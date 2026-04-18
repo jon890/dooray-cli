@@ -58,3 +58,69 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - `post create`는 `--subject` 필수
 - 멤버 resolver는 이름 부분일치로 매칭, 모호하면 에러 + 후보 목록 출력
 - post 목록은 최신순 정렬 (`-createdAt`)
+
+## 상황별 ADR 필수 참조
+
+아래 작업을 할 때는 해당 ADR을 반드시 먼저 읽는다 — 라이브러리 고유 함정·실험 결과·정책 근거가 담겨 있어 모르고 진행하면 버그 재발 위험.
+
+| 상황 | 필수 확인 ADR |
+|---|---|
+| 새 HTTP 요청 (retry·timeout·error 분기) | ky 사용 강제 ADR (등록 필요) |
+| 새 Commander.js 서브커맨드 추가 | Commander.js 패턴 ADR (등록 필요) |
+| `~/.dooray/cache/` 구조 변경 | 캐시 일관성 ADR (등록 필요) |
+| IMAP 메일 조회 기능 | imapflow + mailparser 통합 ADR (등록 필요) |
+| 새 출력 포맷 (table/json/quiet) | formatter 패턴 ADR (등록 필요) |
+| 에러 처리·exitCode 정책 | `DoorayCliError` 패턴 ADR (등록 필요) |
+| 멤버·프로젝트 이름 부분일치 | member resolver 매칭 정책 ADR (등록 필요) |
+
+ADR 번호는 `docs/adr.md`에 실제로 등록된 시점에 이 표를 갱신한다. **표만 채우고 실제 ADR이 없는 상태로 방치하지 않는다** — 등록 전에는 "(등록 필요)"로 두고, 등록 시점에 `ADR-{N}` 교체.
+
+## 토큰 효율 (Opus/Sonnet 라우팅)
+
+- **논의·계획·docs 작성**: main 세션 (opus 허용)
+- **task phase 실행**: sonnet 기본 — rename, 리팩토링, 다중 파일 수정도 sonnet
+- **task phase에서 opus 사용 금지 예외**:
+  - 새 아키텍처 설계가 phase 안에 있는 경우
+  - 복잡 알고리즘 설계 (도메인 핵심 신규 설계)
+- **기계적 작업은 opus 금지** — rename/이동/경로 수정 등은 파일 수가 많아도 sonnet으로 충분
+- 빌드 검증·커밋 phase는 haiku
+
+**Why**: Opus는 Sonnet의 약 5배 비싸고 Claude Code Max 5시간 한도를 빠르게 소모.
+
+## 파일 읽기 효율
+
+- **전체 파일 읽기 금지** (200줄 초과 시) — offset+limit로 필요한 섹션만
+- **같은 파일 반복 읽기 금지** — 같은 세션 내에서는 기억해서 재사용
+- **대형 docs 파일** (`docs/adr.md` 등)은 grep으로 필요 섹션만 찾아 offset 지정
+
+## 조사/탐색 접근 방식
+
+- **직접 질문에는 직접 답변부터** — 사용자가 특정 파일/영역/패턴을 명시했다면 해당 위치부터 확인. 광범위한 codebase 탐색 금지
+- **사용자가 조사 경로를 제시했으면 그 경로부터** — 지시받은 영역에서 codebase 전체를 먼저 뒤지지 않는다
+- **Explore agent는 최후 수단** — Grep/Glob/Read로 3번 이상 시도한 후에도 못 찾을 때만 사용
+- **가정 없이 주장하지 않기** — "dead code", "미사용" 같은 판단은 실제로 참조를 grep한 후에만 제기
+
+## Task 작업 규칙
+
+- 각 phase는 **원자적 단일 책임** — 다른 관심사면 별도 phase로 분리. **작업 항목 5개 이하** 엄수
+- **task 파일 생성 즉시 git commit** — index.json + phase 파일을 실행 전에 커밋
+- task 완료 즉시 git commit (index.json 상태 갱신 포함)
+- 각 phase 프롬프트는 **자기완결적** (이전 대화 없이 독립 실행 가능)
+- **docs 최신화는 task 생성 전 필수** — task phase 내에서 docs 변경 금지
+
+**Why "5개 이하"**: AI 에이전트는 작업 항목이 많으면 뒤쪽을 누락하는 경향 (실증: 11개 항목 중 뒤 3개 누락 사고).
+
+## Git & PR Conventions
+
+PR 제목은 반드시 아래 형식을 따른다:
+
+```
+type(scope): description
+```
+
+예시:
+- `feat(commands): add wiki search subcommand`
+- `fix(cache): resolve atomic write race in member store`
+- `docs(adr): add ky retry policy ADR`
+
+이 형식에서 절대 벗어나지 않는다.
