@@ -54,7 +54,7 @@ dooray post get tc-ocr 42 --json           # JSON 출력
 
 ```bash
 dooray post create tc-ocr \
-  --subject "업무 제목" \
+  --title "업무 제목" \
   --body "본문 마크다운" \
   --to "담당자이름" \
   --priority normal
@@ -67,7 +67,7 @@ dooray post create tc-ocr \
 dooray post edit tc-ocr 42
 
 # 비대화형 (AI 에이전트 친화)
-dooray post edit tc-ocr 42 --subject "새 제목" --body "새 본문"
+dooray post edit tc-ocr 42 --title "새 제목" --body "새 본문"
 ```
 
 ### 댓글

@@ -54,8 +54,8 @@ dooray doctor                                 # 설정 검증
 | 업무 목록 조회 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` |
 | 업무 상세 보기 | `dooray post get <project> <number>` |
-| 업무 생성 | `dooray post create <project> --subject "..." --body "..."` |
-| 업무 제목/본문 수정 | `dooray post edit <project> <number> --subject "..." --body "..."` |
+| 업무 생성 | `dooray post create <project> --title "..." --body "..."` |
+| 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` |
 | 업무 완료 처리 | `dooray post done <project> <number>` |
 | 업무 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
 | 댓글 조회 | `dooray post comment list <project> <number>` |
@@ -80,6 +80,8 @@ dooray doctor                                 # 설정 검증
 | 전체 첨부파일 다운로드 | `dooray post file download-all <project> <number>` |
 | 첨부파일 업로드 | `dooray post file upload <project> <number> <file-path>` |
 | 첨부파일 삭제 | `dooray post file delete <project> <number> <file-id>` |
+
+> **제목 옵션 네이밍**: `post` 와 `wiki page` 모두 `--title` 표준. `post`의 `--subject`는 deprecated alias로 당분간 동작하되, 새 코드에서는 `--title` 사용을 권장.
 
 ---
 
@@ -129,7 +131,7 @@ dooray project list --search "AI서비스" --json
 
 # 2. 업무 생성
 dooray post create ai-service-dev \
-  --subject "주간보고 2026-W14" \
+  --title "주간보고 2026-W14" \
   --body "## 이번 주 성과\n- 항목1\n- 항목2" \
   --to "김철수"
 ```
@@ -163,7 +165,7 @@ dooray wiki page get tc-ocr 3052841366755571094 --json
 
 ```bash
 dooray post create <project> \
-  --subject "제목" \
+  --title "제목" \
   --body "본문 마크다운" \
   --to "담당자이름" \           # 여러 명: --to "김철수" --to "이영희"
   --cc "참조자이름" \
@@ -173,20 +175,20 @@ dooray post create <project> \
 
 본문이 길면 파일로:
 ```bash
-dooray post create <project> --subject "제목" --body-file ./content.md
+dooray post create <project> --title "제목" --body-file ./content.md
 ```
 
 ### 업무 수정 (non-interactive)
 
 ```bash
 # 제목만 변경
-dooray post edit <project> <number> --subject "새 제목"
+dooray post edit <project> <number> --title "새 제목"
 
 # 본문만 변경
 dooray post edit <project> <number> --body "새 본문"
 
 # 제목 + 본문 동시 변경
-dooray post edit <project> <number> --subject "새 제목" --body-file ./updated.md
+dooray post edit <project> <number> --title "새 제목" --body-file ./updated.md
 ```
 
 ### 댓글 추가 (non-interactive)
