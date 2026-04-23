@@ -1,0 +1,41 @@
+{
+  "name": "fix-wiki-page-create-parent-fallback",
+  "description": "wiki page create --parent 생략 시 home pageId 자동 폴백 + wiki 캐시 인프라 — GitHub Issue #5",
+  "created_at": "2026-04-23T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 2,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "Wiki 캐시 인프라 확장 (CachedWiki + store)",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 2,
+      "title": "resolveWikiHomePageId + page-create 연동 + 빌드 검증",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    }
+  ],
+  "updated_at": "2026-04-23T00:00:00Z"
+}
