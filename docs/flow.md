@@ -68,7 +68,7 @@ dooray post search my-project "스프린트"   # 4) 제목 검색
 
 ```
 dooray post create my-project \
-  --subject "기능 구현" \
+  --title "기능 구현" \
   --to "김철수" \                           # 이름 or 이메일로 멤버 지정
   --body-file task.md                       # 또는 --body - (stdin)
 ```

@@ -54,8 +54,9 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 
 ## 주의사항
 
-- `post edit`, `comment edit`은 `--subject`/`--body` 옵션으로 non-interactive 사용 가능
-- `post create`는 `--subject` 필수
+- `post edit`, `comment edit`은 `--title`/`--body` 옵션으로 non-interactive 사용 가능 (`--subject`는 deprecated alias, stderr 경고 후 동작)
+- `post create`는 `--title` 필수 (또는 `--subject` alias)
+- 제목 옵션 이름은 post·wiki 모두 `--title`로 통일 (Issue #8)
 - 멤버 resolver는 이름 부분일치로 매칭, 모호하면 에러 + 후보 목록 출력
 - post 목록은 최신순 정렬 (`-createdAt`)
 
