@@ -123,6 +123,23 @@
 - API body 필드는 `subject` (업무·위키 공통)
 - CLI는 `wiki page create/edit` 에서 `--title` 플래그 사용 — API 매핑 시점에서 `subject`로 변환
 
+### Wiki 페이지 수정 엔드포인트 3종
+Dooray는 위키 페이지 수정을 3개 엔드포인트로 분리 제공:
+
+| Endpoint | 용도 | Body |
+|---|---|---|
+| `PUT /wiki/v1/wikis/{wikiId}/pages/{pageId}` | 제목+본문 동시 수정 | `{ subject?, body?, referrers? }` |
+| `PUT /wiki/v1/wikis/{wikiId}/pages/{pageId}/title` | 제목만 수정 | `{ subject }` |
+| `PUT /wiki/v1/wikis/{wikiId}/pages/{pageId}/content` | 본문만 수정 | `{ body: { mimeType, content } }` |
+
+CLI `wiki page edit` 분기 (Issue #4):
+- 플래그 없음 → `$EDITOR` 열고 제목+본문 동시 수정 (`/pages/{pageId}`)
+- `--title X` 단독 → `/title`
+- `--body` or `--body-file` 단독 → `/content`
+- `--title` + body 플래그 → `/pages/{pageId}` (동시 수정)
+
+단일 필드 수정 시 main PUT에 partial body를 보내는 대신 dedicated endpoint를 쓴다 — 공식 문서 의도와 일치, 서버 partial 수용 여부 불확실성 제거.
+
 ### 파일 API (307 redirect)
 - 파일 업로드/다운로드는 `api.dooray.com` 대신 `file-api.dooray.com`으로 라우팅 필요
 - 첫 요청이 307 응답 → Location 헤더의 실제 파일 서버로 재요청 (클라이언트에서 `redirect: "manual"` 후 처리)
