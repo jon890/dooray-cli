@@ -13,22 +13,24 @@ Phase 1에서 `post create/edit`의 `--title` 표준화가 완료됐다. `skills
 
 Phase 1 완료가 전제. post/create, post/edit 코드가 `--title`을 이미 받고 있어야 SKILL.md 예시와 일치.
 
-### 갱신 대상 4곳 (작성 시점 기준 grep)
+### 갱신 대상 7곳 (작성 시점 기준 grep)
 
 ```
 skills/dooray-cli/SKILL.md:57:| 업무 생성 | `dooray post create <project> --subject "..." --body "..."` |
 skills/dooray-cli/SKILL.md:58:| 업무 제목/본문 수정 | `dooray post edit <project> <number> --subject "..." --body "..."` |
-skills/dooray-cli/SKILL.md:129:  --subject "주간보고 2026-W14" \
-skills/dooray-cli/SKILL.md:163:  --subject "제목" \
-skills/dooray-cli/SKILL.md:173:dooray post create <project> --subject "제목" --body-file ./content.md
-skills/dooray-cli/SKILL.md:180:dooray post edit <project> <number> --subject "새 제목"
-skills/dooray-cli/SKILL.md:186:dooray post edit <project> <number> --subject "새 제목" --body-file ./updated.md
+skills/dooray-cli/SKILL.md:132:  --subject "주간보고 2026-W14" \
+skills/dooray-cli/SKILL.md:166:  --subject "제목" \
+skills/dooray-cli/SKILL.md:176:dooray post create <project> --subject "제목" --body-file ./content.md
+skills/dooray-cli/SKILL.md:183:dooray post edit <project> <number> --subject "새 제목"
+skills/dooray-cli/SKILL.md:189:dooray post edit <project> <number> --subject "새 제목" --body-file ./updated.md
 ```
 
 7개 라인에서 `--subject` 사용. 모두 `--title`로 교체.
 
+> 줄 번호는 작성 시점 스냅샷. 작업 직전 `grep -n '\-\-subject' skills/dooray-cli/SKILL.md`로 재확인 후 진행.
+
 **제외 대상**:
-- `skills/dooray-cli/SKILL.md:73` — `dooray mail send --to "..." --subject "..."` → mail/send는 `--subject` 유지 (이메일 표준). **건드리지 말 것**
+- `skills/dooray-cli/SKILL.md:76` — `dooray mail send --to "..." --subject "..."` → mail/send는 `--subject` 유지 (이메일 표준). **건드리지 말 것**
 
 ## 목표
 
