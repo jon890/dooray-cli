@@ -137,6 +137,9 @@ grep -n 'opts.parent ?? ""' src/commands/wiki/page-create.ts || echo "OK_REMOVED
 # size=100 번들 포함 확인
 grep -c '"size":100\|size: 100' dist/index.js
 
+# wikis.json 번들 포함 확인 (Phase 1의 WIKIS_PATH가 resolver를 통해 번들에 포함됨)
+grep -c "wikis.json" dist/index.js
+
 # EXIT_API_ERROR import 확인 (resolver에서 사용)
 grep -n "EXIT_API_ERROR" src/resolvers/wiki.ts
 ```
@@ -149,6 +152,7 @@ grep -n "EXIT_API_ERROR" src/resolvers/wiki.ts
 - [ ] `grep "resolveWikiHomePageId" src/commands/wiki/page-create.ts` → 2줄 (import + 호출)
 - [ ] `grep 'opts.parent ?? ""' src/commands/wiki/page-create.ts` → 0줄 (매치 없음)
 - [ ] `grep -c "size.*100\|size:100" dist/index.js` → 1 이상 (번들 난독화 대비 유연한 매치)
+- [ ] `grep -c "wikis.json" dist/index.js` → 1 이상 (Phase 1 WIKIS_PATH가 Phase 2 resolver 통해 번들 포함)
 - [ ] `git diff --stat src/resolvers/wiki.ts src/commands/wiki/page-create.ts` → 2 파일 수정
 
 ## 주의사항
