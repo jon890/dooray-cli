@@ -134,7 +134,7 @@ team-lead가 `docs/` 하위 문서를 읽고 사용자와 논의.
 
 ### 4. task 파일 생성
 
-`tasks/{task-name}/` 디렉터리에 `index.json` + `phase-{N}.md` 생성.
+`tasks/{NNN}-{task-name}/` 디렉터리에 `index.json` + `phase-{N}.md` 생성.
 phase 프롬프트 규칙은 기존 `plan-and-build`와 동일:
 
 - 원자적 단일 책임, 작업 항목 5개 이하
@@ -176,7 +176,7 @@ executor 규칙:
 - phase-{N}.md를 순서대로 읽고 실행
 - 각 phase 완료 후 성공 기준 검증
 - **커밋은 하지 않음** — team-lead가 검증 후 커밋
-- **마지막 phase에서 `tasks/{task-name}/index.json`의 `status`/`current_phase`/각 phase `status`를 `completed`로 업데이트** (별도 phase 아닌 마지막 phase 작업 내 스텝으로)
+- **마지막 phase에서 `tasks/{NNN}-{task-name}/index.json`의 `status`/`current_phase`/각 phase `status`를 `completed`로 업데이트** (별도 phase 아닌 마지막 phase 작업 내 스텝으로)
 - 완료/실패 시 team-lead에게 결과 보고
 
 ### 7. 코드 품질 검사 (code-reviewer)

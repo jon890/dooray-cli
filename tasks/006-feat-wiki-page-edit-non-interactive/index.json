@@ -1,5 +1,5 @@
 {
-  "name": "feat-wiki-page-edit-non-interactive",
+  "name": "006-feat-wiki-page-edit-non-interactive",
   "description": "wiki page edit에 --title/--body/--body-file 비대화형 플래그 추가 — GitHub Issue #4",
   "created_at": "2026-04-23T00:00:00Z",
   "status": "pending",

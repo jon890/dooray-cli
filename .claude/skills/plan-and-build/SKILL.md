@@ -57,7 +57,7 @@ description: AI 에이전트 하네스를 사용한 대규모 구현 자동화. 
 `prompts/task-create.md` 형식에 따라 task와 phase 파일을 생성:
 
 ```
-tasks/{task-name}/
+tasks/{NNN}-{task-name}/
   index.json
   phase-01.md
   phase-02.md
@@ -81,10 +81,10 @@ tasks/{task-name}/
 ```bash
 # cwd: <repo root>
 # 전체 실행 (백그라운드)
-python3 scripts/run-phases.py tasks/{task-name}
+python3 scripts/run-phases.py tasks/{NNN}-{task-name}
 
 # 특정 phase부터 재개
-python3 scripts/run-phases.py tasks/{task-name} --from-phase 3
+python3 scripts/run-phases.py tasks/{NNN}-{task-name} --from-phase 3
 ```
 
 **Task phase에서 파일 커밋 규칙**:

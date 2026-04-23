@@ -126,31 +126,51 @@ task 파일을 **사용자에게 제출하기 전**에 반드시 [`common-critic
 
 CLI 레포에서는 8단계를 4단계(1+2 합침, 3+4 합침, 5+6 합침, 7+8 합침)로 압축 가능 — 단 각 합쳐진 단계 내부에서 모호함 제거는 동일하게 수행. UI가 없으므로 3단계는 "주요 호출 시나리오 검증(명령 인자/플래그 조합, API 호출 시퀀스)"으로, 4단계는 "명령 시그니처·옵션·출력 포맷(stdout/stderr)"으로 해석한다.
 
-## plan 네이밍 규칙
+## task 네이밍 규칙
+
+### 형식: `{NNN}-{task-name}`
+
+모든 새 task 폴더는 `tasks/{NNN}-{task-name}/` 형식으로 만든다.
+
+- `NNN` = 3자리 zero-padded 순차 번호 (001, 002, ...)
+- `task-name` = 케밥 케이스 간결 요약. Issue 연결은 `index.json`의 `description` 필드에 남긴다 (폴더명에 issue 번호 넣지 않음 — 폴더명 중복 회피 + 범용성)
+
+예시:
+```
+tasks/004-fix-dooray-error-decode/           # Issue #6
+tasks/005-fix-wiki-page-create-parent-fallback/  # Issue #5
+tasks/006-feat-wiki-page-edit-non-interactive/   # Issue #4
+```
+
+`index.json`의 `name` 필드도 폴더명과 **동일**하게 설정 (`"name": "006-feat-wiki-page-edit-non-interactive"`).
 
 ### 번호 충돌 방지 (필수)
 
-**plan/ADR 번호를 부여하기 전에 반드시 기존 번호를 확인한다.** 다른 세션이나 build-with-teams 실행 결과로 번호가 추가되어 있을 수 있다.
+**번호를 부여하기 전에 반드시 기존 번호를 확인한다.** 다른 세션이나 parallel 작업으로 번호가 추가되어 있을 수 있다.
 
 ```bash
 # cwd: <repo root>
-# plan 번호 확인
-ls tasks/ | grep "plan{후보번호}"
+# 현재 사용된 task 번호 전체 확인
+ls tasks/ | grep -E "^[0-9]{3}-" | sort
 
-# ADR 번호 확인
+# ADR 번호 확인 (별개)
 grep "^## ADR-{후보번호}" docs/adr.md
 ```
 
-다음 가용 번호를 사용. 단순 task 생성 시 항상 위 명령으로 사전 확인.
+다음 가용 번호(가장 큰 번호 + 1)를 사용. 번호 없는 레거시 폴더는 count에 포함하지 않는다 (소급 rename 금지 원칙).
 
 ### 서브넘버 규칙
 
-비슷한 성격의 작업은 같은 번호에 서브넘버를 붙여 묶는다:
+비슷한 성격의 후속 작업은 같은 번호에 서브넘버를 붙여 묶는다:
 
 ```
-plan160-treatment-settings-upgrade      # 원본
-plan160-2-conti-settings-upgrade        # 동일 성격 후속 작업
+006-feat-wiki-page-edit-non-interactive      # 원본
+006-2-feat-wiki-page-bulk-edit               # 동일 도메인 후속 확장
 ```
 
-묶기 기준: 동일 UI 패턴 복제 / 동일 스키마 확장 / 동일 기능의 다른 영역 확장
+묶기 기준: 동일 도메인 확장 / 동일 패턴 복제
 별도 번호 부여 기준: 서로 다른 도메인 / 독립 실행 가능 + 의존 관계 없음
+
+### ADR 번호는 별개
+
+ADR(`docs/adr.md`)의 `ADR-{N}`과 task 번호는 **독립적**. ADR은 기술 결정 단위, task는 구현 단위.
