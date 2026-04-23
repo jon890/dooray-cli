@@ -7,6 +7,7 @@ import type {
   CachedProject,
   CachedMember,
   CachedWorkflow,
+  CachedWiki,
 } from "./types.js";
 
 const CACHE_DIR = join(homedir(), ".dooray", "cache");
@@ -15,6 +16,7 @@ const PROJECTS_PATH = join(CACHE_DIR, "projects.json");
 const PROJECTS_PRIVATE_PATH = join(CACHE_DIR, "projects-private.json");
 const MEMBERS_DIR = join(CACHE_DIR, "members");
 const WORKFLOWS_DIR = join(CACHE_DIR, "workflows");
+const WIKIS_PATH = join(CACHE_DIR, "wikis.json");
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -100,6 +102,16 @@ export async function getWorkflows(projectId: string): Promise<CacheEntry<Cached
 
 export async function setWorkflows(projectId: string, items: CachedWorkflow[]): Promise<void> {
   await writeJson(workflowsPath(projectId), { updatedAt: now(), data: items } satisfies CacheEntry<CachedWorkflow[]>);
+}
+
+// ─── Wikis ────────────────────────────────────────────────
+
+export async function getWikis(): Promise<CacheEntry<CachedWiki[]> | null> {
+  return readJson<CacheEntry<CachedWiki[]>>(WIKIS_PATH);
+}
+
+export async function setWikis(items: CachedWiki[]): Promise<void> {
+  await writeJson(WIKIS_PATH, { updatedAt: now(), data: items } satisfies CacheEntry<CachedWiki[]>);
 }
 
 // ─── Clear ────────────────────────────────────────────────

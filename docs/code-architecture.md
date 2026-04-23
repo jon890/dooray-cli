@@ -34,7 +34,7 @@ src/
     member.ts               # name → organizationMemberId
     workflow.ts             # name·class → workflowId
     post.ts                 # postNumber → postId (API 호출)
-    wiki.ts                 # projectCode → wikiId (캐시)
+    wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시)
 
   cache/
     store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크

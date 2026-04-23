@@ -2,7 +2,7 @@ import { Command } from "commander";
 import fs from "node:fs/promises";
 import { getConfigOrThrow } from "../../config/store.js";
 import { DoorayApiClient } from "../../api/client.js";
-import { resolveWiki } from "../../resolvers/wiki.js";
+import { resolveWiki, resolveWikiHomePageId } from "../../resolvers/wiki.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
@@ -52,11 +52,12 @@ export const wikiPageCreateCommand = new Command("create")
 
     startSpinner("위키 페이지 생성 중...");
     const wikiId = await resolveWiki(client, project);
+    const parentPageId = opts.parent ?? (await resolveWikiHomePageId(client, wikiId));
 
     const res = await client.createWikiPage(wikiId, {
       subject: opts.title,
       body: { mimeType: "text/x-markdown", content: bodyContent },
-      parentPageId: opts.parent ?? "",
+      parentPageId,
     });
     stopSpinner(true, "위키 페이지 생성 완료");
 

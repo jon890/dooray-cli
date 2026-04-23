@@ -90,7 +90,7 @@ dooray post workflow tc-ocr 42 "진행 중"    # 워크플로우 변경
 dooray wiki list                           # 위키 목록
 dooray wiki pages tc-ocr                   # 페이지 목록
 dooray wiki page get tc-ocr <page-id>      # 페이지 상세
-dooray wiki page create tc-ocr             # 페이지 생성 ($EDITOR)
+dooray wiki page create tc-ocr --title "..." [--parent <page-id>] [--body "..." | --body-file <path>]
 dooray wiki page edit tc-ocr <page-id>     # 페이지 수정 ($EDITOR)
 ```
 
@@ -167,7 +167,7 @@ cp -r skills/dooray-cli ~/.claude/skills/
 
 ## 캐시
 
-프로젝트, 멤버, 워크플로우 정보는 `~/.dooray/cache/`에 캐시됩니다.
+프로젝트, 멤버, 워크플로우, 위키 정보는 `~/.dooray/cache/`에 캐시됩니다.
 
 ```bash
 dooray cache clear    # 캐시 삭제
