@@ -9,11 +9,27 @@ task phase를 Claude Agent Teams 파이프라인으로 실행하는 시스템. `
 
 ## 사전 검증 (실행 전 필수)
 
-plan 인자를 받으면 **가장 먼저** `tasks/{plan}/index.json`의 `status`를 확인:
-- `"completed"` → 이미 완료된 plan. 사용자에게 알리고 **실행하지 않음**
-- `"pending"` 또는 `"in_progress"` → 정상 진행
+plan 인자를 받으면 **가장 먼저** 3중 검증. 하나라도 걸리면 사용자에게 알리고 **실행 차단** (사용자 확인 없이 강행 금지):
 
-이 검증을 빠뜨리면 완료된 plan을 재실행하는 사고가 발생한다.
+1. **main의 index.json status**: `tasks/{plan}/index.json`의 `status`가 `"completed"`면 이미 완료
+   ```bash
+   python3 -c "import json; d=json.load(open('tasks/{plan}/index.json')); print(d['status'])"
+   ```
+   `completed` → 차단. `pending`/`in_progress` → 다음 검증.
+
+2. **원격 `feat/{plan}` 브랜치 존재**: 이미 작업 중이거나 PR 미머지 상태
+   ```bash
+   git ls-remote --heads origin "feat/{plan}" | grep -q . && echo FOUND || echo NONE
+   ```
+   `FOUND` → 차단 (사용자 확인 후 이어쓸지/새로 시작할지 결정).
+
+3. **해당 plan 제목을 포함한 오픈 PR**: 작업 완료 후 머지 대기 중
+   ```bash
+   gh pr list --state open --search "{plan}" --json number,title,headRefName
+   ```
+   결과 있음 → 차단.
+
+세 검증 모두 통과해야 신규 실행. 특히 PR 머지 전 단계에서 main의 index.json은 여전히 `pending`이므로 1번만 보면 재실행 사고를 놓친다. 2·3번이 커버.
 
 ## 핵심 원칙
 
@@ -124,6 +140,7 @@ phase 프롬프트 규칙은 기존 `plan-and-build`와 동일:
 - 원자적 단일 책임, 작업 항목 5개 이하
 - 자기완결적 (이전 대화 없이 독립 실행 가능)
 - 성공 기준에 모든 작업 검증 포함
+- **마지막 phase는 "task 완료 처리" 단계를 포함**: `index.json`의 `status`를 `"completed"`로, 모든 phase `status`도 `"completed"`로 업데이트 (executor가 같은 phase에서 수행하고 team-lead가 최종 커밋에 포함)
 
 task 파일 생성 후 커밋.
 
@@ -159,6 +176,7 @@ executor 규칙:
 - phase-{N}.md를 순서대로 읽고 실행
 - 각 phase 완료 후 성공 기준 검증
 - **커밋은 하지 않음** — team-lead가 검증 후 커밋
+- **마지막 phase에서 `tasks/{task-name}/index.json`의 `status`/`current_phase`/각 phase `status`를 `completed`로 업데이트** (별도 phase 아닌 마지막 phase 작업 내 스텝으로)
 - 완료/실패 시 team-lead에게 결과 보고
 
 ### 7. 코드 품질 검사 (code-reviewer)
@@ -218,14 +236,17 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
 
 ### 9. 완료 + PR 생성
 
-1. team-lead가 변경사항 검토
+1. team-lead가 변경사항 검토 — 마지막 phase 커밋에 `index.json` completed 업데이트가 포함됐는지 확인 (누락 시 PR 브랜치에서 수정 + amend/추가 커밋)
 2. 통합 검증 명령 (`{{CI_CMD}}`) 최종 확인
 3. git commit + push
 4. **PR 생성** — `gh pr create` (main 대상, 변경사항 요약)
-5. **index.json 완료 처리 + 커밋** — 메인 워킹 디렉토리에서:
-   - `tasks/{task-name}/index.json`의 `status`를 `"completed"`, 각 phase `status`도 `"completed"`로 변경
-   - `git add tasks/{task-name}/index.json && git commit -m "chore: {task-name} 완료 상태 업데이트"` + push
-   - **이 단계를 빠뜨리면 같은 plan이 재실행되는 사고 발생**
+5. **index.json 완료 상태는 PR 브랜치에만 존재** — 메인 워킹 디렉토리에서는 **건드리지 않는다**:
+   - 마지막 phase 커밋이 이미 `index.json`의 `status="completed"` + 모든 phase `status="completed"`를 포함해야 한다 (task 파일 설계 시 마지막 phase에 해당 업데이트 명시 — 4단계 참조)
+   - main에서 별도 커밋 **금지** 이유:
+     - 이중 진실원 회피
+     - main에 진행 중인 다른 작업(다른 plan의 미푸시 커밋, unstaged 변경)과 의도치 않게 섞여 push될 위험
+     - PR 머지로 자동 반영되므로 중복 커밋
+   - "재실행 사고 방지"는 main 커밋이 아니라 **실행 전 3중 사전 검증**(status + 원격 feat 브랜치 + 오픈 PR)으로 막는다
 6. 팀 shutdown (SendMessage `shutdown_request`)
 
 ## worktree 기반 격리 실행 (필수)
@@ -281,16 +302,16 @@ executor가 phase 실패 보고 시:
 ## 실행 흐름 요약
 
 ```
-[worktree 생성 (origin/main 기반)]
+[사전 검증 — main index.json status + 원격 feat 브랜치 + 오픈 PR (3중 체크)]
+    → [worktree 생성 (origin/main 기반)]
     → [docs 최신화 + 커밋]
-    → [task 파일 생성 + 커밋]
+    → [task 파일 생성 + 커밋]  ← 마지막 phase에 index.json completed 업데이트 스텝 포함
     → [critic 평가] ←─ REVISE면 계획 수정 후 재평가 (한도 3회)
-    → [executor 실행] ←─ 실패 시 원인 분석 후 재실행
+    → [executor 실행] ←─ 마지막 phase에서 index.json completed 확정. 실패 시 원인 분석 후 재실행
     → [코드 품질 검사] ←─ FIX_NEEDED면 executor 재투입 (한도 2회)
     → [docs-verifier 검증 (문서 부패 포함)] ←─ VIOLATION/UPDATE_NEEDED면 재투입 (한도 2회)
-    → [team-lead 최종 커밋 + push]
-    → [PR 생성]
-    → [index.json completed + 커밋/push] ← 누락 시 재실행 사고
+    → [team-lead 최종 커밋 + push]  ← PR 브랜치에 index.json completed 이미 포함됨
+    → [PR 생성]  ← main에 별도 커밋 금지
     → [worktree 정리 + 팀 shutdown]
 ```
 
