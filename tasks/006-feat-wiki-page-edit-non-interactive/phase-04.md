@@ -8,7 +8,7 @@ Phase 1-3에서 API 레이어 추가, 유틸 추출, 커맨드 분기 로직, SK
 
 ### 먼저 읽을 파일
 
-- `tasks/feat-wiki-page-edit-non-interactive/index.json` — 전체 phase 완료 여부 확인
+- `tasks/006-feat-wiki-page-edit-non-interactive/index.json` — 전체 phase 완료 여부 확인
 - `docs/dooray-api-reference.md` §7 "Wiki 페이지 수정 엔드포인트 3종" — 최종 검증 대조
 
 ## 목표
@@ -75,14 +75,24 @@ grep -c "함께 사용할 수 없습니다" dist/index.js
 grep -c "resolveWikiHomePageId\|normalizeDoorayMessage" dist/index.js
 ```
 
-### 5) task 상태 일관성 확인
+### 5) task 완료 처리 (`index.json` 업데이트)
+
+이 phase는 task의 마지막 phase이므로 **executor가 직접 `tasks/006-feat-wiki-page-edit-non-interactive/index.json`을 업데이트**한다 (team-lead가 PR 브랜치 커밋에 포함하여 main에 별도 커밋 없이 PR 머지로 반영).
+
+업데이트 항목:
+- 최상위 `status`: `"pending"` → `"completed"`
+- 최상위 `current_phase`: `4` (마지막 phase 번호 유지)
+- 최상위 `updated_at`: ISO 8601 현재 시각 (`2026-04-23T...Z`)
+- `phases[0..3].status`: 모두 `"pending"` → `"completed"`
+
+수정 후 검증:
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
-cat tasks/feat-wiki-page-edit-non-interactive/index.json | grep -E "\"status\"|\"current_phase\""
+python3 -c "import json; d=json.load(open('tasks/006-feat-wiki-page-edit-non-interactive/index.json')); assert d['status']=='completed', d['status']; assert all(p['status']=='completed' for p in d['phases']), [p['status'] for p in d['phases']]; print('OK')"
 ```
 
-기대: 마지막 phase 실행 중이므로 status `running` 또는 `completed`, current_phase는 4.
+기대: `OK` 출력.
 
 ## 성공 기준
 
@@ -94,11 +104,12 @@ cat tasks/feat-wiki-page-edit-non-interactive/index.json | grep -E "\"status\"|\
 - [ ] `grep -c "함께 사용할 수 없습니다" dist/index.js` → 1 이상
 - [ ] `grep -c "resolveWikiHomePageId" dist/index.js` → 1 이상 (Issue #5 자산 보존)
 - [ ] `grep -c "normalizeDoorayMessage" dist/index.js` → 1 이상 (Issue #6 자산 보존)
-- [ ] `git status --short` → 코드 수정 없음 (이 phase는 검증만)
+- [ ] `index.json`의 최상위 `status` = `"completed"`, 각 `phases[*].status` = `"completed"` (Python 검증 스크립트 `OK` 출력)
+- [ ] `git status --short` → `tasks/006-feat-wiki-page-edit-non-interactive/index.json` 만 수정 (코드 변경 없음)
 
 ## 주의사항
 
-- **이 phase는 코드 변경 금지** — 검증 실패 시 이전 phase로 되돌아가 수정. phase 4에서 직접 fix하지 말 것
+- **이 phase는 코드 변경 금지** — 검증 실패 시 이전 phase로 되돌아가 수정. phase 4에서 직접 fix하지 말 것 (단, `index.json` 상태 업데이트는 예외)
 - **회귀 확인은 `create --help` 까지만** — 실제 실행은 실 API 키가 필요하므로 smoke 수준에서 멈춤
 - **만약 `pnpm run build`가 성공하는데 smoke 테스트 실패** → `PHASE_BLOCKED: smoke 불일치 — 수동 검토 필요`
 

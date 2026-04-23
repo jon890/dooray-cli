@@ -91,7 +91,9 @@ dooray wiki list                           # 위키 목록
 dooray wiki pages tc-ocr                   # 페이지 목록
 dooray wiki page get tc-ocr <page-id>      # 페이지 상세
 dooray wiki page create tc-ocr --title "..." [--parent <page-id>] [--body "..." | --body-file <path>]
-dooray wiki page edit tc-ocr <page-id>     # 페이지 수정 ($EDITOR)
+dooray wiki page edit tc-ocr <page-id> --title "새 제목"                   # 제목만 (비대화형)
+dooray wiki page edit tc-ocr <page-id> --body "..." | --body-file <path>  # 본문만 (비대화형)
+dooray wiki page edit tc-ocr <page-id>                                     # $EDITOR (플래그 없을 때)
 ```
 
 ### 메일

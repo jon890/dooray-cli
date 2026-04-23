@@ -427,6 +427,14 @@ export interface UpdateWikiPageRequest {
   referrers?: WikiReferrer[];
 }
 
+export interface UpdateWikiPageTitleRequest {
+  subject: string;
+}
+
+export interface UpdateWikiPageContentRequest {
+  body: WikiPageBody;
+}
+
 export interface CreateWikiPageResult {
   id: string;
   wikiId: string;

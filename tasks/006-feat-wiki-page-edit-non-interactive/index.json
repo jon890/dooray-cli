@@ -2,8 +2,8 @@
   "name": "006-feat-wiki-page-edit-non-interactive",
   "description": "wiki page edit에 --title/--body/--body-file 비대화형 플래그 추가 — GitHub Issue #4",
   "created_at": "2026-04-23T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "completed",
+  "current_phase": 4,
   "total_phases": 4,
   "error_message": null,
   "blocked_reason": null,
@@ -12,30 +12,30 @@
       "number": 1,
       "title": "API client 메서드 + types (updateWikiPageTitle/Content)",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "readBody/readStdin 공유 유틸 추출 + page-create 마이그레이션 + 충돌 가드",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 3,
       "title": "page-edit 비대화형 플래그 + 분기 로직 + SKILL.md",
       "file": "phase-03.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 4,
       "title": "빌드 + smoke 검증",
       "file": "phase-04.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-04-23T00:00:00Z"
+  "updated_at": "2026-04-23T09:30:00Z"
 }
