@@ -83,6 +83,19 @@ dooray doctor                                 # 설정 검증
 
 ---
 
+## 제약사항 (Dooray API 한계)
+
+CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI 사용을 안내할 것.
+
+| 작업 | 대체 경로 | 근거 |
+|---|---|---|
+| 위키 페이지 **삭제** | 웹 UI (`https://{tenant}.dooray.com/wiki/...`) | Dooray REST API에 해당 엔드포인트 없음 (위키 댓글·첨부파일 삭제는 있지만 페이지 자체는 없음, `docs/dooray-api-reference.md` §7 참조) |
+| 프로젝트 삭제 | 웹 UI (admin 페이지) | API 미지원 |
+
+위키 페이지를 잘못 만든 경우(테스트/중복) **soft delete(빈 제목·본문) 우회 금지** — 페이지가 트리에 남아 사용자 혼란 유발.
+
+---
+
 ## 워크플로우 판단 기준
 
 1. **"내 프로젝트", "개인 프로젝트" 언급 시** → `dooray project list --type private --json` 으로 개인 프로젝트 먼저 조회
