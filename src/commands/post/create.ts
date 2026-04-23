@@ -54,7 +54,8 @@ async function resolveUsers(
 export const postCreateCommand = new Command("create")
   .description("업무 생성")
   .argument("<project>", "프로젝트 코드 또는 ID")
-  .requiredOption("--subject <title>", "업무 제목")
+  .option("--title <title>", "업무 제목")
+  .option("--subject <subject>", "--title의 deprecated alias")
   .option("--to <members...>", "담당자 (이름 또는 이메일, 여러 명 가능)")
   .option("--cc <members...>", "참조자 (이름 또는 이메일, 여러 명 가능)")
   .option("--body <text>", "본문 텍스트 (- 입력 시 stdin에서 읽기)")
@@ -66,6 +67,19 @@ export const postCreateCommand = new Command("create")
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
+    const subject = opts.title ?? opts.subject;
+    if (!subject) {
+      throw new DoorayCliError(
+        "--title이 필요합니다.",
+        EXIT_PARAM_ERROR,
+      );
+    }
+    if (opts.subject && !opts.title) {
+      process.stderr.write(
+        "⚠  --subject는 deprecated입니다. 대신 --title을 사용해주세요.\n",
+      );
+    }
+
     const bodyContent = await readBody(opts);
 
     startSpinner("업무 생성 중...");
@@ -75,7 +89,7 @@ export const postCreateCommand = new Command("create")
     const ccUsers = opts.cc ? await resolveUsers(client, projectId, opts.cc) : [];
 
     const res = await client.createPost(projectId, {
-      subject: opts.subject,
+      subject: subject,
       body: { mimeType: "text/x-markdown", content: bodyContent },
       users: { to: toUsers, cc: ccUsers },
       priority: opts.priority,

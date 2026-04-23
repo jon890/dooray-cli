@@ -58,10 +58,11 @@ async function resolveBody(opts: {
 }
 
 export const postEditCommand = new Command("edit")
-  .description("업무 수정 ($EDITOR 또는 --subject/--body 옵션)")
+  .description("업무 수정 ($EDITOR 또는 --title/--body 옵션)")
   .argument("<project>", "프로젝트 코드 또는 ID")
   .argument("<post-number>", "업무 번호")
-  .option("--subject <title>", "제목 변경 (non-interactive)")
+  .option("--title <title>", "제목 변경 (non-interactive)")
+  .option("--subject <subject>", "--title의 deprecated alias")
   .option("--body <text>", "본문 변경 (- 입력 시 stdin, non-interactive)")
   .option("--body-file <path>", "본문 파일 경로 (- 입력 시 stdin, non-interactive)")
   .action(async (project, postNumberStr, opts) => {
@@ -76,7 +77,14 @@ export const postEditCommand = new Command("edit")
     const members = await ensureMembers(client, projectId);
     stopSpinner(true, "업무 조회 완료");
 
-    const nonInteractive = opts.subject || opts.body || opts.bodyFile;
+    const title = opts.title ?? opts.subject;
+    if (opts.subject && !opts.title) {
+      process.stderr.write(
+        "⚠  --subject는 deprecated입니다. 대신 --title을 사용해주세요.\n",
+      );
+    }
+
+    const nonInteractive = title || opts.body || opts.bodyFile;
 
     if (nonInteractive) {
       // Non-interactive mode: apply only specified changes
@@ -97,7 +105,7 @@ export const postEditCommand = new Command("edit")
       }));
 
       await client.updatePost(projectId, postId, {
-        subject: opts.subject ?? post.subject,
+        subject: title ?? post.subject,
         body: {
           mimeType: "text/x-markdown",
           content: newBody ?? post.body.content,
