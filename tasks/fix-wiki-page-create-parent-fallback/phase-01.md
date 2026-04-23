@@ -115,8 +115,7 @@ grep -n "WIKIS_PATH\|export async function getWikis\|export async function setWi
 # import 업데이트 확인
 grep -n "CachedWiki" src/cache/store.ts
 
-# 빌드 산출물에 반영 확인 (CachedWiki는 type-only라 dist에 안 나올 수 있음 — WIKIS_PATH 존재 여부만 확인)
-grep -c "wikis.json" dist/index.js
+# dist grep은 Phase 2에서 검증 — Phase 1 단독 빌드 시 getWikis/setWikis 호출자 부재로 tree-shake됨
 ```
 
 ## 성공 기준
@@ -127,7 +126,6 @@ grep -c "wikis.json" dist/index.js
 - [ ] `grep "export async function getWikis" src/cache/store.ts` → 1줄
 - [ ] `grep "export async function setWikis" src/cache/store.ts` → 1줄
 - [ ] `grep "WIKIS_PATH" src/cache/store.ts` → 2줄 이상 (선언 + 사용)
-- [ ] `grep -c "wikis.json" dist/index.js` → 1 이상
 - [ ] `git diff --stat src/cache/` → 2 파일 수정
 
 ## 주의사항

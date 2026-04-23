@@ -65,7 +65,7 @@ dooray doctor                                 # 설정 검증
 | 위키 목록 | `dooray wiki list` |
 | 위키 페이지 목록 | `dooray wiki pages <project>` |
 | 위키 페이지 상세 | `dooray wiki page get <project> <page-id>` |
-| 위키 페이지 생성 | `dooray wiki page create <project> --subject "..." --body "..."` |
+| 위키 페이지 생성 | `dooray wiki page create <project> --title "..." [--parent <page-id>] [--body "..."]` (--parent 생략 시 위키 home 페이지 아래 생성) |
 | 메일 목록 조회 | `dooray mail list` |
 | 안읽은 메일 | `dooray mail list --unread` |
 | 메일 제목 검색 | `dooray mail list --search "<keyword>"` |
@@ -198,7 +198,7 @@ CLI 에러 발생 시 복구 방법:
 
 ## 캐시
 
-프로젝트, 멤버, 워크플로우 정보는 `~/.dooray/cache/`에 캐시된다.
+프로젝트, 멤버, 워크플로우, 위키 정보는 `~/.dooray/cache/`에 캐시된다.
 캐시가 오래된 것 같으면:
 
 ```bash

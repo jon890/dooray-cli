@@ -30,3 +30,12 @@ export interface CachedWorkflow {
   class: "backlog" | "registered" | "working" | "closed";
   order?: number;
 }
+
+export const WIKIS_TTL_MS = 86_400_000; // 24h — wiki home은 거의 불변
+
+export interface CachedWiki {
+  id: string;
+  projectId: string;
+  name: string;
+  homePageId: string;
+}
