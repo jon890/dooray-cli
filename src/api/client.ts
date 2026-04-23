@@ -3,6 +3,7 @@ import { createReadStream } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import { basename } from "node:path";
 import { DoorayCliError } from "../utils/errors.js";
+import { normalizeDoorayMessage } from "../utils/dooray-message.js";
 import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "../utils/exit-codes.js";
 import type {
   ProjectListResponse,
@@ -89,8 +90,11 @@ async function toDoorayCliError(error: unknown): Promise<never> {
     const exitCode = status === 401 || status === 403 ? EXIT_AUTH_ERROR : EXIT_API_ERROR;
     try {
       const body = (await error.response.json()) as DoorayErrorResponse;
+      // NOTE: form-encoding 관례로 `+`를 공백으로 치환한다.
+      // Dooray resultMessage에 의도된 `+`가 포함된 경우 공백으로 바뀌는 부작용이
+      // 있으나, 실측된 메시지는 대부분 한국어 설명문이라 수용 가능한 트레이드오프.
       throw new DoorayCliError(
-        `API 호출 실패: ${body.header.resultMessage}`,
+        `API 호출 실패: ${normalizeDoorayMessage(body.header.resultMessage)}`,
         exitCode,
       );
     } catch (e) {
