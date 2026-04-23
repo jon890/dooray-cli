@@ -30,6 +30,8 @@ import type {
   CreateWikiPageRequest,
   CreateWikiPageResponse,
   UpdateWikiPageRequest,
+  UpdateWikiPageTitleRequest,
+  UpdateWikiPageContentRequest,
   DoorayApiUnitResponse,
   DoorayErrorResponse,
   PostFileListResponse,
@@ -395,6 +397,34 @@ export class DoorayApiClient {
     try {
       return await this.api
         .put(`wiki/v1/wikis/${wikiId}/pages/${pageId}`, { json: body })
+        .json<DoorayApiUnitResponse>();
+    } catch (e) {
+      return toDoorayCliError(e);
+    }
+  }
+
+  async updateWikiPageTitle(
+    wikiId: string,
+    pageId: string,
+    body: UpdateWikiPageTitleRequest,
+  ): Promise<DoorayApiUnitResponse> {
+    try {
+      return await this.api
+        .put(`wiki/v1/wikis/${wikiId}/pages/${pageId}/title`, { json: body })
+        .json<DoorayApiUnitResponse>();
+    } catch (e) {
+      return toDoorayCliError(e);
+    }
+  }
+
+  async updateWikiPageContent(
+    wikiId: string,
+    pageId: string,
+    body: UpdateWikiPageContentRequest,
+  ): Promise<DoorayApiUnitResponse> {
+    try {
+      return await this.api
+        .put(`wiki/v1/wikis/${wikiId}/pages/${pageId}/content`, { json: body })
         .json<DoorayApiUnitResponse>();
     } catch (e) {
       return toDoorayCliError(e);

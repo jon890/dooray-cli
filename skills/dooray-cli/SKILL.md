@@ -66,6 +66,9 @@ dooray doctor                                 # 설정 검증
 | 위키 페이지 목록 | `dooray wiki pages <project>` |
 | 위키 페이지 상세 | `dooray wiki page get <project> <page-id>` |
 | 위키 페이지 생성 | `dooray wiki page create <project> --title "..." [--parent <page-id>] [--body "..."]` (--parent 생략 시 위키 home 페이지 아래 생성) |
+| 위키 페이지 수정 (제목) | `dooray wiki page edit <project> <page-id> --title "..."` |
+| 위키 페이지 수정 (본문) | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` |
+| 위키 페이지 수정 (에디터) | `dooray wiki page edit <project> <page-id>` (플래그 없으면 $EDITOR 열림) |
 | 메일 목록 조회 | `dooray mail list` |
 | 안읽은 메일 | `dooray mail list --unread` |
 | 메일 제목 검색 | `dooray mail list --search "<keyword>"` |

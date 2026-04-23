@@ -56,6 +56,7 @@ src/
     errors.ts               # DoorayCliError (message + exitCode)
     spinner.ts              # ora 래퍼
     exit-codes.ts           # 0 성공 / 1 API오류 / 2 인증실패 / 3 파라미터오류 / 4 설정오류
+    body-input.ts           # --body / --body-file → string (stdin "-" + 충돌 가드)
 
   commands/
     setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)
@@ -93,7 +94,7 @@ src/
       pages.ts
       page-get.ts
       page-create.ts
-      page-edit.ts          # $EDITOR 기반
+      page-edit.ts          # $EDITOR + 비대화형 플래그(--title/--body/--body-file)
 
     mail/
       list.ts               # 메일 목록 (--unread, --search)
