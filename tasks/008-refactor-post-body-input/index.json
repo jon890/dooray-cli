@@ -1,0 +1,27 @@
+{
+  "name": "008-refactor-post-body-input",
+  "description": "post 4 파일(create/edit/comment-add/comment-edit)의 readBody/resolveBody/readStdin 중복을 body-input.ts 유틸로 일원화 — GitHub Issue #12",
+  "created_at": "2026-04-24T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 2,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "readBodyInputOrNull 유틸 추가 + post 4 파일 migration",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "빌드 + smoke 검증",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-04-24T00:00:00Z"
+}
