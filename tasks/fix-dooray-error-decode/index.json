@@ -1,0 +1,27 @@
+{
+  "name": "fix-dooray-error-decode",
+  "description": "Dooray API 에러 응답의 URL-encoded resultMessage를 사람이 읽을 수 있는 형태로 정규화 — GitHub Issue #6",
+  "created_at": "2026-04-23T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 1,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "normalizeDoorayMessage 유틸 추가 + client.ts 연동 + 빌드 검증",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    }
+  ],
+  "updated_at": "2026-04-23T00:00:00Z"
+}
