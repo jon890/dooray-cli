@@ -126,7 +126,7 @@
 - 프로젝트별 멤버/워크플로우를 독립 파일로 관리 → 특정 프로젝트 캐시만 삭제 가능
 - 파일별 `updatedAt`으로 TTL 독립 관리
 
-**구조**: `me.json`, `projects.json`, `members/{projectId}.json`, `workflows/{projectId}.json`
+**구조**: 자세한 파일 트리·스키마는 `docs/data-schema.md` 참조
 
 ---
 

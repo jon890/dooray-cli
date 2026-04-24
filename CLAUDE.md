@@ -66,15 +66,18 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 
 | 상황 | 필수 확인 ADR |
 |---|---|
-| 새 HTTP 요청 (retry·timeout·error 분기) | ky 사용 강제 ADR (등록 필요) |
-| 새 Commander.js 서브커맨드 추가 | Commander.js 패턴 ADR (등록 필요) |
-| `~/.dooray/cache/` 구조 변경 | 캐시 일관성 ADR (등록 필요) |
-| IMAP 메일 조회 기능 | imapflow + mailparser 통합 ADR (등록 필요) |
-| 새 출력 포맷 (table/json/quiet) | formatter 패턴 ADR (등록 필요) |
-| 에러 처리·exitCode 정책 | `DoorayCliError` 패턴 ADR (등록 필요) |
-| 멤버·프로젝트 이름 부분일치 | member resolver 매칭 정책 ADR (등록 필요) |
+| 새 HTTP 요청 (retry·timeout·error 분기) | **ADR-002** (ky) |
+| `~/.dooray/cache/` 구조 변경 | **ADR-004**, **ADR-010** (TTL + 파일 분리) |
+| IMAP 메일 조회 기능 | **ADR-012** (imapflow + 서버 특이점) |
+| SMTP 메일 발송 기능 | **ADR-013** (nodemailer) |
+| 멤버·프로젝트 이름 부분일치 | **ADR-008** (모호 → 에러 + 후보) |
+| 파일 업로드/다운로드 (307 처리) | **ADR-015** (수동 redirect + Auth 헤더 재첨부) |
+| `dooray setup` 마법사 변경 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치) |
+| 새 Commander.js 서브커맨드 추가 | (ADR 없음 — 기존 `commands/*.ts` 패턴 참조) |
+| 새 출력 포맷 (table/json/quiet) | (ADR 없음 — 기존 `formatters/*.ts` 패턴 참조) |
+| 에러 처리·exitCode 정책 | (ADR 없음 — `src/utils/errors.ts` + `src/utils/exit-codes.ts` 직접 확인) |
 
-ADR 번호는 `docs/adr.md`에 실제로 등록된 시점에 이 표를 갱신한다. **표만 채우고 실제 ADR이 없는 상태로 방치하지 않는다** — 등록 전에는 "(등록 필요)"로 두고, 등록 시점에 `ADR-{N}` 교체.
+신규 ADR 추가 시 본 표에 행 추가. **"(등록 필요)" 플레이스홀더 사용 금지** — ADR이 정말 없으면 위처럼 "(ADR 없음 — 코드 위치)" 형식으로 직접 가리키거나 표에서 행 자체를 빼는 쪽이 낫다.
 
 ## 토큰 효율 (Opus/Sonnet 라우팅)
 
