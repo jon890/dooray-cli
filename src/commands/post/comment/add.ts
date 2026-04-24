@@ -1,44 +1,13 @@
 import { Command } from "commander";
-import fs from "node:fs/promises";
 import { getConfigOrThrow } from "../../../config/store.js";
 import { DoorayApiClient } from "../../../api/client.js";
 import { resolveProject } from "../../../resolvers/project.js";
 import { resolvePost } from "../../../resolvers/post.js";
 import { openInEditor } from "../../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
-import { DoorayCliError } from "../../../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import { readBodyInputOrNull } from "../../../utils/body-input.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { printJson } from "../../../formatters/table.js";
-
-async function readStdin(): Promise<string> {
-  if (process.stdin.isTTY) {
-    throw new DoorayCliError(
-      "stdin에서 읽으려면 파이프로 데이터를 전달해주세요.",
-      EXIT_PARAM_ERROR,
-    );
-  }
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString("utf-8");
-}
-
-async function resolveBody(opts: {
-  body?: string;
-  bodyFile?: string;
-}): Promise<string | null> {
-  if (opts.body) {
-    if (opts.body === "-") return readStdin();
-    return opts.body;
-  }
-  if (opts.bodyFile) {
-    if (opts.bodyFile === "-") return readStdin();
-    return fs.readFile(opts.bodyFile, "utf-8");
-  }
-  return null;
-}
 
 export const commentAddCommand = new Command("add")
   .description("댓글 추가")
@@ -51,7 +20,7 @@ export const commentAddCommand = new Command("add")
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
-    let bodyContent = await resolveBody(opts);
+    let bodyContent = await readBodyInputOrNull(opts);
 
     if (bodyContent == null) {
       bodyContent = await openInEditor("");

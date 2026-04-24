@@ -44,6 +44,7 @@ Task 006(PR #13)에서 `body-input.ts` 가 추가됐고, task 007(PR #14) 에서
 2. **동작 변화 수용**: post 4 파일 모두 `--body` + `--body-file` **동시 지정 시 에러** (기존 silent ignore 제거). Issue #12 Acceptance에 명시됨
 3. **post/create**: `readBodyInput` 그대로 사용 (미지정 시 `""`)
 4. **post/edit, comment/add, comment/edit**: `readBodyInputOrNull` 사용 (미지정 시 `null` = 기존 "본문 유지" / "에디터 폴백" 시맨틱 유지)
+5. **잠재 버그 동시 수정 (의도된 부수효과)**: post/create의 기존 로컬 `readBody`는 `--body <text>`(non-"-") 전달 시 문자열을 silent drop하고 `""`를 반환하는 버그가 있었음. `readBodyInput`(`return opts.body ?? ""`)으로 migration 하면서 이 버그가 자동 수정됨
 
 ## 목표
 
@@ -53,7 +54,7 @@ Task 006(PR #13)에서 `body-input.ts` 가 추가됐고, task 007(PR #14) 에서
 4. `DoorayCliError`/`EXIT_PARAM_ERROR` import는 **다른 용도로 쓰이면 보존**, 아니면 제거
 5. 빌드 통과 + 동일 동작(+ 새 에러 가드)
 
-## 작업 목록
+## 작업 목록 (4개)
 
 ### 1) `src/utils/body-input.ts` 확장
 
@@ -77,7 +78,11 @@ export async function readBodyInputOrNull(
 
 **주의**: `readBodyInput` 내부의 `--body와 --body-file은 함께 사용할 수 없습니다.` 에러 가드가 자동 전파됨. 별도 구현 불필요.
 
-### 2) `src/commands/post/create.ts` migration
+### 2) post 4 파일 migration (create / edit / comment-add / comment-edit)
+
+4개 파일을 동일한 패턴으로 일괄 migration. 각 파일 작업은 독립적이지만 의존성이 없어 하나의 묶음으로 취급.
+
+#### 2a) `src/commands/post/create.ts` migration
 
 **Before (L1-39 구조)**:
 ```ts
@@ -101,7 +106,7 @@ async function readStdin(): Promise<string> { ... }
 
 **주의**: `DoorayCliError`, `EXIT_PARAM_ERROR` 는 post/create.ts에서 **`--title` 필수 체크에 계속 사용** → 유지.
 
-### 3) `src/commands/post/edit.ts` migration
+#### 2b) `src/commands/post/edit.ts` migration
 
 **Before (L31-58 구조)**:
 ```ts
@@ -129,7 +134,7 @@ grep -n "DoorayCliError\|EXIT_PARAM_ERROR" src/commands/post/edit.ts
 ```
 → 결과가 readStdin 내부 외에 없으면 두 import 모두 **제거**. 있으면 유지.
 
-### 4) `src/commands/post/comment/add.ts` migration
+#### 2c) `src/commands/post/comment/add.ts` migration
 
 **Before (L14-41 구조)**:
 ```ts
@@ -154,7 +159,7 @@ async function resolveBody(opts: {...}): Promise<string | null> { ... }
 
 **주의**: `DoorayCliError` / `EXIT_PARAM_ERROR` 사용 여부 grep 확인 후 선별 제거.
 
-### 5) `src/commands/post/comment/edit.ts` migration
+#### 2d) `src/commands/post/comment/edit.ts` migration
 
 **Before (L12-39 구조)**:
 ```ts
@@ -178,14 +183,14 @@ async function resolveBody(opts: {...}): Promise<string | null> { ... }
 
 **주의**: 마찬가지로 `DoorayCliError` / `EXIT_PARAM_ERROR` 사용 여부 grep 후 선별 제거.
 
-### 6) 빌드 검증
+### 3) 빌드 검증
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 pnpm run build
 ```
 
-### 7) 정적 검증
+### 4) 정적 검증
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli

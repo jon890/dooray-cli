@@ -54,13 +54,13 @@ dooray doctor                                 # 설정 검증
 | 업무 목록 조회 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` |
 | 업무 상세 보기 | `dooray post get <project> <number>` |
-| 업무 생성 | `dooray post create <project> --title "..." --body "..."` |
-| 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` |
+| 업무 생성 | `dooray post create <project> --title "..." --body "..."` 또는 `--body-file <path>` (`--body`와 `--body-file`은 동시 사용 불가) |
+| 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` 또는 `--body-file <path>` |
 | 업무 완료 처리 | `dooray post done <project> <number>` |
 | 업무 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
 | 댓글 조회 | `dooray post comment list <project> <number>` |
-| 댓글 추가 | `dooray post comment add <project> <number> --body "..."` |
-| 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` |
+| 댓글 추가 | `dooray post comment add <project> <number> --body "..."` 또는 `--body-file <path>` |
+| 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` 또는 `--body-file <path>` |
 | 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` |
 | 위키 목록 | `dooray wiki list` |
 | 위키 페이지 목록 | `dooray wiki pages <project>` |
@@ -173,7 +173,7 @@ dooray post create <project> \
   --due-date "2026-04-30T18:00:00+09:00"
 ```
 
-본문이 길면 파일로:
+본문이 길면 파일로 (`--body`와 `--body-file`은 함께 사용 불가):
 ```bash
 dooray post create <project> --title "제목" --body-file ./content.md
 ```

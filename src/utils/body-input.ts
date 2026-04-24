@@ -29,6 +29,20 @@ export async function readBodyInput(opts: BodyInputOptions): Promise<string> {
   return opts.body ?? "";
 }
 
+/**
+ * `readBodyInput`의 null-friendly variant.
+ *
+ * - body/bodyFile 둘 다 미지정 시 `null` 반환 (호출자가 "본문 유지" / "$EDITOR 폴백" 등으로 해석)
+ * - 동시 지정 시 에러 (`readBodyInput`과 동일)
+ * - 하나만 지정 시 해당 값 반환 (`readBodyInput`과 동일)
+ */
+export async function readBodyInputOrNull(
+  opts: BodyInputOptions,
+): Promise<string | null> {
+  if (opts.body == null && opts.bodyFile == null) return null;
+  return readBodyInput(opts);
+}
+
 async function readStdin(): Promise<string> {
   if (process.stdin.isTTY) {
     throw new DoorayCliError(

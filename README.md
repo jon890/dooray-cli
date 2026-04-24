@@ -58,6 +58,9 @@ dooray post create tc-ocr \
   --body "본문 마크다운" \
   --to "담당자이름" \
   --priority normal
+
+# 본문을 파일에서 읽기 (--body와 --body-file은 동시 사용 불가)
+dooray post create tc-ocr --title "업무 제목" --body-file ./content.md
 ```
 
 ### 업무 수정
@@ -68,6 +71,9 @@ dooray post edit tc-ocr 42
 
 # 비대화형 (AI 에이전트 친화)
 dooray post edit tc-ocr 42 --title "새 제목" --body "새 본문"
+
+# 본문을 파일에서 읽기
+dooray post edit tc-ocr 42 --body-file ./updated.md
 ```
 
 ### 댓글
@@ -75,6 +81,7 @@ dooray post edit tc-ocr 42 --title "새 제목" --body "새 본문"
 ```bash
 dooray post comment list tc-ocr 42
 dooray post comment add tc-ocr 42 --body "댓글 내용"
+dooray post comment add tc-ocr 42 --body-file ./comment.md
 ```
 
 ### 상태 변경
