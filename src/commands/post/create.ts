@@ -1,5 +1,4 @@
 import { Command } from "commander";
-import fs from "node:fs/promises";
 import { getConfigOrThrow } from "../../config/store.js";
 import { DoorayApiClient } from "../../api/client.js";
 import { resolveProject } from "../../resolvers/project.js";
@@ -7,36 +6,10 @@ import { resolveMember } from "../../resolvers/member.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
+import { readBodyInput } from "../../utils/body-input.js";
 import type { CreatePostUser } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
-
-async function readBody(opts: { bodyFile?: string; body?: string }): Promise<string> {
-  if (opts.bodyFile) {
-    if (opts.bodyFile === "-") {
-      return readStdin();
-    }
-    return fs.readFile(opts.bodyFile, "utf-8");
-  }
-  if (opts.body === "-") {
-    return readStdin();
-  }
-  return "";
-}
-
-async function readStdin(): Promise<string> {
-  if (process.stdin.isTTY) {
-    throw new DoorayCliError(
-      "stdin에서 읽으려면 파이프로 데이터를 전달해주세요.",
-      EXIT_PARAM_ERROR,
-    );
-  }
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString("utf-8");
-}
 
 async function resolveUsers(
   client: DoorayApiClient,
@@ -80,7 +53,7 @@ export const postCreateCommand = new Command("create")
       );
     }
 
-    const bodyContent = await readBody(opts);
+    const bodyContent = await readBodyInput(opts);
 
     startSpinner("업무 생성 중...");
     const projectId = await resolveProject(client, project);

@@ -1,5 +1,4 @@
 import { Command } from "commander";
-import fs from "node:fs/promises";
 import { getConfigOrThrow } from "../../config/store.js";
 import { DoorayApiClient } from "../../api/client.js";
 import { resolveProject } from "../../resolvers/project.js";
@@ -11,8 +10,7 @@ import {
   parsePostFrontmatter,
 } from "../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
-import { DoorayCliError } from "../../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
+import { readBodyInputOrNull } from "../../utils/body-input.js";
 import type { CreatePostUser } from "../../api/types.js";
 
 async function resolveUsers(
@@ -26,35 +24,6 @@ async function resolveUsers(
     users.push({ type: "member", member: { organizationMemberId: memberId } });
   }
   return users;
-}
-
-async function readStdin(): Promise<string> {
-  if (process.stdin.isTTY) {
-    throw new DoorayCliError(
-      "stdin에서 읽으려면 파이프로 데이터를 전달해주세요.",
-      EXIT_PARAM_ERROR,
-    );
-  }
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString("utf-8");
-}
-
-async function resolveBody(opts: {
-  body?: string;
-  bodyFile?: string;
-}): Promise<string | null> {
-  if (opts.body) {
-    if (opts.body === "-") return readStdin();
-    return opts.body;
-  }
-  if (opts.bodyFile) {
-    if (opts.bodyFile === "-") return readStdin();
-    return fs.readFile(opts.bodyFile, "utf-8");
-  }
-  return null;
 }
 
 export const postEditCommand = new Command("edit")
@@ -88,7 +57,7 @@ export const postEditCommand = new Command("edit")
 
     if (nonInteractive) {
       // Non-interactive mode: apply only specified changes
-      const newBody = await resolveBody(opts);
+      const newBody = await readBodyInputOrNull(opts);
 
       startSpinner("업무 수정 중...");
       const toUsers: CreatePostUser[] = post.users.to.map((u) => ({
