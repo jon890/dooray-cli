@@ -95,6 +95,7 @@ Edit 도구로 `tasks/008-refactor-post-body-input/index.json` 수정:
 - smoke 결과는 `grep -c` 정수 비교 or `exit code`로만
 - `testproj` 등 존재하지 않는 프로젝트 사용은 안전 (Dooray 권한 범위 내 missing이라 resolve 단계에서 실패)
 - **4) 스텝은 반드시 1~3 모두 통과 후** — 검증 실패 상태에서 completed로 전환 금지
+- **`post edit` / `post comment edit`의 body 가드 검증은 `exit code != 0` 체크만** — 이 두 명령은 action 내부에서 `readBodyInputOrNull`을 `resolveProject`/`resolvePost` **뒤에** 호출하므로, `testproj` 인자로는 resolve 단계 에러가 먼저 발생하여 body 가드 stdout 메시지 검증 불가. body 가드가 실제 발동하는지는 `post create`/`post comment add` 2파일의 엄격 smoke로 대리 증명 (4파일 모두 `body-input.ts`의 동일 경로를 사용하므로 충분). 완전 단위 검증이 필요하면 `node -e "require('./dist/index.js')"` 후 `readBodyInputOrNull`을 직접 호출하는 단위 스모크 추가 가능
 
 ## Blocked 조건
 
