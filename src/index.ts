@@ -28,6 +28,7 @@ import { wikiPagesCommand } from "./commands/wiki/pages.js";
 import { wikiPageGetCommand } from "./commands/wiki/page-get.js";
 import { wikiPageCreateCommand } from "./commands/wiki/page-create.js";
 import { wikiPageEditCommand } from "./commands/wiki/page-edit.js";
+import { memberCommand } from "./commands/member/index.js";
 import { mailListCommand } from "./commands/mail/list.js";
 import { mailGetCommand } from "./commands/mail/get.js";
 import { mailSendCommand } from "./commands/mail/send.js";
@@ -106,6 +107,7 @@ mailCommand.addCommand(mailReplyCommand);
 
 program.addCommand(setupCommand);
 program.addCommand(configCommand);
+program.addCommand(memberCommand);
 program.addCommand(cacheCommand);
 program.addCommand(doctorCommand);
 program.addCommand(projectCommand);

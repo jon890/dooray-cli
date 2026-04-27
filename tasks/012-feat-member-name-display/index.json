@@ -2,8 +2,8 @@
   "name": "012-feat-member-name-display",
   "description": "Issue #17 — member get/list 명령 신설 + post comment list table 출력 Creator 컬럼 enrich. project 캐시 활용. ADR-021. (member search, --mention은 후속 issue로 분리.)",
   "created_at": "2026-04-27T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "completed",
+  "current_phase": 4,
   "total_phases": 4,
   "error_message": null,
   "blocked_reason": null,
@@ -12,30 +12,30 @@
       "number": 1,
       "title": "member resolver 역방향 lookup + comment Creator enrich 헬퍼",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "member 명령 신설 (get/list) + formatter",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 3,
       "title": "comment list 적용 + 단위 테스트",
       "file": "phase-03.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 4,
       "title": "빌드 + help/시나리오 검증 + task 완료 처리",
       "file": "phase-04.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-04-27T00:00:00Z"
+  "updated_at": "2026-04-27T10:37:00Z"
 }

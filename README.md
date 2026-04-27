@@ -41,6 +41,13 @@ dooray project members tc-ocr              # 멤버 목록
 dooray project workflows tc-ocr            # 워크플로우 목록
 ```
 
+### 멤버
+
+```bash
+dooray member list tc-ocr                  # 프로젝트 멤버 목록 (이름·organizationMemberId)
+dooray member get <organizationMemberId>   # 멤버 상세 (cache 우회, ADR-021)
+```
+
 ### 업무
 
 ```bash
@@ -104,6 +111,8 @@ dooray post comment list tc-ocr 42
 dooray post comment add tc-ocr 42 --body "댓글 내용"
 dooray post comment add tc-ocr 42 --body-file ./comment.md
 ```
+
+> table 출력의 Creator 컬럼은 프로젝트 멤버 캐시로 자동 enrich되며, `--json`은 raw 응답을 유지한다 (ADR-021).
 
 ### 상태 변경
 

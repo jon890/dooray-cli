@@ -52,7 +52,8 @@ dooray doctor                                 # 설정 검증
 | 초기 설정 (대화형) | `dooray setup` |
 | 프로젝트 찾기 | `dooray project list --search <keyword>` |
 | 개인 프로젝트 목록 | `dooray project list --type private` |
-| 프로젝트 멤버 보기 | `dooray project members <project>` |
+| 프로젝트 멤버 보기 | `dooray project members <project>` 또는 `dooray member list <project>` (이름·organizationMemberId) |
+| 멤버 상세 (organizationMemberId) | `dooray member get <organizationMemberId>` (cache 우회, ADR-021) |
 | 업무 목록 조회 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` |
 | 업무 상세 보기 | `dooray post get <project> <number>` |
@@ -60,7 +61,7 @@ dooray doctor                                 # 설정 검증
 | 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` 또는 `--body-file <path>` |
 | 업무 완료 처리 | `dooray post done <project> <number>` |
 | 업무 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
-| 댓글 조회 | `dooray post comment list <project> <number>` |
+| 댓글 조회 | `dooray post comment list <project> <number>` (table 출력은 Creator 이름 자동 채움, `--json`은 raw 유지 — ADR-021) |
 | 댓글 추가 | `dooray post comment add <project> <number> --body "..."` 또는 `--body-file <path>` |
 | 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` 또는 `--body-file <path>` |
 | 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` |
@@ -106,7 +107,7 @@ CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI �
 2. **프로젝트 코드를 모르면** → `dooray project list --search <keyword>` 로 먼저 찾기
 3. **업무 번호를 모르면** → `dooray post search <project> "<keyword>"` 로 검색
 4. **워크플로우 이름을 모르면** → `dooray project workflows <project>` 로 확인
-5. **멤버 이름을 모르면** → `dooray project members <project>` 로 확인
+5. **멤버 이름을 모르면** → `dooray member list <project>` (또는 `dooray project members <project>`) 로 확인
 6. **결과를 다음 액션에 사용하려면** → `--json` 플래그로 구조화된 데이터 획득
 
 ---
