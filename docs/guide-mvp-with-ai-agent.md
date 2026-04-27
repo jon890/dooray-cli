@@ -67,8 +67,8 @@
 - [`docs/adr.md`](https://github.com/jon890/dooray-cli/blob/main/docs/adr.md) — 기술적 결정 기록 (ADR)
 
 **하네스 구조**
-- [`prompts/task-create.md`](https://github.com/jon890/dooray-cli/blob/main/prompts/task-create.md) — Task/Phase 생성 가이드
-- [`scripts/run-phases.py`](https://github.com/jon890/dooray-cli/blob/main/scripts/run-phases.py) — Phase 순차 실행 스크립트
+- [`.claude/skills/planning/task-create.md`](https://github.com/jon890/dooray-cli/blob/main.claude/skills/planning/task-create.md) — Task/Phase 생성 가이드
+- [`.claude/skills/plan-and-build/run-phases.py`](https://github.com/jon890/dooray-cli/blob/main/.claude/skills/plan-and-build/run-phases.py) — Phase 순차 실행 스크립트
 - [`tasks/implement-dooray-cli/`](https://github.com/jon890/dooray-cli/tree/main/tasks/implement-dooray-cli) — v0.1.0 구현 시 실제 사용된 8개 Phase 파일
 
 **스킬**
@@ -466,7 +466,7 @@ description: docs/ 폴더의 문서를 기반으로 Phase별 순차 구현을 �
 
 모든 프로젝트가 SKILL.md를 사용할 필요는 없습니다. 다음은 대화 시작 시 직접 전달하는 심플한 하네스 세팅 예시입니다.
 
-> **중요**: 아래 프롬프트에서 참조하는 `prompts/task-create.md`나 `scripts/run-phases.py`는 처음에 존재하지 않아도 됩니다. dooray-cli를 만들 때도 이 파일들은 없는 상태에서 시작했습니다. **이 프롬프트를 에이전트에게 전달하면, 에이전트가 필요한 파일들을 직접 생성**합니다. 하네스 인프라 자체를 에이전트에게 구축하게 하는 것이 핵심입니다.
+> **중요**: 아래 프롬프트에서 참조하는 `.claude/skills/planning/task-create.md`나 `.claude/skills/plan-and-build/run-phases.py`는 처음에 존재하지 않아도 됩니다. dooray-cli를 만들 때도 이 파일들은 없는 상태에서 시작했습니다. **이 프롬프트를 에이전트에게 전달하면, 에이전트가 필요한 파일들을 직접 생성**합니다. 하네스 인프라 자체를 에이전트에게 구축하게 하는 것이 핵심입니다.
 
 ```
 다음 과정에 따라 작업 논의 및 구현을 진행하자:
@@ -476,13 +476,13 @@ description: docs/ 폴더의 문서를 기반으로 Phase별 순차 구현을 �
 2. 이번 작업을 구현하기 위해 더 구체화해야할 점, 기술적으로 논의해야할 점이 
    있다면 사용자에게 제시한 후 논의를 이어간다.
 3. 사용자가 충분히 논의했다고 판단 후 구현계획 작성을 지시하면, 
-   가장 먼저 /prompts/task-create.md 파일의 내용을 정확히 숙지한다. 
+   가장 먼저 .claude/skills/planning/task-create.md 파일의 내용을 정확히 숙지한다. 
    이후 해당 방식으로 생성하기 위한 구현 계획을 여러 phase로 나뉜 초안을 작성하고, 
    논의점까지 포함하여 사용자에게 피드백을 요청한다.
 4. 사용자가 충분히 논의했다고 판단 후 task 생성을 지시하면, 
-   /prompts/task-create.md의 형식의 절차에 맞게 task와 phase 파일들을 생성한다.
-5. scripts/run-phases.py를 실행해서 각 phase를 순차적으로 실행한다.
-6. scripts/run-phases.py 종료 후, 종료 코드에 따라 사용자에게 알림을 보낸다:
+   .claude/skills/planning/task-create.md의 형식의 절차에 맞게 task와 phase 파일들을 생성한다.
+5. .claude/skills/plan-and-build/run-phases.py를 실행해서 각 phase를 순차적으로 실행한다.
+6. .claude/skills/plan-and-build/run-phases.py 종료 후, 종료 코드에 따라 사용자에게 알림을 보낸다:
    - exit 0 (성공): 모든 phase 완료. "✅ Task {name} 완료 (N phases)"
    - exit 1 (오류): phase 실행 중 오류 발생. "❌ Task {name} phase {n} 실패: {error}"
    - exit 2 (blocked): 사용자 개입 필요. "⚠️ Task {name} phase {n} blocked: {reason}"
@@ -494,15 +494,15 @@ description: docs/ 폴더의 문서를 기반으로 Phase별 순차 구현을 �
 
 ```
 "이런 간단한 에이전트 하네스를 설정할 수 있게 워크플로가 계속하여 실행될 수 있게 
-위 지침대로 파일을 만들어줄래? 현재 없는 파일이 /prompts/task-create.md이고 
+위 지침대로 파일을 만들어줄래? 현재 없는 파일이 .claude/skills/planning/task-create.md이고 
 scripts 파일들도 없어. 계속 실행 가능하며 안전한 에이전트 하네스망을 간단하게 구축해줄 수 있겠어?"
 ```
 
 > 🤖 **에이전트** — 하네스 인프라를 직접 생성
 
 ```
-prompts/task-create.md     # Claude가 task 만들 때 읽는 가이드
-scripts/run-phases.py      # phase 실행기 (exit 0/1/2 + 알림)
+.claude/skills/planning/task-create.md     # Claude가 task 만들 때 읽는 가이드
+.claude/skills/plan-and-build/run-phases.py      # phase 실행기 (exit 0/1/2 + 알림)
 tasks/                     # task 파일들이 위치할 디렉터리
 ```
 
@@ -849,7 +849,7 @@ AI 에이전트를 위한 것이다. 간결하게 쓰되, 의사 결정 의도�
 
 ### Step 2: 하네스 세팅
 
-논의가 끝나고 문서가 준비되면, 에이전트에게 하네스 구조를 만들어달라고 요청합니다. `prompts/task-create.md`나 `scripts/run-phases.py` 같은 파일이 아직 없어도 괜찮습니다 — 에이전트에게 요구사항을 설명하면 이 파일들을 함께 만들어줍니다.
+논의가 끝나고 문서가 준비되면, 에이전트에게 하네스 구조를 만들어달라고 요청합니다. `.claude/skills/planning/task-create.md`나 `.claude/skills/plan-and-build/run-phases.py` 같은 파일이 아직 없어도 괜찮습니다 — 에이전트에게 요구사항을 설명하면 이 파일들을 함께 만들어줍니다.
 
 ```
 "이제 구현을 Phase로 나누자.

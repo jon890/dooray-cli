@@ -44,7 +44,7 @@ description: AI 에이전트 하네스를 사용한 대규모 구현 자동화. 
 
 ### 3. 구현 계획 초안
 
-`prompts/task-create.md`를 정확히 숙지한 후 다음을 포함한 초안 작성:
+`.claude/skills/planning/task-create.md`를 정확히 숙지한 후 다음을 포함한 초안 작성:
 
 - phase별 분리 이유와 작업 목록
 - 성공 기준 (실행 가능한 명령어)
@@ -54,7 +54,7 @@ description: AI 에이전트 하네스를 사용한 대규모 구현 자동화. 
 
 ### 4. Task 생성
 
-`prompts/task-create.md` 형식에 따라 task와 phase 파일을 생성:
+`.claude/skills/planning/task-create.md` 형식에 따라 task와 phase 파일을 생성:
 
 ```
 tasks/{NNN}-{task-name}/
@@ -81,10 +81,10 @@ tasks/{NNN}-{task-name}/
 ```bash
 # cwd: <repo root>
 # 전체 실행 (백그라운드)
-python3 scripts/run-phases.py tasks/{NNN}-{task-name}
+python3 .claude/skills/plan-and-build/run-phases.py tasks/{NNN}-{task-name}
 
 # 특정 phase부터 재개
-python3 scripts/run-phases.py tasks/{NNN}-{task-name} --from-phase 3
+python3 .claude/skills/plan-and-build/run-phases.py tasks/{NNN}-{task-name} --from-phase 3
 ```
 
 **Task phase에서 파일 커밋 규칙**:
@@ -138,11 +138,11 @@ tasks/
     phase-02.md
     ...
 
-scripts/
-  run-phases.py       # phase 순차 실행기 (실시간 스트리밍, --from-phase 지원)
-
-prompts/
-  task-create.md      # task/phase 작성 가이드
+.claude/skills/
+  plan-and-build/
+    run-phases.py     # phase 순차 실행기 (실시간 스트리밍, --from-phase 지원)
+  planning/
+    task-create.md    # task/phase 작성 가이드
 ```
 
 ## Phase 모델 라우팅 (토큰 효율 최우선)

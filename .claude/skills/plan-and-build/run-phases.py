@@ -3,10 +3,10 @@
 Agent harness — Claude Code phase 순차 실행기.
 
 Usage:
-  python scripts/run-phases.py <task-dir> [--from-phase N]
+  python .claude/skills/plan-and-build/run-phases.py <task-dir> [--from-phase N]
 
-  예: python scripts/run-phases.py tasks/implement-api-client
-      python scripts/run-phases.py tasks/implement-api-client --from-phase 3
+  예: python .claude/skills/plan-and-build/run-phases.py tasks/implement-api-client
+      python .claude/skills/plan-and-build/run-phases.py tasks/implement-api-client --from-phase 3
 
 Exit codes:
   0  — 모든 phase 완료
@@ -119,7 +119,7 @@ def validate_task(task: dict, task_dir: Path) -> None:
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         print(
-            "\n  → prompts/task-create.md 참고\n",
+            "\n  → .claude/skills/planning/task-create.md 참고\n",
             file=sys.stderr,
         )
         sys.exit(1)

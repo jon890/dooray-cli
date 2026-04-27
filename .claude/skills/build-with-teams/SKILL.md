@@ -226,7 +226,7 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
 
 7. **`docs/code-architecture.md` ↔ 실제 `src/` 디렉토리 일치**: 새/삭제된 디렉토리가 code-architecture에 반영되었는지
 8. **새 명령이 `README.md` 사용법에 반영**: 새 Commander.js 서브커맨드 추가 시 README 예제 업데이트 필수
-9. **`prompts/task-create.md` ↔ 실제 phase 작성 일치**: task-create 가이드가 최신 phase 관행(5개 이하 / 자기완결 등)을 반영하는지
+9. **`.claude/skills/planning/task-create.md` ↔ 실제 phase 작성 일치**: task-create 가이드가 최신 phase 관행(5개 이하 / 자기완결 등)을 반영하는지
 10. **`skills/dooray-cli/SKILL.md` (공개 스킬) ↔ 실제 명령 옵션 일치** — **CLI는 스킬도 dogfooding 대상**. 새/삭제/변경된 명령·옵션이 공개 스킬에 반영되지 않으면 외부 사용자가 오작동 경로를 따라감
 
 판정:
