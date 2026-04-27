@@ -369,3 +369,38 @@
 - 다른 도메인(wiki 등)의 입력 방식도 동일 패턴으로 통합 — 별도 task
 - vitest 기반 추가 테스트 확대 (resolver, formatter 등)
 - GitHub Actions CI에 `pnpm test` 통합
+
+---
+
+## ADR-021: `member` 명령 + comment list Creator 이름 자동 채우기
+
+**결정**:
+
+- `dooray member` 서브커맨드 신설:
+  - `dooray member get <member-id>` — `GET /common/v1/members/{id}` 단건 조회 (이미 client 메서드 존재)
+  - `dooray member list <project>` — `GET /project/v1/projects/{id}/members` (project 필수 positional, 다른 list 명령과 일관)
+- `post comment list`의 table 출력 Creator 컬럼을 project 멤버 캐시(`CachedMember`)로 enrich. `--json`은 raw 응답 그대로 (호환성)
+- 캐시 전략: 기존 project 단위 캐시(`~/.dooray/cache/members/{projectId}.json`) 그대로 유지. organization 단위 reverse lookup은 도입하지 않음. `member get`은 cache miss하면 `getMemberDetail` 직접 호출, 결과 캐시는 안 함
+
+**이유**:
+
+- 응답 메타에 `organizationMemberId`만 있고 표시명 없음 — 댓글 작성자가 누구인지 즉시 알 수 없어 자동화 흐름이 끊김 (Issue #17)
+- table 출력만 enrich: `--json`은 외부 도구 파이프 입력으로 자주 쓰이므로 스키마 안정성 우선. 사용자가 enriched JSON 원하면 후속 옵션(`--enriched-json` 등) 도입 가능
+- project 단위 캐시 유지: 새 캐시 패턴(organization-wide) 도입 비용 대비, 표시명 채우기 사용 시점에 항상 projectId가 함께 있어 기존 캐시로 충분
+- `member get`은 캐시 우회: 기존 project 캐시들에서 reverse lookup하려면 모든 파일 스캔 — 일회성 단건 조회는 직접 API가 단순. 반복 조회 최적화는 사용 패턴 데이터 축적 후 결정
+
+**`member list` 시그니처가 positional인 이유**:
+
+- 다른 list 명령(`post list`, `wiki page list`)이 모두 `<project>` positional → 일관성. Issue 본문은 `--project` 옵션 형태였으나 본 레포 컨벤션 우선
+
+**대안 기각**:
+
+- organization 단위 캐시(`~/.dooray/cache/org-members.json`): 본 task의 사용 패턴(comment list enrich + member get 단건)에서 이득 부족. 캐시 invalidation 로직 추가 부담
+- `--json`도 enrich: 응답 스키마 변경 = breaking. 외부 자동화 도구의 기대치 깨질 위험
+- `member search` 본 task 포함: `GET /common/v1/members`의 `name=keyword` 단독 호출 동작이 공식 doc 모순(externalEmailAddresses 필수 명시 + name 필터 동시 나열) — 실호출 검증 필요. 별도 task
+
+**후속 작업**:
+
+- `feat(post comment): --mention <name>` — 이름 → ID 자동 변환 + 멘션 마크업 생성
+- `feat(member): member search` — organization-wide 검색. API 동작 검증 후 설계
+- 다른 출력(`post get` 작성자/담당자 등)도 동일 enrich 패턴 확대 (응답에 name 비어있는 경우)
