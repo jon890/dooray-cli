@@ -404,3 +404,44 @@
 - `feat(post comment): --mention <name>` — 이름 → ID 자동 변환 + 멘션 마크업 생성
 - `feat(member): member search` — organization-wide 검색. API 동작 검증 후 설계
 - 다른 출력(`post get` 작성자/담당자 등)도 동일 enrich 패턴 확대 (응답에 name 비어있는 경우)
+
+---
+
+## ADR-022: `dooray feedback` 명령 + GitHub 호출은 `gh` CLI에 위임
+
+**결정**:
+
+- `dooray feedback` 명령 신설. 인터랙티브(`@inquirer/prompts` editor) + non-interactive(`--title`/`--body`/`--body-file`/`--label` 반복) + `--dry-run` 미리보기 지원
+- GitHub issue 생성은 **`gh` CLI에 위임** (`execFile('gh', ['issue', 'create', '--repo', 'jon890/dooray-cli', '--title', ..., '--body-file', tmp])`)
+- 본문 자동 메타: dooray-cli 버전, Node 버전, OS/arch만 첨부. **baseUrl 미포함**, API key/IMAP 비밀번호 등 시크릿은 메타 수집 단계에서 접근 자체를 안 함
+- 라벨은 `--label` 자유 입력 (반복). repo의 라벨 동적 fetch는 후속
+- 대상 repo는 하드코딩(`jon890/dooray-cli`). 포크 사용자용 config 옵션은 후속
+- `--last` 모드(직전 명령 + 에러 자동 첨부)는 본 task 제외 — 별도 후속 이슈
+
+**이유**:
+
+- 피드백 루프 마찰 제거 (Issue #19): "에러 만남 → 한 줄로 issue 등록 → 작업 복귀" 흐름 완성
+- gh CLI 위임이 보안·구현 모두 우위: 토큰 관리·만료·refresh·OAuth 앱 등록 부담 0. dooray-cli의 보안 표면이 늘지 않음. 본 CLI 사용자(개발자) 환경에서 gh 설치율 높음
+- 본문은 임시 파일 + `--body-file`: 긴 markdown / 특수문자 / shell escaping 안전
+- baseUrl 미포함: 사내 endpoint 사용자가 OSS public repo로 보낼 때 회사/프로젝트 정보 누출 위험. issue 디버깅 가치 대비 비용 ↑
+- `--last` 분리: 모든 명령 종료 시점에 argv·에러를 디스크에 기록하는 hook은 전역 부수 효과(I/O + argv 시크릿 위험). 별도 의사결정 가치
+
+**대안 기각**:
+
+- PAT를 `~/.dooray/config.json`에 저장: 토큰 만료/회수/스코프 관리 부담. 사용자가 PAT 만들어 입력하는 UX 약함
+- OAuth Device Flow + 직접 토큰 저장: 가장 매끄러우나 OAuth 앱 등록·관리 + 토큰 보관 코드 추가. 본 기능 가치 대비 과함
+- octokit 등 SDK 도입: 외부 dep 추가. gh CLI 위임이면 0
+- 라벨 동적 fetch: 첫 실행 비용 + 캐시 관리 부담. 자유 입력으로 충분
+- baseUrl 마스킹(host만 가림): suffix는 노출되어 회사 식별 가능 — 누출 0인 "제외"가 단순·안전
+
+**Sanitization 범위**:
+
+- 자동 메타: 환경 정보만 (`process.version`, `process.platform`, `process.arch`, `package.json` 버전)
+- config 객체에 절대 접근 안 함 (apiKey/IMAP 비밀번호/baseUrl 모두)
+- 사용자 본문은 그대로 — 사용자 책임. `--dry-run`으로 사전 확인 가능
+
+**후속 작업**:
+
+- `feat(cli): dooray feedback --last` — 직전 명령 추적 + 자동 첨부 (별도 issue)
+- repo 라벨 동적 fetch + select prompt
+- `feedbackRepo` config 옵션 (포크 사용자)
