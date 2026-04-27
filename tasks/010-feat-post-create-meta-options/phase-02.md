@@ -279,7 +279,7 @@ export async function resolveWorkflow(
 }
 ```
 
-**member.ts**: 정확일치 우선 분기 추가. 단 멤버는 `name + id`를 후보 표시에 사용 — `matchByName` 호출. 단 멤버는 이메일 매칭도 있을 수 있으니 기존 `byName` 변수 흐름 보존하며 `matchByName`으로 교체.
+**member.ts**: 현재 `resolveMember` 본문(member.ts:69~)은 단순 `name.includes(input)` 한 줄 + 모호 시 후보 목록 출력. 이메일 분기는 **존재하지 않음** — 그대로 `matchByName` 호출로 1:1 교체. `getMemberDetail` 실패로 `name: ""`인 항목은 빈 문자열이 어떤 입력에도 매칭 안 되므로 자동 제외 (별도 처리 불필요).
 
 ```ts
 // resolveMember 본문에서:
@@ -294,7 +294,13 @@ const match = matchByName(
 return match.organizationMemberId;
 ```
 
-기존 멤버 매칭이 이메일/email-like 입력을 어떻게 처리하는지 확인 후, 그 분기는 보존해야 함. 만약 `member.ts`에 이메일 분기가 있다면 `matchByName` 호출 전에 처리.
+**회귀 영향 호출 경로** (변경 후 동작 동일성 확인 대상):
+- `--to`, `--cc` (post create / mail send)
+- `post done`, `post workflow` (assignee resolve)
+
+정확일치 → 부분일치 → 모호 시 에러 우선순위 유지가 회귀 검증 핵심.
+
+**resolveWorkflow 의도 명시**: 기존 동작은 `w.name === input || w.class === input` (정확일치 OR class 일치)였음. 통일 후 우선순위는 (1) name 정확일치 → (2) class 정확일치 → (3) name 부분일치 → (4) 모호 시 에러. class는 `matchByName` 외부에서 별도 분기로 처리하여 의미 동등성 유지.
 
 ## 성공 기준
 
@@ -308,7 +314,7 @@ return match.organizationMemberId;
 
 - **`post create` 명령 수정은 phase 3에서** — resolver만 작성
 - **`matchByName` 헬퍼는 부분일치 = `includes()`**, 정규식 X
-- 멤버 resolver의 기존 이메일/특수 분기가 있다면 보존
+- 멤버 resolver는 단순 `name.includes` 단일 분기 — `matchByName` 1:1 교체
 - workflow의 `class` 매칭 우선순위는 변경 금지 (기존 동작 호환)
 - Tag mandatory 검증 메시지는 사용자 친화적으로 — 어느 그룹이 누락인지 그룹명 노출
 - `DoorayCliError(message, EXIT_PARAM_ERROR)` 일관 사용

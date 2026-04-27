@@ -25,6 +25,8 @@ Phase 1 (api/cache) + Phase 2 (resolver) 위에 사용자 인터페이스를 통
 
 `--tag`는 **반복 입력**(`--tag X --tag Y`) 형태로 받음 — commander의 `(value, prev) => [...prev, value]` 패턴. 이슈 본문이 그렇게 명시.
 
+**참고 — 이슈 #18 본문의 `tagIdList` 오타**: API 실제 필드명은 `tagIds`. 본 task는 신규 옵션 추가이므로 `tagIdList`와의 호환성은 비대상이며, 코드는 `tagIds`를 사용한다.
+
 ### action 핸들러 변경
 
 기존 흐름 (`subject` 검증 → `bodyContent` → spinner 시작 → projectId resolve → toUsers/ccUsers → createPost) 사이에 다음 추가:
@@ -32,9 +34,12 @@ Phase 1 (api/cache) + Phase 2 (resolver) 위에 사용자 인터페이스를 통
 1. **resolve 단계 (createPost 호출 전)** — 병렬 처리:
 
 ```ts
+// commander variadic이 누적한 빈 문자열 제거 (입력 사고 방지)
+const tagInputs = (opts.tag ?? []).filter((s: string) => s.length > 0);
+
 const [tagIds, parentPostId, milestoneId] = await Promise.all([
-  opts.tag && opts.tag.length > 0
-    ? resolveTags(client, projectId, opts.tag)
+  tagInputs.length > 0
+    ? resolveTags(client, projectId, tagInputs)
     : Promise.resolve<string[] | undefined>(undefined),
   opts.parent
     ? resolvePostRef(client, opts.parent)
