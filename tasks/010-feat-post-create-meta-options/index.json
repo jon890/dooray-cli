@@ -2,8 +2,8 @@
   "name": "010-feat-post-create-meta-options",
   "description": "Issue #18 — post create에 --tag/--parent/--workflow/--milestone 옵션 추가. mandatory-tag 정책 프로젝트(예: tc-ocr)에서 CLI 사용 가능하게 함. 매칭 정책(정확→부분→모호 에러) 전체 resolver에 통일. ADR-019.",
   "created_at": "2026-04-27T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "completed",
+  "current_phase": 5,
   "total_phases": 5,
   "error_message": null,
   "blocked_reason": null,
@@ -12,37 +12,37 @@
       "number": 1,
       "title": "API 클라이언트 + types + 캐시 기반",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "resolver 신설 + 기존 매칭 정책 통일",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 3,
       "title": "post create 명령에 4개 옵션 통합",
       "file": "phase-03.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 4,
       "title": "doctor/cache 명령 갱신 + 정합성 점검",
       "file": "phase-04.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 5,
       "title": "빌드 검증 + 실호출 시나리오",
       "file": "phase-05.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-04-27T00:00:00Z"
+  "updated_at": "2026-04-27T10:00:00Z"
 }

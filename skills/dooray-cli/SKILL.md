@@ -54,7 +54,7 @@ dooray doctor                                 # 설정 검증
 | 업무 목록 조회 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` |
 | 업무 상세 보기 | `dooray post get <project> <number>` |
-| 업무 생성 | `dooray post create <project> --title "..." --body "..."` 또는 `--body-file <path>` (`--body`와 `--body-file`은 동시 사용 불가) |
+| 업무 생성 | `dooray post create <project> --title "..." --body "..."` 또는 `--body-file <path>` (`--body`와 `--body-file`은 동시 사용 불가, `--tag`/`--parent`/`--workflow`/`--milestone` 지원) |
 | 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` 또는 `--body-file <path>` |
 | 업무 완료 처리 | `dooray post done <project> <number>` |
 | 업무 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
@@ -170,13 +170,19 @@ dooray post create <project> \
   --to "담당자이름" \           # 여러 명: --to "김철수" --to "이영희"
   --cc "참조자이름" \
   --priority normal \           # highest, high, normal, low, lowest
-  --due-date "2026-04-30T18:00:00+09:00"
+  --due-date "2026-04-30T18:00:00+09:00" \
+  --tag "버그" --tag "긴급" \   # 반복 지정. mandatory 그룹은 클라이언트 사전 검증
+  --parent "tc-ocr/337" \       # "code/number" 또는 raw postId 두 형태만 허용
+  --workflow "진행 중" \         # 이름 또는 class (registered/working/closed). 부분일치 모호 시 후보 + 에러
+  --milestone "Sprint 12"
 ```
 
 본문이 길면 파일로 (`--body`와 `--body-file`은 함께 사용 불가):
 ```bash
 dooray post create <project> --title "제목" --body-file ./content.md
 ```
+
+> **`--workflow` 동작 주의**: 워크플로우 설정은 post 생성 *후속* 호출이므로, 워크플로우 resolve/설정에 실패해도 stderr 경고만 출력되고 **exit code는 0** (post는 이미 생성됨). 자동화 스크립트에서 워크플로우 적용 여부를 보장해야 하면 stderr를 별도 점검할 것.
 
 ### 업무 수정 (non-interactive)
 
