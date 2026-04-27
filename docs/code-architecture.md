@@ -35,10 +35,11 @@ src/
     workflow.ts             # name·class → workflowId
     post.ts                 # postNumber → postId (API 호출)
     wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시)
-    postRef.ts              # "code/number" 또는 raw postId → postId
+    postRef.ts              # "code/number" 또는 raw postId → postId (post create --parent 전용)
     tag.ts                  # name[] → tagIds + mandatory/selectOne 검증
     milestone.ts            # name → milestoneId
     match.ts                # 공용: 정확일치 → 부분일치 → 모호 시 에러
+    post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020)
 
   cache/
     store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크
@@ -61,6 +62,7 @@ src/
     spinner.ts              # ora 래퍼
     exit-codes.ts           # 0 성공 / 1 API오류 / 2 인증실패 / 3 파라미터오류 / 4 설정오류
     body-input.ts           # --body / --body-file → string (stdin "-" + 충돌 가드)
+    dooray-url.ts           # https://*.dooray.com/task/to/<postId> URL parser (ADR-020)
 
   commands/
     setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)
@@ -133,6 +135,7 @@ class DoorayApiClient {
   getProjects(params?): Promise<ProjectListResponse>;
   getPosts(projectId, params?): Promise<PostListResponse>;
   getPost(projectId, postId): Promise<PostDetailResponse>;
+  getPostStandalone(postId): Promise<PostDetailResponse>;  // GET /project/v1/posts/{postId} — projectId 불명일 때 (ADR-020)
   createPost(projectId, body): Promise<CreatePostResponse>;
   updatePost(projectId, postId, body): Promise<void>;
   // ... (dooray-mcp-server DoorayClient 인터페이스와 1:1 대응)
@@ -145,8 +148,10 @@ class DoorayApiClient {
 1. index.ts — Commander가 커맨드 파싱
 2. commands/post/done.ts — 실행 진입
 3. config/store.ts — apiKey, baseUrl 로드 (없으면 exitCode 4)
-4. resolvers/project.ts — "my-project" → projectId
-5. resolvers/post.ts — 42 → postId (API 호출)
+4. resolvers/post-input.ts — 입력 분기:
+     • <project> <number>  → resolveProject + resolvePost (4·5단계 정상 실행)
+     • --id / --url / URL positional → getPostStandalone(postId) 단일 호출로 4·5단계 단축
+5. (positional 모드에서만) resolvers/post.ts — 42 → postId
 6. api/client.ts — POST /project/v1/projects/{id}/posts/{id}/set-done
 7. formatters/post.ts — 성공 메시지 출력
 ```
@@ -164,6 +169,13 @@ class DoorayApiClient {
 - `--quiet`: ID만 출력 (스크립팅용)
 - `--no-color`: 컬러 제거 (CI 환경, `NO_COLOR` env 자동 감지)
 - 스피너·에러: stderr / 데이터: stdout (파이프 시 stderr 오염 방지)
+
+## 테스트
+
+- vitest (코로케이션 `*.test.ts` 패턴 — 소스 옆에 테스트 배치)
+- `pnpm test` (단발) / `pnpm test:watch` (개발 중)
+- 현재 커버: `src/utils/dooray-url.ts` (URL parser), `src/resolvers/post-input.ts` (7-branch 분기, ADR-020)
+- 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 (ADR-020 도입 근거)
 
 ## 빌드·배포
 

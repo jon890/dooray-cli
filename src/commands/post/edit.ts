@@ -1,8 +1,7 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { DoorayApiClient } from "../../api/client.js";
-import { resolveProject } from "../../resolvers/project.js";
-import { resolvePost } from "../../resolvers/post.js";
+import { resolvePostInput } from "../../resolvers/post-input.js";
 import { resolveMember, ensureMembers } from "../../resolvers/member.js";
 import {
   openInEditor,
@@ -28,8 +27,10 @@ async function resolveUsers(
 
 export const postEditCommand = new Command("edit")
   .description("업무 수정 ($EDITOR 또는 --title/--body 옵션)")
-  .argument("<project>", "프로젝트 코드 또는 ID")
-  .argument("<post-number>", "업무 번호")
+  .argument("[project]", "프로젝트 코드 (또는 첫 인자에 Dooray URL)")
+  .argument("[post-number]", "업무 번호 (project와 함께 사용)")
+  .option("--id <postId>", "Dooray post ID (project/post-number 대신)")
+  .option("--url <url>", "Dooray 업무 URL (project/post-number 대신)")
   .option("--title <title>", "제목 변경 (non-interactive)")
   .option("--subject <subject>", "--title의 deprecated alias")
   .option("--body <text>", "본문 변경 (- 입력 시 stdin, non-interactive)")
@@ -39,8 +40,12 @@ export const postEditCommand = new Command("edit")
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
     startSpinner("업무 조회 중...");
-    const projectId = await resolveProject(client, project);
-    const postId = await resolvePost(client, projectId, Number(postNumberStr));
+    const { projectId, postId, postNumber } = await resolvePostInput(client, {
+      projectArg: project,
+      postNumberArg: postNumberStr,
+      idOpt: opts.id,
+      urlOpt: opts.url,
+    });
     const res = await client.getPost(projectId, postId);
     const post = res.result;
     const members = await ensureMembers(client, projectId);
@@ -112,5 +117,5 @@ export const postEditCommand = new Command("edit")
       stopSpinner(true, "업무 수정 완료");
     }
 
-    process.stdout.write(`#${postNumberStr} 업무가 수정되었습니다.\n`);
+    process.stdout.write(`#${postNumber} 업무가 수정되었습니다.\n`);
   });

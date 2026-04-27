@@ -50,6 +50,17 @@ dooray post get tc-ocr 42                  # 업무 상세
 dooray post get tc-ocr 42 --json           # JSON 출력
 ```
 
+#### 업무 식별 방식 (post 하위 12개 명령 공통)
+
+| 방식 | 예시 |
+|---|---|
+| `<project> <number>` | `dooray post get tc-ocr 42` |
+| Dooray URL positional | `dooray post get https://x.dooray.com/task/to/4319587406666362045` |
+| `--id <postId>` | `dooray post get --id 4319587406666362045` |
+| `--url <url>` | `dooray post get --url https://x.dooray.com/task/to/...` |
+
+대상: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`. AI 에이전트는 사용자 메시지의 Dooray URL을 그대로 첫 인자로 전달하면 가장 빠르다 (ADR-020).
+
 ### 업무 생성
 
 ```bash
@@ -159,6 +170,15 @@ dooray post file upload <project> <number> ./report.pdf
 
 # 파일 삭제
 dooray post file delete <project> <number> <file-id>
+```
+
+URL/`--id`/`--url` 모드에서는 sub-id를 옵션으로 전달:
+```bash
+dooray post file download --url <url> --file-id <fileId> -o ./downloads
+dooray post file delete   --url <url> --file-id <fileId>
+dooray post file upload   --url <url> --file ./report.pdf
+dooray post comment edit  --url <url> --comment-id <commentId> --body "..."
+dooray post comment delete --url <url> --comment-id <commentId>
 ```
 
 ## 출력 모드

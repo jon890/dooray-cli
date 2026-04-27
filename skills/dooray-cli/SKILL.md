@@ -45,6 +45,8 @@ dooray doctor                                 # 설정 검증
 
 자연어 요청을 커맨드로 변환할 때 아래 표를 참고한다.
 
+> **공통 (post 하위 12개 명령)**: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`는 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL(`https://*.dooray.com/task/to/<postId>`)을 직접 받는다. **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축, ADR-020).
+
 | 의도 | 커맨드 |
 |------|--------|
 | 초기 설정 (대화형) | `dooray setup` |
@@ -160,6 +162,42 @@ dooray wiki page get tc-ocr 3052841366755571094 --json
 ---
 
 ## 커맨드 상세
+
+### 업무 식별 방식 (post 하위 12개 명령 공통, ADR-020)
+
+`post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`는 4가지 입력을 모두 받는다:
+
+```bash
+# (1) 기존 positional — 가장 익숙한 형태
+dooray post get tc-ocr 42
+
+# (2) Dooray URL을 첫 인자로 — 사용자 메시지에서 URL을 그대로 복사할 때 최적
+dooray post get https://x.dooray.com/task/to/4319587406666362045
+
+# (3) --id <postId>
+dooray post get --id 4319587406666362045
+
+# (4) --url <url>
+dooray post get --url https://x.dooray.com/task/to/4319587406666362045
+```
+
+**우선순위 / 충돌 규칙**: `--id`+`--url` 동시 지정 → 에러. `--id`/`--url`+positional 동시 지정 → 에러. URL/`--id`/`--url` 모드는 standalone API(`getPost(postId)`)로 resolve 단계를 단축.
+
+**sub-id 옵션화** (URL/`--id`/`--url` 모드에서 필수):
+```bash
+# comment edit/delete: --comment-id
+dooray post comment edit  --url <url> --comment-id <commentId> --body "..."
+dooray post comment delete --url <url> --comment-id <commentId>
+
+# file download/delete: --file-id
+dooray post file download --url <url> --file-id <fileId> -o ./downloads
+dooray post file delete   --url <url> --file-id <fileId>
+
+# file upload: --file (로컬 경로)
+dooray post file upload   --url <url> --file ./report.pdf
+```
+
+기존 positional 3-arg(`comment edit <project> <number> <comment-id>`, `file upload <project> <number> <path>`)는 그대로 유지.
 
 ### 업무 생성 (non-interactive)
 
