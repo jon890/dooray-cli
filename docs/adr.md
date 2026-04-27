@@ -277,3 +277,42 @@
 **package.json**: `files` 필드에 `skills/` 추가 필수 (npm publish 시 포함)
 
 **스킬 포맷**: Claude Code 전용 (SKILL.md frontmatter 규격). 타 에이전트(Cursor, Windsurf 등) 지원은 요청 시 확장
+
+---
+
+## ADR-019: `post create` 메타데이터 옵션 (`--tag`/`--parent`/`--workflow`/`--milestone`)
+
+**결정**:
+
+- `post create`에 4개 옵션 추가. `--tag`는 반복 가능(variadic), 모두 이름 기반 lookup
+- 매칭 정책: **정확일치 → 부분일치 → 모호시 후보 + 에러** (`resolveMember`/`resolveWorkflow` 등 전체 resolver에 동일 적용)
+- `--parent`: `code/number` (슬래시 포함) 또는 raw `postId` (슬래시 없음). 두 형태만 허용, 자릿수 휴리스틱 없음
+- `--workflow`: create API에 필드 없음 → create 후 `setPostWorkflow` 후속 호출. 실패 시 `stderr` warn + `exit 0` (post 자체는 생성 성공)
+- 클라이언트 사전 검증: `tagGroup.mandatory === true` 그룹은 1개 이상 선택 강제, `selectOne === true` 그룹은 다중 선택 시 에러
+
+**이유**:
+
+- mandatory-tag 정책 프로젝트(예: `tc-ocr`)에서 CLI로 단 한 건의 업무도 생성 불가 → 차단 이슈 (Issue #18)
+- ID 직접 입력 미지원: 사용자가 ID를 손에 들고 있는 흐름은 거의 없음. 이름 lookup만으로 단순화. 단 `--parent`만 raw postId 허용 — 부모 업무가 다른 프로젝트 또는 번호 미상일 수 있어
+- `--workflow` 실패시 exit 0: 업무 ID는 이미 발급됨. CI는 `--json`으로 후처리 가능. 전체 실패 처리하면 사용자가 두 번 만들 위험
+- 클라이언트 mandatory 검증: 캐시된 `tagGroup` 정보로 무료 제공. API의 `USER_INVALID_TAG_MANDATORY_PREFIX` 에러보다 친절한 메시지 (어느 그룹이 누락인지 명시)
+- 전체 resolver 부분일치 통일: 멤버만 부분일치였던 비대칭 해소
+
+**필드명 검증**:
+
+- POST `/project/v1/projects/{projectId}/posts` body: `parentPostId`, `milestoneId`, `tagIds` (Dooray 공식 문서 확인 — 이슈 본문 curl의 `tagIdList`는 사용자 오타)
+- 목록 엔드포인트: `GET /project/v1/projects/{id}/tags`, `GET /project/v1/projects/{id}/milestones` (page/size 페이지네이션, max 100)
+
+**캐시**:
+
+- `~/.dooray/cache/tags/{projectId}.json`, `~/.dooray/cache/milestones/{projectId}.json` (멤버·워크플로우 패턴 답습)
+- TTL 24h (ADR-010)
+- `CachedTag`에 `groupMandatory`, `groupSelectOne` 보존 — mandatory 검증에 필요
+
+**대안 기각**:
+
+- `--tag`에 휴리스틱(짧은 숫자→postNumber) 도입: ID 형식 변경 시 깨짐, A안(`/` 분기)이 단순·명확
+- `--workflow` 실패시 exit non-zero: post는 이미 생성된 상태에서 전체 실패 처리는 사용자에게 "다시 만들까" 혼란 유발
+- ID 직접 입력 허용: 이름 lookup 실패 시 `--workflow xxx-uuid` 폴백은 거의 사용되지 않을 흐름 — 복잡도만 증가
+
+**후속 작업**: `post edit`에 `--tag`/`--milestone` 동일 옵션 추가 (별도 task `010-2`).

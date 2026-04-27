@@ -56,8 +56,9 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 
 - `post edit`, `comment edit`은 `--title`/`--body` 옵션으로 non-interactive 사용 가능 (`--subject`는 deprecated alias, stderr 경고 후 동작)
 - `post create`는 `--title` 필수 (또는 `--subject` alias)
+- `post create`는 `--tag` (반복) / `--parent` (`code/number` 또는 raw postId) / `--workflow` / `--milestone` 지원. mandatory-tag 그룹은 클라이언트가 사전 검증
 - 제목 옵션 이름은 post·wiki 모두 `--title`로 통일 (Issue #8)
-- 멤버 resolver는 이름 부분일치로 매칭, 모호하면 에러 + 후보 목록 출력
+- resolver(멤버·워크플로우·태그·마일스톤)는 정확일치 → 이름 부분일치, 모호하면 에러 + 후보 목록 출력
 - post 목록은 최신순 정렬 (`-createdAt`)
 
 ## 상황별 ADR 필수 참조
@@ -71,6 +72,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | IMAP 메일 조회 기능 | **ADR-012** (imapflow + 서버 특이점) |
 | SMTP 메일 발송 기능 | **ADR-013** (nodemailer) |
 | 멤버·프로젝트 이름 부분일치 | **ADR-008** (모호 → 에러 + 후보) |
+| post 메타데이터 (태그/부모/워크플로우/마일스톤) 옵션 | **ADR-019** (이름 lookup + mandatory 사전 검증 + workflow 후속 호출 정책) |
 | 파일 업로드/다운로드 (307 처리) | **ADR-015** (수동 redirect + Auth 헤더 재첨부) |
 | `dooray setup` 마법사 변경 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치) |
 | 새 Commander.js 서브커맨드 추가 | (ADR 없음 — 기존 `commands/*.ts` 패턴 참조) |
