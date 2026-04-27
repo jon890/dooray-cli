@@ -316,3 +316,56 @@
 - ID 직접 입력 허용: 이름 lookup 실패 시 `--workflow xxx-uuid` 폴백은 거의 사용되지 않을 흐름 — 복잡도만 증가
 
 **후속 작업**: `post edit`에 `--tag`/`--milestone` 동일 옵션 추가 (별도 task `010-2`).
+
+---
+
+## ADR-020: post 명령 input 통합 (`--id`/URL/positional) + 첫 테스트 인프라(vitest)
+
+**결정**:
+
+- post 하위 12개 명령(get/edit/done/workflow + comment 4개 + file 5개)에 통합 입력 방식 도입
+  - 기존: `<project> <post-number>` (호환 유지)
+  - 신규: `--id <postId>` 옵션 / `--url <url>` 옵션 / 첫 positional이 Dooray URL이면 자동 분기
+- comment/file 명령의 sub-id(`<comment-id>`, `<file-id>`)는 **옵션화** (`--comment-id`, `--file-id`). 기존 positional도 호환 — agent 친화
+- 입력 검증은 `resolvePostInput` 단일 헬퍼에 집중. `--id`/`--url`/positional 동시 사용 시 명시적 에러
+- standalone API `GET /project/v1/posts/{postId}` 활용 — 응답에 `project.{id,code}`, `taskNumber`, `number` 포함되어 한 번의 lookup으로 기존 코드 경로 재사용
+- URL 매칭은 strict 정규식 `^https?://[\w.-]+\.dooray\.com/task/to/(\d+)(?:[/?#].*)?$`. 매칭 실패 시 명확한 에러
+- **테스트 인프라로 vitest 도입** — dooray-cli 첫 테스트 환경. URL parser와 resolvePostInput 단위 테스트로 분기 안전성 확보
+
+**이유**:
+
+- Dooray URL은 post-id만 포함하므로(예: `https://x.dooray.com/task/to/{postId}`), 동료가 URL만 공유하면 project 코드를 모를 때 CLI 사용 불가 (Issue #16)
+- agent 친화: AI 에이전트가 사용자 메시지에서 추출한 URL을 그대로 CLI 첫 인자로 전달 가능 + `--id`로 구조화 호출도 가능 — 둘 다 지원하면 agent의 라우팅 부담 0
+- `<project> <post-number>` breaking 회피: 기존 사용자/스크립트는 그대로 동작
+- sub-id 옵션화: 기존 `comment edit <project> <post-number> <comment-id>`에서 URL 모드 시 positional 개수가 가변되어 모호. 옵션 제공으로 모호 제거
+- vitest 채택: Node 빌트인 `node:test`도 검토했으나, mock 지원·watch UX·향후 통합 테스트 확장성에서 vitest 우위. 이번 변경은 분기 규칙이 다수라 단위 테스트로 회귀 방지가 핵심
+
+**분기 규칙 (resolvePostInput 우선순위)**:
+
+1. `--id` + `--url` 동시 → 에러
+2. `--id` 또는 `--url` + positional 동시 → 에러
+3. `--url` 단독 → URL parse → standalone 호출
+4. `--id` 단독 → standalone 호출
+5. positional 1개이고 `http(s)://`로 시작 → URL parse → standalone
+6. positional 2개 → 기존 `resolveProject` + `resolvePost`
+7. 그 외 → 입력 형식 안내 에러 (3개 형식 모두 예시 노출)
+
+**대안 기각**:
+
+- positional 단일 `<ref>` 통합 (`tc-ocr/337` | postId | URL): 기존 `<project> <post-number>` 두 인자 깨지는 breaking — 영향 범위 너무 큼
+- positional 1개 numeric을 postId로 자동 인식: postId 길이 변경 시 휴리스틱 깨짐. 19자리 임계는 임의값. → URL 또는 명시 옵션만 인정
+- sub-id를 인자 개수로 분기: `comment edit tc-ocr cmt-abc`(post-number 누락) 같은 사용자 실수에 모호한 에러 발생. 옵션화가 안전
+- `node:test` 빌트인 사용: deps 0 장점은 있으나 mocking·watch·향후 코드 확장성에서 vitest 우위
+
+**테스트 인프라**:
+
+- vitest dev dependency, `test`/`test:watch` scripts. 코로케이션(`*.test.ts`) 패턴
+- `vitest.config.ts` 생략 — 디폴트로 자동 검색
+- tsup 번들 영향 없음 (entry import 안 하면 미포함)
+- coverage 도구·CI 통합은 후속 task
+
+**후속 작업**:
+
+- 다른 도메인(wiki 등)의 입력 방식도 동일 패턴으로 통합 — 별도 task
+- vitest 기반 추가 테스트 확대 (resolver, formatter 등)
+- GitHub Actions CI에 `pnpm test` 통합

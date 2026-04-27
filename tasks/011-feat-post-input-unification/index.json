@@ -1,0 +1,48 @@
+{
+  "name": "011-feat-post-input-unification",
+  "description": "Issue #16 — post 하위 12개 명령에 통합 입력 방식 도입(--id/--url/URL positional). standalone API 활용. comment/file의 sub-id 옵션화. 첫 테스트 인프라(vitest) 도입. ADR-020.",
+  "created_at": "2026-04-27T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 5,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "vitest setup + URL parser + standalone API + resolvePostInput 헬퍼",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "post get/edit/done/workflow 통합 적용",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 3,
+      "title": "post comment 4개 명령 + --comment-id 옵션화",
+      "file": "phase-03.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 4,
+      "title": "post file 5개 명령 + --file-id 옵션화",
+      "file": "phase-04.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 5,
+      "title": "빌드 + 테스트 + help/docs 정합성 + 시나리오 검증",
+      "file": "phase-05.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-04-27T00:00:00Z"
+}
