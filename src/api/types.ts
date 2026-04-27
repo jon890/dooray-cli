@@ -71,13 +71,37 @@ export interface ParentPost {
   subject: string;
 }
 
+export interface TagGroup {
+  id: string;
+  name: string;
+  mandatory: boolean;
+  selectOne: boolean;
+}
+
+// 기존 Tag 확장 — 신규 필드는 모두 optional.
+// PostDetailItem.tags 응답에는 id 외 필드가 없을 수 있어 런타임 undefined 위험 방지.
+export interface Tag {
+  id: string;
+  name?: string;
+  color?: string;
+  tagGroup?: TagGroup | null;
+}
+
 export interface Milestone {
   id: string;
   name: string;
 }
 
-export interface Tag {
-  id: string;
+export interface TagListResponse {
+  header: DoorayApiHeader;
+  result: Tag[];
+  totalCount: number;
+}
+
+export interface MilestoneListResponse {
+  header: DoorayApiHeader;
+  result: Milestone[];
+  totalCount: number;
 }
 
 export interface Workflow {

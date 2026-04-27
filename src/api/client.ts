@@ -24,6 +24,8 @@ import type {
   ProjectMemberListResponse,
   ProjectWorkflowListResponse,
   MemberDetailResponse,
+  TagListResponse,
+  MilestoneListResponse,
   WikiListResponse,
   WikiPagesResponse,
   WikiPageResponse,
@@ -337,6 +339,46 @@ export class DoorayApiClient {
       return await this.api
         .get(`project/v1/projects/${projectId}/workflows`)
         .json<ProjectWorkflowListResponse>();
+    } catch (e) {
+      return toDoorayCliError(e);
+    }
+  }
+
+  // ─── Tags ───────────────────────────────────────────
+
+  async getProjectTags(
+    projectId: string,
+    params?: { page?: number; size?: number },
+  ): Promise<TagListResponse> {
+    try {
+      return await this.api
+        .get(`project/v1/projects/${projectId}/tags`, {
+          searchParams: {
+            ...(params?.page != null && { page: params.page }),
+            ...(params?.size != null && { size: params.size }),
+          },
+        })
+        .json<TagListResponse>();
+    } catch (e) {
+      return toDoorayCliError(e);
+    }
+  }
+
+  // ─── Milestones ─────────────────────────────────────
+
+  async getProjectMilestones(
+    projectId: string,
+    params?: { page?: number; size?: number },
+  ): Promise<MilestoneListResponse> {
+    try {
+      return await this.api
+        .get(`project/v1/projects/${projectId}/milestones`, {
+          searchParams: {
+            ...(params?.page != null && { page: params.page }),
+            ...(params?.size != null && { size: params.size }),
+          },
+        })
+        .json<MilestoneListResponse>();
     } catch (e) {
       return toDoorayCliError(e);
     }

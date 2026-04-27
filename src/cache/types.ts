@@ -31,6 +31,24 @@ export interface CachedWorkflow {
   order?: number;
 }
 
+export const TAGS_TTL_MS = 86_400_000;       // 24h
+export const MILESTONES_TTL_MS = 86_400_000; // 24h
+export const RESOLVER_FETCH_PAGE_SIZE = 100;
+
+export interface CachedTag {
+  id: string;
+  name: string;
+  groupId: string | null;        // tagGroup.id (null이면 미소속)
+  groupName: string | null;
+  groupMandatory: boolean;       // mandatory 검증에 필요
+  groupSelectOne: boolean;       // selectOne 검증에 필요
+}
+
+export interface CachedMilestone {
+  id: string;
+  name: string;
+}
+
 export const WIKIS_TTL_MS = 86_400_000; // 24h — wiki home은 거의 불변
 
 export interface CachedWiki {

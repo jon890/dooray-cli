@@ -7,7 +7,7 @@ Issue #18 — `post create`가 mandatory-tag 정책 프로젝트에서 동작하
 ### 먼저 읽을 파일
 
 - `docs/adr.md` ADR-019 — 본 task의 결정 근거 (필드명·캐시·mandatory 검증 정책)
-- `src/api/client.ts` (페이지네이션 패턴: `getProjectMembers`, `getProjectWorkflows`)
+- `src/api/client.ts` (페이지네이션 패턴: `getProjectMembers` 단독 — `getProjectWorkflows`는 page/size 미수신이라 참고 대상 아님)
 - `src/api/types.ts` (기존 `Tag`, `Milestone` 정의 여부 확인 — 응답 형태 일부 이미 있음)
 - `src/cache/types.ts` + `src/cache/store.ts` (멤버·워크플로우 패턴)
 
@@ -25,7 +25,11 @@ Issue #18 — `post create`가 mandatory-tag 정책 프로젝트에서 동작하
 ```
 - 페이지네이션: `page` (기본 0), `size` (기본 20, 최대 100)
 
-`GET /project/v1/projects/{project-id}/milestones` — 동일한 페이지네이션. 응답 스키마는 구현 시 실호출 또는 기존 `Milestone` 타입(types.ts) 재확인.
+`GET /project/v1/projects/{project-id}/milestones` — 동일한 페이지네이션. 응답 wrapper는 tag와 동일한 형태로 가정:
+```json
+{ "header": {...}, "result": [{ "id": "...", "name": "..." }], "totalCount": N }
+```
+구현 시 실호출(`hurl`/`curl`)로 wrapper 형태(`result` + `totalCount`)를 반드시 1회 검증한 뒤 `MilestoneListResponse` 타입을 확정. 다르면 phase-02 진행 전에 phase-01 작업 1)/4) 수정.
 
 POST `/project/v1/projects/{project-id}/posts` body 필드명: `tagIds`, `parentPostId`, `milestoneId` (단수). **이슈 본문 curl의 `tagIdList`는 사용자 오타** — 코드의 `tagIds` 그대로 사용.
 
@@ -43,12 +47,14 @@ export interface TagGroup {
   selectOne: boolean;
 }
 
-// 기존 Tag 인터페이스에 tagGroup 필드 추가 (이미 있으면 검증만)
+// 기존 Tag 인터페이스 확장 — 신규 필드는 모두 optional.
+// 사유: 기존 `PostDetailItem.tags: Tag[]` 응답에는 id 외 필드가 없을 수 있어
+// 필수로 두면 런타임 undefined 위험. resolver(tag.ts)에서 CachedTag 정규화 시 좁힘.
 export interface Tag {
   id: string;
-  name: string;
-  color: string;
-  tagGroup: TagGroup | null;
+  name?: string;
+  color?: string;
+  tagGroup?: TagGroup | null;
 }
 
 // Milestone은 최소 필드만 (id, name) — 추가 필드는 추후 확장
@@ -74,39 +80,49 @@ export interface MilestoneListResponse {
 
 ### 2) `src/api/client.ts` — 신규 메서드 2개
 
-`getProjectWorkflows`/`getProjectMembers` 패턴 그대로:
+**필수 패턴**: `client.ts`의 실제 컨벤션은 try/catch + `this.api` + `toDoorayCliError`. `handle()` 헬퍼는 존재하지 않음. `getProjectMembers` (대략 client.ts:307~321)를 그대로 복제:
 
 ```ts
 async getProjectTags(
   projectId: string,
   params?: { page?: number; size?: number },
 ): Promise<TagListResponse> {
-  const searchParams: Record<string, string> = {};
-  if (params?.page !== undefined) searchParams.page = String(params.page);
-  if (params?.size !== undefined) searchParams.size = String(params.size);
-  return this.handle(() =>
-    this.client
-      .get(`project/v1/projects/${projectId}/tags`, { searchParams })
-      .json<TagListResponse>(),
-  );
+  try {
+    return await this.api
+      .get(`project/v1/projects/${projectId}/tags`, {
+        searchParams: {
+          ...(params?.page != null && { page: params.page }),
+          ...(params?.size != null && { size: params.size }),
+        },
+      })
+      .json<TagListResponse>();
+  } catch (e) {
+    return toDoorayCliError(e);
+  }
 }
 
 async getProjectMilestones(
   projectId: string,
   params?: { page?: number; size?: number },
 ): Promise<MilestoneListResponse> {
-  const searchParams: Record<string, string> = {};
-  if (params?.page !== undefined) searchParams.page = String(params.page);
-  if (params?.size !== undefined) searchParams.size = String(params.size);
-  return this.handle(() =>
-    this.client
-      .get(`project/v1/projects/${projectId}/milestones`, { searchParams })
-      .json<MilestoneListResponse>(),
-  );
+  try {
+    return await this.api
+      .get(`project/v1/projects/${projectId}/milestones`, {
+        searchParams: {
+          ...(params?.page != null && { page: params.page }),
+          ...(params?.size != null && { size: params.size }),
+        },
+      })
+      .json<MilestoneListResponse>();
+  } catch (e) {
+    return toDoorayCliError(e);
+  }
 }
 ```
 
-기존 메서드의 `handle` / `searchParams` 헬퍼 사용 패턴을 정확히 따를 것.
+- `this.api` (필드명) 사용 — `this.client` 아님
+- `toDoorayCliError(e)`는 같은 파일 상단에 이미 존재. import 추가 불필요
+- `searchParams`는 spread + `!= null` 가드로 0 값도 보존
 
 ### 3) `src/cache/types.ts` — 캐시 타입 추가
 
@@ -174,9 +190,9 @@ export async function setMilestones(projectId: string, items: CachedMilestone[])
 - **`post create` 수정은 phase 3에서** — 이 phase에서 명령 수정 금지
 - **`getCacheStats` 갱신은 phase 4에서** — 본 phase에서 건드리지 않음
 - 기존 `Tag`/`Milestone` 타입이 이미 있으면 **확장만**. 중복 정의시 빌드 에러 가능
-- `handle()` 헬퍼 시그니처는 `client.ts` 다른 메서드와 정확히 동일하게
+- `client.ts`의 실제 패턴은 try/catch + `this.api` + `toDoorayCliError` (handle 헬퍼 없음). `getProjectMembers`를 그대로 복제할 것
 
 ## Blocked 조건
 
 - `src/api/types.ts`에 이미 `Tag`/`Milestone`/`TagGroup` 정의가 본 phase 요구와 호환 불가하게 충돌 → `PHASE_BLOCKED: 기존 타입 정의 충돌`
-- `client.ts`의 `handle`/`searchParams` 헬퍼 패턴이 변경됨 → `PHASE_BLOCKED: 클라이언트 패턴 변경`
+- `client.ts`의 try/catch + `toDoorayCliError` 패턴이 변경됨 → `PHASE_BLOCKED: 클라이언트 패턴 변경`

@@ -2,8 +2,7 @@ import { DoorayApiClient } from "../api/client.js";
 import type { CachedMember } from "../cache/types.js";
 import { getMembers, setMembers, isExpired } from "../cache/store.js";
 import { MEMBERS_TTL_MS } from "../cache/types.js";
-import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+import { matchByName } from "./match.js";
 
 async function fetchAllMembers(
   client: DoorayApiClient,
@@ -64,23 +63,11 @@ export async function resolveMember(
   input: string,
 ): Promise<string> {
   const members = await ensureMembers(client, projectId);
-
-  // name 부분일치
-  const byName = members.filter((m) => m.name.includes(input));
-  if (byName.length === 1) return byName[0].organizationMemberId;
-
-  if (byName.length > 1) {
-    const candidates = byName
-      .map((m) => `  - ${m.name} (${m.organizationMemberId})`)
-      .join("\n");
-    throw new DoorayCliError(
-      `복수의 멤버가 매칭됩니다: "${input}"\n${candidates}`,
-      EXIT_PARAM_ERROR,
-    );
-  }
-
-  throw new DoorayCliError(
-    `멤버를 찾을 수 없습니다: ${input}`,
-    EXIT_PARAM_ERROR,
+  const match = matchByName(
+    members,
+    input,
+    "멤버",
+    (m) => `${m.name} (${m.organizationMemberId})`,
   );
+  return match.organizationMemberId;
 }

@@ -61,7 +61,17 @@ dooray post create tc-ocr \
 
 # 본문을 파일에서 읽기 (--body와 --body-file은 동시 사용 불가)
 dooray post create tc-ocr --title "업무 제목" --body-file ./content.md
+
+# 메타 옵션: --tag(반복) / --parent / --workflow / --milestone
+dooray post create tc-ocr \
+  --title "업무 제목" --body "본문" --to "담당자이름" \
+  --tag "버그" --tag "긴급" \
+  --parent "tc-ocr/337" \
+  --workflow "진행 중" \
+  --milestone "Sprint 12"
 ```
+
+> mandatory-tag 정책 프로젝트(예: `tc-ocr`)에서는 mandatory 그룹마다 1개 이상 `--tag`로 지정해야 한다. 누락 시 클라이언트가 사전 검증으로 후보 목록과 함께 에러 출력.
 
 ### 업무 수정
 
