@@ -2,6 +2,8 @@ import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
 import { DoorayApiClient } from "../../../api/client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
+import { buildMemberNameMap } from "../../../resolvers/member.js";
+import { enrichCommentCreators } from "../../../utils/comment-enrich.js";
 import { formatCommentList } from "../../../formatters/post.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
@@ -32,5 +34,14 @@ export const commentListCommand = new Command("list")
     });
     stopSpinner(true, "댓글 목록 조회 완료");
 
-    formatCommentList(res.result, globalOpts);
+    let comments = res.result;
+    if (!globalOpts.json) {
+      // table/quiet 출력일 때만 enrich (--json은 raw 유지 — ADR-021)
+      let nameMap = new Map<string, string>();
+      try {
+        nameMap = await buildMemberNameMap(client, projectId);
+      } catch { /* enrich 실패 시 빈 map → 표시명 비어있음, 명령은 정상 동작 */ }
+      comments = enrichCommentCreators(comments, nameMap);
+    }
+    formatCommentList(comments, globalOpts);
   });

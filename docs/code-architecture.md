@@ -31,7 +31,7 @@ src/
   resolvers/
     me.ts                   # /common/v1/members/me → CachedMe
     project.ts              # code·id → projectId
-    member.ts               # name → organizationMemberId
+    member.ts               # name → organizationMemberId + lookupMemberName / buildMemberNameMap (ADR-021)
     workflow.ts             # name·class → workflowId
     post.ts                 # postNumber → postId (API 호출)
     wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시)
@@ -56,6 +56,7 @@ src/
     table.ts                # cli-table3 기반 테이블 출력
     post.ts                 # Post 전용 포맷 (workflow 이름 등)
     wiki.ts                 # Wiki 전용 포맷
+    member.ts               # Member 상세/목록 포맷 (ADR-021)
 
   utils/
     errors.ts               # DoorayCliError (message + exitCode)
@@ -63,6 +64,7 @@ src/
     exit-codes.ts           # 0 성공 / 1 API오류 / 2 인증실패 / 3 파라미터오류 / 4 설정오류
     body-input.ts           # --body / --body-file → string (stdin "-" + 충돌 가드)
     dooray-url.ts           # https://*.dooray.com/task/to/<postId> URL parser (ADR-020)
+    comment-enrich.ts       # PostComment[] Creator 이름 채우기 (ADR-021, immutable)
 
   commands/
     setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)
@@ -74,6 +76,11 @@ src/
       list.ts
       members.ts
       workflows.ts
+
+    member/
+      index.ts              # member 서브커맨드 등록
+      get.ts                # dooray member get <member-id> (cache 우회, ADR-021)
+      list.ts               # dooray member list <project> (project 캐시 활용)
 
     post/
       list.ts
