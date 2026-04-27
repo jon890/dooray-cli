@@ -202,6 +202,16 @@ export class DoorayApiClient {
     }
   }
 
+  async getPostStandalone(postId: string): Promise<PostDetailResponse> {
+    try {
+      return await this.api
+        .get(`project/v1/posts/${postId}`)
+        .json<PostDetailResponse>();
+    } catch (e) {
+      return toDoorayCliError(e);
+    }
+  }
+
   async createPost(projectId: string, body: CreatePostRequest): Promise<CreatePostApiResponse> {
     try {
       return await this.api

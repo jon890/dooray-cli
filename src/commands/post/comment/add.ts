@@ -1,8 +1,7 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
 import { DoorayApiClient } from "../../../api/client.js";
-import { resolveProject } from "../../../resolvers/project.js";
-import { resolvePost } from "../../../resolvers/post.js";
+import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { openInEditor } from "../../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { readBodyInputOrNull } from "../../../utils/body-input.js";
@@ -11,8 +10,10 @@ import { printJson } from "../../../formatters/table.js";
 
 export const commentAddCommand = new Command("add")
   .description("댓글 추가")
-  .argument("<project>", "프로젝트 코드 또는 ID")
-  .argument("<post-number>", "업무 번호")
+  .argument("[project]", "프로젝트 코드 (또는 첫 인자에 Dooray URL)")
+  .argument("[post-number]", "업무 번호 (project와 함께 사용)")
+  .option("--id <postId>", "Dooray post ID (project/post-number 대신)")
+  .option("--url <url>", "Dooray 업무 URL (project/post-number 대신)")
   .option("--body <text>", "댓글 본문 (- 입력 시 stdin에서 읽기)")
   .option("--body-file <path>", "본문 파일 경로 (- 입력 시 stdin에서 읽기)")
   .action(async (project, postNumberStr, opts) => {
@@ -31,8 +32,12 @@ export const commentAddCommand = new Command("add")
     }
 
     startSpinner("댓글 추가 중...");
-    const projectId = await resolveProject(client, project);
-    const postId = await resolvePost(client, projectId, Number(postNumberStr));
+    const { projectId, postId } = await resolvePostInput(client, {
+      projectArg: project,
+      postNumberArg: postNumberStr,
+      idOpt: opts.id,
+      urlOpt: opts.url,
+    });
     const res = await client.createPostComment(projectId, postId, {
       body: { mimeType: "text/x-markdown", content: bodyContent },
     });
