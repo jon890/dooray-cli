@@ -26,6 +26,7 @@ import type {
   MemberDetailResponse,
   TagListResponse,
   MilestoneListResponse,
+  MemberGroupListResponse,
   WikiListResponse,
   WikiPagesResponse,
   WikiPageResponse,
@@ -369,6 +370,26 @@ export class DoorayApiClient {
           },
         })
         .json<TagListResponse>();
+    } catch (e) {
+      return toDoorayCliError(e);
+    }
+  }
+
+  // ─── Member Groups ──────────────────────────────────
+
+  async getProjectMemberGroups(
+    projectId: string,
+    params?: { page?: number; size?: number },
+  ): Promise<MemberGroupListResponse> {
+    try {
+      return await this.api
+        .get(`project/v1/projects/${projectId}/member-groups`, {
+          searchParams: {
+            ...(params?.page != null && { page: params.page }),
+            ...(params?.size != null && { size: params.size }),
+          },
+        })
+        .json<MemberGroupListResponse>();
     } catch (e) {
       return toDoorayCliError(e);
     }

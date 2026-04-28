@@ -45,6 +45,7 @@ export const doctorCommand = new Command("doctor")
     console.log(`  워크플로우: ${stats.workflowProjectCount}개 프로젝트`);
     console.log(`  Tag 캐시 (프로젝트 수): ${stats.tagProjectCount}`);
     console.log(`  Milestone 캐시 (프로젝트 수): ${stats.milestoneProjectCount}`);
+    console.log(`  Member Group 캐시 (프로젝트 수): ${stats.memberGroupProjectCount}`);
 
     // Claude Code 스킬 검증
     const claudeDir = path.join(

@@ -38,6 +38,7 @@ export const RESOLVER_FETCH_PAGE_SIZE = 100;
 export interface CachedTag {
   id: string;
   name: string;
+  color: string;                 // 태그 색상 (hex, 예: "ffcedd")
   groupId: string | null;        // tagGroup.id (null이면 미소속)
   groupName: string | null;
   groupMandatory: boolean;       // mandatory 검증에 필요
@@ -47,6 +48,13 @@ export interface CachedTag {
 export interface CachedMilestone {
   id: string;
   name: string;
+}
+
+export const MEMBER_GROUPS_TTL_MS = 86_400_000; // 24h
+
+export interface CachedMemberGroup {
+  id: string;
+  code: string;
 }
 
 export const WIKIS_TTL_MS = 86_400_000; // 24h — wiki home은 거의 불변

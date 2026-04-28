@@ -16,6 +16,7 @@ async function fetchAllTags(client: DoorayApiClient, projectId: string): Promise
       all.push({
         id: t.id,
         name: t.name ?? "",
+        color: t.color ?? "",
         groupId: t.tagGroup?.id ?? null,
         groupName: t.tagGroup?.name ?? null,
         groupMandatory: t.tagGroup?.mandatory ?? false,
