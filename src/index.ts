@@ -33,6 +33,7 @@ import { mailListCommand } from "./commands/mail/list.js";
 import { mailGetCommand } from "./commands/mail/get.js";
 import { mailSendCommand } from "./commands/mail/send.js";
 import { mailReplyCommand } from "./commands/mail/reply.js";
+import { feedbackCommand } from "./commands/feedback.js";
 import { DoorayCliError } from "./utils/errors.js";
 
 const program = new Command();
@@ -114,6 +115,7 @@ program.addCommand(projectCommand);
 program.addCommand(postCommand);
 program.addCommand(wikiCommand);
 program.addCommand(mailCommand);
+program.addCommand(feedbackCommand);
 
 program.parseAsync().catch((err) => {
   if (err instanceof DoorayCliError) {

@@ -2,8 +2,8 @@
   "name": "013-feat-feedback-command",
   "description": "Issue #19 — dooray feedback 명령 신설. GitHub issue 생성은 gh CLI에 위임. 인터랙티브($EDITOR via inquirer editor prompt) + non-interactive(--title/--body/--body-file/--label) + --dry-run. 자동 메타(버전/Node/OS)만 첨부, baseUrl/시크릿 미포함. ADR-022. (--last는 후속 이슈로 분리.)",
   "created_at": "2026-04-27T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "completed",
+  "current_phase": 3,
   "total_phases": 3,
   "error_message": null,
   "blocked_reason": null,
@@ -12,23 +12,47 @@
       "number": 1,
       "title": "feedback-meta 헬퍼 + 단위 테스트",
       "file": "phase-01.md",
-      "status": "pending",
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ],
+      "commitSha": "12aa5219bdf0"
     },
     {
       "number": 2,
       "title": "feedback 명령 구현 (인터랙티브/non-interactive/dry-run/gh 호출)",
       "file": "phase-02.md",
-      "status": "pending",
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ],
+      "commitSha": "12aa5219bdf0"
     },
     {
       "number": 3,
       "title": "빌드 + 시나리오 검증 + task 완료 처리",
       "file": "phase-03.md",
-      "status": "pending",
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ],
+      "commitSha": "12aa5219bdf0"
     }
   ],
-  "updated_at": "2026-04-27T00:00:00Z"
+  "updated_at": "2026-04-28T02:05:30.421900+00:00"
 }
