@@ -1,0 +1,34 @@
+{
+  "name": "014-feat-project-groups-tags",
+  "description": "Issue #20 — `dooray project groups`/`project tags` 명령 신설. groups MVP는 ID+Code만(Members는 후속 --with-members), tags는 010의 캐시·resolver 재사용하되 CachedTag에 color 필드 추가. project members/workflows 패턴 답습.",
+  "created_at": "2026-04-28T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 3,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "API/types/cache/resolver — member-groups 신규 + CachedTag color 추가",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "project groups/tags 명령 + formatter + index.ts 등록 + README/SKILL.md 갱신",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 3,
+      "title": "빌드 + smoke + task 완료 처리",
+      "file": "phase-03.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-04-28T00:00:00Z"
+}
