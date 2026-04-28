@@ -53,6 +53,25 @@ git log ${LAST_TAG}..HEAD --pretty=format:"%s" | sort
 - **신규 옵션** (`feat(...)` 메시지에 `--xxx` 등장) — 기존 명령에 추가된 플래그
 - **버그 수정** / **리팩토링** / **문서/인프라**
 
+추가로 **해결된 GitHub 이슈**를 식별:
+
+```bash
+# 열린 이슈 목록
+gh issue list --state open --json number,title --jq '.[] | "#\(.number)  \(.title)"'
+
+# task 디렉토리 / 커밋 메시지 / PR 본문에서 "Issue #N" 또는 "#N" 참조 추출
+grep -rE "Issue #[0-9]+|^#[0-9]+" tasks/ 2>/dev/null
+git log ${LAST_TAG}..HEAD --grep="#[0-9]" --oneline
+```
+
+각 열린 이슈에 대해 "이번 릴리스로 해결되었는가?" 판단:
+- 이슈 제목/본문 ↔ 이번 릴리스의 신규 명령/옵션 매핑
+- 후속 이슈(`feat(... ) follow-up`)는 release 시점에 close하지 않음 — 별도 task가 필요
+
+**결과를 사용자에게 제시**하고 close 대상 이슈 목록을 확정. 이 목록은:
+- GitHub Release 노트 하단에 `Closes #N, #M` 으로 기록
+- Step 9에서 release publish 후 자동 close
+
 이 결과는 다음 단계(문서 동기화 검증)와 GitHub Release 노트에 그대로 활용한다.
 
 ### 3. 문서 동기화 검증 (README + dooray-cli 스킬)
@@ -100,10 +119,21 @@ git tag -a v<version> -m "v<version>"
 git push origin v<version>
 ```
 
-릴리스 노트는 **2단계 분석 결과를 그대로 활용**해 작성한다 (Highlights / 신규 명령 / 신규 옵션 / 버그 수정 / Full Changelog 링크):
+릴리스 노트는 **2단계 분석 결과를 그대로 활용**해 작성한다 (Highlights / 신규 명령 / 신규 옵션 / 버그 수정 / **Closes** / Full Changelog 링크):
 
 ```bash
 gh release create v<version> --title "v<version> — <요약>" --notes "<2단계 결과 기반 노트>"
+```
+
+릴리스 노트 본문 마지막에 다음 섹션을 포함:
+
+```markdown
+## Closes
+
+이번 릴리스로 해결된 이슈 (release publish 후 자동 close):
+- #16 feat(post): post-id/URL 입력 지원
+- #17 feat(member): 표시명 resolve
+- #18 feat(post create): mandatory-tag 옵션
 ```
 
 자동 생성으로 대체할 경우:
@@ -126,9 +156,28 @@ npm publish --access public --otp=<code>
 - `https://github.com/jon890/dooray-cli/releases/tag/v<version>` 릴리스 확인
 - `https://www.npmjs.com/package/@bifos/dooray-cli` 버전 확인 (반영에 수 분 소요)
 
+### 9. 해결된 이슈 close
+
+2단계에서 식별한 close 대상 이슈를 일괄 close. release publish 완료 후에만 실행 (publish 실패 시 close 금지).
+
+```bash
+RELEASE_URL="https://github.com/jon890/dooray-cli/releases/tag/v<version>"
+for n in <이슈번호 목록>; do
+  gh issue close $n --comment "v<version>에서 구현 완료되어 close합니다. ${RELEASE_URL}"
+done
+```
+
+각 close에 release 링크 코멘트 첨부 — 이슈에서 release notes로 즉시 이동 가능.
+
+**close 금지 케이스**:
+- 후속 작업이 남은 이슈 (예: MVP만 구현되고 추가 옵션 후속)
+- 이슈 본문 범위와 구현 범위가 부분적으로만 일치
+→ 이런 케이스는 close 대신 **comment**로 진행 상황만 기록 + 이슈 open 유지
+
 ## 주의사항
 
 - **빌드 실패 시 릴리스하지 않는다**
 - **README/스킬 문서 동기화 누락 시**: 사용자에게 보고하고 보완 commit 후 진행 (사용자가 명시적으로 건너뛰기를 동의하지 않는 한)
 - **npm publish는 사용자가 직접 OTP를 입력해야 한다**
 - 이전 태그를 force-update하지 않는다 (새 태그만 생성)
+- **이슈 close는 publish 완료 후에만** — npm publish 실패하면 release는 미완성, close 보류
