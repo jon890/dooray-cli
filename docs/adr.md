@@ -10,7 +10,7 @@
 - npm 생태계로 `npx @bifos/dooray-cli` 즉시 배포 가능
 - CLI 툴 생태계(Commander, chalk, ora 등)가 Node.js에서 가장 성숙
 
-**트레이드오프**: Kotlin API 클라이언트 재사용 포기 → types.ts로 포팅 필요 (1일 내 완료 가능)
+**대안 기각**: Kotlin MCP 서버 코드 재사용 포기 → 다른 ADR과 형식 일관성 확보. types.ts 포팅 비용은 1일 내라 상쇄 가능.
 
 ---
 
@@ -219,14 +219,7 @@
 - `dooray setup`은 언제든 재실행 가능, config 미설정 시 안내 메시지로 유도
 - 재실행 시 기존 설정값을 기본값으로 표시하여 부분 수정 가능
 
-**플로우**:
-
-1. 테넌트명 입력 (기본값: `nhnent`) — API Key 발급 링크·메일 설정 링크 생성에 사용
-2. API Endpoint 선택 (4개 환경: 민간·공공·공공업무망·금융, 기본: 민간)
-3. API Key 입력 (마스킹, 발급 링크 안내)
-4. API 연결 테스트 → 실패 시 재입력 유도
-5. 메일 사용 여부 → Y: IMAP 계정·비밀번호 입력 / n: 건너뛰기
-6. 전체 입력 완료 후 config.json에 한 번에 저장 (all-or-nothing)
+**플로우**: 세부 단계는 `docs/flow.md` "최초 설정 — `dooray setup`" 섹션 참조.
 
 **라이브러리**: `@inquirer/prompts` — 선택(select), 입력(input), 비밀번호(password), 확인(confirm) 프롬프트 지원. tsup CJS 번들 호환성 확인 필요.
 
