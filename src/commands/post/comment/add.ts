@@ -7,6 +7,10 @@ import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { readBodyInputOrNull } from "../../../utils/body-input.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { printJson } from "../../../formatters/table.js";
+import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js";
+import { resolveMemberGroup } from "../../../resolvers/member-group.js";
+import { ensureMe } from "../../../resolvers/me.js";
+import { prependMentions } from "../../../utils/mention.js";
 
 export const commentAddCommand = new Command("add")
   .description("댓글 추가")
@@ -16,6 +20,18 @@ export const commentAddCommand = new Command("add")
   .option("--url <url>", "Dooray 업무 URL (project/post-number 대신)")
   .option("--body <text>", "댓글 본문 (- 입력 시 stdin에서 읽기)")
   .option("--body-file <path>", "본문 파일 경로 (- 입력 시 stdin에서 읽기)")
+  .option(
+    "--mention <name>",
+    "멤버 멘션 (반복 가능, 이름 부분일치)",
+    (value: string, prev: string[]) => [...prev, value],
+    [] as string[],
+  )
+  .option(
+    "--mention-group <code>",
+    "그룹 멘션 (반복 가능, code 부분일치)",
+    (value: string, prev: string[]) => [...prev, value],
+    [] as string[],
+  )
   .action(async (project, postNumberStr, opts) => {
     const globalOpts = commentAddCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
@@ -32,12 +48,36 @@ export const commentAddCommand = new Command("add")
     }
 
     startSpinner("댓글 추가 중...");
-    const { projectId, postId } = await resolvePostInput(client, {
+    const { projectId, postId, projectCode } = await resolvePostInput(client, {
       projectArg: project,
       postNumberArg: postNumberStr,
       idOpt: opts.id,
       urlOpt: opts.url,
     });
+
+    const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
+    const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);
+
+    if (mentionInputs.length > 0 || groupInputs.length > 0) {
+      const me = await ensureMe(client);
+      const memberIds = await Promise.all(
+        mentionInputs.map((name) => resolveMember(client, projectId, name)),
+      );
+      const nameMap = await buildMemberNameMap(client, projectId);
+      const members = memberIds.map((memberId) => ({
+        memberId,
+        name: nameMap.get(memberId) ?? memberId,
+      }));
+
+      const groups = await Promise.all(
+        groupInputs.map(async (code) => {
+          const g = await resolveMemberGroup(client, projectId, code);
+          return { groupId: g.id, code: g.code, projectCode };
+        }),
+      );
+      bodyContent = prependMentions(bodyContent, members, groups, me);
+    }
+
     const res = await client.createPostComment(projectId, postId, {
       body: { mimeType: "text/x-markdown", content: bodyContent },
     });

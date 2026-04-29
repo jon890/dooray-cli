@@ -29,7 +29,7 @@ src/
     types.ts                # 모든 API 요청/응답 타입
 
   resolvers/
-    me.ts                   # /common/v1/members/me → CachedMe
+    me.ts                   # /common/v1/members/me → CachedMe (id·name·orgId; orgId 없으면 캐시 갱신)
     project.ts              # code·id → projectId
     member.ts               # name → organizationMemberId + lookupMemberName / buildMemberNameMap (ADR-021)
     workflow.ts             # name·class → workflowId
@@ -67,6 +67,7 @@ src/
     body-input.ts           # --body / --body-file → string (stdin "-" + 충돌 가드)
     dooray-url.ts           # https://*.dooray.com/task/to/<postId> URL parser (ADR-020)
     comment-enrich.ts       # PostComment[] Creator 이름 채우기 (ADR-021, immutable)
+    mention.ts              # 멤버·그룹 멘션 마크업 빌더 + prependMentions (Issue #25)
 
   commands/
     setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)

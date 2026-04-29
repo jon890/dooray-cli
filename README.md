@@ -118,6 +118,32 @@ dooray post comment add tc-ocr 42 --body-file ./comment.md
 
 > table 출력의 Creator 컬럼은 프로젝트 멤버 캐시로 자동 enrich되며, `--json`은 raw 응답을 유지한다 (ADR-021).
 
+#### 멘션 (comment add / comment edit)
+
+`--mention <name>` (반복), `--mention-group <code>` (반복)으로 본문 앞에 멘션 마크업을 자동 prepend한다.
+
+```bash
+# 멤버 멘션 1명
+dooray post comment add P 1 --mention 홍길동 --body "확인 부탁드립니다"
+
+# 여러 명
+dooray post comment add P 1 --mention 홍길동 --mention 김철수 --body "..."
+
+# 그룹 멘션
+dooray post comment add P 1 --mention-group 개발 --body "검토 요청"
+
+# 멤버 + 그룹 혼합
+dooray post comment add P 1 \
+  --mention 홍길동 \
+  --mention-group 개발 \
+  --body "검토 부탁드립니다"
+
+# comment edit에도 동일 옵션 사용 가능
+dooray post comment edit P 1 <commentId> --mention 홍길동 --body "수정 내용"
+```
+
+> 이전 버전 캐시는 orgId가 없으므로 첫 호출 시 자동 갱신됩니다 (또는 `dooray cache clear`).
+
 #### comment list 필터 옵션
 
 ```bash

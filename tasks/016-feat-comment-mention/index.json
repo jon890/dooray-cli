@@ -2,8 +2,8 @@
   "name": "016-feat-comment-mention",
   "description": "Issue #25 — `post comment add/edit`에 `--mention <name>` (반복) + `--mention-group <code>` (반복) 옵션 추가. 이름→ID resolve + Dooray markdown 형식으로 본문 앞 prepend. orgId는 me 캐시에 저장(getMe.defaultOrganization.id 활용), 본인 vs 타인은 me ID 매칭으로 자동 분기. 014 member-group 캐시 + 012 member resolver 재활용.",
   "created_at": "2026-04-29T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "completed",
+  "current_phase": 3,
   "total_phases": 3,
   "error_message": null,
   "blocked_reason": null,
@@ -12,23 +12,23 @@
       "number": 1,
       "title": "API/types/cache — MeDetail.defaultOrganization + CachedMe.orgId + resolveMemberGroup",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "mention helper + comment add/edit 옵션 통합 + 단위 테스트",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 3,
       "title": "README/SKILL.md + 빌드/시나리오 검증 + task 완료",
       "file": "phase-03.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-04-29T00:00:00Z"
+  "updated_at": "2026-04-29T08:14:45Z"
 }

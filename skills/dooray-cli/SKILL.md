@@ -261,6 +261,19 @@ dooray post comment latest <project> <number>
 
 ---
 
+## 멘션 자동 작성 (post comment add/edit)
+
+`--mention <name>` (반복) 또는 `--mention-group <code>` (반복)으로 본문 앞에 멘션 마크업을 자동 prepend한다. 아래 "Dooray 마크다운 링크 형식" 섹션의 URL 형식을 자동 출력한다.
+
+```bash
+dooray post comment add P 1 --mention 홍길동 --mention-group 개발 --body "..."
+# 결과 본문: [@홍길동](dooray://orgId/members/m1 "member") [@P/개발](dooray://orgId/member-groups/g1) ...
+```
+
+- 이름 부분일치 지원 (모호하면 에러 + 후보 목록 출력)
+- 멤버 먼저, 그룹 다음 순서 고정
+- comment edit에도 동일 옵션 사용 (`$EDITOR` 모드에서는 EDITOR 진입 전에 prepend)
+
 ## Dooray 마크다운 링크 형식 (멤버·그룹·업무 멘션)
 
 댓글/본문 작성 시 다음 형식으로 마크업하면 Dooray 앱이 인식해 inline 멘션·navigation으로 렌더링한다. ID는 본인 환경 값으로 채워 사용 — `dooray member get` / `project groups` / `post get` 등으로 조회.
