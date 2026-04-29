@@ -98,6 +98,25 @@ grep -nE "<신규 옵션|신규 명령>" skills/dooray-cli/SKILL.md
 
 **버그 수정/리팩토링만 있는 릴리스**라면 본 단계는 통과 가능 — 사용자에게 그 사실을 명시하고 진행.
 
+#### 3.5. PII / 사내 식별자 노출 검증 (필수, 실패 시 중단)
+
+CLAUDE.md "PII / 사내 식별자 노출 금지" 섹션과 동일 grep:
+
+```bash
+# cwd: <repo root>
+grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com|kim@example\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
+# 0건이어야 release 진행
+
+grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|<postId>|<pageId>"
+# 0건이어야 release 진행
+```
+
+**히트가 있으면**:
+- 사용자에게 즉시 보고 + 위치 노출
+- placeholder(`<project>`/`<tenant>`/`<postId>` 등) 또는 dummy 패턴(1234567890123456789)으로 교체 후 보완 commit
+- 보완 commit 후 grep 재실행 → 0건 확인 후 다음 단계 진행
+- **사용자가 "내부 사용 OK"로 명시 동의하지 않는 한 release 차단**
+
 ### 4. 버전 범프
 
 - `package.json`의 `version` 필드를 `<version>`으로 변경

@@ -543,7 +543,7 @@ tasks/                     # task 파일들이 위치할 디렉터리
 "파일 다운로드 기능이 잘 동작하면 완료"
 
 # GOOD — 기계적 완료 조건
-"pnpm run build 성공 + dooray post file download tc-ocr 454 <file-id> 실행 시 파일 저장됨"
+"pnpm run build 성공 + dooray post file download <project> 454 <file-id> 실행 시 파일 저장됨"
 ```
 
 에이전트는 "잘 동작하는지"를 판단할 수 없지만, "빌드 성공 여부"와 "명령 실행 결과"는 판단할 수 있습니다.

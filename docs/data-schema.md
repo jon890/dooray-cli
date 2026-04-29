@@ -19,7 +19,7 @@
 ```typescript
 interface Config {
   version: 1;
-  tenantName?: string;     // 회사 테넌트명 (e.g. "nhnent"), 기본값: "nhnent"
+  tenantName?: string;     // 회사 테넌트명 (e.g. "<tenant>"), 기본값: "<tenant>"
   apiKey: string;          // Dooray API 토큰
   baseUrl: string;         // API Endpoint, 4개 환경 중 택 1
   imapHost?: string;       // 기본값: "imap.dooray.com"

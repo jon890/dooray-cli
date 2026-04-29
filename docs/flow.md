@@ -7,18 +7,18 @@
 ```
 dooray setup
 
-? 회사 테넌트명을 입력하세요 (Dooray 접속 URL에서 확인: https://{tenant}.dooray.com) (nhnent)
+? 회사 테넌트명을 입력하세요 (Dooray 접속 URL에서 확인: https://{tenant}.dooray.com) (<tenant>)
 ? API Endpoint를 선택하세요 (화살표로 선택)
 ❯ 민간 클라우드      https://api.dooray.com
   공공 클라우드      https://api.gov-dooray.com
   공공 업무망 클라우드 https://api.gov-dooray.co.kr
   금융 클라우드      https://api.dooray.co.kr
-? API Key를 입력하세요 (발급: https://nhnent.dooray.com/setting/api/token) ****
+? API Key를 입력하세요 (발급: https://<tenant>.dooray.com/setting/api/token) ****
 
 ✓ API 연결 성공 (홍길동)
 
 ? 메일 기능을 사용하시겠습니까? (Y/n) Y
-? IMAP 사용자 이메일 (설정 확인: https://nhnent.dooray.com/setting/mail/general/read) user@nhn.com
+? IMAP 사용자 이메일 (설정 확인: https://<tenant>.dooray.com/setting/mail/general/read) user@example.com
 ? IMAP 비밀번호 ****
 
 ? Claude Code 스킬을 설치하시겠습니까? (Y/n) Y
@@ -28,7 +28,7 @@ dooray setup
 ```
 
 플로우:
-1. 테넌트명 입력 (기본값: `nhnent`) → API Key 발급·메일 설정 링크에 자동 반영
+1. 테넌트명 입력 (기본값: `<tenant>`) → API Key 발급·메일 설정 링크에 자동 반영
 2. API Endpoint 선택 (4개 환경 중 택 1, 기본: 민간)
 3. API Key 입력 (마스킹, 발급 링크 안내)
 4. API 연결 테스트 → 실패 시 재입력 유도
@@ -97,7 +97,7 @@ subject: 현재 제목
 priority: normal
 due_date: 2026-04-30T18:00:00+09:00
 to:
-  - kim@nhnent.com
+  - user@example.com
 cc: []
 ---
 본문 마크다운...

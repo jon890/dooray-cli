@@ -285,7 +285,7 @@
 
 **이유**:
 
-- mandatory-tag 정책 프로젝트(예: `tc-ocr`)에서 CLI로 단 한 건의 업무도 생성 불가 → 차단 이슈 (Issue #18)
+- mandatory-tag 정책 프로젝트(예: `<project>`)에서 CLI로 단 한 건의 업무도 생성 불가 → 차단 이슈 (Issue #18)
 - ID 직접 입력 미지원: 사용자가 ID를 손에 들고 있는 흐름은 거의 없음. 이름 lookup만으로 단순화. 단 `--parent`만 raw postId 허용 — 부모 업무가 다른 프로젝트 또는 번호 미상일 수 있어
 - `--workflow` 실패시 exit 0: 업무 ID는 이미 발급됨. CI는 `--json`으로 후처리 가능. 전체 실패 처리하면 사용자가 두 번 만들 위험
 - 클라이언트 mandatory 검증: 캐시된 `tagGroup` 정보로 무료 제공. API의 `USER_INVALID_TAG_MANDATORY_PREFIX` 에러보다 친절한 메시지 (어느 그룹이 누락인지 명시)
@@ -345,9 +345,9 @@
 
 **대안 기각**:
 
-- positional 단일 `<ref>` 통합 (`tc-ocr/337` | postId | URL): 기존 `<project> <post-number>` 두 인자 깨지는 breaking — 영향 범위 너무 큼
+- positional 단일 `<ref>` 통합 (`<project>/337` | postId | URL): 기존 `<project> <post-number>` 두 인자 깨지는 breaking — 영향 범위 너무 큼
 - positional 1개 numeric을 postId로 자동 인식: postId 길이 변경 시 휴리스틱 깨짐. 19자리 임계는 임의값. → URL 또는 명시 옵션만 인정
-- sub-id를 인자 개수로 분기: `comment edit tc-ocr cmt-abc`(post-number 누락) 같은 사용자 실수에 모호한 에러 발생. 옵션화가 안전
+- sub-id를 인자 개수로 분기: `comment edit <project> cmt-abc`(post-number 누락) 같은 사용자 실수에 모호한 에러 발생. 옵션화가 안전
 - `node:test` 빌트인 사용: deps 0 장점은 있으나 mocking·watch·향후 코드 확장성에서 vitest 우위
 
 **테스트 인프라**:

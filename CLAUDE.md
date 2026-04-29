@@ -120,6 +120,35 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - 복잡한 비교가 필요한 질문은 옵션마다 `preview` (ASCII 다이어그램·코드 스니펫)로 시각화하여 답변 부담 최소화
 - "당연히 그렇게 가는" 결정(예: 기존 패턴 답습, 변경 없음)은 굳이 묻지 말고 본문에 "권장: 그대로" 한 줄로 처리. 진짜 분기가 있는 사항만 `AskUserQuestion`
 
+## PII / 사내 식별자 노출 금지 (public OSS)
+
+이 repo는 GitHub public이므로 다음 식별자는 **README/skills/docs/CLAUDE.md/이슈 본문 어디에도 노출 금지**. 코드 예시·시나리오·issue body 작성 시 항상 placeholder 사용.
+
+| 노출 금지 | 대체 |
+|---|---|
+| 사내 Dooray 프로젝트 코드 (예: `tc-ocr`) | `<project>` |
+| NHN 도메인 (`nhnent`, `nhn.com`, `nhnent.com`, `nhn-comico` 등) | `<tenant>` / `example.com` |
+| 사내 이메일 (`*@nhn*.com`, `*@example.com` 사용 사외) | `user@example.com` |
+| 실제 19자리 numeric ID (postId/pageId/memberId/projectId/groupId) | `<postId>` / `<pageId>` / `<memberId>` 등 |
+| 실명 (사용자 본인 + 동료 한국어 이름) | `<사용자A>` 또는 가상 이름(`홍길동`/`김철수`) — 가상은 OK |
+| Dooray orgId (실제 19자리) | `<orgId>` |
+
+**검증 grep** (commit/이슈 작성/release 전 실행):
+
+```bash
+# cwd: <repo root>
+grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com|kim@example\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
+# 0건이어야 함
+
+# 19자리 numeric (단 doc 예시의 dummy 패턴 1234567890123456789, 9876543210987654321은 OK)
+grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|<postId>|<pageId>"
+# 0건이어야 함 (남으면 실제값 가능성 — 검토 후 placeholder 또는 dummy로 교체)
+```
+
+**자동화**: `/release` 스킬 Step 3(문서 동기화)에 PII gate 통합 — release 전 자동 검증.
+
+**예외**: 사용자가 명시적으로 "내부 wiki라 OK" 등 동의한 경우만. 디폴트는 placeholder.
+
 ## Task 작업 규칙
 
 - 각 phase는 **원자적 단일 책임** — 다른 관심사면 별도 phase로 분리. **작업 항목 5개 이하** 엄수

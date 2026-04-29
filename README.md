@@ -37,10 +37,10 @@ dooray doctor
 dooray project list                        # 프로젝트 목록 (기본: public)
 dooray project list --search ocr           # 코드로 검색
 dooray project list --type private         # 개인 프로젝트 목록
-dooray project members tc-ocr              # 멤버 목록
-dooray project workflows tc-ocr            # 워크플로우 목록
-dooray project groups tc-ocr              # 멤버 그룹 목록 (ID / Code)
-dooray project tags tc-ocr                # 태그 목록 (ID / Color / Name / Group / Mandatory)
+dooray project members <project>              # 멤버 목록
+dooray project workflows <project>            # 워크플로우 목록
+dooray project groups <project>              # 멤버 그룹 목록 (ID / Code)
+dooray project tags <project>                # 태그 목록 (ID / Color / Name / Group / Mandatory)
 ```
 
 > **태그 캐시 갱신**: 이전 버전에서 캐시한 태그가 색상 없이 표시되면 `dooray cache clear` 실행 후 다시 조회하세요.
@@ -48,26 +48,26 @@ dooray project tags tc-ocr                # 태그 목록 (ID / Color / Name / G
 ### 멤버
 
 ```bash
-dooray member list tc-ocr                  # 프로젝트 멤버 목록 (이름·organizationMemberId)
+dooray member list <project>                  # 프로젝트 멤버 목록 (이름·organizationMemberId)
 dooray member get <organizationMemberId>   # 멤버 상세 (cache 우회, ADR-021)
 ```
 
 ### 업무
 
 ```bash
-dooray post list tc-ocr                    # 업무 목록 (최신순)
-dooray post search tc-ocr "키워드"          # 제목 검색
-dooray post get tc-ocr 42                  # 업무 상세
-dooray post get tc-ocr 42 --json           # JSON 출력
+dooray post list <project>                    # 업무 목록 (최신순)
+dooray post search <project> "키워드"          # 제목 검색
+dooray post get <project> 42                  # 업무 상세
+dooray post get <project> 42 --json           # JSON 출력
 ```
 
 #### 업무 식별 방식 (post 하위 12개 명령 공통)
 
 | 방식 | 예시 |
 |---|---|
-| `<project> <number>` | `dooray post get tc-ocr 42` |
-| Dooray URL positional | `dooray post get https://x.dooray.com/task/to/4319587406666362045` |
-| `--id <postId>` | `dooray post get --id 4319587406666362045` |
+| `<project> <number>` | `dooray post get <project> 42` |
+| Dooray URL positional | `dooray post get https://x.dooray.com/task/to/<postId>` |
+| `--id <postId>` | `dooray post get --id <postId>` |
 | `--url <url>` | `dooray post get --url https://x.dooray.com/task/to/...` |
 
 대상: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`. AI 에이전트는 사용자 메시지의 Dooray URL을 그대로 첫 인자로 전달하면 가장 빠르다 (ADR-020).
@@ -75,45 +75,45 @@ dooray post get tc-ocr 42 --json           # JSON 출력
 ### 업무 생성
 
 ```bash
-dooray post create tc-ocr \
+dooray post create <project> \
   --title "업무 제목" \
   --body "본문 마크다운" \
   --to "담당자이름" \
   --priority normal
 
 # 본문을 파일에서 읽기 (--body와 --body-file은 동시 사용 불가)
-dooray post create tc-ocr --title "업무 제목" --body-file ./content.md
+dooray post create <project> --title "업무 제목" --body-file ./content.md
 
 # 메타 옵션: --tag(반복) / --parent / --workflow / --milestone
-dooray post create tc-ocr \
+dooray post create <project> \
   --title "업무 제목" --body "본문" --to "담당자이름" \
   --tag "버그" --tag "긴급" \
-  --parent "tc-ocr/337" \
+  --parent "<project>/337" \
   --workflow "진행 중" \
   --milestone "Sprint 12"
 ```
 
-> mandatory-tag 정책 프로젝트(예: `tc-ocr`)에서는 mandatory 그룹마다 1개 이상 `--tag`로 지정해야 한다. 누락 시 클라이언트가 사전 검증으로 후보 목록과 함께 에러 출력.
+> mandatory-tag 정책 프로젝트(예: `<project>`)에서는 mandatory 그룹마다 1개 이상 `--tag`로 지정해야 한다. 누락 시 클라이언트가 사전 검증으로 후보 목록과 함께 에러 출력.
 
 ### 업무 수정
 
 ```bash
 # 대화형 ($EDITOR)
-dooray post edit tc-ocr 42
+dooray post edit <project> 42
 
 # 비대화형 (AI 에이전트 친화)
-dooray post edit tc-ocr 42 --title "새 제목" --body "새 본문"
+dooray post edit <project> 42 --title "새 제목" --body "새 본문"
 
 # 본문을 파일에서 읽기
-dooray post edit tc-ocr 42 --body-file ./updated.md
+dooray post edit <project> 42 --body-file ./updated.md
 ```
 
 ### 댓글
 
 ```bash
-dooray post comment list tc-ocr 42
-dooray post comment add tc-ocr 42 --body "댓글 내용"
-dooray post comment add tc-ocr 42 --body-file ./comment.md
+dooray post comment list <project> 42
+dooray post comment add <project> 42 --body "댓글 내용"
+dooray post comment add <project> 42 --body-file ./comment.md
 ```
 
 > table 출력의 Creator 컬럼은 프로젝트 멤버 캐시로 자동 enrich되며, `--json`은 raw 응답을 유지한다 (ADR-021).
@@ -148,18 +148,18 @@ dooray post comment edit P 1 <commentId> --mention 홍길동 --body "수정 내�
 
 ```bash
 # 최신 5개 (desc 정렬)
-dooray post comment list tc-ocr 42 --latest 5
+dooray post comment list <project> 42 --latest 5
 
 # 특정 시간 이후 댓글만
-dooray post comment list tc-ocr 42 --since 2026-04-27
+dooray post comment list <project> 42 --since 2026-04-27
 
 # 작성자 이름으로 필터 (부분일치)
-dooray post comment list tc-ocr 42 --from-author 홍길동
+dooray post comment list <project> 42 --from-author 홍길동
 
 # 오름차순 / 내림차순 정렬
-dooray post comment list tc-ocr 42 --sort asc
-dooray post comment list tc-ocr 42 --sort desc
-dooray post comment list tc-ocr 42 --reverse   # --sort desc alias
+dooray post comment list <project> 42 --sort asc
+dooray post comment list <project> 42 --sort desc
+dooray post comment list <project> 42 --reverse   # --sort desc alias
 ```
 
 #### comment latest
@@ -168,10 +168,10 @@ dooray post comment list tc-ocr 42 --reverse   # --sort desc alias
 
 ```bash
 # 최신 댓글 1개
-dooray post comment latest tc-ocr 42
+dooray post comment latest <project> 42
 
 # 최신 3개
-dooray post comment latest tc-ocr 42 -n 3
+dooray post comment latest <project> 42 -n 3
 
 # URL로도 가능
 dooray post comment latest --url <dooray-url>
@@ -180,20 +180,20 @@ dooray post comment latest --url <dooray-url>
 ### 상태 변경
 
 ```bash
-dooray post done tc-ocr 42                 # 완료 처리
-dooray post workflow tc-ocr 42 "진행 중"    # 워크플로우 변경
+dooray post done <project> 42                 # 완료 처리
+dooray post workflow <project> 42 "진행 중"    # 워크플로우 변경
 ```
 
 ### 위키
 
 ```bash
 dooray wiki list                           # 위키 목록
-dooray wiki pages tc-ocr                   # 페이지 목록
-dooray wiki page get tc-ocr <page-id>      # 페이지 상세
-dooray wiki page create tc-ocr --title "..." [--parent <page-id>] [--body "..." | --body-file <path>]
-dooray wiki page edit tc-ocr <page-id> --title "새 제목"                   # 제목만 (비대화형)
-dooray wiki page edit tc-ocr <page-id> --body "..." | --body-file <path>  # 본문만 (비대화형)
-dooray wiki page edit tc-ocr <page-id>                                     # $EDITOR (플래그 없을 때)
+dooray wiki pages <project>                   # 페이지 목록
+dooray wiki page get <project> <page-id>      # 페이지 상세
+dooray wiki page create <project> --title "..." [--parent <page-id>] [--body "..." | --body-file <path>]
+dooray wiki page edit <project> <page-id> --title "새 제목"                   # 제목만 (비대화형)
+dooray wiki page edit <project> <page-id> --body "..." | --body-file <path>  # 본문만 (비대화형)
+dooray wiki page edit <project> <page-id>                                     # $EDITOR (플래그 없을 때)
 ```
 
 ### 메일
@@ -263,8 +263,8 @@ dooray post comment delete --url <url> --comment-id <commentId>
 
 ```bash
 # 파이프라인 예시
-dooray post list tc-ocr --json | jq '.[] | select(.priority == "high")'
-dooray post list tc-ocr --quiet | xargs -I{} dooray post done tc-ocr {}
+dooray post list <project> --json | jq '.[] | select(.priority == "high")'
+dooray post list <project> --quiet | xargs -I{} dooray post done <project> {}
 ```
 
 ## AI 에이전트 연동

@@ -121,11 +121,11 @@ CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI �
 
 ```bash
 # 1. 업무 검색으로 번호 확인
-dooray post search tc-ocr "graceful shutdown" --json
+dooray post search <project> "graceful shutdown" --json
 # → [{ "number": 42, "subject": "graceful shutdown 구현", ... }]
 
 # 2. 완료 처리
-dooray post done tc-ocr 42
+dooray post done <project> 42
 ```
 
 ### 프로젝트 찾아서 업무 생성
@@ -146,21 +146,21 @@ dooray post create ai-service-dev \
 
 ```bash
 # 1. 업무 조회
-dooray post get tc-ocr 42 --json
+dooray post get <project> 42 --json
 
 # 2. 댓글 추가
-dooray post comment add tc-ocr 42 --body "진행 상황 업데이트: 80% 완료"
+dooray post comment add <project> 42 --body "진행 상황 업데이트: 80% 완료"
 ```
 
 ### 위키 페이지 조회
 
 ```bash
 # 1. 위키 페이지 목록
-dooray wiki pages tc-ocr --json
-# → [{ "id": "3052841366755571094", "subject": "설계 문서", ... }]
+dooray wiki pages <project> --json
+# → [{ "id": "<pageId>", "subject": "설계 문서", ... }]
 
 # 2. 페이지 내용 조회
-dooray wiki page get tc-ocr 3052841366755571094 --json
+dooray wiki page get <project> <pageId> --json
 ```
 
 ---
@@ -173,16 +173,16 @@ dooray wiki page get tc-ocr 3052841366755571094 --json
 
 ```bash
 # (1) 기존 positional — 가장 익숙한 형태
-dooray post get tc-ocr 42
+dooray post get <project> 42
 
 # (2) Dooray URL을 첫 인자로 — 사용자 메시지에서 URL을 그대로 복사할 때 최적
-dooray post get https://x.dooray.com/task/to/4319587406666362045
+dooray post get https://x.dooray.com/task/to/<postId>
 
 # (3) --id <postId>
-dooray post get --id 4319587406666362045
+dooray post get --id <postId>
 
 # (4) --url <url>
-dooray post get --url https://x.dooray.com/task/to/4319587406666362045
+dooray post get --url https://x.dooray.com/task/to/<postId>
 ```
 
 **우선순위 / 충돌 규칙**: `--id`+`--url` 동시 지정 → 에러. `--id`/`--url`+positional 동시 지정 → 에러. URL/`--id`/`--url` 모드는 standalone API(`getPost(postId)`)로 resolve 단계를 단축.
@@ -214,7 +214,7 @@ dooray post create <project> \
   --priority normal \           # highest, high, normal, low, lowest
   --due-date "2026-04-30T18:00:00+09:00" \
   --tag "버그" --tag "긴급" \   # 반복 지정. mandatory 그룹은 클라이언트 사전 검증
-  --parent "tc-ocr/337" \       # "code/number" 또는 raw postId 두 형태만 허용
+  --parent "<project>/337" \       # "code/number" 또는 raw postId 두 형태만 허용
   --workflow "진행 중" \         # 이름 또는 class (registered/working/closed). 부분일치 모호 시 후보 + 에러
   --milestone "Sprint 12"
 ```
