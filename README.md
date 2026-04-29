@@ -118,6 +118,39 @@ dooray post comment add tc-ocr 42 --body-file ./comment.md
 
 > table 출력의 Creator 컬럼은 프로젝트 멤버 캐시로 자동 enrich되며, `--json`은 raw 응답을 유지한다 (ADR-021).
 
+#### comment list 필터 옵션
+
+```bash
+# 최신 5개 (desc 정렬)
+dooray post comment list tc-ocr 42 --latest 5
+
+# 특정 시간 이후 댓글만
+dooray post comment list tc-ocr 42 --since 2026-04-27
+
+# 작성자 이름으로 필터 (부분일치)
+dooray post comment list tc-ocr 42 --from-author 홍길동
+
+# 오름차순 / 내림차순 정렬
+dooray post comment list tc-ocr 42 --sort asc
+dooray post comment list tc-ocr 42 --sort desc
+dooray post comment list tc-ocr 42 --reverse   # --sort desc alias
+```
+
+#### comment latest
+
+최신 댓글 1개(또는 N개)를 빠르게 조회한다.
+
+```bash
+# 최신 댓글 1개
+dooray post comment latest tc-ocr 42
+
+# 최신 3개
+dooray post comment latest tc-ocr 42 -n 3
+
+# URL로도 가능
+dooray post comment latest --url <dooray-url>
+```
+
 ### 상태 변경
 
 ```bash
