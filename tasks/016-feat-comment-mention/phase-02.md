@@ -104,6 +104,10 @@ describe("prependMentions", () => {
   it("멘션 없으면 본문 그대로", () => {
     expect(prependMentions("본문", [], [], ME)).toBe("본문");
   });
+  it("빈 본문 + 멘션만 → trailing 공백", () => {
+    expect(prependMentions("", [{ memberId: "200", name: "A" }], [], ME))
+      .toBe('[@A](dooray://1/members/200 "member") ');
+  });
   it("멤버만 또는 그룹만도 동작", () => {
     expect(prependMentions("X", [{ memberId: "100", name: "본인" }], [], ME))
       .toBe('[@본인](dooray://1/members/100 "me") X');
@@ -128,7 +132,7 @@ describe("prependMentions", () => {
 기존 흐름 (`bodyContent` 결정 → `resolvePostInput` → `createPostComment`) 사이에 mention 처리 끼워넣기:
 
 ```ts
-import { resolveMember } from "../../../resolvers/member.js";
+import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js";
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";
 import { ensureMe } from "../../../resolvers/me.js";
 import { prependMentions } from "../../../utils/mention.js";
@@ -149,25 +153,30 @@ import { prependMentions } from "../../../utils/mention.js";
 .action(async (project, postNumberStr, opts) => {
   // 기존 config/client/bodyContent 흐름 그대로
 
-  // bodyContent 결정 후, resolvePostInput 후, createPostComment 직전에:
+  // bodyContent 결정 후, resolvePostInput 결과 destructure 시 projectCode 함께 추출:
+  const { projectId, postId, projectCode } = await resolvePostInput(client, { ... });
+
+  // createPostComment 직전에:
   const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
   const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);
 
   if (mentionInputs.length > 0 || groupInputs.length > 0) {
     const me = await ensureMe(client);
-    const members = await Promise.all(
-      mentionInputs.map(async (name) => {
-        const memberId = await resolveMember(client, projectId, name);
-        // resolveMember는 ID만 반환 — name은 입력값 그대로 마크업 표시
-        return { memberId, name };
-      }),
+    // 1차: 입력 → memberId resolve
+    const memberIds = await Promise.all(
+      mentionInputs.map((name) => resolveMember(client, projectId, name)),
     );
-    // 그룹 코드 resolve — projectCode는 입력값(부분일치 매칭된 code)으로 표시
+    // 2차: id → 정식 name lookup (사용자 입력이 부분일치 raw일 수 있음 → 정식 표시명으로 정규화)
+    const nameMap = await buildMemberNameMap(client, projectId, memberIds);
+    const members = memberIds.map((memberId) => ({
+      memberId,
+      name: nameMap.get(memberId) ?? memberId,
+    }));
+
     const groups = await Promise.all(
       groupInputs.map(async (code) => {
         const g = await resolveMemberGroup(client, projectId, code);
-        // projectCode는 명령 첫 인자 또는 resolvePostInput.projectCode (011 결과)
-        return { groupId: g.id, code: g.code, projectCode: resolved.projectCode };
+        return { groupId: g.id, code: g.code, projectCode };
       }),
     );
     bodyContent = prependMentions(bodyContent, members, groups, me);
@@ -177,13 +186,35 @@ import { prependMentions } from "../../../utils/mention.js";
 });
 ```
 
-> `resolved.projectCode`: `resolvePostInput`(011) 반환값에 `projectCode` 있는지 확인. 없으면 `resolveProject` 결과 또는 첫 positional 그대로 사용. 본 phase 작성 시 phase 1과 011 산출물 시그니처 정확히 점검.
+> `resolvePostInput.ResolvedPostInput.projectCode` 존재 확인됨 (`src/resolvers/post-input.ts:18`). destructure만 추가.
+> `buildMemberNameMap`은 `src/resolvers/member.ts:89`에 존재 — `ensureMembers` 캐시를 한 번에 활용 (네트워크 추가 호출 없음).
 
 ### 3) `src/commands/post/comment/edit.ts` — 동일 패턴
 
-`add.ts`와 같이 옵션 추가 + body 결정 직후 prepend. 기존 `--title`/`--body`/`--body-file` 흐름은 무변경. edit가 `--body` 미지정 시 기존 본문 fetch하는 흐름이 있으면, fetch된 본문 앞에 prepend (사용자 의도: "기존 본문에 멘션 추가").
+`add.ts`와 같이 옵션 추가. edit는 두 분기:
 
-> edit 본문 fetch 흐름 정확한 형태는 코드 확인 후 결정.
+- **`--body`/`--body-file` 모드** (`readBodyInputOrNull`이 non-null 반환): `edited` 결정 직후 `prependMentions`로 앞에 prepend. add.ts와 동일 패턴.
+- **`$EDITOR` 모드** (`readBodyInputOrNull`이 null → `comment.body.content`로 `original` 채움): **`openInEditor(original)` 호출 직전에** `original`에 prepend. 사용자가 EDITOR에서 멘션 마크업을 직접 보고 편집할 수 있도록.
+
+```ts
+let edited = await readBodyInputOrNull(opts);
+
+// 멘션 옵션 처리 (add.ts와 동일하게 me/members/groups 준비)
+const mentionPrefix = (members.length > 0 || groups.length > 0)
+  ? prependMentions("", members, groups, me).trimEnd()
+  : "";
+
+if (edited == null) {
+  let original = comment.body.content;
+  if (mentionPrefix) original = mentionPrefix + " " + original;
+  edited = await openInEditor(original);
+  if (original === edited) { /* 변경사항 없음 */ }
+} else if (mentionPrefix) {
+  edited = mentionPrefix + " " + edited;
+}
+```
+
+> `prependMentions(body="")` 결과는 `"{mentions} "` (trailing 공백) — `trimEnd()`로 한 번 정리. 빈 본문 + 멘션만인 케이스도 일관된 출력.
 
 ### 4) commander option key 점검
 
@@ -199,14 +230,15 @@ import { prependMentions } from "../../../utils/mention.js";
 - [ ] `node dist/index.js post comment add --help` → `--mention`, `--mention-group` 노출
 - [ ] `node dist/index.js post comment edit --help` → 동일
 - [ ] `grep -c "buildMemberMention\|buildGroupMention\|prependMentions" src/utils/mention.ts` → 3 이상
-- [ ] `grep -c "ensureMe\|resolveMemberGroup\|resolveMember" src/commands/post/comment/{add,edit}.ts` → 6 이상 (각 명령에 3개씩)
+- [ ] `grep -c "ensureMe\|resolveMemberGroup\|resolveMember\|buildMemberNameMap" src/commands/post/comment/add.ts src/commands/post/comment/edit.ts` → 8 이상 (각 명령에 4개씩)
 - [ ] `git diff --stat` — `src/utils/mention.ts(.test.ts)`, `src/commands/post/comment/{add,edit}.ts` 변경
 
 ## 주의사항
 
 - **prepend 위치**: 본문 앞 + 공백 1칸 구분 (`{mentions} {body}`). 이슈 #25 결정사항
 - **멤버 먼저, 그룹 다음** 순서 고정 — 단위 테스트로 가드
-- **본문 비어있으면 기존 에러**: 멘션만 있고 body 없으면 add는 에러 ("빈 댓글은 작성할 수 없습니다"). 멘션은 본문에 부수 효과만
+- **`add.ts`에서 `--body` 미지정 + 멘션만 지정한 케이스**: `bodyContent==null` → `openInEditor("")` 진입. 멘션 prepend는 EDITOR 진입 **전에** 빈 본문에 적용해서 사용자가 멘션 마크업을 보고 편집하도록 (edit.ts와 동일 정책). 사용자가 EDITOR에서 빈 본문으로 저장하면 기존 abort 로직("빈 댓글은 작성할 수 없습니다") 그대로 — 멘션만으로는 댓글 작성 불가
+- **prependMentions의 빈 본문 처리**: `prependMentions("", members, groups, me)`는 `"{mentions} "` (trailing 공백 1) 반환 → 호출자가 `trimEnd()` 또는 그대로 사용. 단위 테스트에 빈 body 케이스 추가
 - **`resolveMember` 부분일치 + 모호 에러는 그대로 throw** — 사용자가 정확한 이름 입력 유도
 - **`resolveMemberGroup`도 동일 패턴** (014 + phase 1)
 - **commander option key**: `--mention-group` → `opts.mentionGroup` (camelCase). README/SKILL.md(phase 3)는 kebab-case로 표기
@@ -215,5 +247,5 @@ import { prependMentions } from "../../../utils/mention.js";
 ## Blocked 조건
 
 - phase 1 산출물(`ensureMe`, `MeDetail`, `resolveMemberGroup`, `CachedMe.orgId`) 부재 → `PHASE_BLOCKED: phase 1 미완료`
-- 011의 `resolvePostInput` 반환값에 `projectCode` 부재 → `PHASE_BLOCKED: projectCode 획득 경로 결정 필요` (대안: 첫 positional 그대로 사용)
-- comment edit의 본문 fetch 흐름이 미존재(`--body` 필수)면 → 동일 패턴 적용, 본 phase에서 별도 분기 불필요
+- `resolvePostInput`이 `projectCode` 반환 중단 → `PHASE_BLOCKED: post-input 시그니처 변경` (현재는 `src/resolvers/post-input.ts:18`에서 보장됨)
+- `buildMemberNameMap` 시그니처 변경 → `PHASE_BLOCKED: member resolver 시그니처 변경`

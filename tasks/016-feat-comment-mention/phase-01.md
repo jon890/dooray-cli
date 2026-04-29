@@ -34,7 +34,7 @@ Issue #25 — 멘션 마크업 URL이 `dooray://{orgId}/...` 형식이라 orgId 
 
 `GET /common/v1/members/{id}` 는 `defaultOrganization` 미포함.
 
-## 작업 목록 (4개)
+## 작업 목록 (5개)
 
 ### 1) `src/api/types.ts` — MeDetail 별도 타입 + 응답 타입
 
@@ -85,7 +85,7 @@ export interface CachedMe {
 
 > 010(`CachedTag.color`) 패턴 답습. 이전 캐시는 `orgId` 미포함 — `cache clear`로 재생성. README 안내(phase 3).
 
-**`src/resolvers/me.ts` 신규**:
+**`src/resolvers/me.ts` 수정** (이미 존재 — 기존 `ensureMe`는 `{ id, name }`만 반환. 본문을 아래 패치로 교체. `getMe`/`setMe` 시그니처는 무변경 — `CachedMe` 타입 확장만으로 자동 전파):
 ```ts
 import { DoorayApiClient } from "../api/client.js";
 import type { CachedMe } from "../cache/types.js";
