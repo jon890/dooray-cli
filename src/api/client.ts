@@ -72,7 +72,7 @@ export interface GetProjectsParams {
 export interface GetPostCommentsParams {
   page?: number;
   size?: number;
-  order?: string;
+  order?: "createdAt" | "-createdAt";
 }
 
 export interface GetMembersParams {

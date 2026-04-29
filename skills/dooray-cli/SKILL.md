@@ -63,7 +63,8 @@ dooray doctor                                 # 설정 검증
 | 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` 또는 `--body-file <path>` |
 | 업무 완료 처리 | `dooray post done <project> <number>` |
 | 업무 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
-| 댓글 조회 | `dooray post comment list <project> <number>` (table 출력은 Creator 이름 자동 채움, `--json`은 raw 유지 — ADR-021) |
+| 댓글 조회 | `dooray post comment list <project> <number>` — `--sort asc\|desc`, `--reverse`, `--latest <n>`, `--since <iso>`, `--from-author <name>` 필터 지원. table 출력은 Creator 이름 자동 채움, `--json`은 raw 유지 (ADR-021) |
+| 최신 댓글 조회 | `dooray post comment latest <project> <number>` — 최신 댓글 1개 빠른 조회. `-n <N>`으로 N개 지정 |
 | 댓글 추가 | `dooray post comment add <project> <number> --body "..."` 또는 `--body-file <path>` |
 | 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` 또는 `--body-file <path>` |
 | 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` |
@@ -243,6 +244,19 @@ dooray post edit <project> <number> --title "새 제목" --body-file ./updated.m
 ```bash
 dooray post comment add <project> <number> --body "댓글 내용"
 dooray post comment add <project> <number> --body-file ./comment.md
+```
+
+### 댓글 목록 필터 (non-interactive)
+
+```bash
+# 최신 5개
+dooray post comment list <project> <number> --latest 5
+# 특정 날짜 이후
+dooray post comment list <project> <number> --since 2026-04-27
+# 작성자 필터
+dooray post comment list <project> <number> --from-author 홍길동
+# 최신 댓글 1개 빠른 조회
+dooray post comment latest <project> <number>
 ```
 
 ---

@@ -17,6 +17,7 @@ import { postCreateCommand } from "./commands/post/create.js";
 import { postDoneCommand } from "./commands/post/done.js";
 import { postWorkflowCommand } from "./commands/post/workflow.js";
 import { commentListCommand } from "./commands/post/comment/list.js";
+import { commentLatestCommand } from "./commands/post/comment/latest.js";
 import { commentAddCommand } from "./commands/post/comment/add.js";
 import { commentEditCommand } from "./commands/post/comment/edit.js";
 import { commentDeleteCommand } from "./commands/post/comment/delete.js";
@@ -77,6 +78,7 @@ postCommand.addCommand(postWorkflowCommand);
 // comment 서브커맨드 그룹
 const commentCommand = new Command("comment").description("댓글 관련 명령");
 commentCommand.addCommand(commentListCommand);
+commentCommand.addCommand(commentLatestCommand);
 commentCommand.addCommand(commentAddCommand);
 commentCommand.addCommand(commentEditCommand);
 commentCommand.addCommand(commentDeleteCommand);

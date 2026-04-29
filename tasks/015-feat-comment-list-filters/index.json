@@ -2,8 +2,8 @@
   "name": "015-feat-comment-list-filters",
   "description": "Issue #23 — `post comment list`에 정렬/필터 옵션 추가 (--sort/--reverse/--latest/--since/--from-author) + `post comment latest <project> <number>` 단축 명령. server-side `order` 파라미터 활용, --since는 페이지 단위 break(safe early-exit). 011/012 산출물 위에 옵션만 추가.",
   "created_at": "2026-04-29T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "completed",
+  "current_phase": 3,
   "total_phases": 3,
   "error_message": null,
   "blocked_reason": null,
@@ -12,23 +12,23 @@
       "number": 1,
       "title": "API params 확장 (order) + types",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "comment list 옵션 + filter 로직 + comment latest 명령",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 3,
       "title": "README/SKILL.md + 빌드/시나리오 검증 + task 완료 처리",
       "file": "phase-03.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-04-29T00:00:00Z"
+  "updated_at": "2026-04-29T14:14:00Z"
 }

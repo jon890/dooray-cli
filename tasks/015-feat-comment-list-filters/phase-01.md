@@ -20,17 +20,19 @@ Issue #23 — Dooray `/logs` 엔드포인트는 `order=createdAt`(asc, default) 
 
 ## 작업 목록 (2개)
 
-### 1) `src/api/client.ts` — `GetPostCommentsParams` 확장
+### 1) `src/api/client.ts` — `GetPostCommentsParams.order` 타입 좁히기
 
-기존:
+**현재 상태 (main 기준 client.ts:72-76)** — `order?: string`이 **이미 존재**:
 ```ts
 export interface GetPostCommentsParams {
   page?: number;
   size?: number;
+  order?: string;          // ← 이미 적용됨
 }
 ```
+그리고 `getPostComments` 본문(client.ts:272-282)의 `searchParams`에도 `...(params?.order && { order: params.order })` spread가 **이미 존재**. 본 phase에서 추가하지 않는다.
 
-변경:
+**변경 (본 phase의 유일한 코드 변경) — 타입을 union으로 좁히기**:
 ```ts
 export interface GetPostCommentsParams {
   page?: number;
@@ -39,14 +41,7 @@ export interface GetPostCommentsParams {
 }
 ```
 
-`getPostComments` 본문의 `searchParams` 객체에 `order` spread 추가:
-```ts
-searchParams: {
-  ...(params?.page != null && { page: params.page }),
-  ...(params?.size != null && { size: params.size }),
-  ...(params?.order && { order: params.order }),
-},
-```
+`getPostComments` 본문은 변경 없음.
 
 ### 2) 타입 export 위치 확인
 
@@ -58,7 +53,7 @@ searchParams: {
 
 - [ ] `pnpm run build` 성공
 - [ ] `pnpm test` 통과 (기존 30개 테스트 유지)
-- [ ] `grep -c "order.*createdAt\|-createdAt" src/api/client.ts` → 2 이상 (타입 + spread)
+- [ ] `grep -c '"createdAt" | "-createdAt"' src/api/client.ts` → 1 이상 (union 라인 한 줄)
 - [ ] `git diff --stat` — `src/api/client.ts` 만 변경
 
 ## 주의사항

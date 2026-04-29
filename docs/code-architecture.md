@@ -96,6 +96,7 @@ src/
       workflow.ts
       comment/
         list.ts
+        latest.ts             # 최신 댓글 N개 단축 조회
         add.ts
         edit.ts
         delete.ts
