@@ -355,6 +355,12 @@ export interface MemberDetail {
 
 export type MemberDetailResponse = DoorayApiResponse<MemberDetail>;
 
+export interface MemberSearchResponse {
+  header: DoorayApiHeader;
+  result: MemberDetail[];
+  totalCount: number;
+}
+
 export interface MeDetail extends MemberDetail {
   defaultOrganization: { id: string };
   idProviderType?: string;
