@@ -261,6 +261,46 @@ dooray post comment latest <project> <number>
 
 ---
 
+## Dooray 마크다운 링크 형식 (멤버·그룹·업무 멘션)
+
+댓글/본문 작성 시 다음 형식으로 마크업하면 Dooray 앱이 인식해 inline 멘션·navigation으로 렌더링한다. ID는 본인 환경 값으로 채워 사용 — `dooray member get` / `project groups` / `post get` 등으로 조회.
+
+### 멤버 멘션
+```markdown
+[@본인이름](dooray://{orgId}/members/{memberId} "me")
+[@타인이름](dooray://{orgId}/members/{memberId} "member")
+```
+- title 속성: 본인은 `"me"`, 타인은 `"member"`
+- URL: `dooray://{orgId}/members/{memberId}`
+
+### 그룹 멘션 (member-group)
+```markdown
+[@projectCode/그룹명](dooray://{orgId}/member-groups/{groupId})
+```
+- **`projects/{projectId}/` 경로 포함하지 않음** (직관과 반대 — 흔한 실수)
+- title 속성 **없음**
+- URL: `dooray://{orgId}/member-groups/{groupId}`
+
+### 업무(task) 링크
+```markdown
+[projectCode/{number} {subject}](dooray://{orgId}/tasks/{postId} "registered")
+```
+- 표시 텍스트: `{project}/{number} {subject}`
+- URL: `dooray://{orgId}/tasks/{postId}`
+- title: workflow class — `registered` / `working` / `closed` / `backlog`
+- 클릭 시 외부 브라우저 안 열고 Dooray 앱 내부 navigation + workflow 상태 표시
+
+### 필요 ID 조회 명령
+
+| ID | 조회 |
+|---|---|
+| `orgId` | Dooray 앱/웹 URL에서 추출 (`https://{org}.dooray.com/...`의 도메인 + 별도 확인 필요) |
+| `memberId` | `dooray member get <id>` 또는 `dooray project members <project>` |
+| `groupId` | `dooray project groups <project>` |
+| `postId` | `dooray post get <project> <number> --json` 의 `id` 필드 |
+
+---
+
 ## 에러 핸들링
 
 CLI 에러 발생 시 복구 방법:
