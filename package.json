@@ -1,6 +1,6 @@
 {
   "name": "@bifos/dooray-cli",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "CLI tool for Dooray project management — AI agent & terminal friendly",
   "keywords": [
     "dooray",
