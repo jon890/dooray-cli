@@ -53,6 +53,8 @@ dooray doctor                                 # 설정 검증
 | 프로젝트 찾기 | `dooray project list --search <keyword>` |
 | 개인 프로젝트 목록 | `dooray project list --type private` |
 | 프로젝트 멤버 보기 | `dooray project members <project>` 또는 `dooray member list <project>` (이름·organizationMemberId) |
+| 프로젝트 멤버 그룹 목록 | `dooray project groups <project>` (ID / Code) |
+| 프로젝트 태그 목록 | `dooray project tags <project>` (ID / Color / Name / Group / Mandatory) |
 | 멤버 상세 (organizationMemberId) | `dooray member get <organizationMemberId>` (cache 우회, ADR-021) |
 | 업무 목록 조회 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` |

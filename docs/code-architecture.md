@@ -40,9 +40,11 @@ src/
     milestone.ts            # name → milestoneId
     match.ts                # 공용: 정확일치 → 부분일치 → 모호 시 에러
     post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020)
+    member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선)
 
   cache/
     store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크
+                            #   MEMBER_GROUPS_DIR = ~/.dooray/cache/member-groups/
     types.ts                # CacheEntry·Cached* 인터페이스
 
   config/
@@ -76,6 +78,8 @@ src/
       list.ts
       members.ts
       workflows.ts
+      groups.ts               # dooray project groups <project>
+      tags.ts                 # dooray project tags <project>
 
     member/
       index.ts              # member 서브커맨드 등록
@@ -140,6 +144,7 @@ class DoorayApiClient {
   getMe(): Promise<MemberDetailResponse>;
   getMemberDetail(memberId): Promise<MemberDetailResponse>;
   getProjects(params?): Promise<ProjectListResponse>;
+  getProjectMemberGroups(projectId, params?): Promise<MemberGroupListResponse>;
   getPosts(projectId, params?): Promise<PostListResponse>;
   getPost(projectId, postId): Promise<PostDetailResponse>;
   getPostStandalone(postId): Promise<PostDetailResponse>;  // GET /project/v1/posts/{postId} — projectId 불명일 때 (ADR-020)

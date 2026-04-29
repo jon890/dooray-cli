@@ -10,6 +10,7 @@ import type {
   CachedTag,
   CachedMilestone,
   CachedWiki,
+  CachedMemberGroup,
 } from "./types.js";
 
 const CACHE_DIR = join(homedir(), ".dooray", "cache");
@@ -20,6 +21,7 @@ const MEMBERS_DIR = join(CACHE_DIR, "members");
 const WORKFLOWS_DIR = join(CACHE_DIR, "workflows");
 const TAGS_DIR = join(CACHE_DIR, "tags");
 const MILESTONES_DIR = join(CACHE_DIR, "milestones");
+const MEMBER_GROUPS_DIR = join(CACHE_DIR, "member-groups");
 const WIKIS_PATH = join(CACHE_DIR, "wikis.json");
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -136,6 +138,20 @@ export async function setMilestones(projectId: string, items: CachedMilestone[])
   await writeJson(milestonesPath(projectId), { updatedAt: now(), data: items } satisfies CacheEntry<CachedMilestone[]>);
 }
 
+// ─── Member Groups (per project) ─────────────────────────
+
+function memberGroupsPath(projectId: string): string {
+  return join(MEMBER_GROUPS_DIR, `${projectId}.json`);
+}
+
+export async function getMemberGroups(projectId: string): Promise<CacheEntry<CachedMemberGroup[]> | null> {
+  return readJson<CacheEntry<CachedMemberGroup[]>>(memberGroupsPath(projectId));
+}
+
+export async function setMemberGroups(projectId: string, items: CachedMemberGroup[]): Promise<void> {
+  await writeJson(memberGroupsPath(projectId), { updatedAt: now(), data: items } satisfies CacheEntry<CachedMemberGroup[]>);
+}
+
 // ─── Wikis ────────────────────────────────────────────────
 
 export async function getWikis(): Promise<CacheEntry<CachedWiki[]> | null> {
@@ -164,6 +180,7 @@ export async function getCacheStats(): Promise<{
   workflowProjectCount: number;
   tagProjectCount: number;
   milestoneProjectCount: number;
+  memberGroupProjectCount: number;
   me: CachedMe | null;
 }> {
   const projects = await getProjects();
@@ -193,7 +210,13 @@ export async function getCacheStats(): Promise<{
     milestoneProjectCount = files.filter((f) => f.endsWith(".json")).length;
   } catch { /* dir doesn't exist */ }
 
+  let memberGroupProjectCount = 0;
+  try {
+    const files = await readdir(MEMBER_GROUPS_DIR);
+    memberGroupProjectCount = files.filter((f) => f.endsWith(".json")).length;
+  } catch { /* dir doesn't exist */ }
+
   const me = await getMe();
 
-  return { projectCount, memberProjectCount, workflowProjectCount, tagProjectCount, milestoneProjectCount, me: me?.data ?? null };
+  return { projectCount, memberProjectCount, workflowProjectCount, tagProjectCount, milestoneProjectCount, memberGroupProjectCount, me: me?.data ?? null };
 }

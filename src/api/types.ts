@@ -361,6 +361,22 @@ export interface ProjectMemberListResponse {
   totalCount?: number;
 }
 
+// ─── Project Member Group ───────────────────────────────
+
+export interface MemberGroup {
+  id: string;
+  code: string;
+  project: ProjectInfo;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MemberGroupListResponse {
+  header: DoorayApiHeader;
+  result: MemberGroup[];
+  totalCount: number;
+}
+
 // ─── Project Workflow ───────────────────────────────────
 
 export interface ProjectWorkflow {

@@ -39,7 +39,11 @@ dooray project list --search ocr           # 코드로 검색
 dooray project list --type private         # 개인 프로젝트 목록
 dooray project members tc-ocr              # 멤버 목록
 dooray project workflows tc-ocr            # 워크플로우 목록
+dooray project groups tc-ocr              # 멤버 그룹 목록 (ID / Code)
+dooray project tags tc-ocr                # 태그 목록 (ID / Color / Name / Group / Mandatory)
 ```
+
+> **태그 캐시 갱신**: 이전 버전에서 캐시한 태그가 색상 없이 표시되면 `dooray cache clear` 실행 후 다시 조회하세요.
 
 ### 멤버
 
