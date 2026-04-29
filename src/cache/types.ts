@@ -11,6 +11,7 @@ export interface CacheEntry<T> {
 export interface CachedMe {
   id: string;
   name: string;
+  orgId: string;
 }
 
 export interface CachedProject {

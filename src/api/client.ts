@@ -24,6 +24,7 @@ import type {
   ProjectMemberListResponse,
   ProjectWorkflowListResponse,
   MemberDetailResponse,
+  MeResponse,
   TagListResponse,
   MilestoneListResponse,
   MemberGroupListResponse,
@@ -131,11 +132,11 @@ export class DoorayApiClient {
 
   // ─── Me ─────────────────────────────────────────────
 
-  async getMe(): Promise<MemberDetailResponse> {
+  async getMe(): Promise<MeResponse> {
     try {
       return await this.api
         .get("common/v1/members/me")
-        .json<MemberDetailResponse>();
+        .json<MeResponse>();
     } catch (e) {
       return toDoorayCliError(e);
     }

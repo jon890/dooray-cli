@@ -355,6 +355,18 @@ export interface MemberDetail {
 
 export type MemberDetailResponse = DoorayApiResponse<MemberDetail>;
 
+export interface MeDetail extends MemberDetail {
+  defaultOrganization: { id: string };
+  idProviderType?: string;
+  idProviderUserId?: string;
+  locale?: string;
+  timezoneName?: string;
+  nativeName?: string;
+  displayMemberId?: string;
+}
+
+export type MeResponse = DoorayApiResponse<MeDetail>;
+
 export interface ProjectMemberListResponse {
   header: DoorayApiHeader;
   result: ProjectMember[];

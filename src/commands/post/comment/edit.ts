@@ -7,6 +7,10 @@ import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { readBodyInputOrNull } from "../../../utils/body-input.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js";
+import { resolveMemberGroup } from "../../../resolvers/member-group.js";
+import { ensureMe } from "../../../resolvers/me.js";
+import { prependMentions } from "../../../utils/mention.js";
 
 export const commentEditCommand = new Command("edit")
   .description("댓글 수정 ($EDITOR 또는 --body 옵션)")
@@ -18,6 +22,18 @@ export const commentEditCommand = new Command("edit")
   .option("--comment-id <commentId>", "댓글 ID (positional 대체)")
   .option("--body <text>", "댓글 본문 변경 (- 입력 시 stdin, non-interactive)")
   .option("--body-file <path>", "본문 파일 경로 (- 입력 시 stdin, non-interactive)")
+  .option(
+    "--mention <name>",
+    "멤버 멘션 (반복 가능, 이름 부분일치)",
+    (value: string, prev: string[]) => [...prev, value],
+    [] as string[],
+  )
+  .option(
+    "--mention-group <code>",
+    "그룹 멘션 (반복 가능, code 부분일치)",
+    (value: string, prev: string[]) => [...prev, value],
+    [] as string[],
+  )
   .action(async (arg1, arg2, arg3, opts) => {
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
@@ -69,7 +85,7 @@ export const commentEditCommand = new Command("edit")
     }
 
     startSpinner("댓글 조회 중...");
-    const { projectId, postId } = await resolvePostInput(client, {
+    const { projectId, postId, projectCode } = await resolvePostInput(client, {
       projectArg,
       postNumberArg,
       idOpt: opts.id,
@@ -84,17 +100,45 @@ export const commentEditCommand = new Command("edit")
       process.exit(1);
     }
 
+    // 멘션 옵션 처리
+    const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
+    const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);
+
+    let mentionPrefix = "";
+    if (mentionInputs.length > 0 || groupInputs.length > 0) {
+      const me = await ensureMe(client);
+      const memberIds = await Promise.all(
+        mentionInputs.map((name) => resolveMember(client, projectId, name)),
+      );
+      const nameMap = await buildMemberNameMap(client, projectId);
+      const members = memberIds.map((memberId) => ({
+        memberId,
+        name: nameMap.get(memberId) ?? memberId,
+      }));
+
+      const groups = await Promise.all(
+        groupInputs.map(async (code) => {
+          const g = await resolveMemberGroup(client, projectId, code);
+          return { groupId: g.id, code: g.code, projectCode };
+        }),
+      );
+      mentionPrefix = prependMentions("", members, groups, me).trimEnd();
+    }
+
     let edited = await readBodyInputOrNull(opts);
 
     if (edited == null) {
       // Interactive mode: $EDITOR
-      const original = comment.body.content;
-      edited = await openInEditor(original);
+      const rawContent = comment.body.content;
+      const editorSeed = mentionPrefix ? mentionPrefix + " " + rawContent : rawContent;
+      edited = await openInEditor(editorSeed);
 
-      if (original === edited) {
+      if (rawContent === edited) {
         process.stdout.write("변경사항 없음\n");
         return;
       }
+    } else if (mentionPrefix) {
+      edited = mentionPrefix + " " + edited;
     }
 
     startSpinner("댓글 수정 중...");
