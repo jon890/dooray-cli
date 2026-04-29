@@ -1,0 +1,34 @@
+{
+  "name": "018-feat-feedback-last-mode",
+  "description": "Issue #27 — `dooray feedback --last` 모드. 직전 dooray 명령의 argv(sanitized) + 에러를 본문 상단에 자동 첨부. opt-in (config.json `trackLastRun: true`), 에러시만 기록, 최소 세트(argv/exitCode/errorMessage/timestamp), argv 패턴 마스킹(--api-key/--token/Authorization 등). ADR-023.",
+  "created_at": "2026-04-29T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 3,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "config schema + sanitization util + last-run store + 단위 테스트",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "src/index.ts catch hook + feedback --last 로직",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 3,
+      "title": "README/SKILL.md + setup wizard 통합 + 빌드/시나리오 + task 완료",
+      "file": "phase-03.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-04-29T00:00:00Z"
+}

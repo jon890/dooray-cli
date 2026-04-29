@@ -79,6 +79,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | post 명령 input 통합 (`--id`/URL/positional) + 단위 테스트 | **ADR-020** (분기 규칙 + vitest 도입 근거) |
 | `member` 명령 + 표시명 enrich | **ADR-021** (캐시 전략 + table-only enrich + list/get 시그니처) |
 | `feedback` 명령 (GitHub issue 등록) | **ADR-022** (gh CLI 위임 + sanitization 정책) |
+| `feedback --last` (last-run 추적) | **ADR-023** (opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹) |
 | 파일 업로드/다운로드 (307 처리) | **ADR-015** (수동 redirect + Auth 헤더 재첨부) |
 | `dooray setup` 마법사 변경 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치) |
 | 새 Commander.js 서브커맨드 추가 | (ADR 없음 — 기존 `commands/*.ts` 패턴 참조) |

@@ -438,3 +438,49 @@
 - `feat(cli): dooray feedback --last` — 직전 명령 추적 + 자동 첨부 (별도 issue)
 - repo 라벨 동적 fetch + select prompt
 - `feedbackRepo` config 옵션 (포크 사용자)
+
+---
+
+## ADR-023: `dooray feedback --last` last-run 추적 — opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹
+
+**결정**:
+
+- last-run 추적은 **opt-in**: `~/.dooray/config.json`의 `trackLastRun: true` 플래그가 있을 때만 동작. 기본 off
+- **에러 발생 시만 기록**: `src/index.ts` 최상위 `catch` 블록에서만 `~/.dooray/last-run.json` 작성. 성공 종료는 기록 안 함
+- 저장 항목 **최소 세트**: argv (sanitized) + exitCode + errorMessage + timestamp. `cwd`/`env`/Node 버전 등 미포함 (PII 위험 회피)
+- argv **패턴 마스킹**: `--api-key=*`, `--token=*`, `--password=*`, `Authorization: Bearer *` 등 시크릿 패턴 자동 마스킹 (`***`)
+- 단일 파일 덮어쓰기 — 최근 N개 보관 X (use case는 "직전 1건 보고")
+- `dooray feedback` 자체는 기록 안 함 (재귀 방지)
+- `--last` 사용 시 last-run.json 없으면 친절한 안내: "기록된 직전 실행 없음. config.json에 trackLastRun: true 설정 후 재시도"
+
+**이유**:
+
+- **opt-in 채택**: 모든 명령 종료 시점 디스크 I/O는 전역 부수 효과. 사용자가 명시적으로 켜야 의도 명확. dooray-cli는 자동화 스크립트에서 자주 호출 — 의도 없이 매번 파일 쓰기는 부담
+- **에러시만 기록**: feedback --last의 use case는 "에러 만남 → 그 자리에서 보고". 성공 명령 기록은 효용 ↓ 부수효과 ↑. preAction/postAction commander hook 같은 추가 코드 불필요(catch 블록 한 곳만)
+- **최소 세트 + cwd 제외**: cwd가 사내 경로(예: `/Users/.../my-project/...`)일 가능성 — CLAUDE.md "PII 노출 금지" 정책과 일관. 디버깅 가치 < privacy 위험
+- **패턴 마스킹**: dooray-cli는 config.json만 사용하므로 argv에 시크릿 들어갈 일 거의 없으나 **0은 아님** (사용자가 `--header "Authorization: ..."` 같은 옵션 추가 가능성). 안전망 차원
+- **재귀 방지**: feedback 명령 자체가 자기 argv를 last-run에 남기면 다음 feedback에서 fed back → 답답한 UX
+
+**대안 기각**:
+
+- 기본 on + opt-out: 부수 효과가 사용자 인지 없이 작동 — privacy/disk I/O 우려. opt-in이 안전 디폴트
+- 모든 명령 hook: commander `preAction`/`postAction` 추가는 src/index.ts 구조 변경 폭 ↑. 또한 성공 명령은 디버깅 가치 낮음
+- 풀세트(cwd/env 포함): cwd가 사내 경로 노출. PII gate(CLAUDE.md)와 모순
+- argv 전체 제외(명령 이름만): 재현 명령을 사용자가 손으로 다시 적어야 함 — feedback --last의 가치 ↓
+- 사용자 확인 (interactive sanitize): UX 좋으나 비-TTY/CI에서 동작 안 함, 구현 복잡
+
+**Sanitization 룰** (argv → 안전 argv):
+
+| 패턴 | 마스킹 |
+|---|---|
+| `--api-key=VALUE` 또는 `--api-key VALUE` | `--api-key=***` |
+| `--token=VALUE` / `--password=VALUE` | `***` |
+| `Authorization: Bearer X` 등 헤더 인자 | `Authorization: ***` |
+| (확장) 사용자 보고 기반 추가 패턴 | 추후 |
+
+**저장 위치**: `~/.dooray/last-run.json` (config 옆, cache 외부 — `cache clear`로 지워지지 않음). 단일 파일 덮어쓰기.
+
+**후속 작업**:
+
+- `feedback --last` 실행 시 sanitized argv 미리보기 + confirm (현재 `--dry-run`으로 사전 확인 가능, 강제 confirm은 후속)
+- Sanitization 패턴 확장 (사용자 보고 기반)
