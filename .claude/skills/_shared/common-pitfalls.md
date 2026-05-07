@@ -298,8 +298,29 @@ git -C /Users/.../dooray-cli/.claude/worktrees/{plan} status --short
 ## CLI3. 캐시 일관성
 
 **증상**: `~/.dooray/cache/` 쓰기 후 읽기 시 부분 쓰기 / 스키마 불일치 노출.
-**Good**: write 는 atomic (`writeFile` to temp + rename), read 는 schema 검증 (Zod 등). ADR-004 / ADR-010 참조.
+**Good**: write 는 atomic (`writeFile` to temp + rename), read 는 schema 검증 (타입 가드). ADR-004 / ADR-010 참조.
 **검출**: `grep -nE 'fs\.writeFile.*cache' src/cache/` 결과 중 atomic 패턴 미적용 라인.
+
+## CLI4. `~/.dooray/` 민감 파일의 mode 미지정
+
+**증상**: `writeFile(path, data)` 만 호출하면 OS umask (보통 644) 로 파일 생성 → 공유 머신에서 다른 사용자가 sanitized argv (project code / postId 등) 또는 캐시된 멤버 정보를 읽을 수 있음.
+**Good**: 사용자 데이터를 담는 `~/.dooray/` 하위 파일은 `writeFile(..., { mode: 0o600 })` 으로 owner-only. 특히 `last-run.json` / cache 하위 / config.json 등.
+**검출**: `grep -nE 'writeFile\([^,]+,\s*[^,]+\)' src/cache/ src/config/ | grep -v "mode:"` (옵션 인자가 없는 호출).
+**Why**: PR #36 review — last-run.json 이 sanitized 후에도 argv 에 프로젝트 코드 / 19자리 ID 가 남아 있어 정보 노출 표면.
+
+## CLI5. JSON.parse 결과를 `as Type` 단언
+
+**증상**: 디스크/네트워크에서 읽은 JSON 을 검증 없이 `as LastRun` / `as CachedMember` 등 단언. 타입 시스템은 통과하지만 런타임 형태가 다르면 후속 호출에서 `TypeError: x.y is not a function`.
+**Good**: 검증 로직을 **타입 가드 함수** (`function isLastRun(o: unknown): o is LastRun`) 로 추출하고 `isLastRun(parsed) ? parsed : null` 패턴 사용. 인터페이스 필드 추가 시 가드 함수도 같이 갱신해야 컴파일 통과 — 동기화 강제.
+**검출**: `grep -rnE 'JSON\.parse.*\)\s+as\b' src/` (즉시 단언 패턴).
+**Why**: PR #36 review — 이전에 인라인 검증 + `as` 단언은 검증 블록과 캐스트가 따로 진화하다 결국 어긋남.
+
+## CLI6. 사용자 데이터를 markdown 코드 블록에 직접 삽입
+
+**증상**: `\`\`\`\n${last.errorMessage}\n\`\`\`` 처럼 외부에서 받은 문자열을 fenced code block 안에 그대로 삽입. 데이터에 `\`\`\`` 가 포함되면 GitHub Markdown 파서가 거기서 코드 블록을 닫아 본문이 깨짐 (누출 가능).
+**Good**: 삽입 전 `s.replace(/\`\`\`/g, "'''")` 로 이스케이프하거나, 인용 블록 (`>`) 으로 감싸기. issue body / PR body / wiki 모두 동일.
+**검출**: `grep -rnE '"\`\`\`"' src/utils/feedback-meta.ts src/` 영역의 fenced block builder 코드.
+**Why**: PR #36 review — `buildLastRunBlock` 가 errorMessage 를 ` ``` ` 안에 직접 넣어 GitHub 표시가 깨질 가능성.
 
 ---
 
