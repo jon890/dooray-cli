@@ -4,6 +4,17 @@
 
 fos-blog 의 `claude-code-review.yml` (~447줄) 을 dooray-cli 컨텍스트로 이식. 핵심 인프라 (concurrency 그룹 / 이전 봇 댓글 자동 삭제 / dummy 인라인 댓글 자동 정리 / `/review` 댓글 reaction / claude-code-action@v1.0.111 pin / `--body-file -` HEREDOC 강제 / `'COMMENT_EOF'` single-quoted) 는 그대로 유지하고, **specialist prompt 4개만 dooray-cli 규칙으로 재작성**.
 
+### 원본 파일 (절대경로) — 반드시 이 경로에서 읽어 base 로 사용
+
+```bash
+test -f /Users/nhn/personal/fos-blog/.github/workflows/claude-code-review.yml && echo OK
+# 기대: OK
+```
+
+base 위치: `/Users/nhn/personal/fos-blog/.github/workflows/claude-code-review.yml`
+
+(fos-blog 의 git 메타데이터에서 commit hash 가 필요하면 `git -C /Users/nhn/personal/fos-blog log -1 --format=%H -- .github/workflows/claude-code-review.yml` 로 확인 가능. 본 phase 에서는 현재 시점 working tree 의 파일을 base 로 한다.)
+
 핵심 차이:
 - 트리거: PR opened + `/review` 댓글 (fos-blog 와 동일)
 - gh pr diff 의 lock 파일 제외: dooray-cli 도 `pnpm-lock.yaml` 제외
@@ -32,7 +43,7 @@ base 구조는 fos-blog 의 `claude-code-review.yml` (1~82행 + 273~447행) 그�
 - `concurrency` 그룹
 - `permissions` 블록 (contents:read / pull-requests:write / issues:write / id-token:write)
 - `env: PR_NUMBER` 추출
-- `actions/checkout@v6 with fetch-depth: 1`
+- `actions/checkout@v6 with fetch-depth: 1` — fos-blog 원본 그대로 유지. (phase-01 의 CI workflow 는 `actions/checkout@v4` 사용. 두 workflow 가 서로 다른 메이저 버전이지만 fos-blog 의 review workflow base 가 v6 으로 작성된 의도이므로 따라간다. 추후 v6 가 표준화되면 phase-01 도 v6 로 통일하는 별도 작업으로 분리)
 - `/review` 댓글에 `eyes` reaction 추가 step
 - 이전 claude[bot] 일반/인라인 댓글 자동 삭제 step
 - `anthropics/claude-code-action@v1.0.111` (회귀 픽스 전 pin 유지)
@@ -106,7 +117,7 @@ dooray-cli 의 디렉터리 레이어 (CLAUDE.md 참조):
 
 🟡 권장 수정:
 - 새 명령이 `--id` / `--url` / positional URL 분기를 `resolvePostInput` 으로 통일 안 하고 자체 분기 작성 (ADR-020)
-- 캐시 entry 신규 추가 시 schema 검증 (Zod 등) 누락 (ADR-010)
+- 캐시 entry 신규 추가 시 ADR-010 정책 (TTL + 파일 분리 + atomic write) 미준수 — 신규 캐시 종류 추가가 `~/.dooray/cache/{kind}.json` 별도 파일로 분리되었는지, atomic write 패턴 (temp + rename) 을 따르는지, TTL 만료 체크가 read 경로에 있는지
 - `formatters/` 패턴 준수 — table/JSON/quiet 분기 누락
 
 ### 2. 보안 주의 — secrets / token 관리
