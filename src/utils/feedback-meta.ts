@@ -46,7 +46,7 @@ export function buildLastRunBlock(last: LastRun): string {
     "",
     "```",
     `$ ${last.argv.join(" ")}`,
-    last.errorMessage,
+    last.errorMessage.replace(/```/g, "'''"),
     "```",
     "",
     `- exit code: ${last.exitCode}`,
