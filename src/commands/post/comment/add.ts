@@ -11,6 +11,9 @@ import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js"
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";
 import { ensureMe } from "../../../resolvers/me.js";
 import { prependMentions } from "../../../utils/mention.js";
+import { appendTaskLinks, type TaskLinkInput } from "../../../utils/task-link.js";
+import { DoorayCliError } from "../../../utils/errors.js";
+import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
 
 export const commentAddCommand = new Command("add")
   .description("댓글 추가")
@@ -32,6 +35,7 @@ export const commentAddCommand = new Command("add")
     (value: string, prev: string[]) => [...prev, value],
     [] as string[],
   )
+  .option("--link-task <ref>", "다른 업무 링크 추가 (<project>/<number> 또는 postId, 반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
   .action(async (project, postNumberStr, opts) => {
     const globalOpts = commentAddCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
@@ -57,6 +61,7 @@ export const commentAddCommand = new Command("add")
 
     const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
     const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);
+    const linkInputs: string[] = (opts.linkTask ?? []).filter((s: string) => s.length > 0);
 
     if (mentionInputs.length > 0 || groupInputs.length > 0) {
       const me = await ensureMe(client);
@@ -76,6 +81,46 @@ export const commentAddCommand = new Command("add")
         }),
       );
       bodyContent = prependMentions(bodyContent, members, groups, me);
+    }
+
+    if (linkInputs.length > 0) {
+      const me = await ensureMe(client);
+      const links: TaskLinkInput[] = await Promise.all(
+        linkInputs.map(async (ref) => {
+          let projectArg: string | undefined;
+          let postNumberArg: string | undefined;
+          let idOpt: string | undefined;
+          if (/^[0-9]{15,}$/.test(ref)) {
+            idOpt = ref;
+          } else if (ref.includes("/")) {
+            const [p, n] = ref.split("/");
+            if (!p || !n) {
+              throw new DoorayCliError(
+                `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
+                EXIT_PARAM_ERROR,
+              );
+            }
+            projectArg = p;
+            postNumberArg = n;
+          } else {
+            throw new DoorayCliError(
+              `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
+              EXIT_PARAM_ERROR,
+            );
+          }
+          const { projectId: pid, postId: pidPost, projectCode: pCode, postNumber } =
+            await resolvePostInput(client, { projectArg, postNumberArg, idOpt });
+          const detail = await client.getPost(pid, pidPost);
+          return {
+            projectCode: pCode,
+            number: postNumber,
+            postId: pidPost,
+            subject: detail.result.subject,
+            workflowClass: detail.result.workflowClass,
+          };
+        }),
+      );
+      bodyContent = appendTaskLinks(bodyContent, links, me);
     }
 
     const res = await client.createPostComment(projectId, postId, {

@@ -6,12 +6,15 @@ import { resolveMember, ensureMembers, buildMemberNameMap } from "../../resolver
 import { resolveMemberGroup } from "../../resolvers/member-group.js";
 import { ensureMe } from "../../resolvers/me.js";
 import { prependMentions } from "../../utils/mention.js";
+import { appendTaskLinks, type TaskLinkInput } from "../../utils/task-link.js";
 import {
   openInEditor,
   serializePostFrontmatter,
   parsePostFrontmatter,
 } from "../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
+import { DoorayCliError } from "../../utils/errors.js";
+import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { readBodyInputOrNull } from "../../utils/body-input.js";
 import { checkAndGuardDropped } from "../../utils/attachment-check.js";
 import type { CreatePostUser } from "../../api/types.js";
@@ -41,6 +44,7 @@ export const postEditCommand = new Command("edit")
   .option("--body-file <path>", "본문 파일 경로 (- 입력 시 stdin, non-interactive)")
   .option("--mention <name>", "멤버 멘션 (반복 가능, 이름 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--mention-group <code>", "그룹 멘션 (반복 가능, code 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--link-task <ref>", "다른 업무 링크 추가 (<project>/<number> 또는 postId, 반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--no-confirm", "누락 attachment 경고 시 confirm 없이 진행 (자동화용)")
   .action(async (project, postNumberStr, opts) => {
     const config = await getConfigOrThrow();
@@ -48,6 +52,7 @@ export const postEditCommand = new Command("edit")
 
     const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
     const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);
+    const linkInputs: string[] = (opts.linkTask ?? []).filter((s: string) => s.length > 0);
 
     startSpinner("업무 조회 중...");
     const { projectId, postId, postNumber, projectCode } = await resolvePostInput(client, {
@@ -97,6 +102,47 @@ export const postEditCommand = new Command("edit")
           }),
         );
         newBody = prependMentions(effectiveBody, members, groups, me);
+      }
+
+      if (linkInputs.length > 0) {
+        const effectiveBody = newBody ?? post.body.content;
+        const me = await ensureMe(client);
+        const links: TaskLinkInput[] = await Promise.all(
+          linkInputs.map(async (ref) => {
+            let projectArg: string | undefined;
+            let postNumberArg: string | undefined;
+            let idOpt: string | undefined;
+            if (/^[0-9]{15,}$/.test(ref)) {
+              idOpt = ref;
+            } else if (ref.includes("/")) {
+              const [p, n] = ref.split("/");
+              if (!p || !n) {
+                throw new DoorayCliError(
+                  `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
+                  EXIT_PARAM_ERROR,
+                );
+              }
+              projectArg = p;
+              postNumberArg = n;
+            } else {
+              throw new DoorayCliError(
+                `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
+                EXIT_PARAM_ERROR,
+              );
+            }
+            const { projectId: pid, postId: pidPost, projectCode: pCode, postNumber } =
+              await resolvePostInput(client, { projectArg, postNumberArg, idOpt });
+            const detail = await client.getPost(pid, pidPost);
+            return {
+              projectCode: pCode,
+              number: postNumber,
+              postId: pidPost,
+              subject: detail.result.subject,
+              workflowClass: detail.result.workflowClass,
+            };
+          }),
+        );
+        newBody = appendTaskLinks(effectiveBody, links, me);
       }
 
       startSpinner("업무 수정 중...");

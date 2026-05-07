@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { DoorayApiClient } from "../../api/client.js";
 import { resolveProject, ensureProjects } from "../../resolvers/project.js";
+import { resolvePostInput } from "../../resolvers/post-input.js";
 import { resolveMember, buildMemberNameMap } from "../../resolvers/member.js";
 import { resolveMemberGroup } from "../../resolvers/member-group.js";
 import { resolveTags, validateMandatoryTags } from "../../resolvers/tag.js";
@@ -14,6 +15,7 @@ import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { readBodyInput } from "../../utils/body-input.js";
 import { prependMentions } from "../../utils/mention.js";
+import { appendTaskLinks, type TaskLinkInput } from "../../utils/task-link.js";
 import type { CreatePostUser } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
@@ -45,6 +47,7 @@ export const postCreateCommand = new Command("create")
   .option("--tag <name>", "태그 이름 (반복 가능)", (value, prev: string[]) => [...prev, value], [] as string[])
   .option("--mention <name>", "멤버 멘션 (반복 가능, 이름 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--mention-group <code>", "그룹 멘션 (반복 가능, code 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--link-task <ref>", "다른 업무 링크 추가 (<project>/<number> 또는 postId, 반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--parent <ref>", "부모 업무 (project/number 또는 postId)")
   .option("--workflow <name>", "초기 워크플로우 이름 또는 class")
   .option("--milestone <name>", "마일스톤 이름")
@@ -68,6 +71,7 @@ export const postCreateCommand = new Command("create")
 
     const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
     const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);
+    const linkInputs: string[] = (opts.linkTask ?? []).filter((s: string) => s.length > 0);
 
     let bodyContent = await readBodyInput(opts);
 
@@ -103,6 +107,46 @@ export const postCreateCommand = new Command("create")
         }),
       );
       bodyContent = prependMentions(bodyContent, members, groups, me);
+    }
+
+    if (linkInputs.length > 0) {
+      const me = await ensureMe(client);
+      const links: TaskLinkInput[] = await Promise.all(
+        linkInputs.map(async (ref) => {
+          let projectArg: string | undefined;
+          let postNumberArg: string | undefined;
+          let idOpt: string | undefined;
+          if (/^[0-9]{15,}$/.test(ref)) {
+            idOpt = ref;
+          } else if (ref.includes("/")) {
+            const [p, n] = ref.split("/");
+            if (!p || !n) {
+              throw new DoorayCliError(
+                `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
+                EXIT_PARAM_ERROR,
+              );
+            }
+            projectArg = p;
+            postNumberArg = n;
+          } else {
+            throw new DoorayCliError(
+              `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
+              EXIT_PARAM_ERROR,
+            );
+          }
+          const { projectId: pid, postId: pidPost, projectCode: pCode, postNumber } =
+            await resolvePostInput(client, { projectArg, postNumberArg, idOpt });
+          const detail = await client.getPost(pid, pidPost);
+          return {
+            projectCode: pCode,
+            number: postNumber,
+            postId: pidPost,
+            subject: detail.result.subject,
+            workflowClass: detail.result.workflowClass,
+          };
+        }),
+      );
+      bodyContent = appendTaskLinks(bodyContent, links, me);
     }
 
     const toUsers = opts.to ? await resolveUsers(client, projectId, opts.to) : [];
