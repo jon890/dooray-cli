@@ -46,9 +46,9 @@ echo "new body" | dooray post comment edit <project> <post-number> <comment-id> 
 2. **명시적 제거**: attachment 가 더 이상 필요 없다고 판단하면 `--no-confirm` 으로 진행. 누락이 의도한 결과임을 명시
 ```
 
-### 3. `CLAUDE.md` 주의사항 표 — 한 줄 추가
+### 3. `CLAUDE.md` `## 주의사항` 섹션 — 한 줄 추가 (불릿 리스트, "상황별 ADR 필수 참조" 표 아님)
 
-기존 표에 항목:
+`## 주의사항` 섹션의 기존 불릿 리스트 끝에 다음 한 줄 추가:
 ```
 - `post edit` / `post comment edit` 는 본문 full-replace. 새 본문에 기존 attachment markdown(`![](/files/<id>)`) 누락 시 (y/N) confirm. non-TTY 는 abort, `--no-confirm` 으로 우회.
 ```
