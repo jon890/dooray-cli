@@ -59,7 +59,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - `post create`는 `--tag` (반복) / `--parent` (`code/number` 또는 raw postId) / `--workflow` / `--milestone` 지원. mandatory-tag 그룹은 클라이언트가 사전 검증
 - post 하위 12개 명령(get/edit/done/workflow + comment 4개 + file 5개)은 `<project> <post-number>` 외에도 `--id <postId>` / `--url <url>` / 첫 positional에 Dooray URL 직접 입력 지원. `resolvePostInput` 단일 헬퍼에서 분기
 - `dooray member get/list` 명령으로 표시명 조회. `post comment list` table 출력은 Creator 컬럼을 project 멤버 캐시로 enrich (단 `--json`은 raw 유지)
-- `dooray feedback`은 GitHub issue를 `gh` CLI에 위임해서 생성. baseUrl/시크릿은 자동 메타에 미포함. `--last`(직전 명령 추적)는 후속 이슈로 분리
+- `dooray feedback`은 GitHub issue를 `gh` CLI에 위임해서 생성. baseUrl/시크릿은 자동 메타에 미포함. `--last`로 직전 명령의 sanitized argv + 에러를 본문 상단에 자동 첨부 (opt-in: `dooray config set track-last-run true`, ADR-023)
 - 제목 옵션 이름은 post·wiki 모두 `--title`로 통일 (Issue #8)
 - resolver(멤버·워크플로우·태그·마일스톤)는 정확일치 → 이름 부분일치, 모호하면 에러 + 후보 목록 출력
 - post 목록은 최신순 정렬 (`-createdAt`)

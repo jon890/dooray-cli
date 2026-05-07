@@ -73,9 +73,12 @@ export async function setConfigValue(
     case "smtp-port":
       config.smtpPort = parseInt(value, 10);
       break;
+    case "track-last-run":
+      config.trackLastRun = value === "true";
+      break;
     default:
       throw new DoorayCliError(
-        `알 수 없는 설정 키: ${key}\n사용 가능한 키: api-key, base-url, tenant-name, imap-host, imap-port, imap-username, imap-password, smtp-host, smtp-port`,
+        `알 수 없는 설정 키: ${key}\n사용 가능한 키: api-key, base-url, tenant-name, imap-host, imap-port, imap-username, imap-password, smtp-host, smtp-port, track-last-run`,
         EXIT_CONFIG_ERROR,
       );
   }

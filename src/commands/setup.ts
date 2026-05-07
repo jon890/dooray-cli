@@ -159,7 +159,14 @@ export const setupCommand = new Command("setup")
         }
       }
 
-      // 8. 저장 (all-or-nothing)
+      // 8. feedback --last 모드 (opt-in)
+      const trackLastRun = await confirm({
+        message: "feedback --last 모드 활성화 (직전 명령 에러를 GitHub issue에 자동 첨부)?",
+        default: false,
+        theme: { prefix: "📋" },
+      });
+
+      // 9. 저장 (all-or-nothing)
       const config: Config = {
         version: 1,
         apiKey,
@@ -172,6 +179,7 @@ export const setupCommand = new Command("setup")
         smtpHost: useMail ? DEFAULTS.smtpHost : existing?.smtpHost,
         smtpPort: useMail ? DEFAULTS.smtpPort : existing?.smtpPort,
       };
+      config.trackLastRun = trackLastRun;
 
       await saveConfig(config);
       console.log(

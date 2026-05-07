@@ -283,6 +283,28 @@ dooray post list <project> --quiet | xargs -I{} dooray post done <project> {}
 cp -r skills/dooray-cli ~/.claude/skills/
 ```
 
+## 피드백 (GitHub Issue 등록)
+
+`dooray feedback` 명령으로 GitHub issue를 직접 등록할 수 있습니다 (`gh` CLI 위임).
+
+```bash
+# 인터랙티브 (제목/본문/라벨 대화형 입력)
+dooray feedback
+
+# 논인터랙티브
+dooray feedback --title "버그 제목" --body "재현 방법"
+
+# --last 모드 (직전 에러 자동 첨부)
+dooray config set track-last-run true   # 1회만, opt-in
+dooray feedback --last                  # 직전 명령 + 에러 자동 첨부 + $EDITOR로 의견 추가
+dooray feedback --last --title "재현" --body "추가 설명" --dry-run  # 미리보기
+
+# 미리보기 (gh 호출 없이 본문 확인)
+dooray feedback --dry-run
+```
+
+> **개인정보 보호 (ADR-023)**: `--last` 모드에서 argv는 `--api-key`/`--token`/`Authorization` 등 시크릿 패턴을 자동 마스킹 후 저장합니다. cwd/env는 미저장.
+
 ## 캐시
 
 프로젝트, 멤버, 워크플로우, 위키 정보는 `~/.dooray/cache/`에 캐시됩니다.

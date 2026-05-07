@@ -10,7 +10,9 @@ import {
   readCliVersion,
   collectMeta,
   buildIssueBody,
+  buildLastRunBlock,
 } from "../utils/feedback-meta.js";
+import { readLastRun } from "../cache/last-run.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
@@ -50,11 +52,31 @@ export const feedbackCommand = new Command("feedback")
     (value: string, prev: string[]) => [...prev, value],
     [] as string[],
   )
+  .option("--last", "직전 실행한 dooray 명령의 argv + 에러를 본문 상단에 자동 첨부")
   .option("--dry-run", "gh 호출 없이 본문만 미리보기")
   .action(async (opts) => {
     let title: string | undefined = opts.title;
     let userBody = await readBody(opts);
     let labels: string[] = [...(opts.label as string[])];
+
+    if (opts.last) {
+      const last = await readLastRun();
+      if (!last) {
+        throw new DoorayCliError(
+          "기록된 직전 실행이 없습니다. config.json에 trackLastRun: true 설정 후 dooray 명령 실행 시 자동 기록됩니다.\n  설정: dooray config set track-last-run true",
+          EXIT_PARAM_ERROR,
+        );
+      }
+      const lastBlock = buildLastRunBlock(last);
+      if (userBody == null) {
+        userBody = await editor({
+          message: "본문 작성 ($EDITOR가 열림)",
+          default: lastBlock + "\n\n",
+        });
+      } else {
+        userBody = lastBlock + "\n\n" + userBody;
+      }
+    }
 
     if (!title) {
       title = await input({ message: "이슈 제목" });

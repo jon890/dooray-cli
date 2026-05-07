@@ -316,6 +316,22 @@ dooray post comment add P 1 --mention 홍길동 --mention-group 개발 --body ".
 
 ---
 
+## 피드백 (GitHub Issue 등록)
+
+`dooray feedback` 명령으로 dooray-cli GitHub issue를 직접 등록한다 (`gh` CLI 위임).
+
+```bash
+# 논인터랙티브 (non-interactive — 에이전트 자동화용)
+dooray feedback --title "버그 제목" --body "재현 방법" --label "bug"
+
+# --last 모드 (직전 에러 자동 첨부 — track-last-run 활성화 필요)
+dooray config set track-last-run true
+dooray feedback --last --title "에러 제목" --body "추가 설명" --dry-run  # 미리보기
+dooray feedback --last --title "에러 제목" --body "추가 설명"            # 실제 등록
+```
+
+> **참고**: `--last` 모드는 `trackLastRun: true` (ADR-023 opt-in)가 설정된 경우에만 직전 실패 명령이 자동 기록됨. argv는 시크릿 패턴(`--api-key`/`--token`/`Authorization`) 마스킹 후 저장.
+
 ## 에러 핸들링
 
 CLI 에러 발생 시 복구 방법:

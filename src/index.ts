@@ -38,6 +38,9 @@ import { mailSendCommand } from "./commands/mail/send.js";
 import { mailReplyCommand } from "./commands/mail/reply.js";
 import { feedbackCommand } from "./commands/feedback.js";
 import { DoorayCliError } from "./utils/errors.js";
+import { sanitizeArgv } from "./utils/argv-sanitize.js";
+import { writeLastRun } from "./cache/last-run.js";
+import { getConfig } from "./config/store.js";
 
 const program = new Command();
 
@@ -123,11 +126,28 @@ program.addCommand(wikiCommand);
 program.addCommand(mailCommand);
 program.addCommand(feedbackCommand);
 
-program.parseAsync().catch((err) => {
-  if (err instanceof DoorayCliError) {
-    process.stderr.write(chalk.red(`오류: ${err.message}`) + "\n");
-    process.exit(err.exitCode);
+program.parseAsync().catch(async (err) => {
+  const errorMessage = err instanceof Error ? err.message : String(err);
+  const exitCode = err instanceof DoorayCliError ? err.exitCode : 1;
+
+  // last-run 기록 (best-effort, opt-in, feedback 명령은 제외)
+  try {
+    const config = await getConfig();
+    const sanitized = sanitizeArgv(process.argv.slice(2));
+    const firstNonFlag = sanitized.find((a) => !a.startsWith("-"));
+    const isFeedbackCommand = firstNonFlag === "feedback";
+    if (config?.trackLastRun && !isFeedbackCommand) {
+      await writeLastRun({
+        argv: ["dooray", ...sanitized],
+        exitCode,
+        errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch {
+    // last-run 기록 실패는 무시 — 원래 에러 마스킹 금지
   }
-  process.stderr.write(chalk.red(`오류: ${err.message}`) + "\n");
-  process.exit(1);
+
+  process.stderr.write(chalk.red(`오류: ${errorMessage}`) + "\n");
+  process.exit(exitCode);
 });
