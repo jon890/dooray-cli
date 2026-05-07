@@ -101,7 +101,9 @@ export const uploadCommentFileCommand = new Command("upload")
 
     if (globalOpts.json) {
       printJson({ fileId, fileName, commentId: logId });
-    } else if (!globalOpts.quiet) {
+    } else if (globalOpts.quiet) {
+      process.stdout.write(`${fileId}\n`);
+    } else {
       process.stdout.write(`업로드 + 댓글 reference 추가: fileId=${fileId}\n`);
     }
   });

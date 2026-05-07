@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { getConfigOrThrow } from "../../../../config/store.js";
 import { DoorayApiClient } from "../../../../api/client.js";
 import { resolvePostInput } from "../../../../resolvers/post-input.js";
@@ -72,7 +72,8 @@ export const downloadCommentFileCommand = new Command("download")
     });
     const { buffer, fileName } = await client.downloadPostFile(projectId, postId, fileId);
 
-    const outputPath = join(opts.out, fileName);
+    const safeName = basename(fileName);
+    const outputPath = join(opts.out, safeName);
     await writeFile(outputPath, Buffer.from(buffer));
     stopSpinner(true, "다운로드 완료");
 

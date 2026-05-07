@@ -79,8 +79,8 @@ export const listCommentFileCommand = new Command("list")
     if (files.length === 0) {
       if (globalOpts.json) {
         process.stdout.write("[]\n");
-      } else {
-        process.stderr.write("첨부 없음\n");
+      } else if (!globalOpts.quiet) {
+        process.stdout.write("첨부 없음\n");
       }
       return;
     }
