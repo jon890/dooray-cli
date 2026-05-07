@@ -34,7 +34,7 @@ src/commands/post/edit.ts
 
 ## 작업 항목
 
-### 1. `src/commands/post/create.ts` — 옵션 추가 + body 합성
+### 1. `src/commands/post/create.ts` — 옵션 추가 + projectCode 획득 + body 합성
 
 옵션 정의 추가 (기존 `--tag` 옆):
 
@@ -43,14 +43,35 @@ src/commands/post/edit.ts
 .option("--mention-group <code>", "그룹 멘션 (반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
 ```
 
+**projectCode 획득 (필수)** — `post create` 는 `resolveProject(client, input)` 만 사용하고 반환은 `string` (id만). `--mention-group` markdown 은 `[@<projectCode>/<groupCode>](...)` 포맷이라 정확한 projectCode 필요. positional 이 code 든 ID 든 projects cache 에서 reverse lookup:
+
+```ts
+import { ensureProjects } from "../../resolvers/project.js";
+import { DoorayCliError } from "../../utils/errors.js";
+import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
+// ...
+const projectId = await resolveProject(client, projectInput);
+let projectCode: string | undefined;
+if (groupInputs.length > 0) {
+  // mention-group 사용 시에만 reverse lookup (cache 히트면 추가 API 호출 없음)
+  const projects = await ensureProjects(client);
+  projectCode = projects.find((p) => p.id === projectId)?.code;
+  if (!projectCode) {
+    throw new DoorayCliError(
+      `--mention-group 은 공개 프로젝트에서만 지원됩니다. dooray project list 로 캐시 갱신 후 재시도하세요.`,
+      EXIT_PARAM_ERROR,
+    );
+  }
+}
+```
+
 action 안에서 (resolveTags 호출 근처):
 
 ```ts
 import { prependMentions } from "../../utils/mention.js";
 import { ensureMe } from "../../resolvers/me.js";
-import { resolveMember } from "../../resolvers/member.js";
+import { resolveMember, buildMemberNameMap } from "../../resolvers/member.js";
 import { resolveMemberGroup } from "../../resolvers/member-group.js";
-import { buildMemberNameMap } from "../../resolvers/member.js"; // 기존 export 가정
 
 // ...
 const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
@@ -67,7 +88,7 @@ if (mentionInputs.length > 0 || groupInputs.length > 0) {
   const groups = await Promise.all(
     groupInputs.map(async (code) => {
       const g = await resolveMemberGroup(client, projectId, code);
-      return { groupId: g.id, code: g.code, projectCode };
+      return { groupId: g.id, code: g.code, projectCode: projectCode! };
     }),
   );
   bodyContent = prependMentions(bodyContent, members, groups, me);
@@ -75,8 +96,6 @@ if (mentionInputs.length > 0 || groupInputs.length > 0) {
 
 // updatePost / createPost body 에 bodyContent 사용
 ```
-
-`projectCode` 는 `resolvePostInput` 결과 또는 입력 인자에서 획득 — comment add/edit 패턴 그대로.
 
 ### 2. `src/commands/post/edit.ts` — non-interactive 분기에만 적용
 

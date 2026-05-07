@@ -23,7 +23,7 @@ CLAUDE.md
 tasks/022-feat-mention-link-first-class/index.json
 ```
 
-## 작업 항목
+## 작업 항목 (4개)
 
 ### 1. 4 명령에 `--dry-run` 옵션
 
@@ -45,7 +45,11 @@ if (opts.dryRun) {
 
 `--json` 과 함께 쓸 때: `process.stdout.write(JSON.stringify({ body: bodyContent }) + "\n")`. quiet 모드는 `bodyContent` 만.
 
-### 2. `README.md` — 사용 예 섹션 갱신
+**중요 — `post edit` non-interactive 분기**: `checkAndGuardDropped` 가 `--dry-run` 보다 먼저 실행되면 confirm prompt 가 떠서 미리보기 의도와 충돌. `--dry-run` 시 `checkAndGuardDropped` 도 skip.
+
+### 2. 사용자 가이드 docs 3 파일 갱신 (README + SKILL.md + CLAUDE.md)
+
+#### 2-1. `README.md` — 사용 예 섹션 갱신
 
 기존 mention 예시 옆에 task link + dry-run 예 추가:
 
@@ -70,7 +74,7 @@ dooray post comment add <project> <post-number> --body "..." --link-task <projec
 \`\`\`
 ```
 
-### 3. `skills/dooray-cli/SKILL.md` — AI 에이전트 가이드
+#### 2-2. `skills/dooray-cli/SKILL.md` — AI 에이전트 가이드
 
 ```markdown
 ## 멘션·링크 자동 삽입 (first-class)
@@ -83,20 +87,20 @@ dooray post comment add <project> <post-number> --body "..." --link-task <projec
 - `--dry-run` — API 호출 없이 합성 결과만 stdout. CI / 자동화 검증용
 ```
 
-### 4. `CLAUDE.md` 주의사항 표 — 한 줄 추가
+#### 2-3. `CLAUDE.md` 주의사항 표 — 한 줄 추가
 
 ```
 - `post create` / `post edit` / `post comment add/edit` 4 명령 모두 `--mention` / `--mention-group` / `--link-task` / `--dry-run` 동일 옵션 지원. mention 은 prepend, link-task 는 append, 적용 순서는 mention → link-task. interactive ($EDITOR) 모드의 `post edit` 는 mention/link-task 무시 + 경고
 ```
 
-### 5. 빌드 검증
+### 3. 빌드 검증
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 pnpm build && pnpm test
 ```
 
-### 6. 마지막 phase — index.json 완료 마킹
+### 4. 마지막 phase — index.json 완료 마킹
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
