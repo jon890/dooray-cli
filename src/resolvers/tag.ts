@@ -41,11 +41,11 @@ export async function ensureTags(client: DoorayApiClient, projectId: string): Pr
 /** 누락 그룹별 후보 태그 추출 헬퍼 */
 function buildMandatoryHint(allTags: CachedTag[], missingGroupIds: string[]): string {
   const lines: string[] = [];
-  for (const gid of missingGroupIds) {
-    const groupTags = allTags.filter((t) => t.groupId === gid);
-    const gname = groupTags[0]?.groupName ?? gid;
+  for (const groupId of missingGroupIds) {
+    const groupTags = allTags.filter((t) => t.groupId === groupId);
+    const groupName = groupTags[0]?.groupName ?? groupId;
     const candidates = groupTags.map((t) => t.name).join(", ");
-    lines.push(`  - "${gname}": ${candidates || "(태그 없음)"}`);
+    lines.push(`  - "${groupName}": ${candidates || "(태그 없음)"}`);
   }
   return lines.join("\n");
 }
