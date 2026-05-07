@@ -10,6 +10,7 @@ import {
 } from "../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { readBodyInputOrNull } from "../../utils/body-input.js";
+import { checkAndGuardDropped } from "../../utils/attachment-check.js";
 import type { CreatePostUser } from "../../api/types.js";
 
 async function resolveUsers(
@@ -35,6 +36,7 @@ export const postEditCommand = new Command("edit")
   .option("--subject <subject>", "--title의 deprecated alias")
   .option("--body <text>", "본문 변경 (- 입력 시 stdin, non-interactive)")
   .option("--body-file <path>", "본문 파일 경로 (- 입력 시 stdin, non-interactive)")
+  .option("--no-confirm", "누락 attachment 경고 시 confirm 없이 진행 (자동화용)")
   .action(async (project, postNumberStr, opts) => {
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
@@ -63,6 +65,11 @@ export const postEditCommand = new Command("edit")
     if (nonInteractive) {
       // Non-interactive mode: apply only specified changes
       const newBody = await readBodyInputOrNull(opts);
+
+      if (newBody != null) {
+        const attachments = (post.files ?? []).map((f) => ({ id: f.id, name: f.name }));
+        await checkAndGuardDropped(post.body.content, newBody, attachments, !opts.confirm);
+      }
 
       startSpinner("업무 수정 중...");
       const toUsers: CreatePostUser[] = post.users.to.map((u) => ({
@@ -101,6 +108,9 @@ export const postEditCommand = new Command("edit")
       }
 
       const parsed = parsePostFrontmatter(edited);
+
+      const attachmentsInteractive = (post.files ?? []).map((f) => ({ id: f.id, name: f.name }));
+      await checkAndGuardDropped(post.body.content, parsed.body, attachmentsInteractive, !opts.confirm);
 
       startSpinner("업무 수정 중...");
       const toUsers = await resolveUsers(client, projectId, parsed.to);

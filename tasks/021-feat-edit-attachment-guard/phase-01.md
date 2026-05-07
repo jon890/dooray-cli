@@ -47,8 +47,10 @@ src/utils/attachment-check.test.ts
 // markdown link/image 의 (/files/<id>) 형태만 인정한다.
 export function extractAttachmentFileIds(body: string): Set<string> {
   const ids = new Set<string>();
-  // !?\[...\]\(/files/<id>...\)  — 괄호 안에 query 가 붙을 수도 있어 첫 토큰만 캡처
-  const re = /!?\[[^\]]*\]\(\/files\/([^\s)]+)/g;
+  // !?\[...\]\(/files/<id>...\)  — id 종결자: 공백 / `)` / `?` (query) / `#` (fragment).
+  // `[^\s)]+` 만 쓰면 `/files/abc?dl=1` 에서 `abc?dl=1` 을 id 로 잘못 추출하여 attachments 의 `abc` 와 매칭 실패.
+  // code block 내부 표기도 매칭됨 — 보수적 검출 우선 (false-positive 가 false-negative 사고보다 안전).
+  const re = /!?\[[^\]]*\]\(\/files\/([^\s)?#]+)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(body)) !== null) {
     ids.add(m[1]);
@@ -87,7 +89,7 @@ export function findDroppedAttachments(
 
 ### 2. `src/utils/attachment-check.test.ts` — 단위 테스트
 
-다음 케이스 (총 8개):
+다음 케이스 (총 9개):
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -112,6 +114,10 @@ describe("extractAttachmentFileIds", () => {
   it("/files/ prefix 없는 경로는 무시", () => {
     expect(extractAttachmentFileIds("![](/uploads/123) [x](/other/456)"))
       .toEqual(new Set());
+  });
+  it("query string / fragment 가 붙어도 id 만 추출", () => {
+    expect(extractAttachmentFileIds("![](/files/abc?dl=1) [x](/files/def#frag)"))
+      .toEqual(new Set(["abc", "def"]));
   });
 });
 
@@ -156,9 +162,9 @@ pnpm build && pnpm test
 grep -nE "export function (extractAttachmentFileIds|findDroppedAttachments)" src/utils/attachment-check.ts
 # 기대: 2줄 매칭
 
-# 3. 테스트 케이스 8개
+# 3. 테스트 케이스 9개
 grep -cE "^\s*it\(" src/utils/attachment-check.test.ts
-# 기대: 8
+# 기대: 9
 ```
 
 ## 작업 외 금지

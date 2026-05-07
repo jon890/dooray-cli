@@ -64,6 +64,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - 제목 옵션 이름은 post·wiki 모두 `--title`로 통일 (Issue #8)
 - resolver(멤버·워크플로우·태그·마일스톤)는 정확일치 → 이름 부분일치, 모호하면 에러 + 후보 목록 출력
 - post 목록은 최신순 정렬 (`-createdAt`)
+- `post edit` / `post comment edit` 는 본문 full-replace. 새 본문에 기존 attachment markdown(`![](/files/<id>)`) 누락 시 (y/N) confirm. non-TTY 는 abort, `--no-confirm` 으로 우회.
 
 ## 상황별 ADR 필수 참조
 

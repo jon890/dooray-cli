@@ -11,6 +11,7 @@ import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js"
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";
 import { ensureMe } from "../../../resolvers/me.js";
 import { prependMentions } from "../../../utils/mention.js";
+import { checkAndGuardDropped } from "../../../utils/attachment-check.js";
 
 export const commentEditCommand = new Command("edit")
   .description("댓글 수정 ($EDITOR 또는 --body 옵션)")
@@ -22,6 +23,7 @@ export const commentEditCommand = new Command("edit")
   .option("--comment-id <commentId>", "댓글 ID (positional 대체)")
   .option("--body <text>", "댓글 본문 변경 (- 입력 시 stdin, non-interactive)")
   .option("--body-file <path>", "본문 파일 경로 (- 입력 시 stdin, non-interactive)")
+  .option("--no-confirm", "누락 attachment 경고 시 confirm 없이 진행 (자동화용)")
   .option(
     "--mention <name>",
     "멤버 멘션 (반복 가능, 이름 부분일치)",
@@ -140,6 +142,9 @@ export const commentEditCommand = new Command("edit")
     } else if (mentionPrefix) {
       edited = mentionPrefix + " " + edited;
     }
+
+    const attachments = (comment.files ?? []).map((f) => ({ id: f.id, name: f.name }));
+    await checkAndGuardDropped(comment.body.content, edited, attachments, !opts.confirm);
 
     startSpinner("댓글 수정 중...");
     await client.updatePostComment(projectId, postId, commentId, {
