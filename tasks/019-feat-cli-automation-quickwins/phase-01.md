@@ -31,11 +31,13 @@ src/index.ts
 
 ## 작업 항목
 
-### 1. `src/utils/spinner.ts` — quiet 모드 추가
+### 1. `src/utils/spinner.ts` — quiet 모드 추가 (no-op proxy 반환)
 
-모듈에 `setQuiet(quiet: boolean)` 함수 추가. quiet=true 이면 `startSpinner` 가 ora 를 시작하지 않고 no-op `Ora` 호환 객체 반환 (또는 null 반환 + 호출자 가드). `stopSpinner` 도 quiet 시 즉시 return.
+모듈에 `setQuiet(quiet: boolean)` 함수 추가. quiet=true 이면 `startSpinner` 가 ora 를 시작하지 않고 **`Ora` 타입을 만족하는 no-op proxy** 반환. 반환 타입은 `Ora` 그대로 유지 → 호출처(`spinner.text = ...`, `spinner.stop()` 등) 무수정.
 
-구현 패턴 (예시):
+> 왜 `Ora | null` 이 아니라 proxy 인가? `obj?.prop = v` 는 ECMAScript 사양상 **SyntaxError** (optional chaining 은 assignment LHS 에 못 씀). 호출처를 모두 `if (spinner) spinner.text = ...` 로 가드하느니 spinner 모듈 안에서 흡수.
+
+구현 패턴 (정확히 이 패턴 사용):
 
 ```ts
 import ora, { type Ora } from "ora";
@@ -43,32 +45,38 @@ import ora, { type Ora } from "ora";
 let current: Ora | null = null;
 let quiet = false;
 
+const noopSpinner: Ora = new Proxy({} as Ora, {
+  get(_target, prop) {
+    if (prop === "text" || prop === "prefixText" || prop === "suffixText") return "";
+    if (prop === "isSpinning") return false;
+    // 모든 메서드는 self-chainable no-op
+    return () => noopSpinner;
+  },
+  set() {
+    // text / prefixText / suffixText 등 setter 는 silent ignore
+    return true;
+  },
+});
+
 export function setQuiet(value: boolean): void {
   quiet = value;
 }
 
-export function startSpinner(text: string): Ora | null {
-  if (quiet) return null;
+export function startSpinner(text: string): Ora {
+  if (quiet) return noopSpinner;
   current = ora({ text, stream: process.stderr }).start();
   return current;
 }
 
 export function stopSpinner(success?: boolean, text?: string): void {
-  if (!current) return;
+  if (!current) return;  // quiet 모드에서는 current 가 절대 set 안 되므로 no-op
   if (success === false) current.fail(text);
   else current.succeed(text);
   current = null;
 }
 ```
 
-`startSpinner` 의 반환 타입 변경 (`Ora` → `Ora | null`) 으로 호출자 영향 점검. 현재 반환값을 변수에 받아 사용하는 곳이 있는지 확인:
-
-```bash
-# cwd: /Users/nhn/personal/dooray-cli
-grep -rn "= startSpinner\|const spinner = startSpinner\|let spinner = startSpinner" src/
-```
-
-기대: `src/commands/post/file/download-all.ts:20` 등 일부. 해당 파일들은 spinner 변수를 사용하면 `spinner?.text = ...` 같은 optional chaining 으로 변경.
+**핵심 약속**: `startSpinner` 반환 타입은 `Ora` 그대로. 따라서 `download-all.ts:39` 의 `spinner.text = ...` 같은 호출처는 **수정 불필요** — proxy 의 set trap 이 silent 흡수.
 
 ### 2. `src/index.ts` — preAction hook 에서 quiet 모드 활성화
 
@@ -88,16 +96,56 @@ program.hook("preAction", () => {
 });
 ```
 
-### 3. spinner 변수 사용처 호환
+### 3. spinner 호출처 영향 검증 (수정 불필요)
 
-`startSpinner` 가 null 반환 가능하므로 변수에 담아 쓰는 곳은 모두 optional chaining. 다음 명령으로 사후 검증:
+작업 1 의 no-op proxy 패턴 덕분에 호출처 코드 변경은 **불필요**. 다음 명령으로 호출처를 확인하고, proxy 가 `spinner.text = ...` / `spinner.stop()` 등을 silent 흡수하는지 빌드/타입체크로 확인:
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 grep -rnE "(const|let)\s+\w+\s*=\s*startSpinner" src/
+# 기대: download-all.ts:20 같은 1~2건. 본 phase 에서 이 파일들은 수정 안 함.
+
+# Ora setter 호출 패턴 (.text = ...) 파악
+grep -rnE "spinner\.(text|prefixText|suffixText)\s*=" src/
+# 기대: download-all.ts:39 의 1줄. 그대로 유지 — proxy 가 흡수.
+
+pnpm build  # tsup 가 타입 통과 확인
 ```
 
-각 사용처에서 `spinner.text = ...` → `spinner?.text = ...`, `spinner.stop()` → `spinner?.stop()` 등으로 변경. 단순 `startSpinner("...")` (반환값 미사용) 호출은 변경 불필요.
+### 4. `src/utils/spinner.test.ts` — 단위 테스트 (신규)
+
+quiet 모드 회귀 가드.
+
+```ts
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { setQuiet, startSpinner, stopSpinner } from "./spinner.js";
+
+describe("spinner quiet mode", () => {
+  beforeEach(() => setQuiet(false));
+
+  it("setQuiet(true) suppresses stderr output from startSpinner", () => {
+    const stderrWrite = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    setQuiet(true);
+    const s = startSpinner("test");
+    expect(stderrWrite).not.toHaveBeenCalled();
+    s.stop();
+    stderrWrite.mockRestore();
+  });
+
+  it("noop proxy: text setter / stop() / succeed() / fail() 호출 안전", () => {
+    setQuiet(true);
+    const s = startSpinner("init");
+    expect(() => { s.text = "updated"; s.stop(); s.succeed("ok"); s.fail("nope"); }).not.toThrow();
+  });
+
+  it("setQuiet(false) 복귀 후 정상 동작", () => {
+    setQuiet(false);
+    const s = startSpinner("normal");
+    expect(s).toBeDefined();
+    stopSpinner(true, "done");
+  });
+});
+```
 
 ## 성공 기준
 
@@ -116,9 +164,10 @@ grep -n "export function setQuiet" src/utils/spinner.ts
 grep -n "setQuiet" src/index.ts
 # 기대: 2줄 (import + 호출)
 
-# 4. dist 번들에 setQuiet 포함
-grep -c "setQuiet" dist/index.js
-# 기대: 0 이상 (tsup 이 inline 했으면 다른 형태로 들어가도 OK — 빌드 통과로 갈음)
+# 4. quiet 모드 단위 테스트 — `src/utils/spinner.test.ts` (신규 또는 기존 확장)
+#    setQuiet(true) 후 startSpinner 호출 시 stderr 무출력 + 반환 객체에 .text=... / .stop() 호출 안전
+grep -nE "setQuiet\(true\)" src/utils/spinner.test.ts 2>/dev/null
+# 기대: 1줄 이상
 
 # 5. 수동 검증: --json 파이프 청결성 (executor 가 빌드 후 직접 실행)
 node dist/index.js --help >/dev/null 2>&1
