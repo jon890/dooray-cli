@@ -13,9 +13,9 @@ Issue #27 — last-run 추적 인프라. ADR-023 (opt-in + 에러시만 + 최소
 
 ## 작업 목록 (4개)
 
-### 1) `src/config/store.ts` — `trackLastRun?: boolean` 추가
+### 1a) `src/config/types.ts` — `Config` 인터페이스에 `trackLastRun?: boolean` 추가
 
-기존 `Config` 인터페이스에 optional 필드 추가:
+`Config` 인터페이스는 `src/config/types.ts:1-12`에 있다. (store.ts는 `import type { Config }`만 함.)
 
 ```ts
 export interface Config {
@@ -24,9 +24,10 @@ export interface Config {
 }
 ```
 
-**`set` 명령 핸들러**: `case "track-last-run":` 추가, value를 `"true"`/`"false"` 파싱해 boolean 저장. `dooray config set track-last-run true` 형태로 활성화.
+### 1b) `src/config/store.ts` — `set` switch에 `case "track-last-run":` 추가
 
-기존 `case "tenant-name":` 같은 패턴 답습. set 알 수 없는 키 에러 메시지의 사용 가능 키 목록에 `track-last-run` 추가.
+`case "tenant-name":` (현재 store.ts:70) 같은 패턴 답습. value를 `"true"`/`"false"` 파싱해 boolean 저장.
+`dooray config set track-last-run true` 형태로 활성화. set 알 수 없는 키 에러 메시지의 사용 가능 키 목록에도 `track-last-run` 추가.
 
 ### 2) `src/utils/argv-sanitize.ts` — 신규 + 단위 테스트
 
@@ -157,7 +158,8 @@ phase 1의 핵심 검증은 sanitize 단위 테스트. 시크릿 단어가 출�
 
 - [ ] `pnpm run build` 성공
 - [ ] `pnpm test` 통과 (sanitize 6+ 케이스 추가)
-- [ ] `grep -c "trackLastRun" src/config/store.ts` → 2 이상 (interface + set case)
+- [ ] `grep -c "trackLastRun" src/config/types.ts` → 1 이상 (Config 인터페이스 필드)
+- [ ] `grep -c "trackLastRun" src/config/store.ts` → 1 이상 (set case 내부 boolean 할당)
 - [ ] `grep -c "track-last-run" src/config/store.ts` → 2 이상 (set case + 사용가능 키 목록)
 - [ ] `ls src/utils/argv-sanitize.ts src/utils/argv-sanitize.test.ts src/cache/last-run.ts` → 3 파일
 - [ ] `grep -c "readLastRun\|writeLastRun" src/cache/last-run.ts` → 2 이상

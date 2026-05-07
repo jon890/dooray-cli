@@ -9,6 +9,7 @@ export interface Config {
   imapPassword?: string;
   smtpHost?: string;
   smtpPort?: number;
+  trackLastRun?: boolean;
 }
 
 export const API_ENDPOINTS = {

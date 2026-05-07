@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildIssueBody, collectMeta } from "./feedback-meta.js";
+import { buildIssueBody, buildLastRunBlock, collectMeta } from "./feedback-meta.js";
 
 const FAKE_META = {
   cliVersion: "0.5.2",
@@ -33,6 +33,30 @@ describe("buildIssueBody", () => {
     const out = buildIssueBody("\n\n  의견  \n\n", FAKE_META);
     expect(out).toContain("의견");
     expect(out).not.toMatch(/\n{4,}/);
+  });
+});
+
+describe("buildLastRunBlock", () => {
+  it("argv + 에러 + exit code + timestamp 모두 포함", () => {
+    const out = buildLastRunBlock({
+      argv: ["dooray", "post", "create", "<project>"],
+      exitCode: 2,
+      errorMessage: "API 호출 실패: USER_INVALID_TAG_MANDATORY_PREFIX",
+      timestamp: "2026-04-29T10:00:00Z",
+    });
+    expect(out).toContain("$ dooray post create <project>");
+    expect(out).toContain("USER_INVALID_TAG_MANDATORY_PREFIX");
+    expect(out).toContain("exit code: 2");
+    expect(out).toContain("2026-04-29T10:00:00Z");
+  });
+  it("baseUrl/apiKey/시크릿 없음 회귀 가드", () => {
+    const out = buildLastRunBlock({
+      argv: ["dooray"],
+      exitCode: 1,
+      errorMessage: "x",
+      timestamp: "2026-04-29T00:00:00Z",
+    });
+    expect(out).not.toMatch(/baseUrl|apiKey|api[_-]?key|password|token|Bearer/i);
   });
 });
 

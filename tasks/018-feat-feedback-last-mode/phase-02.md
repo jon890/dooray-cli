@@ -32,7 +32,7 @@ program.parseAsync().catch((err) => {
 ```ts
 import { sanitizeArgv } from "./utils/argv-sanitize.js";
 import { writeLastRun } from "./cache/last-run.js";
-import { getConfigOrThrow } from "./config/store.js";
+import { getConfig } from "./config/store.js";  // Throw 안 하는 변형 사용
 
 program.parseAsync().catch(async (err) => {
   const errorMessage = err instanceof Error ? err.message : String(err);
@@ -40,13 +40,14 @@ program.parseAsync().catch(async (err) => {
 
   // last-run 기록 (best-effort, opt-in, feedback 명령은 제외)
   try {
-    const config = await getConfigOrThrow();
-    const isFeedbackCommand =
-      process.argv.includes("feedback") &&
-      process.argv[2] === "feedback";
-    if (config.trackLastRun && !isFeedbackCommand) {
+    const config = await getConfig();  // null 가능 — setup 안 한 사용자
+    // 전역 옵션 우회 차단: argv 전체에서 "-" 로 시작 안 하는 첫 토큰을 서브명령으로 본다
+    const sanitized = sanitizeArgv(process.argv.slice(2));
+    const firstNonFlag = sanitized.find((a) => !a.startsWith("-"));
+    const isFeedbackCommand = firstNonFlag === "feedback";
+    if (config?.trackLastRun && !isFeedbackCommand) {
       await writeLastRun({
-        argv: sanitizeArgv(process.argv.slice(1)),  // node 경로 제외
+        argv: ["dooray", ...sanitized],  // 본문 출력 시 "$ dooray ..." 재현 의도
         exitCode,
         errorMessage,
         timestamp: new Date().toISOString(),
@@ -61,9 +62,11 @@ program.parseAsync().catch(async (err) => {
 });
 ```
 
-> **재귀 방지**: `process.argv[2] === "feedback"` 체크로 `dooray feedback ...` 자체 실행은 last-run에 안 남김. argv[0]=node, argv[1]=dist/index.js, argv[2]=서브명령.
+> **재귀 방지 (강화)**: 단순히 `argv[2] === "feedback"` 만 보면 `dooray --json feedback ...` 처럼 전역 옵션이 앞에 오는 경우 우회된다. 따라서 `argv.slice(2)` 에서 "-" 로 시작 안 하는 첫 토큰을 서브명령으로 판정. ADR-023 재귀 방지 정책 일치.
 >
-> **getConfigOrThrow 내부에서 throw 가능성**: config 자체 읽기 실패 → 그냥 try/catch로 swallow. last-run 기록만 못 할 뿐 원래 에러는 정상 출력.
+> **`getConfig` 사용**: `getConfigOrThrow` 는 setup 안 한 사용자에게 throw — catch 내부에서 호출하면 최초 사용자가 만난 원래 에러를 swallow 처리하느라 의도 어긋남. `getConfig` 가 `null` 반환하면 `config?.trackLastRun` 짧은 경로로 통과.
+>
+> **argv 출력**: `slice(2)` 후 `["dooray", ...]` 접두를 수동으로 붙여 본문에 `$ dooray post get X 1` 형태로 재현. argv[1]=dist/index.js 경로가 본문에 노출되지 않음.
 
 ### 2) `src/commands/feedback.ts` — `--last` 옵션 + 본문 조립
 
@@ -161,13 +164,14 @@ describe("buildLastRunBlock", () => {
 - [ ] `pnpm test` 통과 (buildLastRunBlock 2+ 케이스 추가)
 - [ ] `node dist/index.js feedback --help` → `--last` 옵션 노출
 - [ ] `grep -c "writeLastRun\|sanitizeArgv\|trackLastRun" src/index.ts` → 3 이상
-- [ ] `grep -c "isFeedbackCommand" src/index.ts` → 1 이상 (재귀 방지)
+- [ ] `grep -c "isFeedbackCommand\|firstNonFlag" src/index.ts` → 2 이상 (전역 옵션 우회 방지 가드)
+- [ ] `grep -c "getConfigOrThrow" src/index.ts` → 0 (catch hook은 `getConfig` 사용)
 - [ ] `grep -c "readLastRun\|buildLastRunBlock\|opts.last" src/commands/feedback.ts` → 3 이상
 
 ## 주의사항
 
 - **best-effort 기록**: catch 블록 내부 try/catch가 원래 에러 출력을 절대 마스킹하지 않도록. last-run 기록 실패는 silent
-- **재귀 방지 필수**: `process.argv[2] === "feedback"` 체크. feedback이 자기 자신 argv를 last-run에 남기면 다음 feedback에 fed back
+- **재귀 방지 필수 (전역 옵션 우회 케이스 포함)**: `argv.slice(2)` 의 첫 non-flag 토큰이 `feedback` 인지로 판정. 단순히 `argv[2] === "feedback"` 만 보면 `dooray --json feedback ...` 같이 전역 옵션이 앞에 올 때 가드가 풀려 feedback 자체 실패가 last-run에 기록 → 다음 `--last` 호출에서 fed back
 - **opt-in 게이트**: `config.trackLastRun !== true` 면 기록 X
 - **--last 사용 시 last-run 없음 → 명확한 에러 메시지** (단위 테스트로는 검증 어려움 — phase 3 시나리오)
 - **인터랙티브 모드 editor default**: lastBlock + "\n\n"로 사용자가 그 아래 의견 작성. 사용자 의견이 빈 줄이면 lastBlock만으로도 본문 충분

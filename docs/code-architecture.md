@@ -46,6 +46,7 @@ src/
     store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크
                             #   MEMBER_GROUPS_DIR = ~/.dooray/cache/member-groups/
     types.ts                # CacheEntry·Cached* 인터페이스
+    last-run.ts             # ~/.dooray/last-run.json 단일 read/write (ADR-023, cache 디렉토리 외부 — cache clear 영향 없음)
 
   config/
     store.ts                # ~/.dooray/config.json CRUD
@@ -68,6 +69,8 @@ src/
     dooray-url.ts           # https://*.dooray.com/task/to/<postId> URL parser (ADR-020)
     comment-enrich.ts       # PostComment[] Creator 이름 채우기 (ADR-021, immutable)
     mention.ts              # 멤버·그룹 멘션 마크업 빌더 + prependMentions (Issue #25)
+    feedback-meta.ts        # CLI 버전·환경 수집 + GitHub issue body 빌더 + buildLastRunBlock (ADR-022, ADR-023)
+    argv-sanitize.ts        # argv 시크릿 패턴 마스킹 (--api-key/--token/--password/Authorization, ADR-023)
 
   commands/
     setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)
