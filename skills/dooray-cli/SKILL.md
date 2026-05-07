@@ -45,7 +45,7 @@ dooray doctor                                 # 설정 검증
 
 자연어 요청을 커맨드로 변환할 때 아래 표를 참고한다.
 
-> **공통 (post 하위 12개 명령)**: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`는 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL(`https://*.dooray.com/task/to/<postId>`)을 직접 받는다. **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축, ADR-020).
+> **공통 (post 하위 12개 명령)**: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`는 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL(`https://*.dooray.com/task/to/<postId>` 또는 브라우저 주소창 복사본 `https://*.dooray.com/task/<projectId>/<postId>`)을 직접 받는다. **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축, ADR-020).
 
 | 의도 | 커맨드 |
 |------|--------|

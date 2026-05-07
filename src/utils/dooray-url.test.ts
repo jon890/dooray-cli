@@ -27,6 +27,20 @@ describe("parseDoorayTaskUrl", () => {
     expect(parseDoorayTaskUrl("tc-ocr/337")).toBeNull();
     expect(parseDoorayTaskUrl("12345")).toBeNull();
   });
+  it("/task/<projectId>/<postId> 형 URL 에서 postId 추출", () => {
+    expect(parseDoorayTaskUrl("https://example.dooray.com/task/1234567890123456789/9876543210987654321"))
+      .toBe("9876543210987654321");
+  });
+  it("/task/<projectId>/<postId> 형도 query string 무시", () => {
+    expect(parseDoorayTaskUrl("https://x.dooray.com/task/123/456?ref=foo"))
+      .toBe("456");
+  });
+  it("/task/<projectId>/<postId> 형도 trailing slash 허용", () => {
+    expect(parseDoorayTaskUrl("https://x.dooray.com/task/123/456/")).toBe("456");
+  });
+  it("/task/<projectId>/<postId> 형도 dooray.com 도메인 외 reject", () => {
+    expect(parseDoorayTaskUrl("https://other.com/task/123/456")).toBeNull();
+  });
 });
 
 describe("isLikelyDoorayUrl", () => {

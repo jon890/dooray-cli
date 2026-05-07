@@ -3,7 +3,7 @@ import { getConfigOrThrow } from "../../config/store.js";
 import { DoorayApiClient } from "../../api/client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { resolveMember } from "../../resolvers/member.js";
-import { resolveTags } from "../../resolvers/tag.js";
+import { resolveTags, validateMandatoryTags } from "../../resolvers/tag.js";
 import { resolveMilestone } from "../../resolvers/milestone.js";
 import { resolvePostRef } from "../../resolvers/postRef.js";
 import { resolveWorkflow } from "../../resolvers/workflow.js";
@@ -74,7 +74,7 @@ export const postCreateCommand = new Command("create")
     const [tagIds, parentPostId, milestoneId] = await Promise.all([
       tagInputs.length > 0
         ? resolveTags(client, projectId, tagInputs)
-        : Promise.resolve<string[] | undefined>(undefined),
+        : validateMandatoryTags(client, projectId).then(() => undefined),
       opts.parent
         ? resolvePostRef(client, opts.parent)
         : Promise.resolve<string | undefined>(undefined),

@@ -75,7 +75,8 @@ dooray post get <project> 42 --json           # JSON 출력
 | 방식 | 예시 |
 |---|---|
 | `<project> <number>` | `dooray post get <project> 42` |
-| Dooray URL positional | `dooray post get https://x.dooray.com/task/to/<postId>` |
+| Dooray URL positional (`/task/to/<postId>`) | `dooray post get https://x.dooray.com/task/to/<postId>` |
+| Dooray URL positional (브라우저 주소창 복사본) | `dooray post get https://x.dooray.com/task/<projectId>/<postId>` |
 | `--id <postId>` | `dooray post get --id <postId>` |
 | `--url <url>` | `dooray post get --url https://x.dooray.com/task/to/...` |
 

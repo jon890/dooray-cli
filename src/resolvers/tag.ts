@@ -38,6 +38,44 @@ export async function ensureTags(client: DoorayApiClient, projectId: string): Pr
   return items;
 }
 
+/** 누락 그룹별 후보 태그 추출 헬퍼 */
+function buildMandatoryHint(allTags: CachedTag[], missingGroupIds: string[]): string {
+  const lines: string[] = [];
+  for (const gid of missingGroupIds) {
+    const groupTags = allTags.filter((t) => t.groupId === gid);
+    const gname = groupTags[0]?.groupName ?? gid;
+    const candidates = groupTags.map((t) => t.name).join(", ");
+    lines.push(`  - "${gname}": ${candidates || "(태그 없음)"}`);
+  }
+  return lines.join("\n");
+}
+
+/**
+ * 태그 입력 없이 post create 시 mandatory 그룹 존재 여부를 사전 검증.
+ * mandatory 그룹이 있으면 후보 태그를 포함한 에러를 throw.
+ */
+export async function validateMandatoryTags(
+  client: DoorayApiClient,
+  projectId: string,
+): Promise<void> {
+  const allTags = await ensureTags(client, projectId);
+  const missingGroupIds: string[] = [];
+  const seen = new Set<string>();
+  for (const t of allTags) {
+    if (t.groupMandatory && t.groupId && !seen.has(t.groupId)) {
+      seen.add(t.groupId);
+      missingGroupIds.push(t.groupId);
+    }
+  }
+  if (missingGroupIds.length === 0) return;
+  throw new DoorayCliError(
+    `필수 태그 그룹이 누락되었습니다 (그룹당 1개 이상 필요):\n` +
+      buildMandatoryHint(allTags, missingGroupIds) +
+      `\n\n다시 시도: --tag "<그룹>: <후보>" 형식으로 추가`,
+    EXIT_PARAM_ERROR,
+  );
+}
+
 /**
  * 입력된 태그 이름들을 CachedTag로 lookup하고 mandatory/selectOne 정책을 검증.
  * 반환값은 tagIds (post create body용).
@@ -65,14 +103,14 @@ export async function resolveTags(
     if (t.groupMandatory && t.groupId) mandatoryGroups.set(t.groupId, t.groupName ?? t.groupId);
   }
   const coveredGroups = new Set(selected.map((t) => t.groupId).filter((g): g is string => !!g));
-  const missing: string[] = [];
-  for (const [gid, gname] of mandatoryGroups) {
-    if (!coveredGroups.has(gid)) missing.push(gname);
+  const missingIds: string[] = [];
+  for (const [gid] of mandatoryGroups) {
+    if (!coveredGroups.has(gid)) missingIds.push(gid);
   }
-  if (missing.length > 0) {
+  if (missingIds.length > 0) {
     throw new DoorayCliError(
       `필수 태그 그룹이 누락되었습니다 (그룹당 1개 이상 필요):\n` +
-        missing.map((g) => `  - ${g}`).join("\n"),
+        buildMandatoryHint(allTags, missingIds),
       EXIT_PARAM_ERROR,
     );
   }
