@@ -1,5 +1,7 @@
 # dooray-cli
 
+[![CI](https://github.com/jon890/dooray-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/jon890/dooray-cli/actions/workflows/ci.yml)
+
 NHN Dooray REST API를 래핑한 CLI 도구입니다. 터미널과 AI 에이전트 환경에서 Dooray 업무를 관리할 수 있습니다.
 
 > A CLI tool wrapping the NHN Dooray REST API. Manage Dooray tasks from your terminal or AI agent workflows.
@@ -311,6 +313,34 @@ node dist/index.js --help
 pnpm link --global
 dooray --help
 ```
+
+## GitHub Actions
+
+이 레포는 두 개의 워크플로를 사용합니다:
+
+### CI (`.github/workflows/ci.yml`)
+- 트리거: `main` 으로 push, `main` 대상 PR
+- 동작: `pnpm install --frozen-lockfile` → `pnpm test` → `pnpm build` (Node 18, ubuntu-latest)
+- 별도 secret 불필요
+
+### Claude code review (`.github/workflows/claude-code-review.yml`)
+- 트리거: PR opened, PR 댓글에 `/review` 포함
+- 동작: 4 병렬 specialist 에이전트 (TypeScript / Conventions / Security / Architecture) 가 인라인 리뷰 + 요약 댓글 1개 게시
+- 필요 secret: `CLAUDE_CODE_OAUTH_TOKEN`
+
+#### Secret 셋업
+
+1. https://github.com/jon890/dooray-cli/settings/secrets/actions 접속
+2. `New repository secret` → 이름 `CLAUDE_CODE_OAUTH_TOKEN` + 값 (Anthropic 에서 발급한 OAuth 토큰)
+3. PR 을 열거나 PR 댓글에 `/review` 작성하면 자동 실행
+
+#### 비용 / 토큰
+
+각 PR 당 4 specialist 가 모두 `haiku` 모델로 동작 — 평균 PR 1건 당 수십 센트 수준. PR 자동 트리거 비활성화하려면 `claude-code-review.yml` 의 `if:` 조건에서 `github.event_name == 'pull_request'` 분기를 제거하고 `/review` 댓글 트리거만 남길 수 있음.
+
+#### Fork PR 제한
+
+GitHub Actions 정책상 fork 에서 열린 PR 은 `secrets.CLAUDE_CODE_OAUTH_TOKEN` 에 접근 못 해 **자동 리뷰가 silent 하게 skip** 된다. fork 기여자가 리뷰를 받으려면 maintainer 가 PR 댓글에 `/review` 를 작성하여 base repo 컨텍스트로 워크플로를 트리거해야 한다.
 
 ## 라이센스
 
