@@ -57,7 +57,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - `post edit`, `comment edit`은 `--title`/`--body` 옵션으로 non-interactive 사용 가능 (`--subject`는 deprecated alias, stderr 경고 후 동작)
 - `post create`는 `--title` 필수 (또는 `--subject` alias)
 - `post create`는 `--tag` (반복) / `--parent` (`code/number` 또는 raw postId) / `--workflow` / `--milestone` 지원. mandatory-tag 그룹은 클라이언트가 사전 검증
-- post 하위 12개 명령(get/edit/done/workflow + comment 4개 + file 5개)은 `<project> <post-number>` 외에도 `--id <postId>` / `--url <url>` / 첫 positional에 Dooray URL 직접 입력 지원. `resolvePostInput` 단일 헬퍼에서 분기
+- post 하위 16개 명령(get/edit/done/workflow + comment 4개 + file 5개 + comment file 4개)은 `<project> <post-number>` 외에도 `--id <postId>` / `--url <url>` / 첫 positional에 Dooray URL 직접 입력 지원. `resolvePostInput` 단일 헬퍼에서 분기
 - `dooray post comment file *` 4 명령(list/upload/download/delete) — 댓글에 첨부된 파일 관리. Dooray 가 댓글 전용 endpoint 미지원이라 내부적으로 post-level files API + 댓글 본문 PUT(`![filename](/files/<id>)` markdown) 합성으로 동작 (ADR-024). `delete` 는 markdown 제거 + 파일 삭제 둘 다 수행 (atomic 보장 없음 — 부분 성공 시 stderr 안내 + non-zero exit)
 - `dooray member get/list` 명령으로 표시명 조회. `post comment list` table 출력은 Creator 컬럼을 project 멤버 캐시로 enrich (단 `--json`은 raw 유지)
 - `dooray feedback`은 GitHub issue를 `gh` CLI에 위임해서 생성. baseUrl/시크릿은 자동 메타에 미포함. `--last`로 직전 명령의 sanitized argv + 에러를 본문 상단에 자동 첨부 (opt-in: `dooray config set track-last-run true`, ADR-023)

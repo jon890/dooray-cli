@@ -15,34 +15,22 @@ ADR-024 기반. Dooray 가 댓글 전용 attachment endpoint 를 미지원하므
 - `src/api/types.ts` `PostComment` / `PostCommentListResponse` — 단건 응답 타입 도출 base
 - `src/utils/feedback-meta.ts` — utils 단위 테스트 형식 참고
 
-## 작업 항목 (4개)
+## 작업 항목 (3개)
 
-### 1) `src/api/types.ts` — 단건 응답 타입 추가
+### 1) `src/api/client.ts` — `getPostComment` 단건 조회 메서드
 
-기존 `PostCommentListResponse` 를 보고 단건 변형 추가:
-
-```ts
-// 기존 PostCommentListResponse: DoorayApiResponse<PostComment[]>
-// 신규
-export type GetPostCommentResponse = DoorayApiResponse<PostComment>;
-```
-
-`PostComment` 타입에 `files: PostFileDetail[]` 필드가 이미 있는지 확인. 없으면 추가 (검증으로 확인됨 — 응답에 `files: []` 항상 존재).
-
-### 2) `src/api/client.ts` — `getPostComment` 단건 조회 메서드
-
-`getPostComments` (L284) 옆에 추가:
+`getPostComments` (L284) 옆에 추가. **반환 타입은 기존 `PostCommentDetailResponse`** (`src/api/types.ts:332` — `DoorayApiResponse<PostComment>`) 재사용. types.ts 수정 없음 (중복 alias 추가 금지). `PostComment.files?: PostCommentFile[]` (L311) 도 이미 존재 — optional 임에 유의 (다음 phase 에서 `?? []` 폴백).
 
 ```ts
 async getPostComment(
   projectId: string,
   postId: string,
   logId: string,
-): Promise<GetPostCommentResponse> {
+): Promise<PostCommentDetailResponse> {
   try {
     return await this.api
       .get(`project/v1/projects/${projectId}/posts/${postId}/logs/${logId}`)
-      .json<GetPostCommentResponse>();
+      .json<PostCommentDetailResponse>();
   } catch (e) {
     return toDoorayCliError(e);
   }
@@ -51,7 +39,7 @@ async getPostComment(
 
 `try { ... } catch (e) { return toDoorayCliError(e); }` 패턴 — 기존 모든 client 메서드 (예: `getPostFiles` L541) 와 일관. ky HTTPError 누설 방지.
 
-### 3) `src/utils/comment-files.ts` — markdown reference 헬퍼 (신규)
+### 2) `src/utils/comment-files.ts` — markdown reference 헬퍼 (신규)
 
 ```ts
 /**
@@ -86,7 +74,7 @@ export function removeFileReference(body: string, fileId: string): string {
 }
 ```
 
-### 4) `src/utils/comment-files.test.ts` — 단위 테스트 (신규)
+### 3) `src/utils/comment-files.test.ts` — 단위 테스트 (신규)
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -155,9 +143,9 @@ pnpm run build && pnpm test
 grep -nE "async getPostComment\b" src/api/client.ts
 # 기대: 1 줄
 
-# 3. 단건 응답 타입 export
-grep -nE "export type GetPostCommentResponse" src/api/types.ts
-# 기대: 1 줄
+# 3. 기존 PostCommentDetailResponse 재사용 — types.ts 변경 없음
+git diff --stat src/api/types.ts | tail -1
+# 기대: " 0 files changed" (또는 빈 출력)
 
 # 4. utils 신규 파일 + export 2 개
 grep -cE "export function (appendFileReference|removeFileReference)" src/utils/comment-files.ts
@@ -185,4 +173,4 @@ sed -n '/async getPostComment\b/,/^  }/p' src/api/client.ts | grep -c "toDoorayC
 
 ## Blocked 조건
 
-- `PostComment` 타입에 `files` 필드 부재 → types.ts 에 함께 추가
+- (없음) — `PostComment.files?: PostCommentFile[]` + `PostCommentDetailResponse` 모두 기존 코드에 존재 확인됨 (critic 검증 결과)

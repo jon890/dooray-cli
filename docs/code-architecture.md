@@ -71,6 +71,7 @@ src/
     mention.ts              # 멤버·그룹 멘션 마크업 빌더 + prependMentions (Issue #25)
     feedback-meta.ts        # CLI 버전·환경 수집 + GitHub issue body 빌더 + buildLastRunBlock (ADR-022, ADR-023)
     argv-sanitize.ts        # argv 시크릿 패턴 마스킹 (--api-key/--token/--password/Authorization, ADR-023)
+    comment-files.ts        # appendFileReference / removeFileReference — 댓글 본문 markdown reference 조작 (ADR-024)
 
   commands/
     setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)
@@ -105,6 +106,12 @@ src/
         add.ts
         edit.ts
         delete.ts
+        file/
+          index.ts            # commentFileCommand 조립
+          list.ts             # 댓글 첨부 목록 (getPostComment → .files, ADR-024)
+          upload.ts           # 파일 업로드 + 댓글 reference append
+          download.ts         # post-level 다운로드 wrapper (UX 일관성, ADR-024)
+          delete.ts           # reference 제거 + 파일 삭제 (atomic 보장 X, ADR-024)
       file/
         list.ts               # 첨부파일 목록
         download.ts           # 단일 파일 다운로드
