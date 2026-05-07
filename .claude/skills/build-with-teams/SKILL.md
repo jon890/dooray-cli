@@ -87,6 +87,25 @@ Agent({
 - `run_in_background: true`로 idle 대기 가능
 - 이후 통신은 **모두 `SendMessage({to: "critic", message: "..."})`로만** 진행
 
+**스폰 직후 검증 (필수, 매 Agent 호출마다)**:
+
+`name` 파라미터를 빠뜨려도 Agent 호출은 silent 하게 성공한다 (응답 메시지가 정식 멤버 케이스와 거의 동일해 시각 구분 불가). 정식 멤버 등록 여부는 반드시 `team config.json` 으로 직접 확인한다.
+
+응답 형식 차이로도 1차 식별 가능:
+- ✅ 정식 멤버: `agent_id: critic@plan{N}` + `name: critic` + `team_name: plan{N}` 노출
+- ❌ 일회성 백그라운드: `agentId: <16자 UUID>` 만 노출 (이름·팀 정보 없음)
+
+후자가 보이면 **즉시 재스폰**. 전자라도 다음 grep 으로 한 번 더 확인:
+
+```bash
+# cwd: 무관 (절대경로)
+python3 -c "import json; m=json.load(open('$HOME/.claude/teams/plan{N}/config.json'))['members']; print('\n'.join(f\"{x['name']}@{x['agentType']}\" for x in m))"
+# 기대: team-lead 외에 critic / executor / code-reviewer / docs-verifier 가 표시되어야 함
+# 보이지 않으면 일회성 agent — name 파라미터 추가하여 재스폰
+```
+
+team-lead 외 멤버가 0명이면 직전 Agent 호출에서 `name` 누락. `agentId: <UUID>` 백그라운드 agent 는 결과 와도 무시하고 **새로 정식 멤버로 스폰**.
+
 **팀원 프롬프트/메시지는 worktree 절대경로로 전달한다 (필수).**
 
 sub-agent는 main 워킹 디렉터리에서 실행될 수 있다. 상대경로나 `tasks/{plan}/...` 형태로 지시하면 worktree 브랜치에 커밋된 최신 파일이 아니라 main의 구버전 또는 미존재 파일을 읽어 오판 사고가 발생한다.
