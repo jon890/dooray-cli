@@ -26,7 +26,63 @@ PR에 달린 코드 리뷰 댓글(주로 claude bot의 🔴/🟡 구조화 리�
 
 ---
 
-## 1단계: PR 및 댓글 수집
+## 1단계: PR 및 댓글 수집 + CI 상태 점검
+
+### CI 상태 먼저 확인 (필수)
+
+리뷰 댓글 분석 전에 **CI 상태**를 먼저 확인한다. 봇 리뷰가 아무리 깨끗해도 CI 가 실패하면 PR 머지 불가 — 빌드/테스트 실패는 사실상 가장 시급한 "🔴 필수 수정" 이다.
+
+```bash
+# 1) 한눈에 보기
+gh pr checks <N>
+
+# 2) 실패 / 진행중 체크 추출 (FAILURE / IN_PROGRESS 만)
+gh pr view <N> --json statusCheckRollup \
+  --jq '.statusCheckRollup[] | select(.conclusion=="FAILURE" or .status=="IN_PROGRESS") | {name, conclusion, status, detailsUrl}'
+```
+
+**판정**:
+- 모든 체크가 `pass` / `SUCCESS` → 2단계로 진행
+- `FAILURE` 가 있음 → 아래 "CI 실패 로그 분석" 으로
+- `IN_PROGRESS` 만 있음 → 사용자에게 "CI 진행 중 — 끝나길 기다려 다시 실행할지" 확인
+
+### CI 실패 로그 분석
+
+실패한 run 의 로그를 읽고 원인을 파악한다:
+
+```bash
+# 실패한 워크플로 run id 추출 후 실패 step 로그만 (전체 stdout 다 받지 말 것)
+RUN_ID=$(gh pr view <N> --json statusCheckRollup --jq '.statusCheckRollup[] | select(.conclusion=="FAILURE") | .detailsUrl' | head -1 | grep -oE '[0-9]+/job/[0-9]+' | cut -d/ -f1)
+gh run view $RUN_ID --log-failed 2>&1 | tail -80
+```
+
+`--log-failed` 는 실패한 step 로그만 추출해 토큰 낭비 방지. tail 80 줄 이상 필요하면 점진적으로 늘린다.
+
+### CI 실패 흔한 원인 → 해결 매핑 (dooray-cli 컨텍스트)
+
+| 증상 (로그 키워드) | 원인 | 해결 |
+|---|---|---|
+| `does not provide an export named 'styleText'` / `node:util` | Node 18 ↔ 의존성이 Node 20.12+ API 사용 (vitest 4 / rolldown 등) | `.github/workflows/ci.yml` `NODE_VERSION` 20 으로 + `package.json` `engines.node >=20` |
+| `ERR_PNPM_OUTDATED_LOCKFILE` / `frozen-lockfile` 실패 | 로컬에서 의존성 변경 후 lockfile 미커밋 | 로컬에서 `pnpm install` 후 `pnpm-lock.yaml` 같이 커밋 |
+| `Cannot find module 'X'` | 새 import 추가했는데 의존성 미설치 / package.json 미커밋 | `pnpm add X` + `package.json` + lockfile 같이 커밋 |
+| `SyntaxError: Unexpected token` 빌드 단계 | tsup target 불일치 또는 Node 버전 mismatch | 위 styleText 건과 유사 — Node 버전 점검 |
+| `Test Files X failed` / vitest assertion | 테스트 회귀 | 실패 테스트 파일 직접 읽고 픽스 |
+| `actions/X@vN: Unable to find action` | floating tag 가 cutoff 이후 제거되었거나 오타 | API 로 실존 확인 (`curl -s https://api.github.com/repos/actions/X/tags`) — 잘못된 알람일 수 있음 |
+| Lint/format 실패 (CI 가 lint 단계 가지고 있다면) | 코드 스타일 위반 | 로컬에서 `pnpm lint --fix` 후 커밋. dooray-cli 는 lint 단계 없음 — tsup 빌드가 타입 검증 |
+| `gh-token` / secrets 접근 실패 | fork PR 또는 secret 미등록 | maintainer 가 base 컨텍스트로 트리거 또는 secret 등록 |
+
+표에 없는 증상은 사용자에게 "CI 로그 일부 + 의심 원인" 을 제시하고 진행 방향 확인.
+
+### CI 픽스 흐름
+
+CI 실패 픽스는 리뷰 댓글 처리와 **동일한 단계** 를 따른다:
+
+1. 영향 파일 읽고 최소 수정
+2. **로컬에서 똑같은 명령으로 재현** — `pnpm test`, `pnpm build` 등
+3. (4단계) 검증 통과 후 (5단계) commit & push — 메시지는 `ci: <원인 요약>` 또는 `fix(ci): ...`
+4. push 후 `gh pr checks <N>` 으로 새 run 결과 대기
+
+리뷰 댓글이 같이 있으면, **CI 픽스 먼저 완료 → 같은 PR 에 리뷰 픽스 추가 commit** 순서. 둘을 한 commit 에 섞지 않는다 (회귀 시 분리 revert).
 
 ### PR 번호 결정
 
@@ -311,6 +367,9 @@ git push origin main
 
 ```
 ## 완료 — PR #<N>
+
+🛠️ CI 픽스 (<count>건)
+  - <체크 이름>: <원인 요약> → <적용 픽스>
 
 ✅ 적용된 수정 (<count>건)
   - <파일>: <무엇을 수정했는지>
