@@ -89,7 +89,7 @@ export function findDroppedAttachments(
 
 ### 2. `src/utils/attachment-check.test.ts` — 단위 테스트
 
-다음 케이스 (총 8개):
+다음 케이스 (총 9개):
 
 ```ts
 import { describe, it, expect } from "vitest";
