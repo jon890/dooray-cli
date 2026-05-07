@@ -2,12 +2,12 @@
 
 ## 컨텍스트
 
-dooray-cli 는 현재 `.github/` 디렉터리 자체가 없어 CI 가 돌지 않는다. fos-blog 의 `ci.yml` 을 base 로 dooray-cli 스택 (Node 18, pnpm, tsup build, vitest test) 에 맞게 축소.
+dooray-cli 는 현재 `.github/` 디렉터리 자체가 없어 CI 가 돌지 않는다. fos-blog 의 `ci.yml` 을 base 로 dooray-cli 스택 (Node 20, pnpm, tsup build, vitest test) 에 맞게 축소.
 
 핵심 차이:
 - dooray-cli 는 **lint script 없음** (`pnpm lint` 호출 금지) — `pnpm build` (tsup) 가 타입 검증을 포함하므로 lint 단계 생략
 - DB / 사이트 빌드 환경변수 불필요 (env 블록 비움)
-- Node 버전: 프로젝트 메모리 기준 `Node.js 18`
+- Node 버전: `package.json.engines.node = ">=20"` 기준 Node 20 (LTS)
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
@@ -41,7 +41,7 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: "18"
+  NODE_VERSION: "20"
 
 jobs:
   ci:
@@ -112,8 +112,8 @@ python3 -c "import yaml; yaml.safe_load(open('.github/workflows/ci.yml'))"
 grep -nE "pnpm (test|build|lint|install)" .github/workflows/ci.yml
 # 기대: pnpm install / pnpm test / pnpm build 각 1줄. pnpm lint 0건
 
-# 4. Node 18 명시
-grep -nE "NODE_VERSION:\s*\"?18" .github/workflows/ci.yml
+# 4. Node 20 명시 (package.json.engines 정합)
+grep -nE "NODE_VERSION:\s*\"?20" .github/workflows/ci.yml
 # 기대: 1줄
 
 # 5. (실증) 사용자가 PR 을 한 번 열어 CI green 확인 — 본 phase 완료 기준에서는 yaml 정합성까지만
@@ -135,7 +135,7 @@ pnpm build && pnpm test
 # cwd: /Users/nhn/personal/dooray-cli
 # branch: feat/023-feat-github-ci-claude-review
 git add .github/workflows/ci.yml
-git commit -m "ci: add GitHub Actions CI (pnpm install + test + build on Node 18)
+git commit -m "ci: add GitHub Actions CI (pnpm install + test + build on Node 20)
 
 Adapted from fos-blog. dooray-cli has no lint script — tsup build
 provides type validation. push/PR to main triggers."
