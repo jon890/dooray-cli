@@ -45,7 +45,7 @@ dooray doctor                                 # 설정 검증
 
 자연어 요청을 커맨드로 변환할 때 아래 표를 참고한다.
 
-> **공통 (post 하위 12개 명령)**: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`는 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL(`https://*.dooray.com/task/to/<postId>` 또는 브라우저 주소창 복사본 `https://*.dooray.com/task/<projectId>/<postId>`)을 직접 받는다. **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축, ADR-020).
+> **공통 (post 하위 16개 명령)**: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`는 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL(`https://*.dooray.com/task/to/<postId>` 또는 브라우저 주소창 복사본 `https://*.dooray.com/task/<projectId>/<postId>`)을 직접 받는다. **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축, ADR-020).
 
 | 의도 | 커맨드 |
 |------|--------|
@@ -87,6 +87,10 @@ dooray doctor                                 # 설정 검증
 | 전체 첨부파일 다운로드 | `dooray post file download-all <project> <number>` |
 | 첨부파일 업로드 | `dooray post file upload <project> <number> <file-path>` |
 | 첨부파일 삭제 | `dooray post file delete <project> <number> <file-id>` |
+| 댓글 첨부 목록 | `dooray post comment file list <project> <number> <comment-id>` |
+| 댓글 파일 업로드 | `dooray post comment file upload <project> <number> <comment-id> <path>` |
+| 댓글 파일 다운로드 | `dooray post comment file download <project> <number> <comment-id> <file-id>` |
+| 댓글 파일 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id> --yes` |
 
 > **제목 옵션 네이밍**: `post` 와 `wiki page` 모두 `--title` 표준. `post`의 `--subject`는 deprecated alias로 당분간 동작하되, 새 코드에서는 `--title` 사용을 권장.
 
@@ -154,6 +158,18 @@ dooray post get <project> 42 --json
 dooray post comment add <project> 42 --body "진행 상황 업데이트: 80% 완료"
 ```
 
+### 시나리오 — 댓글에 스크린샷 자동 첨부
+
+스크립트가 스크린샷을 댓글에 삽입하거나, 에이전트가 결과 파일을 첨부 댓글로 보고할 때 사용. Dooray REST API 가 댓글 전용 attachment endpoint 를 미지원하므로 내부적으로 post-level files API + 댓글 본문 PUT 합성으로 동작 (ADR-024).
+
+```bash
+# 1. 댓글을 먼저 만든다 (텍스트만, --json 으로 commentId 획득)
+COMMENT_ID=$(dooray post comment add <project> <post-num> --body "스크린샷 보고:" --json | jq -r '.id')
+
+# 2. 그 댓글에 파일을 첨부 (post-level 업로드 + 댓글 본문 markdown 자동 추가)
+dooray post comment file upload <project> <post-num> "$COMMENT_ID" ./screenshot.png
+```
+
 ### 위키 페이지 조회
 
 ```bash
@@ -169,9 +185,9 @@ dooray wiki page get <project> <pageId> --json
 
 ## 커맨드 상세
 
-### 업무 식별 방식 (post 하위 12개 명령 공통, ADR-020)
+### 업무 식별 방식 (post 하위 16개 명령 공통, ADR-020)
 
-`post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`는 4가지 입력을 모두 받는다:
+`post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`는 4가지 입력을 모두 받는다:
 
 ```bash
 # (1) 기존 positional — 가장 익숙한 형태

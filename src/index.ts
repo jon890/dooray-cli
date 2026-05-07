@@ -21,6 +21,7 @@ import { commentLatestCommand } from "./commands/post/comment/latest.js";
 import { commentAddCommand } from "./commands/post/comment/add.js";
 import { commentEditCommand } from "./commands/post/comment/edit.js";
 import { commentDeleteCommand } from "./commands/post/comment/delete.js";
+import { commentFileCommand } from "./commands/post/comment/file/index.js";
 import { fileListCommand } from "./commands/post/file/list.js";
 import { fileDownloadCommand } from "./commands/post/file/download.js";
 import { fileDownloadAllCommand } from "./commands/post/file/download-all.js";
@@ -89,6 +90,7 @@ commentCommand.addCommand(commentLatestCommand);
 commentCommand.addCommand(commentAddCommand);
 commentCommand.addCommand(commentEditCommand);
 commentCommand.addCommand(commentDeleteCommand);
+commentCommand.addCommand(commentFileCommand);
 postCommand.addCommand(commentCommand);
 
 // file 서브커맨드 그룹

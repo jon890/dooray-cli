@@ -70,7 +70,7 @@ dooray post get <project> 42                  # 업무 상세
 dooray post get <project> 42 --json           # JSON 출력
 ```
 
-#### 업무 식별 방식 (post 하위 12개 명령 공통)
+#### 업무 식별 방식 (post 하위 16개 명령 공통)
 
 | 방식 | 예시 |
 |---|---|
@@ -262,6 +262,28 @@ dooray post file upload   --url <url> --file ./report.pdf
 dooray post comment edit  --url <url> --comment-id <commentId> --body "..."
 dooray post comment delete --url <url> --comment-id <commentId>
 ```
+
+### 댓글 첨부 파일 (`post comment file *`)
+
+자동화로 댓글에 인라인 이미지 / 파일을 삽입할 때 사용. 4 명령 (list/upload/download/delete) 모두 `<project> <post-number> <comment-id>` 또는 `--id <postId> --comment-id <logId>` / `--url <url> --comment-id <logId>` 패턴 지원 (ADR-020).
+
+```bash
+# 첨부 목록
+dooray post comment file list <project> <post-num> <comment-id>
+
+# 업로드 (post-level files API 로 업로드 + 댓글 본문에 markdown reference append)
+dooray post comment file upload <project> <post-num> <comment-id> ./screenshot.png
+
+# 다운로드 (post-level 파일과 동일 — UX 일관성 wrapper)
+dooray post comment file download <project> <post-num> <comment-id> <file-id> --out ./out.png
+
+# 삭제 (댓글 본문 markdown 제거 + post-level 파일 삭제, --yes 로 confirm 생략)
+dooray post comment file delete <project> <post-num> <comment-id> <file-id> --yes
+```
+
+> Dooray REST API 가 댓글 전용 attachment endpoint 를 제공하지 않아 내부적으로
+> post-level files API 와 댓글 본문 PUT 의 합성으로 동작 (ADR-024). 단일 명령
+> = 단일 파일 — 다중 파일은 호출자가 반복 호출.
 
 ## 출력 모드
 

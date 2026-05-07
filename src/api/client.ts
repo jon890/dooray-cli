@@ -297,6 +297,20 @@ export class DoorayApiClient {
     }
   }
 
+  async getPostComment(
+    projectId: string,
+    postId: string,
+    logId: string,
+  ): Promise<PostCommentDetailResponse> {
+    try {
+      return await this.api
+        .get(`project/v1/projects/${projectId}/posts/${postId}/logs/${logId}`)
+        .json<PostCommentDetailResponse>();
+    } catch (e) {
+      return toDoorayCliError(e);
+    }
+  }
+
   async createPostComment(projectId: string, postId: string, body: CreateCommentRequest): Promise<CreateCommentApiResponse> {
     try {
       return await this.api
