@@ -2,7 +2,7 @@
   "name": "021-feat-edit-attachment-guard",
   "description": "GitHub Issue #35 항목 2 — `post edit` / `post comment edit` 가 본문 full-replace 방식이라 새 본문에 기존 inline attachment markdown(`![](/files/<id>)`) 을 빠뜨리면 이미지가 사라진 것처럼 보이는 사고 사례 방지. (옵션 A) 누락된 attachment file ID 가 있으면 stderr 경고 + (y/N) confirm. non-TTY 환경에서는 `--no-confirm` 플래그 없으면 abort.",
   "created_at": "2026-05-07T00:00:00Z",
-  "status": "pending",
+  "status": "completed",
   "current_phase": 1,
   "total_phases": 3,
   "error_message": null,
@@ -12,21 +12,21 @@
       "number": 1,
       "title": "attachment-check util + tests (file id 추출 + dropped 검출)",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "post edit / post comment edit 에 attachment guard 통합",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 3,
       "title": "README / SKILL.md + 빌드 검증 + task 완료",
       "file": "phase-03.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],

@@ -121,6 +121,16 @@ dooray post edit <project> 42 --title "새 제목" --body "새 본문"
 dooray post edit <project> 42 --body-file ./updated.md
 ```
 
+#### 본문 변경 시 attachment 보호
+
+`post edit` 와 `post comment edit` 는 본문을 통째로 replace 합니다. 새 본문에 기존 inline attachment markdown(`![](/files/<id>)`)이 빠져 있으면 stderr 에 경고를 띄우고 (y/N) 로 물어봅니다.
+
+자동화 환경 (pipe / non-TTY) 에서는 그대로 abort 됩니다. 의도한 변경이면 `--no-confirm` 으로 다시 실행하세요.
+
+```bash
+echo "new body" | dooray post comment edit <project> <post-number> <comment-id> --body - --no-confirm
+```
+
 ### 댓글
 
 ```bash

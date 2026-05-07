@@ -181,6 +181,16 @@ dooray wiki pages <project> --json
 dooray wiki page get <project> <pageId> --json
 ```
 
+## 본문 수정 (attachment 보호)
+
+`post edit` / `post comment edit` 는 full-replace 방식이다. 자동화에서는 다음 중 하나를 선택:
+
+1. **기존 attachment 보존**:
+   - `post edit` 수정 전: `dooray post get <project> <post-number> --json` 으로 `.body.content` 에서 `/files/<id>` 패턴 추출
+   - `post comment edit` 수정 전: `dooray post comment list <project> <post-number> --json` 으로 해당 댓글 본문에서 `/files/<id>` 패턴 추출
+   추출한 markdown reference 를 새 본문에 그대로 포함하여 전달
+2. **명시적 제거**: attachment 가 더 이상 필요 없다고 판단하면 `--no-confirm` 으로 진행. 누락이 의도한 결과임을 명시
+
 ---
 
 ## 커맨드 상세
