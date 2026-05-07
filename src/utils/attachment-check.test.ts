@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractAttachmentFileIds, findDroppedAttachments } from "./attachment-check.js";
+import { extractAttachmentFileIds, findDroppedAttachments, sanitizeFileName } from "./attachment-check.js";
 
 describe("extractAttachmentFileIds", () => {
   it("인라인 이미지 markdown 에서 id 추출", () => {
@@ -51,5 +51,18 @@ describe("findDroppedAttachments", () => {
       [{ id: "1" }],
     );
     expect(dropped).toEqual([]);
+  });
+});
+
+describe("sanitizeFileName", () => {
+  it("ANSI escape 제거", () => {
+    expect(sanitizeFileName("evil\x1b[31mname")).toBe("evil?[31mname");
+  });
+  it("control char 제거", () => {
+    expect(sanitizeFileName("a\x00b\x07c\x7fd")).toBe("a?b?c?d");
+  });
+  it("일반 문자 유지", () => {
+    expect(sanitizeFileName("img.png")).toBe("img.png");
+    expect(sanitizeFileName("한글파일.pdf")).toBe("한글파일.pdf");
   });
 });

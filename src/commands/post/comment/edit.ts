@@ -11,7 +11,7 @@ import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js"
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";
 import { ensureMe } from "../../../resolvers/me.js";
 import { prependMentions } from "../../../utils/mention.js";
-import { findDroppedAttachments, guardDroppedAttachments } from "../../../utils/attachment-check.js";
+import { checkAndGuardDropped } from "../../../utils/attachment-check.js";
 
 export const commentEditCommand = new Command("edit")
   .description("댓글 수정 ($EDITOR 또는 --body 옵션)")
@@ -144,10 +144,7 @@ export const commentEditCommand = new Command("edit")
     }
 
     const attachments = (comment.files ?? []).map((f) => ({ id: f.id, name: f.name }));
-    const dropped = findDroppedAttachments(comment.body.content, edited, attachments);
-    if (dropped.length > 0) {
-      await guardDroppedAttachments(dropped, !opts.confirm);
-    }
+    await checkAndGuardDropped(comment.body.content, edited, attachments, !opts.confirm);
 
     startSpinner("댓글 수정 중...");
     await client.updatePostComment(projectId, postId, commentId, {

@@ -10,7 +10,7 @@ import {
 } from "../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { readBodyInputOrNull } from "../../utils/body-input.js";
-import { findDroppedAttachments, guardDroppedAttachments } from "../../utils/attachment-check.js";
+import { checkAndGuardDropped } from "../../utils/attachment-check.js";
 import type { CreatePostUser } from "../../api/types.js";
 
 async function resolveUsers(
@@ -68,10 +68,7 @@ export const postEditCommand = new Command("edit")
 
       if (newBody != null) {
         const attachments = (post.files ?? []).map((f) => ({ id: f.id, name: f.name }));
-        const dropped = findDroppedAttachments(post.body.content, newBody, attachments);
-        if (dropped.length > 0) {
-          await guardDroppedAttachments(dropped, !opts.confirm);
-        }
+        await checkAndGuardDropped(post.body.content, newBody, attachments, !opts.confirm);
       }
 
       startSpinner("업무 수정 중...");
@@ -113,10 +110,7 @@ export const postEditCommand = new Command("edit")
       const parsed = parsePostFrontmatter(edited);
 
       const attachmentsInteractive = (post.files ?? []).map((f) => ({ id: f.id, name: f.name }));
-      const droppedInteractive = findDroppedAttachments(post.body.content, parsed.body, attachmentsInteractive);
-      if (droppedInteractive.length > 0) {
-        await guardDroppedAttachments(droppedInteractive, !opts.confirm);
-      }
+      await checkAndGuardDropped(post.body.content, parsed.body, attachmentsInteractive, !opts.confirm);
 
       startSpinner("업무 수정 중...");
       const toUsers = await resolveUsers(client, projectId, parsed.to);
