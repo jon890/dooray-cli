@@ -54,6 +54,8 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -80,7 +82,18 @@ jobs:
 jq -r '.packageManager // "MISSING"' package.json
 ```
 
-`MISSING` 이면 phase 본문에서 `pnpm/action-setup@v4` 의 `version:` 인자로 명시 (예: `version: 9`). 단 본 phase 에서 package.json 변경은 scope 외 — `version:` 인자만 추가.
+실제 환경: `.tool-versions` 의 `pnpm 10.33.0` + `pnpm-lock.yaml` lockfileVersion `9.0` (pnpm 9+ 호환). `package.json` 에 `packageManager` 미존재 → `MISSING`.
+
+따라서 `pnpm/action-setup@v4` 단계에 `with: version: 10` 명시:
+
+```yaml
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+```
+
+(로컬 `.tool-versions` 의 `pnpm 10.33.0` 과 메이저 일치. 본 phase 에서 `package.json.packageManager` 추가는 scope 외 — `version:` 인자만으로 정합성 확보.)
 
 ## 성공 기준
 

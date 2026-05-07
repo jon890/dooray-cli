@@ -55,15 +55,21 @@ tasks/023-feat-github-ci-claude-review/index.json
 #### 비용 / 토큰
 
 각 PR 당 4 specialist 가 모두 `haiku` 모델로 동작 — 평균 PR 1건 당 수십 센트 수준. PR 자동 트리거 비활성화하려면 `claude-code-review.yml` 의 `if:` 조건에서 `github.event_name == 'pull_request'` 분기를 제거하고 `/review` 댓글 트리거만 남길 수 있음.
+
+#### Fork PR 제한
+
+GitHub Actions 정책상 fork 에서 열린 PR 은 `secrets.CLAUDE_CODE_OAUTH_TOKEN` 에 접근 못 해 **자동 리뷰가 silent 하게 skip** 된다. fork 기여자가 리뷰를 받으려면 maintainer 가 PR 댓글에 `/review` 를 작성하여 base repo 컨텍스트로 워크플로를 트리거해야 한다.
 ```
 
 ### 3. 마지막 phase — index.json 완료 마킹
 
+`sed -i ''` 는 BSD/macOS 전용으로 GNU sed (Linux executor) 에서는 빈 인자 거부 → 실패. 따라서 portable 한 방법을 사용한다. **권장**: Edit 도구로 4개 위치 (`status: pending` → `completed` 4건 — root 1 + phases[*] 3) 직접 치환. 또는 node 한 줄:
+
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
-sed -i '' 's/"status": "pending"/"status": "completed"/g' tasks/023-feat-github-ci-claude-review/index.json
+node -e "const fs=require('fs');const f='tasks/023-feat-github-ci-claude-review/index.json';const d=JSON.parse(fs.readFileSync(f,'utf8'));d.status='completed';d.current_phase=3;d.phases.forEach(p=>p.status='completed');d.updated_at=new Date().toISOString();fs.writeFileSync(f,JSON.stringify(d,null,2)+'\n');"
 grep -c '"status": "completed"' tasks/023-feat-github-ci-claude-review/index.json
-# 기대: 4
+# 기대: 4 (root + phases[0..2])
 ```
 
 ### 4. PII 검증 (CLAUDE.md release 게이트 준수)
