@@ -63,10 +63,10 @@ src/
 
   utils/
     errors.ts               # DoorayCliError (message + exitCode)
-    spinner.ts              # ora 래퍼
+    spinner.ts              # ora 래퍼 + setQuiet (--json/--quiet 시 noop proxy 반환, Issue #35 item 1)
     exit-codes.ts           # 0 성공 / 1 API오류 / 2 인증실패 / 3 파라미터오류 / 4 설정오류
     body-input.ts           # --body / --body-file → string (stdin "-" + 충돌 가드)
-    dooray-url.ts           # https://*.dooray.com/task/to/<postId> URL parser (ADR-020)
+    dooray-url.ts           # /task/to/<postId> 및 /task/<projectId>/<postId> URL parser (ADR-020)
     comment-enrich.ts       # PostComment[] Creator 이름 채우기 (ADR-021, immutable)
     mention.ts              # 멤버·그룹 멘션 마크업 빌더 + prependMentions (Issue #25)
     feedback-meta.ts        # CLI 버전·환경 수집 + GitHub issue body 빌더 + buildLastRunBlock (ADR-022, ADR-023)
@@ -187,6 +187,7 @@ class DoorayApiClient {
 - `--quiet`: ID만 출력 (스크립팅용)
 - `--no-color`: 컬러 제거 (CI 환경, `NO_COLOR` env 자동 감지)
 - 스피너·에러: stderr / 데이터: stdout (파이프 시 stderr 오염 방지)
+- `--json` / `--quiet` 모드: spinner 완전 억제 (`setQuiet(true)` → `startSpinner` 가 no-op `Proxy<Ora>` 반환). jq 같은 파이프에서 stdout 청결 보장 (Issue #35 item 1)
 
 ## 테스트
 

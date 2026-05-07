@@ -39,6 +39,7 @@ import { mailReplyCommand } from "./commands/mail/reply.js";
 import { feedbackCommand } from "./commands/feedback.js";
 import { DoorayCliError } from "./utils/errors.js";
 import { sanitizeArgv } from "./utils/argv-sanitize.js";
+import { setQuiet } from "./utils/spinner.js";
 import { writeLastRun } from "./cache/last-run.js";
 import { getConfig } from "./config/store.js";
 
@@ -52,11 +53,14 @@ program
   .option("--quiet", "ID만 출력")
   .option("--no-color", "색상 비활성화");
 
-// --no-color 처리: chalk 비활성화
+// --no-color 처리: chalk 비활성화. --json / --quiet 모드에서 spinner 비활성화
 program.hook("preAction", () => {
   const opts = program.opts();
   if (opts.color === false || process.env.NO_COLOR) {
     chalk.level = 0;
+  }
+  if (opts.json || opts.quiet) {
+    setQuiet(true);
   }
 });
 

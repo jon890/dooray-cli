@@ -322,7 +322,10 @@
 - comment/file 명령의 sub-id(`<comment-id>`, `<file-id>`)는 **옵션화** (`--comment-id`, `--file-id`). 기존 positional도 호환 — agent 친화
 - 입력 검증은 `resolvePostInput` 단일 헬퍼에 집중. `--id`/`--url`/positional 동시 사용 시 명시적 에러
 - standalone API `GET /project/v1/posts/{postId}` 활용 — 응답에 `project.{id,code}`, `taskNumber`, `number` 포함되어 한 번의 lookup으로 기존 코드 경로 재사용
-- URL 매칭은 strict 정규식 `^https?://[\w.-]+\.dooray\.com/task/to/(\d+)(?:[/?#].*)?$`. 매칭 실패 시 명확한 에러
+- URL 매칭은 두 형태 모두 지원 (Issue #35 item 4):
+  - 공식 short form: `^https?://[\w.-]+\.dooray\.com/task/to/(\d+)(?:[/?#].*)?$` → 캡처 1 = postId
+  - 브라우저 주소창 복사본 alt form: `^https?://[\w.-]+\.dooray\.com/task/(\d+)/(\d+)(?:[/?#].*)?$` → 캡처 2 = postId. 캡처 1 은 projectId 이지만 `parseDoorayTaskUrl` 의 `string | null` 시그니처 유지를 위해 미반환 — `resolvePostInput` 이 postId 로 standalone API 재호출하면서 project 정보 획득
+- 매칭 실패 시 명확한 에러
 - **테스트 인프라로 vitest 도입** — dooray-cli 첫 테스트 환경. URL parser와 resolvePostInput 단위 테스트로 분기 안전성 확보
 
 **이유**:

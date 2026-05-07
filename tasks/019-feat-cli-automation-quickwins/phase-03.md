@@ -119,13 +119,52 @@ const [tagIds, parentPostId, milestoneId] = await Promise.all([
 
 `validateMandatoryTags` 는 통과 시 void 반환. throw 가 발생하지 않으면 `tagIds` 는 undefined 그대로 → 기존 `...(tagIds && tagIds.length > 0 && { tagIds })` 분기와 호환.
 
-### 3. 마지막 phase — index.json 완료 마킹
+### 3. `src/resolvers/tag.test.ts` — `validateMandatoryTags` 단위 테스트 (신규 또는 기존 확장)
+
+mocked client 로 mandatory 그룹 검증 분기를 회귀 가드. 최소 3 케이스:
+
+```ts
+import { describe, it, expect, vi } from "vitest";
+import { validateMandatoryTags } from "./tag.js";
+import type { DoorayApiClient } from "../api/client.js";
+
+function mockClient(tags: Array<{ id: string; name: string; tagGroupId?: string; groupMandatory?: boolean }>): DoorayApiClient {
+  return { listProjectTags: vi.fn().mockResolvedValue({ result: tags }) } as unknown as DoorayApiClient;
+}
+
+describe("validateMandatoryTags", () => {
+  it("mandatory 그룹 0개면 throw 없이 통과", async () => {
+    const client = mockClient([{ id: "1", name: "bug" }]);
+    await expect(validateMandatoryTags(client, "<project>")).resolves.toBeUndefined();
+  });
+
+  it("mandatory 그룹 다중 — 메시지에 그룹별 후보 포함", async () => {
+    const client = mockClient([
+      { id: "1", name: "p0", tagGroupId: "g1", groupMandatory: true },
+      { id: "2", name: "p1", tagGroupId: "g1", groupMandatory: true },
+      { id: "3", name: "fix", tagGroupId: "g2", groupMandatory: true },
+    ]);
+    await expect(validateMandatoryTags(client, "<project>")).rejects.toThrow(/p0|p1|fix/);
+  });
+
+  it("groupId 없는 mandatory 태그는 무시 (false-positive 방지)", async () => {
+    const client = mockClient([{ id: "1", name: "x", groupMandatory: true }]);
+    await expect(validateMandatoryTags(client, "<project>")).resolves.toBeUndefined();
+  });
+});
+```
+
+(정확한 함수 시그니처·throw 형태는 작업 1·2 의 구현에 맞춰 케이스 본문 조정.)
+
+### 4. 마지막 phase — index.json 완료 마킹
 
 phase-03 가 마지막이므로 본 phase commit 에 `tasks/019-feat-cli-automation-quickwins/index.json` 의 모든 status 를 `completed` 로 변경 포함.
 
+`sed -i ''` 는 BSD 전용이라 GNU sed (Linux) 에서 실패. **권장**: Edit 도구로 4개 위치 직접 치환. 또는 portable node 한 줄:
+
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
-sed -i '' 's/"status": "pending"/"status": "completed"/g' tasks/019-feat-cli-automation-quickwins/index.json
+node -e "const fs=require('fs');const f='tasks/019-feat-cli-automation-quickwins/index.json';const d=JSON.parse(fs.readFileSync(f,'utf8'));d.status='completed';d.current_phase=3;d.phases.forEach(p=>p.status='completed');d.updated_at=new Date().toISOString();fs.writeFileSync(f,JSON.stringify(d,null,2)+'\n');"
 
 # 검증: status: completed 가 4개 (index 1 + phases 3)
 grep -c '"status": "completed"' tasks/019-feat-cli-automation-quickwins/index.json
@@ -153,7 +192,11 @@ grep -n "validateMandatoryTags" src/commands/post/create.ts
 grep -n "buildMandatoryHint" src/resolvers/tag.ts
 # 기대: 3줄 이상 (정의 + resolveTags 호출 + validateMandatoryTags 호출)
 
-# 5. index.json 완료 마킹
+# 5. validateMandatoryTags 단위 테스트 추가
+grep -cE 'validateMandatoryTags.*resolves|validateMandatoryTags.*rejects' src/resolvers/tag.test.ts
+# 기대: 3 이상 (3 케이스)
+
+# 6. index.json 완료 마킹
 grep -c '"status": "completed"' tasks/019-feat-cli-automation-quickwins/index.json
 # 기대: 4
 ```

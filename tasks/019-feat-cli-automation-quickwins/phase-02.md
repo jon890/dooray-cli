@@ -2,7 +2,7 @@
 
 ## 컨텍스트
 
-GitHub Issue #35 의 4번 항목. `dooray post get "https://<tenant>.dooray.com/task/3052841357365230129/4301717914215750193"` 가 reject 됨. 현재 regex 는 `/task/to/<id>` 만 허용.
+GitHub Issue #35 의 4번 항목. `dooray post get "https://<tenant>.dooray.com/task/1234567890123456789/9876543210987654321"` 가 reject 됨. 현재 regex 는 `/task/to/<id>` 만 허용.
 
 코드 현황:
 - `src/utils/dooray-url.ts` — `TASK_URL_RE = /^https?:\/\/[\w.-]+\.dooray\.com\/task\/to\/(\d+)(?:[/?#].*)?$/` (단일 패턴)
@@ -58,8 +58,9 @@ export function parseDoorayTaskUrl(input: string): string | null {
 
 ```ts
 it("/task/<projectId>/<postId> 형 URL 에서 postId 추출", () => {
-  expect(parseDoorayTaskUrl("https://nhnent.dooray.com/task/3052841357365230129/4301717914215750193"))
-    .toBe("4301717914215750193");
+  // PII 게이트 — 사내 도메인 / 실제 19자리 ID 사용 금지. 승인된 dummy 만 사용.
+  expect(parseDoorayTaskUrl("https://example.dooray.com/task/1234567890123456789/9876543210987654321"))
+    .toBe("9876543210987654321");
 });
 it("/task/<projectId>/<postId> 형도 query string 무시", () => {
   expect(parseDoorayTaskUrl("https://x.dooray.com/task/123/456?ref=foo"))
@@ -87,7 +88,7 @@ grep -nE "TASK_URL_ALT_RE|/task/\\\\d\\+/\\\\d\\+" src/utils/dooray-url.ts
 # 기대: 1줄 이상 매칭
 
 # 3. 신규 테스트 케이스 추가 확인
-grep -cE "/task/<projectId>/<postId> 형|task/3052841357365230129/4301717914215750193" src/utils/dooray-url.test.ts
+grep -cE "/task/<projectId>/<postId> 형|task/1234567890123456789/9876543210987654321" src/utils/dooray-url.test.ts
 # 기대: 1 이상
 
 # 4. 기존 케이스 회귀 없음 — 기존 7 케이스 + 신규 4 = 총 11 케이스
