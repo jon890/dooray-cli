@@ -1,0 +1,11 @@
+{
+  "name": "019-feat-cli-automation-quickwins",
+  "description": "GitHub Issue #35 의 항목 1, 3, 4 를 묶어 자동화 사용성 quick-wins 처리. (1) --json/--quiet 시 spinner 비활성화로 stdout 청결 확보, (2) /task/<projectId>/<postId> 형 Dooray URL 파싱 추가, (3) post create 시 mandatory tag group 사전 검증으로 후보 태그 안내",
+  "status": "pending",
+  "total_phases": 3,
+  "phases": [
+    { "id": "phase-01", "name": "spinner suppression in --json / --quiet modes", "status": "pending" },
+    { "id": "phase-02", "name": "Dooray URL parser supports /task/<projectId>/<postId>", "status": "pending" },
+    { "id": "phase-03", "name": "mandatory tag group pre-validation + completion marking", "status": "pending" }
+  ]
+}
