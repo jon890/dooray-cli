@@ -24,6 +24,7 @@ import type {
   ProjectMemberListResponse,
   ProjectWorkflowListResponse,
   MemberDetailResponse,
+  MemberSearchResponse,
   MeResponse,
   TagListResponse,
   MilestoneListResponse,
@@ -77,6 +78,16 @@ export interface GetPostCommentsParams {
 }
 
 export interface GetMembersParams {
+  page?: number;
+  size?: number;
+}
+
+export interface SearchMembersParams {
+  name?: string;
+  externalEmailAddresses?: string;
+  userCode?: string;
+  userCodeExact?: string;
+  idProviderUserId?: string;
   page?: number;
   size?: number;
 }
@@ -339,6 +350,26 @@ export class DoorayApiClient {
       return await this.api
         .get(`common/v1/members/${memberId}`)
         .json<MemberDetailResponse>();
+    } catch (e) {
+      return toDoorayCliError(e);
+    }
+  }
+
+  async searchMembers(params: SearchMembersParams): Promise<MemberSearchResponse> {
+    try {
+      return await this.api
+        .get("common/v1/members", {
+          searchParams: {
+            ...(params.name && { name: params.name }),
+            ...(params.externalEmailAddresses && { externalEmailAddresses: params.externalEmailAddresses }),
+            ...(params.userCode && { userCode: params.userCode }),
+            ...(params.userCodeExact && { userCodeExact: params.userCodeExact }),
+            ...(params.idProviderUserId && { idProviderUserId: params.idProviderUserId }),
+            ...(params.page != null && { page: params.page }),
+            ...(params.size != null && { size: params.size }),
+          },
+        })
+        .json<MemberSearchResponse>();
     } catch (e) {
       return toDoorayCliError(e);
     }

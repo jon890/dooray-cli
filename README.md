@@ -49,7 +49,14 @@ dooray project tags <project>                # 태그 목록 (ID / Color / Name 
 
 ```bash
 dooray member list <project>                  # 프로젝트 멤버 목록 (이름·organizationMemberId)
-dooray member get <organizationMemberId>   # 멤버 상세 (cache 우회, ADR-021)
+dooray member get <organizationMemberId>      # 멤버 상세 (cache 우회, ADR-021)
+
+# organization 전체 멤버 검색
+dooray member search 홍길동                   # 이름 검색
+dooray member search --email user@example.com # 이메일 (정확히 일치)
+dooray member search --user-code abc          # 사번 like 검색
+dooray member search --user-code-exact abc123 # 사번 exact match
+dooray member search 김 --size 50 --page 1   # 페이지네이션
 ```
 
 ### 업무

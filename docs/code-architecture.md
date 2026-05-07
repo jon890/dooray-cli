@@ -86,6 +86,7 @@ src/
       index.ts              # member 서브커맨드 등록
       get.ts                # dooray member get <member-id> (cache 우회, ADR-021)
       list.ts               # dooray member list <project> (project 캐시 활용)
+      search.ts             # dooray member search (org-wide, ad-hoc, 캐시 미사용)
 
     post/
       list.ts

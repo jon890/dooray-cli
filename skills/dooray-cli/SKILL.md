@@ -56,6 +56,7 @@ dooray doctor                                 # 설정 검증
 | 프로젝트 멤버 그룹 목록 | `dooray project groups <project>` (ID / Code) |
 | 프로젝트 태그 목록 | `dooray project tags <project>` (ID / Color / Name / Group / Mandatory) |
 | 멤버 상세 (organizationMemberId) | `dooray member get <organizationMemberId>` (cache 우회, ADR-021) |
+| organization 전체 멤버 검색 | `dooray member search <keyword>` (이름 기본), `--email`(이메일 exact), `--user-code`(사번 like), `--user-code-exact`(사번 exact), `--page`/`--size` |
 | 업무 목록 조회 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` |
 | 업무 상세 보기 | `dooray post get <project> <number>` |
@@ -111,7 +112,8 @@ CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI �
 3. **업무 번호를 모르면** → `dooray post search <project> "<keyword>"` 로 검색
 4. **워크플로우 이름을 모르면** → `dooray project workflows <project>` 로 확인
 5. **멤버 이름을 모르면** → `dooray member list <project>` (또는 `dooray project members <project>`) 로 확인
-6. **결과를 다음 액션에 사용하려면** → `--json` 플래그로 구조화된 데이터 획득
+6. **org 전체 멤버를 찾으려면** → `dooray member search <keyword>` (이름), `--email <addr>`, `--user-code <code>` 중 하나 사용
+7. **결과를 다음 액션에 사용하려면** → `--json` 플래그로 구조화된 데이터 획득
 
 ---
 
@@ -308,7 +310,7 @@ dooray post comment add P 1 --mention 홍길동 --mention-group 개발 --body ".
 | ID | 조회 |
 |---|---|
 | `orgId` | Dooray 앱/웹 URL에서 추출 (`https://{org}.dooray.com/...`의 도메인 + 별도 확인 필요) |
-| `memberId` | `dooray member get <id>` 또는 `dooray project members <project>` |
+| `memberId` | `dooray member get <id>`, `dooray member search <name>`, `--email <addr>`, `--user-code <code>` 등으로 검색 |
 | `groupId` | `dooray project groups <project>` |
 | `postId` | `dooray post get <project> <number> --json` 의 `id` 필드 |
 

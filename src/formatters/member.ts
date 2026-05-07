@@ -30,3 +30,18 @@ export function formatMemberList(rows: MemberListRow[], opts: OutputOptions): vo
     ids: rows.map((r) => r.id),
   });
 }
+
+export function formatMemberSearchResults(members: MemberDetail[], opts: OutputOptions): void {
+  output(opts, {
+    headers: ["ID", "Name", "UserCode", "Nickname", "Email"],
+    rows: members.map((m) => [
+      m.id,
+      m.name,
+      m.userCode ?? "",
+      m.nickname ?? "",
+      m.externalEmailAddress ?? "",
+    ]),
+    raw: members,
+    ids: members.map((m) => m.id),
+  });
+}
