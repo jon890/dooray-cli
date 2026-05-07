@@ -31,6 +31,20 @@ plan 인자를 받으면 **가장 먼저** 3중 검증. 하나라도 걸리면 �
 
 세 검증 모두 통과해야 신규 실행. 특히 PR 머지 전 단계에서 main의 index.json은 여전히 `pending`이므로 1번만 보면 재실행 사고를 놓친다. 2·3번이 커버.
 
+### task 단독 PR 이 이미 열려있는 경우 — 옵션 A (이어서 작업) 권장 흐름
+
+위 2번 (FOUND) + 3번 (OPEN PR) 이 동시에 걸리고, 해당 PR 이 task 파일만 (코드 변경 0개) 머지 대기 중이라면 **옵션 A (이어서 작업)** 로 전환한다. 이는 차단이 아니라 **그 PR 을 그대로 결과물 통합 PR 로 사용**하는 흐름이다 (사후 정리 사고 회피).
+
+**판정 기준** — `gh pr view <N> --json files,additions,deletions` 결과:
+- `files` 가 `tasks/{plan}/...` 만 포함 + 코드 (`src/...`) 변경 0
+- `state` = OPEN
+→ 옵션 A 자동 권장 (사용자 confirm)
+
+**옵션 A 흐름**:
+1. **새 브랜치 만들지 말 것** — 기존 브랜치 그대로 사용
+2. worktree 체크아웃: `git worktree add .claude/worktrees/{plan} feat/{plan}` (`-b` 없음 → 기존 브랜치 사용)
+3. phase 실행 → 결과물 commit → **같은 브랜치**에 push (PR 에 commits 추가됨)
+
 ## 핵심 원칙
 
 1. **docs-first**: docs 반영 + 커밋 → task 생성 → 실행. 순서 위반 금지
@@ -156,7 +170,7 @@ critic 평가 관점:
 4. Phase 크기가 5개 이하인가?
 5. 성공 기준이 충분한가?
 6. **실제 코드와 일치하는가?** (파일 존재, 함수명, 줄 수 검증)
-7. **`common-critic-patterns.md`의 모든 패턴이 사전 소진되었는가?**
+7. **`common-pitfalls.md`의 모든 패턴이 사전 소진되었는가?**
 
 판정:
 - **APPROVE** → 6단계로
