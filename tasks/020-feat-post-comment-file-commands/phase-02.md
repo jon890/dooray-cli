@@ -1,134 +1,109 @@
-# Phase 02 — `post comment file` 4개 명령 구현 + Commander 등록
+# Phase 02 — 4 명령 구현 (list/upload/download/delete) + Commander 등록
 
 ## 컨텍스트
 
-Phase-01 의 4종 API 메서드 (uploadPostCommentFile/listPostCommentFiles/downloadPostCommentFile/deletePostCommentFile) 를 사용하는 CLI 명령 추가.
+phase-01 의 `getPostComment` + `appendFileReference`/`removeFileReference` 위에 4 명령을 구현. ADR-024 의 합성 동작:
 
-명령 시그니처 (Issue #34 제안 그대로):
+| 명령 | 내부 호출 |
+|---|---|
+| `list <comment-id>` | `getPostComment(...).result.files` 반환 |
+| `upload <comment-id> <path>` | (1) `uploadPostFile` (2) `getPostComment` → body 추출 → `appendFileReference` → `updatePostComment` |
+| `download <comment-id> <file-id>` | `downloadPostFile` (post file download 와 동일 — UX 일관성 wrapper) |
+| `delete <comment-id> <file-id>` | (1) `getPostComment` → `removeFileReference` → `updatePostComment`, (2) `deletePostFile` |
+
+전 명령은 ADR-020 의 `<project> <post-number>` / `--id <postId>` / `--url <url>` / 첫 positional URL 분기를 `resolvePostInput` 헬퍼로 통일. `<comment-id>` 는 4 번째 positional 또는 `--comment-id` 옵션. `<path>`/`<file-id>` 는 5 번째 positional 또는 `--file <path>` / `--file-id <id>` 옵션 (post/file 의 기존 패턴 답습).
+
+### 먼저 읽을 파일
+
+- `src/commands/post/file/list.ts` — `getPostFiles` + table/json 출력 (대칭 base)
+- `src/commands/post/file/upload.ts` — `uploadPostFile` + multipart + 결과 출력
+- `src/commands/post/file/download.ts` — stream write + 출력 경로 결정
+- `src/commands/post/file/delete.ts` — confirm 옵션 + DELETE
+- `src/resolvers/post-input.ts` — `<project> <post-number>` / `--id` / `--url` 분기 (`resolvePostInput`)
+- `src/commands/post/comment/edit.ts` (L94-145) — `getPostComments` 후 본문 갱신 패턴 답습
+- `src/commands/post/index.ts` — 서브커맨드 등록 위치
+
+## 작업 항목 (5개)
+
+### 1) `src/commands/post/comment/file/list.ts` (신규)
 
 ```
-dooray post comment file upload   <project> <post-number> <comment-id> <path>
-dooray post comment file list     <project> <post-number> <comment-id>
-dooray post comment file download <project> <post-number> <comment-id> <file-id>
-dooray post comment file delete   <project> <post-number> <comment-id> <file-id>
+dooray post comment file list <project> <post-number> <comment-id>
+dooray post comment file list --id <postId> --comment-id <logId>
+dooray post comment file list --url <url> --comment-id <logId>
 ```
 
-`<comment-id>` (logId) 는 Dooray 가 부여한 19자리 numeric ID. `dooray post comment list <project> <post-number>` 로 조회 가능.
+동작:
+1. `resolvePostInput` 으로 `{ projectId, postId }` 획득
+2. `<comment-id>` 는 positional 4 번째 또는 `--comment-id` 옵션
+3. `client.getPostComment(projectId, postId, logId)` 호출
+4. `res.result.files` 를 `formatTable` 또는 `printJson` 으로 출력 — `post file list` 와 동일 컬럼 (이름 / 크기 / id / 등록 시각)
 
-코드 현황 — 참조 패턴:
-- `src/commands/post/file/upload.ts` / `list.ts` / `download.ts` / `delete.ts` — post file 4종 명령. argv 분기 (positional vs `--id`/`--url`) + spinner + JSON/quiet 분기 모두 갖춤
-- `src/commands/post/comment/edit.ts` — `<project> <post-number> <comment-id>` 3-positional 패턴 + `--id`/`--url` 분기 예시
-- `src/index.ts` — Commander 트리 등록 위치
+`post/file/list.ts` 의 컬럼 헬퍼 / `OutputOptions` 처리 / 빈 결과 메시지 패턴 답습.
 
-직전 plan 과의 관계: 016 (post 12-command input 통합) 가 `--id`/`--url`/positional URL 분기를 `resolvePostInput` 헬퍼로 통일. 신규 명령도 동일 헬퍼 사용.
+### 2) `src/commands/post/comment/file/upload.ts` (신규)
 
-## 변경 파일 (정확)
-
-```bash
-# cwd: /Users/nhn/personal/dooray-cli
-git diff <base>..HEAD --name-only -- src/commands/post/comment/ src/index.ts
+```
+dooray post comment file upload <project> <post-number> <comment-id> <path>
+dooray post comment file upload --id <postId> --comment-id <logId> --file <path>
 ```
 
-기대 결과 (총 5 파일):
+동작 (2-step):
+1. `resolvePostInput` → `{ projectId, postId }`
+2. `<comment-id>` + `<path>` 결정 (positional 우선, 없으면 옵션)
+3. **step 1**: `client.uploadPostFile(projectId, postId, filePath)` → `{ result: { id, name, ... } }` 획득
+4. **step 2**: `client.getPostComment(...)` → `currentBody = res.result.body.content` (mimeType=`text/x-markdown`)
+5. `newBody = appendFileReference(currentBody, fileName, fileId)`
+6. `client.updatePostComment(projectId, postId, logId, { body: { mimeType: "text/x-markdown", content: newBody }})`
+7. **step 1 성공 + step 2 실패** 처리: stderr 안내 + `process.exit(EXIT_API_ERROR)` 또는 `throw new DoorayCliError("...", EXIT_API_ERROR)` — 사용자가 부분 성공 인지하도록. 실패 메시지에 fileId 노출 (사용자가 수동 PUT 또는 `comment file delete` 로 정리 가능).
+
+성공 시 stdout (`--quiet` 아니면) 한 줄: `업로드 + 댓글 reference 추가: fileId=...`. `--json` 이면 `{ fileId, fileName, commentId }` JSON.
+
+### 3) `src/commands/post/comment/file/download.ts` (신규)
+
 ```
-src/commands/post/comment/file/upload.ts        (신규)
-src/commands/post/comment/file/list.ts          (신규)
-src/commands/post/comment/file/download.ts      (신규)
-src/commands/post/comment/file/delete.ts        (신규)
-src/index.ts                                    (Commander 등록)
+dooray post comment file download <project> <post-number> <comment-id> <file-id> [--out <path>]
 ```
 
-## 작업 항목
+동작: `client.downloadPostFile(projectId, postId, fileId)` 호출 후 `--out` 또는 cwd 에 저장. `post/file/download.ts` 의 file write 패턴 그대로 답습 — **comment-id 는 받지만 download API 호출에는 사용 안 함**. UX 일관성 목적이므로 positional 받지만 무시 (warning 없음). `--out` 미지정 시 cwd 에 fileName 그대로.
 
-### 1. 신규 디렉터리 + 4개 명령 파일
+> 왜 commentId 를 받기만 하고 안 쓰는가: 사용자 멘탈 모델 ("그 댓글의 그 파일") 일관성 + 미래에 Dooray 가 댓글 단위 권한 도입할 가능성 → 인자만 받아두면 호환. 현재는 단순 wrapper.
 
-`src/commands/post/comment/file/` 디렉터리 생성.
+### 4) `src/commands/post/comment/file/delete.ts` (신규)
 
-각 파일은 대응하는 `src/commands/post/file/*.ts` 를 참조하여 작성하되, comment-id 인자가 추가되는 차이만 반영:
+```
+dooray post comment file delete <project> <post-number> <comment-id> <file-id> [--yes]
+```
 
-#### 1-1. `upload.ts`
+동작 (2-step):
+1. `resolvePostInput` → `{ projectId, postId }`
+2. `<comment-id>` + `<file-id>` 결정
+3. `--yes` 미지정이면 confirm prompt (`@inquirer/prompts confirm`) — 본문 markdown 제거 + 파일 삭제 안내 (post 단의 다른 댓글에서 같은 fileId 참조 시 broken 됨을 명시)
+4. **step 1**: `getPostComment` → `removeFileReference(body, fileId)` → `updatePostComment` (본문 갱신)
+5. **step 2**: `deletePostFile(projectId, postId, fileId)`
+6. step 1 성공 + step 2 실패 → stderr 경고 + `EXIT_API_ERROR`. 본문에서는 reference 빠졌지만 파일 자체 잔존 → 사용자가 `post file delete` 로 후처리 가능 안내.
 
+`post/file/delete.ts` 의 confirm 패턴 답습.
+
+### 5) `src/commands/post/comment/file/index.ts` + `src/commands/post/comment/index.ts` 등록
+
+`src/commands/post/comment/file/index.ts` (신규):
 ```ts
 import { Command } from "commander";
-// imports — post/file/upload.ts 와 동일 (client, resolvePostInput, spinner, errors, formatters)
+import { listCommentFileCommand } from "./list.js";
+import { uploadCommentFileCommand } from "./upload.js";
+import { downloadCommentFileCommand } from "./download.js";
+import { deleteCommentFileCommand } from "./delete.js";
 
-export const commentFileUploadCommand = new Command("upload")
-  .description("댓글 첨부파일 업로드")
-  .argument("[arg1]", "프로젝트 코드, Dooray URL, 또는 (`--id`/`--url` 모드일 때) comment-id")
-  .argument("[arg2]", "업무 번호 또는 (`--id`/`--url` 모드일 때) comment-id 의 다음 위치")
-  .argument("[arg3]", "comment-id (positional 모드)")
-  .argument("[arg4]", "파일 경로 (positional 모드)")
-  .option("--id <postId>", "Dooray post ID")
-  .option("--url <url>", "Dooray 업무 URL")
-  .option("--comment-id <id>", "comment ID (positional 대체)")
-  .option("--file <path>", "업로드할 파일 경로 (positional 대체)")
-  .action(async (arg1, arg2, arg3, arg4, opts) => {
-    const globalOpts = commentFileUploadCommand.optsWithGlobals() as OutputOptions;
-    /* 분기: opts.id || opts.url 이면 (commentId, filePath) 가 (arg1, arg2) 또는 (--comment-id, --file)
-              아니면 (project, postNumber, commentId, filePath) 가 (arg1..arg4) 또는 (--comment-id, --file 보조)
-              resolvePostInput 으로 (projectId, postId) 획득 → uploadPostCommentFile 호출 */
-    formatPostFile(uploadResult, globalOpts);
-  });
+export const commentFileCommand = new Command("file")
+  .description("댓글 첨부 파일 관리 (post-level files API + 댓글 PUT 합성, ADR-024)")
+  .addCommand(listCommentFileCommand)
+  .addCommand(uploadCommentFileCommand)
+  .addCommand(downloadCommentFileCommand)
+  .addCommand(deleteCommentFileCommand);
 ```
 
-#### 1-2. `list.ts` — `<project> <post-number> <comment-id>` 또는 `--id <postId> --comment-id <id>`. table/JSON/quiet 출력.
-
-#### 1-3. `download.ts` — `<project> <post-number> <comment-id> <file-id>`. `-o, --output <dir>` 지원 (기본 `.`).
-
-#### 1-4. `delete.ts` — `<project> <post-number> <comment-id> <file-id>`.
-
-각 명령 작성 시 `src/commands/post/file/{upload,list,download,delete}.ts` 를 1:1 참조하여 동일 출력 포맷 / 에러 처리 / spinner 사용 유지.
-
-### 2. `src/index.ts` — Commander 트리 등록
-
-기존 `post comment` 그룹 아래에 `file` 서브그룹을 끼워 넣음:
-
-```ts
-// 기존: const commentCommand = new Command("comment").description("...");
-//        commentCommand.addCommand(commentAddCommand);
-//        ...
-
-const commentFileCommand = new Command("file").description("댓글 첨부파일 관련 명령");
-commentFileCommand.addCommand(commentFileUploadCommand);
-commentFileCommand.addCommand(commentFileListCommand);
-commentFileCommand.addCommand(commentFileDownloadCommand);
-commentFileCommand.addCommand(commentFileDeleteCommand);
-
-commentCommand.addCommand(commentFileCommand);
-```
-
-import 4건 추가.
-
-### 3. resolvePostInput 호환성
-
-기존 `resolvePostInput({ projectArg, postNumberArg, idOpt, urlOpt })` 시그니처 그대로 사용. comment-id 는 별도 인자로 받음 (resolver 와 무관).
-
-argv 분기 패턴은 `src/commands/post/file/upload.ts` 와 정확히 동일하게 따라가서 critic 의 "분기 룰 일관성" 지적 회피.
-
-### 4. 동작 실증 (필수)
-
-phase-01 의 API 메서드 검증을 위해 executor 가 빌드 후 1 사이클 실제 호출:
-
-```bash
-# cwd: /Users/nhn/personal/dooray-cli
-pnpm build
-
-# 실증 시나리오 (executor 가 실행 — 사용자가 config 셋업한 환경 가정)
-# 1. 임시 댓글 생성
-COMMENT_ID=$(node dist/index.js post comment add <project> <post-number> --body "test" --json | jq -r '.id')
-# 2. 파일 업로드
-node dist/index.js post comment file upload <project> <post-number> $COMMENT_ID /tmp/test.txt
-# 3. 목록 확인
-node dist/index.js post comment file list <project> <post-number> $COMMENT_ID
-# 4. 다운로드
-node dist/index.js post comment file download <project> <post-number> $COMMENT_ID <file-id> -o /tmp
-# 5. 삭제
-node dist/index.js post comment file delete <project> <post-number> $COMMENT_ID <file-id>
-# 6. 댓글 삭제 (정리)
-node dist/index.js post comment delete <project> <post-number> $COMMENT_ID
-```
-
-**executor 메모**: 위 시나리오를 본 phase 의 검증으로 수행. 사용자가 config 셋업 안 했을 가능성 → executor 가 `dooray doctor` 로 인증 확인 후 진행. 인증 안 되어 있으면 사용자에게 물어보고 그 단계만 스킵 가능.
+`src/commands/post/comment/index.ts` 에 `commentCommand.addCommand(commentFileCommand)` 한 줄 추가.
 
 ## 성공 기준
 
@@ -136,44 +111,50 @@ node dist/index.js post comment delete <project> <post-number> $COMMENT_ID
 # cwd: /Users/nhn/personal/dooray-cli
 
 # 1. 빌드 + 테스트 통과
-pnpm build && pnpm test
-# 기대: exit 0
+pnpm run build && pnpm test
 
-# 2. 4개 명령 파일 생성
-ls src/commands/post/comment/file/{upload,list,download,delete}.ts
-# 기대: 4개 모두 존재
+# 2. 신규 4 명령 파일
+ls src/commands/post/comment/file/{list,upload,download,delete,index}.ts | wc -l | tr -d ' '
+# 기대: 5
 
 # 3. Commander 등록
-grep -nE "commentFileCommand|commentFileUploadCommand|commentFileListCommand" src/index.ts
-# 기대: 5줄 이상 (정의 + 4 addCommand)
-
-# 4. dist 번들에 명령 들어감 (CLI help 확인)
-node dist/index.js post comment file --help 2>&1 | grep -cE "^\s+(upload|list|download|delete)\b"
+node dist/index.js post comment file --help 2>&1 | grep -cE "^  (list|upload|download|delete)\b"
 # 기대: 4
 
-# 5. resolvePostInput 사용 일관성
-grep -cn "resolvePostInput" src/commands/post/comment/file/*.ts
-# 기대: 4 이상 (4 파일 각 1 이상)
+# 4. 각 서브커맨드 --help 통과 (인자 시그니처 확인)
+for sub in list upload download delete; do
+  node dist/index.js post comment file $sub --help >/dev/null 2>&1 && echo "$sub OK"
+done
+# 기대: 4 줄 OK
 
-# 6. (실증 통과 시) executor 메모: upload→list→download→delete 1 사이클 성공
+# 5. resolvePostInput 사용 확인 (4 명령 모두 ADR-020 input 패턴 답습)
+grep -lE "resolvePostInput" src/commands/post/comment/file/{list,upload,download,delete}.ts | wc -l | tr -d ' '
+# 기대: 4
+
+# 6. appendFileReference / removeFileReference 호출
+grep -nE "appendFileReference\(" src/commands/post/comment/file/upload.ts
+grep -nE "removeFileReference\(" src/commands/post/comment/file/delete.ts
+# 기대: 각 1줄
 ```
 
 ## 작업 외 금지
 
-- post 본문 file 명령 (`src/commands/post/file/*`) 변경 금지 — 본 phase scope 외
-- 댓글 본문 자동 markdown 삽입 (`![](/files/<id>)` 자동 append) 금지 — 별도 enhancement
-- comment cache 도입 금지
-- ADR 추가 금지
+- `getPostComment` 시그니처 변경 — phase-01 산출물 그대로
+- 다중 파일 업로드 (multipart 다중) — 단일 파일만. 호출자 (스킬) 가 반복 책임
+- README/SKILL.md 갱신 — phase-03 에서
+- ADR 추가 — ADR-024 만으로 충분
+- `post file *` 4 명령 (기존) 변경 금지 — 회귀 위험
 
-## 커밋
+## 주의사항 (common-pitfalls 사전 소진)
 
-```bash
-# cwd: /Users/nhn/personal/dooray-cli
-# branch: feat/020-feat-post-comment-file-commands
-git add src/commands/post/comment/file/ src/index.ts
-git commit -m "feat(commands): add post comment file 4 commands (upload/list/download/delete)
+- **CLI1 (exitCode)**: 모든 catch 분기 `EXIT_API_ERROR` 또는 `EXIT_PARAM_ERROR`. step 1 성공 + step 2 실패도 명시적 non-zero
+- **CLI2 (HTTP 클라이언트)**: 모든 호출은 `DoorayApiClient` 경유 — ky only
+- **CLI5 (`as Type`)**: `getPostComment` 응답에서 `res.result.body.content` 추출 — 타입 generic 으로 안전. `as` 단언 0
+- **CLI6 (markdown body)**: `appendFileReference` 가 phase-01 에서 `[]` 이스케이프 처리 완료
+- **stdout vs stderr**: 데이터 (json / table) 는 stdout, spinner / "업로드 중..." / "댓글 갱신 중..." 진행 메시지는 stderr (spinner 모듈 사용 — `--json`/`--quiet` 시 자동 억제)
+- **PII**: 코드/명령 예시 모두 `<project>` / `<postId>` / `<logId>` placeholder 또는 dummy `1234567890123456789` 만
 
-Issue #34: expose comment attachment API as post comment file *.
-Mirror post file commands; comment-id is the additional positional arg.
-Reuses resolvePostInput for project/post-number/--id/--url branching."
-```
+## Blocked 조건
+
+- `getPostComment` 응답의 `body.mimeType` 이 markdown 외 (예: `text/html`) → 본 plan 스코프 외, error 한 줄 + skip
+- 사용자가 다중 파일을 `<path>` 에 glob 으로 지정 → "단일 파일만 지원" 에러 + 안내

@@ -487,3 +487,22 @@
 
 - `feedback --last` 실행 시 sanitized argv 미리보기 + confirm (현재 `--dry-run`으로 사전 확인 가능, 강제 confirm은 후속)
 - Sanitization 패턴 확장 (사용자 보고 기반)
+
+## ADR-024: `dooray post comment file *` — post-level files API + 댓글 PUT 합성으로 구현
+
+- **결정**: `comment file list/upload/download/delete` 4 명령을 신설하되, **댓글 전용 attachment REST endpoint 가 없으므로** 내부적으론 (a) post-level files API (`/posts/{postId}/files`) + (b) 댓글 본문 PUT (`/logs/{logId}`) 의 합성으로 구현. 인라인 이미지 자동화의 사용자 멘탈 모델은 "댓글 첨부" 이지만 실제 데이터 모델은 post-level files + 댓글 본문 markdown reference (`![filename](/files/<fileId>)`).
+- **맥락**: Issue #34 의 자동화 시나리오 (스킬이 댓글에 인라인 이미지 삽입) 가 빈번. Dooray 공식 API 문서 (helpdesk.dooray.com share page) 와 실 호출 검증 결과 댓글 attachment 별도 endpoint **부재** 확인 — 공식 문서 `Project > Posts > Logs` 섹션에 logs/{logId}/files 같은 경로 없음. 댓글 단건 GET 응답에 `files: PostFileDetail[]` embedded 만 존재. 기존 `post file *` 4 명령은 post 본문 attachment 만 다루므로 댓글 전용 UX 부재.
+- **합성 동작 (각 명령)**:
+  - `list <comment-id>` — `GET /logs/{logId}` 후 `.result.files` 반환 (별도 endpoint 호출 0)
+  - `upload <comment-id> <path>` — 2-step: (1) `POST /posts/{postId}/files` 로 업로드 + fileId 획득, (2) `PUT /logs/{logId}` 로 본문에 `![filename](/files/<fileId>)` append
+  - `download <comment-id> <file-id>` — `GET /posts/{postId}/files/{fileId}?media=raw` (기존 `downloadPostFile` 재사용 — 사실상 thin wrapper, UX 일관성 목적)
+  - `delete <comment-id> <file-id>` — 2-step: (1) `PUT /logs/{logId}` 로 본문에서 `![*](/files/<fileId>)` 라인 제거, (2) `DELETE /posts/{postId}/files/{fileId}`
+- **트레이드오프**:
+  - **Atomic 보장 부재**: 2-step 동작 (`upload`, `delete`) 중 1 step 만 성공해도 사용자 명령은 부분 성공. 첫 step 실패 시 두 번째 안 함, 두 번째 실패 시 첫 번째 결과 stderr 안내 + non-zero exit. 동시성 충돌 (다른 사용자가 댓글 동시 수정) 은 PUT 의 last-write-wins 로 노출.
+  - **fileId namespace 가 post-level**: 같은 fileId 가 여러 댓글/post 본문에서 동시 참조 가능. `delete` 가 항상 실제 파일 삭제 → 다른 참조가 broken link 됨. 사용자 의도 명확화 위해 delete 는 항상 markdown 제거 + 파일 삭제 (옵션 분기 없이 단일 동작).
+  - **list 의 source 선택**: `.files` 배열 그대로 반환 (단일 소스 원칙). 댓글 본문에 markdown 으로 미참조된 orphan file 도 노출 — 내부 투명성 우선.
+- **대안 기각**:
+  - 댓글 전용 endpoint 사용: 부재. 비공개 endpoint 역공학은 리스크 + 유지보수 부담
+  - markdown reference 제거 없이 파일만 삭제: 댓글 본문에 broken link 잔존 → UX 회귀
+  - 기존 `post file *` 만 사용하도록 안내: 사용자가 댓글 ↔ post 본문 first attachment 구분 못함. 자동화 스킬도 4-명령 일관 패턴이 더 단순
+- **적용 범위**: dooray-cli 의 `comment file *` 4 명령 한정. 다른 commands 는 영향 없음. 추후 Dooray 가 댓글 전용 endpoint 도입하면 client API 만 교체 (CLI 시그니처 그대로).

@@ -1,97 +1,85 @@
-# Phase 03 — README / SKILL.md 갱신 + 빌드 검증 + task 완료 마킹
+# Phase 03 — README + SKILL.md + 빌드 검증 + task 완료
 
 ## 컨텍스트
 
-phase-01, 02 에서 추가한 `post comment file *` 4종 명령을 사용자/AI 에이전트가 발견할 수 있도록 문서화 + task 완료 마킹.
+phase-01 / phase-02 산출물을 사용자/AI 에이전트가 발견하도록 docs 갱신. 자동화 스킬 (스크립트가 댓글에 인라인 이미지 삽입) 시나리오를 SKILL.md 의 자동화 섹션에 명시.
 
-코드 현황:
-- `README.md` — 명령 사용 예 섹션 존재 (post / post comment / post file 등)
-- `skills/dooray-cli/SKILL.md` — AI 에이전트 자동화 가이드. `post comment` / `post file` 사용 예 존재
-- `CLAUDE.md` — "주의사항" 표 (post 하위 명령 input 분기 패턴 명시. 신규 명령도 동일 분기라 동일 표에 흡수 가능)
+## 작업 항목 (4개)
 
-## 변경 파일 (정확)
+### 1) `README.md` — `post comment file *` 사용 예 추가
 
-```bash
-# cwd: /Users/nhn/personal/dooray-cli
-git diff <base>..HEAD --name-only -- README.md skills/ CLAUDE.md tasks/020-feat-post-comment-file-commands/
-```
-
-기대 결과 (총 3~4 파일):
-```
-README.md
-skills/dooray-cli/SKILL.md
-CLAUDE.md                                              (선택 — 주의사항 표 한 줄 추가)
-tasks/020-feat-post-comment-file-commands/index.json
-```
-
-## 작업 항목
-
-### 1. `README.md` — 명령 사용 예 추가
-
-기존 `post comment` 또는 `post file` 섹션 근처에 새 4종 명령 사용 예 추가:
+기존 `post file *` 4 명령 섹션 옆 (또는 자동화 섹션) 에 한 블록 추가:
 
 ```markdown
-### 댓글 첨부파일 관리
+### 댓글 첨부 파일 (`post comment file *`)
 
-\`\`\`bash
-# 댓글에 파일 업로드
-dooray post comment file upload <project> <post-number> <comment-id> ./image.png
+자동화로 댓글에 인라인 이미지 / 파일을 삽입할 때 사용. 4 명령 (list/upload/download/delete) 모두 `<project> <post-number> <comment-id>` 또는 `--id <postId> --comment-id <logId>` / `--url <url> --comment-id <logId>` 패턴 지원 (ADR-020).
 
-# 댓글 첨부파일 목록
-dooray post comment file list <project> <post-number> <comment-id>
+```bash
+# 첨부 목록
+dooray post comment file list <project> <post-num> <comment-id>
 
-# 댓글 첨부파일 다운로드
-dooray post comment file download <project> <post-number> <comment-id> <file-id> -o ./downloads
+# 업로드 (post-level files API 로 업로드 + 댓글 본문에 markdown reference append)
+dooray post comment file upload <project> <post-num> <comment-id> ./screenshot.png
 
-# 댓글 첨부파일 삭제
-dooray post comment file delete <project> <post-number> <comment-id> <file-id>
-\`\`\`
+# 다운로드 (post-level 파일과 동일 — UX 일관성 wrapper)
+dooray post comment file download <project> <post-num> <comment-id> <file-id> --out ./out.png
 
-`<comment-id>` 는 `dooray post comment list <project> <post-number>` 로 조회.
-인라인 이미지로 사용하려면 업로드 후 응답의 file id 를 댓글 본문 markdown 에 \`![](/files/<id>)\` 로 삽입.
+# 삭제 (댓글 본문 markdown 제거 + post-level 파일 삭제, --yes 로 confirm 생략)
+dooray post comment file delete <project> <post-num> <comment-id> <file-id> --yes
 ```
 
-### 2. `skills/dooray-cli/SKILL.md` — AI 에이전트 사용 가이드
+> Dooray REST API 가 댓글 전용 attachment endpoint 를 제공하지 않아 내부적으로
+> post-level files API 와 댓글 본문 PUT 의 합성으로 동작 (ADR-024). 단일 명령
+> = 단일 파일 — 다중 파일은 호출자가 반복 호출.
+```
 
-`post comment` 섹션 근처에 자동화 시나리오 추가:
+### 2) `skills/dooray-cli/SKILL.md` — 자동화 시나리오 추가
 
+기존 자동화 섹션 (post 본문 첨부 안내 옆) 에 댓글 첨부 시나리오 한 블록 추가. 키워드: "스크립트가 스크린샷을 댓글에 삽입", "에이전트가 결과 파일을 첨부 댓글로 보고".
+
+예:
 ```markdown
-## 댓글에 인라인 이미지 첨부
+**시나리오 — 댓글에 스크린샷 자동 첨부**:
 
-1. 댓글 작성: `dooray post comment add <project> <post-number> --body "..." --json | jq -r '.id'` 으로 commentId 획득
-2. 이미지 업로드: `dooray post comment file upload <project> <post-number> <commentId> ./image.png --json | jq -r '.id'` 으로 fileId 획득
-3. 댓글 본문 갱신: `dooray post comment edit <project> <post-number> <commentId> --body "본문 ![](/files/<fileId>)"`
+```bash
+# 1. 댓글을 먼저 만든다 (텍스트만, --json 으로 commentId 획득)
+COMMENT_ID=$(dooray post comment add <project> <post-num> --body "스크린샷 보고:" --json | jq -r '.id')
+
+# 2. 그 댓글에 파일을 첨부 (post-level 업로드 + 댓글 본문 markdown 자동 추가)
+dooray post comment file upload <project> <post-num> "$COMMENT_ID" ./screenshot.png
+```
 ```
 
-### 3. `CLAUDE.md` 주의사항 표 — comment 하위 명령에 file 4종 추가 언급 (선택)
-
-기존 표에 한 줄:
-```
-- `post comment file *` (upload/list/download/delete) 도 `<project> <post-number> <comment-id>` 외 `--id`/`--url` 분기 동일 적용. comment-id 는 추가 positional 인자
-```
-
-(자명한 패턴 확장이므로 표에 한 줄로 충분)
-
-### 4. 빌드 + 시나리오 검증
+### 3) 빌드 + 시나리오 검증
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
-pnpm build && pnpm test
+
+# 1. build + test
+pnpm run build && pnpm test
+# 기대: 모든 vitest pass + 신규 10 케이스 추가
+
+# 2. 4 명령 --help smoke
+for sub in list upload download delete; do
+  node dist/index.js post comment file $sub --help | head -3
+done
+
+# 3. PII 검증 (README + SKILL.md)
+grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/dooray-cli/SKILL.md docs/adr.md tasks/020-feat-post-comment-file-commands/ 2>/dev/null
+# 기대: 0건
 ```
 
-phase-02 의 실증 시나리오 (upload→list→download→delete 1 사이클) 가 phase-02 commit 시점에 통과했는지 executor 메모에서 확인. 본 phase 는 추가 시나리오 없이 빌드 + 테스트만.
+### 4) Task 완료 처리
 
-### 5. 마지막 phase — index.json 완료 마킹
+`tasks/020-feat-post-comment-file-commands/index.json` 의 `status` → `"completed"`, `current_phase` → `3`, 모든 phases[*].status → `"completed"`, `updated_at` → 현재 ISO 8601.
 
-phase-03 가 마지막이므로 본 phase commit 에 status 마킹 포함:
+**권장**: Edit 도구로 4개 위치 직접 치환. 또는 portable node 한 줄:
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
-sed -i '' 's/"status": "pending"/"status": "completed"/g' tasks/020-feat-post-comment-file-commands/index.json
-
-# 검증: status: completed 가 4개 (index 1 + phases 3)
+node -e "const fs=require('fs');const f='tasks/020-feat-post-comment-file-commands/index.json';const d=JSON.parse(fs.readFileSync(f,'utf8'));d.status='completed';d.current_phase=3;d.phases.forEach(p=>p.status='completed');d.updated_at=new Date().toISOString();fs.writeFileSync(f,JSON.stringify(d,null,2)+'\n');"
 grep -c '"status": "completed"' tasks/020-feat-post-comment-file-commands/index.json
-# 기대: 4
+# 기대: 4 (root + phases 3)
 ```
 
 ## 성공 기준
@@ -99,41 +87,33 @@ grep -c '"status": "completed"' tasks/020-feat-post-comment-file-commands/index.
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 
-# 1. 빌드 + 테스트 통과
-pnpm build && pnpm test
-# 기대: exit 0
-
-# 2. README 에 신규 명령 사용 예
-grep -cE "post comment file (upload|list|download|delete)" README.md
+# 1. README 에 4 명령 모두 등장
+grep -cE "post comment file (list|upload|download|delete)" README.md
 # 기대: 4 이상
 
-# 3. SKILL.md 에 자동화 시나리오 추가
-grep -nE "post comment file" skills/dooray-cli/SKILL.md
+# 2. SKILL.md 에 자동화 시나리오 추가
+grep -cE "post comment file upload" skills/dooray-cli/SKILL.md
 # 기대: 1 이상
 
-# 4. index.json 완료 마킹
+# 3. ADR-024 명시 (README 또는 SKILL.md)
+grep -cE "ADR-024" README.md skills/dooray-cli/SKILL.md
+# 기대: 1 이상
+
+# 4. PII 0 건 (README + SKILL.md + docs + tasks/020)
+grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/dooray-cli/SKILL.md docs/adr.md tasks/020-feat-post-comment-file-commands/ 2>/dev/null
+
+# 5. index.json completed
 grep -c '"status": "completed"' tasks/020-feat-post-comment-file-commands/index.json
 # 기대: 4
-
-# 5. PII grep 0건 (CLAUDE.md 의 release 규칙)
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ CLAUDE.md tasks/020-feat-post-comment-file-commands/ 2>/dev/null
-# 기대: 0건
 ```
 
 ## 작업 외 금지
 
-- 댓글 본문에 `![](/files/<id>)` 자동 append 기능 추가 금지 (별도 enhancement)
-- comment cache 도입 금지
-- 기존 post file 명령 문서 변경 금지 (대칭성만 유지)
+- 코드 변경 — phase-01 / phase-02 에서 마무리. 본 phase 는 docs 만
+- ADR 신규 추가 — ADR-024 단일
+- pre-commit hook / CI workflow 변경 (별도 plan)
 
-## 커밋
+## Blocked 조건
 
-```bash
-# cwd: /Users/nhn/personal/dooray-cli
-# branch: feat/020-feat-post-comment-file-commands
-git add README.md skills/dooray-cli/SKILL.md CLAUDE.md tasks/020-feat-post-comment-file-commands/index.json
-git commit -m "docs: document post comment file commands + complete task 020
-
-README usage examples + SKILL.md inline image automation scenario.
-Mark task 020 completed."
-```
+- 빌드 / 테스트 실패 → phase-01 / phase-02 결함, 해당 phase 재시작
+- PII grep 1 건 이상 → 해당 위치를 placeholder 또는 승인 dummy 로 교체

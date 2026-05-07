@@ -1,7 +1,7 @@
 {
   "name": "020-feat-post-comment-file-commands",
-  "description": "GitHub Issue #34 — `dooray post comment file *` 4종 명령 신설 (upload/list/download/delete). 댓글 본문에 인라인 이미지(`![](/files/<id>)`)를 자동화로 삽입하기 위한 댓글 attachment API 노출. post 본문 attachment 의 `post file *` 명령과 대칭. Dooray REST API 의 comment(=log) attachment 엔드포인트 기반 (`posts/{postId}/logs/{logId}/files`).",
-  "created_at": "2026-05-07T00:00:00Z",
+  "description": "GitHub Issue #34 — `dooray post comment file *` 4 종 명령 신설 (list/upload/download/delete). Dooray 가 댓글 전용 attachment endpoint 미지원이라 내부적으론 post-level files API (`/posts/{postId}/files`) + 댓글 본문 PUT (`/logs/{logId}` 의 markdown reference 추가/제거) 합성으로 구현 (ADR-024). 자동화 스킬이 댓글에 인라인 이미지 삽입할 때 사용. 단일 명령 = 단일 파일 (다중 파일은 호출자가 반복).",
+  "created_at": "2026-05-07T18:30:00Z",
   "status": "pending",
   "current_phase": 1,
   "total_phases": 3,
@@ -10,25 +10,25 @@
   "phases": [
     {
       "number": 1,
-      "title": "API client 4종 메서드 + types (comment file CRUD)",
+      "title": "API client (getPostComment) + markdown helper + 단위 테스트",
       "file": "phase-01.md",
       "status": "pending",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
-      "title": "post comment file 4개 명령 구현 + Commander 등록",
+      "title": "4 명령 구현 (list/upload/download/delete) + Commander 등록",
       "file": "phase-02.md",
       "status": "pending",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 3,
-      "title": "README / SKILL.md 갱신 + 빌드 검증 + task 완료",
+      "title": "README + SKILL.md + 빌드 검증 + task 완료",
       "file": "phase-03.md",
       "status": "pending",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-05-07T00:00:00Z"
+  "updated_at": "2026-05-07T18:30:00Z"
 }
