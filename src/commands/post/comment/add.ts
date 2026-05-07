@@ -36,6 +36,7 @@ export const commentAddCommand = new Command("add")
     [] as string[],
   )
   .option("--link-task <ref>", "다른 업무 링크 추가 (<project>/<number> 또는 postId, 반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
   .action(async (project, postNumberStr, opts) => {
     const globalOpts = commentAddCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
@@ -121,6 +122,16 @@ export const commentAddCommand = new Command("add")
         }),
       );
       bodyContent = appendTaskLinks(bodyContent, links, me);
+    }
+
+    if (opts.dryRun) {
+      stopSpinner(false);
+      if (globalOpts.json) {
+        process.stdout.write(JSON.stringify({ body: bodyContent }) + "\n");
+      } else {
+        process.stdout.write(bodyContent + "\n");
+      }
+      return;
     }
 
     const res = await client.createPostComment(projectId, postId, {

@@ -51,6 +51,7 @@ export const postCreateCommand = new Command("create")
   .option("--parent <ref>", "부모 업무 (project/number 또는 postId)")
   .option("--workflow <name>", "초기 워크플로우 이름 또는 class")
   .option("--milestone <name>", "마일스톤 이름")
+  .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
   .action(async (project, opts) => {
     const globalOpts = postCreateCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
@@ -147,6 +148,16 @@ export const postCreateCommand = new Command("create")
         }),
       );
       bodyContent = appendTaskLinks(bodyContent, links, me);
+    }
+
+    if (opts.dryRun) {
+      stopSpinner(false);
+      if (globalOpts.json) {
+        process.stdout.write(JSON.stringify({ body: bodyContent }) + "\n");
+      } else {
+        process.stdout.write(bodyContent + "\n");
+      }
+      return;
     }
 
     const toUsers = opts.to ? await resolveUsers(client, projectId, opts.to) : [];

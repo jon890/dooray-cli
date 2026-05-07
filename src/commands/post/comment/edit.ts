@@ -38,6 +38,7 @@ export const commentEditCommand = new Command("edit")
     [] as string[],
   )
   .option("--link-task <ref>", "다른 업무 링크 추가 (<project>/<number> 또는 postId, 반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
   .action(async (arg1, arg2, arg3, opts) => {
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
@@ -184,6 +185,12 @@ export const commentEditCommand = new Command("edit")
         }),
       );
       edited = appendTaskLinks(edited, links, me);
+    }
+
+    if (opts.dryRun) {
+      stopSpinner(false);
+      process.stdout.write(edited + "\n");
+      return;
     }
 
     const attachments = (comment.files ?? []).map((f) => ({ id: f.id, name: f.name }));

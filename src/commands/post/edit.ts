@@ -45,6 +45,7 @@ export const postEditCommand = new Command("edit")
   .option("--mention <name>", "멤버 멘션 (반복 가능, 이름 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--mention-group <code>", "그룹 멘션 (반복 가능, code 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--link-task <ref>", "다른 업무 링크 추가 (<project>/<number> 또는 postId, 반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
   .option("--no-confirm", "누락 attachment 경고 시 confirm 없이 진행 (자동화용)")
   .action(async (project, postNumberStr, opts) => {
     const config = await getConfigOrThrow();
@@ -79,7 +80,7 @@ export const postEditCommand = new Command("edit")
       // Non-interactive mode: apply only specified changes
       let newBody = await readBodyInputOrNull(opts);
 
-      if (newBody != null) {
+      if (newBody != null && !opts.dryRun) {
         const attachments = (post.files ?? []).map((f) => ({ id: f.id, name: f.name }));
         await checkAndGuardDropped(post.body.content, newBody, attachments, !opts.confirm);
       }
@@ -143,6 +144,12 @@ export const postEditCommand = new Command("edit")
           }),
         );
         newBody = appendTaskLinks(effectiveBody, links, me);
+      }
+
+      if (opts.dryRun) {
+        stopSpinner(false);
+        process.stdout.write((newBody ?? post.body.content) + "\n");
+        return;
       }
 
       startSpinner("업무 수정 중...");
