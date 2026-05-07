@@ -118,29 +118,69 @@ task 파일을 **사용자에게 제출하기 전**에 반드시 [`common-pitfal
 - "변경 항목 1/2/3/4" 작업 내역 / "레거시 삭제 목록" (task 기록이지 ADR 아님)
 - CLAUDE.md 스택 규칙 반복
 
-#### C. 문서 책임 매트릭스 (중복 방지)
+#### C. 문서 책임 매트릭스 (단일 소스 + 역참조)
 
 신규 내용 작성 전 "이 정보의 단일 소스는 어디인가" 확인. 다른 문서에는 **링크 또는 한 줄 참조**만.
 
-| 내용 유형 | 단일 소스 | 다른 문서 |
+| 내용 유형 | 단일 소스 | 역참조 / 링크해야 할 곳 |
 |---|---|---|
-| 명령 동작 / 옵션 / 주의사항 | `CLAUDE.md` 주의사항 표 | README 는 사용 예만 |
-| 디렉터리 구조 / 레이어 | `CLAUDE.md` 디렉토리 구조 | 다른 docs 는 링크 |
-| 기술 결정 근거 (왜) | `docs/adr.md` | CLAUDE.md 표는 ADR 번호 링크 |
-| 캐시 / 파일 레이아웃 | `docs/adr.md` (해당 ADR) | CLAUDE.md 는 ADR 참조 |
+| 명령 동작 / 옵션 / 주의사항 | `CLAUDE.md` 주의사항 표 | `README.md` (사용 예만), `skills/dooray-cli/SKILL.md` (AI 자동화 시나리오) |
+| 디렉터리 구조 / 레이어 | `docs/code-architecture.md` 디렉터리 구조 | `CLAUDE.md` (요약 한 블록) |
+| 기술 결정 근거 (왜) | `docs/adr.md` (해당 ADR) | `CLAUDE.md` ADR 참조 표, `docs/code-architecture.md` 해당 영역에 ADR-NNN 한 줄 |
+| 캐시 / 파일 레이아웃 | `docs/adr.md` (해당 ADR) | `CLAUDE.md` 캐시 규약 행 |
+| API 호출 패턴 / 엔드포인트 | `docs/dooray-api-reference.md` | `docs/code-architecture.md` api/ 섹션 |
+| DB / 데이터 스키마 | `docs/data-schema.md` | `docs/adr.md` (스키마 결정 ADR) |
+| 사용자 흐름 / 시나리오 | `docs/flow.md` | `docs/prd.md` (기능 → 흐름 매핑) |
+
+**역참조 규칙 (필수)**: 새 ADR 추가 시, ADR이 기술하는 영역의 코드 디렉터리 / 명령에 대해 `docs/code-architecture.md` 또는 `CLAUDE.md` ADR 참조 표 **둘 중 한 곳에 ADR-NNN 한 줄 추가**. 단방향 정의 + 양방향 발견 가능성.
+
+#### D. 문서 연결 그래프
+
+```
+docs/adr.md  ←──── (ADR-NNN 역참조) ────  docs/code-architecture.md
+   ↑                                            ↑
+   └────── CLAUDE.md (주의사항 + 표) ──────────┘
+                       ↓
+               README.md (사용 예만)
+                       ↓
+        skills/dooray-cli/SKILL.md (공개, 자동화 시나리오)
+
+docs/dooray-api-reference.md  ←  docs/code-architecture.md (api/ 섹션)
+docs/data-schema.md           ←  docs/adr.md (스키마 결정 ADR)
+docs/flow.md                  ←  docs/prd.md
+```
+
+핵심: **단일 소스 1개 + 역참조 N개**. 같은 정보가 두 문서에 "본문"으로 들어가면 부패.
 
 ### 8단계: 최종 문서 생성
 
-기존 docs 파일에 변경사항 반영:
-- `docs/prd.md` — 기능 요구사항 (해당 시)
-- `docs/flow.md` — 사용자 흐름 변경
-- `docs/data-schema.md` — DB 스키마 변경
-- `docs/code-architecture.md` — 아키텍처 변경 (해당 시)
-- `docs/adr.md` — 기술 결정사항 추가 (자명성 통과한 것만)
+#### A. 변경 유형별 docs 영향 매트릭스 (필수 — 누락 0 화)
 
-**문서 작성 원칙**:
+신규 작업 시 아래 표에서 해당 행을 찾아 **표시된 모든 docs 를 손댄다**. "(해당 시)" 같은 모호한 어휘 금지 — 표시되어 있으면 변경, 표시 없으면 미손.
+
+| 변경 유형 | CLAUDE.md | adr.md | code-architecture.md | README.md | skills/dooray-cli/SKILL.md | data-schema.md | flow.md | dooray-api-reference.md |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 신규 CLI 명령 (소) | 주의사항 1줄 + "N개 명령" 카운트 | — | 디렉터리 트리 + 필요 시 utils 추가 | 사용 예 섹션 | 빠른 참조 표 + 자동화 시나리오 | — | — | — |
+| 신규 ADR 동반 변경 | 주의사항 + ADR 참조 표 행 | ADR 본문 | 해당 영역에 ADR-NNN 역참조 한 줄 | 사용 예 (해당 명령 있을 때) | 시나리오 (해당 명령 있을 때) | — | — | — |
+| 캐시 schema / TTL 변경 | 캐시 규약 행 | ADR 갱신 (ADR-004/010) | utils/cache 섹션 | — | — | — | — | — |
+| 새 API 호출 패턴 (재시도/redirect 등) | — | (정책 결정 시) | api/ 섹션 | — | — | — | — | 엔드포인트 + 동작 설명 |
+| DB 스키마 변경 | — | 결정 ADR | api/ 섹션 (해당 시) | — | — | 스키마 본문 | — | — |
+| 사용자 흐름 변경 | — | — | — | 사용 예 (해당 시) | 시나리오 (해당 시) | — | 흐름 추가/수정 | — |
+| 의존성 추가 / 빌드 설정 | 빌드 명령 (해당 시) | 자명성 게이트 후 ADR | 기술 스택 표 | — | — | — | — | — |
+
+**갱신 시점 분리** (executor 위임 vs 즉시 반영):
+
+| docs | 갱신 시점 | 이유 |
+|---|---|---|
+| `adr.md`, `code-architecture.md`, `CLAUDE.md`, `data-schema.md`, `flow.md`, `prd.md`, `dooray-api-reference.md` | **planning 단계에서 즉시 반영 + commit** | 기획 결정의 단일 소스. task 생성 후 변경 금지 (코드↔docs 결정 mismatch 회피) |
+| `README.md`, `skills/dooray-cli/SKILL.md` | **task 마지막 phase (phase-N)** | 코드 산출물 (실제 명령 인자/옵션) 에 의존 — phase-1·2 후에야 정확히 작성 가능 |
+
+이 분리를 phase 작성 시 명시적으로 따른다. planning 결정 docs 를 phase 안에서 변경하면 critic REVISE 또는 docs-verifier VIOLATION 사유.
+
+#### B. 문서 작성 원칙
+
 - AI 에이전트를 위한 문서 — 컨텍스트 낭비하지 않도록 간결하게
-- 같은 내용을 두 문서에 쓰지 않는다
+- 같은 내용을 두 문서에 "본문"으로 쓰지 않는다 (단일 소스 + 역참조)
 - 의사결정 의도("왜 이렇게 했는가")는 반드시 보존
 - 구현 세부사항은 코드에, docs에는 "무엇을·왜"만
 
