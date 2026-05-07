@@ -57,7 +57,7 @@ plan 인자를 받으면 **가장 먼저** 3중 검증. 하나라도 걸리면 �
 
 | 역할 | 에이전트 타입 | 기본 모델 | 책임 |
 |---|---|---|---|
-| **team-lead** | main session | opus | 계획 수립, task 생성, 팀 조율, 최종 커밋 |
+| **team-lead** | main session | opus | 계획 수립, task 생성, 팀 조율, **phase 별 atomic commit (6.1)**, 최종 push/PR |
 | **critic** | `oh-my-claudecode:critic` | opus | 계획 평가 (APPROVE/REVISE), 실제 코드 대조 |
 | **executor** | `oh-my-claudecode:executor` | sonnet | phase 순차 실행, 코드 수정 (커밋 제외), `bypassPermissions` |
 | **code-reviewer** | `oh-my-claudecode:code-reviewer` | sonnet | 코드 품질 검사 (PASS/FIX_NEEDED), AI slop/금지사항 탐지 |
@@ -208,9 +208,34 @@ executor에게 전달할 정보:
 executor 규칙:
 - phase-{N}.md를 순서대로 읽고 실행
 - 각 phase 완료 후 성공 기준 검증
-- **커밋은 하지 않음** — team-lead가 검증 후 커밋
+- **커밋은 하지 않음** — phase 별 commit 은 team-lead 가 수행 (아래 6.1 참조)
 - **마지막 phase에서 `tasks/{NNN}-{task-name}/index.json`의 `status`/`current_phase`/각 phase `status`를 `completed`로 업데이트** (별도 phase 아닌 마지막 phase 작업 내 스텝으로)
-- 완료/실패 시 team-lead에게 결과 보고
+- phase 완료/실패 시 즉시 team-lead 에게 SendMessage 보고 → team-lead 가 그 phase 를 commit 한 후 다음 phase 진행 지시
+
+### 6.1 phase 별 atomic commit (필수)
+
+executor 가 phase-{N} 완료 보고하면 team-lead 가 즉시 그 phase 의 변경사항만 commit. 다음 phase 시작 전에 commit 이 끝나야 한다.
+
+**commit 메시지 출처**: 각 phase 파일의 `## 커밋` 섹션에 명시된 `git commit -m "..."` 그대로 사용. team-lead 가 자체 작성 금지 — phase 작성자가 의도한 단일 책임 메시지를 보존한다.
+
+**commit 단위**:
+- 각 phase 의 `변경 파일 (정확)` 섹션이 정의한 파일 목록만 staging
+- 다른 phase scope 의 파일이 dirty 면 **commit 금지** + executor 에게 scope 위반 보고 요청
+
+**중간 phase commit 패턴**:
+
+```bash
+# cwd: /Users/.../.claude/worktrees/{plan}
+# branch: feat/{plan}
+git add <phase-NN.md 의 변경 파일 정확히>
+git commit -m "<phase-NN.md 의 ## 커밋 섹션 메시지>"
+```
+
+**마지막 phase commit**: phase 작업 + `index.json` completed 마킹이 같은 commit 에 포함됨 (task 파일 설계 시 마지막 phase 의 작업 항목으로 명시).
+
+**FIX_NEEDED 발생 시**: code-reviewer 의 PASS/FIX_NEEDED 판정은 task 종료 시 1회 (8단계 참조). FIX_NEEDED 면 이미 commit 된 phase 들을 amend 하지 않고, 별도 `fix(<scope>): <지적 사항>` commit 추가. amend 금지 — 이미 push 됐을 수 있고, history 연속성 보존이 디버깅 가치가 더 큼.
+
+**push 주기**: 매 phase commit 후 즉시 push 하지 않고 task 종료 시 일괄 push (9단계). PR 생성 직전이라 commit 누적이 자연스러움. 단 worktree 가 길어지면 (1시간 이상) 중간 push 1회 허용.
 
 ### 7. 코드 품질 검사 (code-reviewer)
 
@@ -272,18 +297,19 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
 
 ### 9. 완료 + PR 생성
 
-1. team-lead가 변경사항 검토 — 마지막 phase 커밋에 `index.json` completed 업데이트가 포함됐는지 확인 (누락 시 PR 브랜치에서 수정 + amend/추가 커밋)
-2. 통합 검증 명령 (`{{CI_CMD}}`) 최종 확인
-3. git commit + push
-4. **PR 생성** — `gh pr create` (main 대상, 변경사항 요약)
-5. **index.json 완료 상태는 PR 브랜치에만 존재** — 메인 워킹 디렉토리에서는 **건드리지 않는다**:
+1. team-lead가 누적 commit 검토 — `git log --oneline feat/{plan}..origin/main` 의 역순으로 phase 별 commit 이 의도대로 들어갔는지 확인. 마지막 phase commit 에 `index.json` completed 가 포함됐는지 grep 검증
+2. 통합 검증 명령 (`{{CI_CMD}}`) 최종 확인 — 모든 phase 누적 후에도 build/test 통과 확인
+3. (FIX_NEEDED 처리 commit 들이 있었다면 그대로 push, amend 금지)
+4. `git push origin feat/{plan}` — n 개 commit 일괄 push
+5. **PR 생성** — `gh pr create` (main 대상). PR description 에 phase 별 commit 목록 자동 포함 (`gh pr create --body` 안에 `git log --oneline {base}..HEAD` 결과)
+6. **index.json 완료 상태는 PR 브랜치에만 존재** — 메인 워킹 디렉토리에서는 **건드리지 않는다**:
    - 마지막 phase 커밋이 이미 `index.json`의 `status="completed"` + 모든 phase `status="completed"`를 포함해야 한다 (task 파일 설계 시 마지막 phase에 해당 업데이트 명시 — 4단계 참조)
    - main에서 별도 커밋 **금지** 이유:
      - 이중 진실원 회피
      - main에 진행 중인 다른 작업(다른 plan의 미푸시 커밋, unstaged 변경)과 의도치 않게 섞여 push될 위험
      - PR 머지로 자동 반영되므로 중복 커밋
    - "재실행 사고 방지"는 main 커밋이 아니라 **실행 전 3중 사전 검증**(status + 원격 feat 브랜치 + 오픈 PR)으로 막는다
-6. 팀 shutdown (SendMessage `shutdown_request`)
+7. 팀 shutdown (SendMessage `shutdown_request`)
 
 ## worktree 기반 격리 실행 (필수)
 
@@ -343,10 +369,10 @@ executor가 phase 실패 보고 시:
     → [docs 최신화 + 커밋]
     → [task 파일 생성 + 커밋]  ← 마지막 phase에 index.json completed 업데이트 스텝 포함
     → [critic 평가] ←─ REVISE면 계획 수정 후 재평가 (한도 3회)
-    → [executor 실행] ←─ 마지막 phase에서 index.json completed 확정. 실패 시 원인 분석 후 재실행
-    → [코드 품질 검사] ←─ FIX_NEEDED면 executor 재투입 (한도 2회)
-    → [docs-verifier 검증 (문서 부패 포함)] ←─ VIOLATION/UPDATE_NEEDED면 재투입 (한도 2회)
-    → [team-lead 최종 커밋 + push]  ← PR 브랜치에 index.json completed 이미 포함됨
+    → [executor 실행 phase-1] → [team-lead phase-1 commit] → ... → [phase-N (index.json completed 포함)] → [team-lead phase-N commit]
+    → [코드 품질 검사 (task 종료 후 1회)] ←─ FIX_NEEDED면 executor 재투입 (한도 2회) → 추가 fix commit (amend 금지)
+    → [docs-verifier 검증 (문서 부패 포함)] ←─ VIOLATION/UPDATE_NEEDED면 재투입 (한도 2회) → 추가 fix commit
+    → [team-lead 일괄 push]  ← PR 브랜치에 phase 별 atomic commit + 필요 시 fix commit 누적
     → [PR 생성]  ← main에 별도 커밋 금지
     → [worktree 정리 + 팀 shutdown]
 ```
