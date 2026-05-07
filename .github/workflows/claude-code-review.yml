@@ -408,32 +408,28 @@ jobs:
           REPO="${{ github.repository }}"
           PR_NUMBER="${{ env.PR_NUMBER }}"
 
-          # claude[bot] 가 작성한 인라인 댓글만 검사
-          gh api "repos/$REPO/pulls/$PR_NUMBER/comments" \
-            --jq '.[] | select(.user.login == "claude[bot]") | "\(.id)\t\(.body)"' \
-            | while IFS=$'\t' read -r comment_id body; do
-              [ -z "$comment_id" ] && continue
+          # 필터링은 jq 안에서 수행하고 ID 만 출력 — multi-line body 가 bash
+          # `while read` 를 깨뜨리는 사고 방지 (이전 구현은 body 의 개행이 새
+          # entry 로 오인되어 garbage id 로 DELETE 폭주, run 시간 9분+ 폭증).
+          # 정리 조건 (하나라도 만족하면 삭제):
+          #   1) 본문 길이 12자 미만
+          #   2) /^test\s*\d*$/i 같은 단순 placeholder (test, test1, sample, foo 등)
+          #   3) 🔴 / 🟡 severity 마커 부재 (정상 review 형식 미준수)
+          ids=$(gh api "repos/$REPO/pulls/$PR_NUMBER/comments" --jq '
+            .[]
+            | select(.user.login == "claude[bot]")
+            | select(
+                (.body | length < 12) or
+                (.body | test("^(test|sample|placeholder|foo|bar|example)\\s*[0-9]*$"; "i")) or
+                ((.body | test("🔴|🟡")) | not)
+              )
+            | .id
+          ')
 
-              # 정리 조건 (하나라도 만족하면 삭제):
-              # 1) 본문 길이 12자 미만
-              # 2) /^test\s*\d*$/i 같은 단순 placeholder (test, test1, test 2, sample, foo 등)
-              # 3) 🔴 / 🟡 severity 마커 부재 (정상 review 형식 미준수)
-              len=${#body}
-              should_delete=0
-
-              if [ "$len" -lt 12 ]; then
-                should_delete=1
-              elif printf '%s' "$body" | grep -qiE '^(test|sample|placeholder|foo|bar|example)[[:space:]]*[0-9]*$'; then
-                should_delete=1
-              elif ! printf '%s' "$body" | grep -qE '🔴|🟡'; then
-                should_delete=1
-              fi
-
-              if [ "$should_delete" = "1" ]; then
-                echo "dummy 인라인 댓글 자동 삭제: id=$comment_id body=\"$body\""
-                gh api "repos/$REPO/pulls/comments/$comment_id" --method DELETE || true
-              fi
-            done
+          for id in $ids; do
+            echo "dummy 인라인 댓글 자동 삭제: id=$id"
+            gh api "repos/$REPO/pulls/comments/$id" --method DELETE || true
+          done
 
       # 작업 결과를 /review 댓글에 ✅/❌ reaction 으로 표시 (success/failure 분기, always 실행)
       - name: /review 댓글에 종료 reaction 추가
