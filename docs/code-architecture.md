@@ -60,6 +60,7 @@ src/
     post.ts                 # Post 전용 포맷 (workflow 이름 등)
     wiki.ts                 # Wiki 전용 포맷
     member.ts               # Member 상세/목록 포맷 (ADR-021)
+    comment.ts              # PostComment 상세 포맷 (table/JSON/quiet, Issue #45)
 
   utils/
     errors.ts               # DoorayCliError (message + exitCode)
@@ -104,6 +105,7 @@ src/
       comment/
         list.ts
         latest.ts             # 최신 댓글 N개 단축 조회
+        get.ts                # 단일 댓글 상세 (positional 3 / --id / --url + --comment-id, Issue #45)
         add.ts
         edit.ts
         delete.ts
