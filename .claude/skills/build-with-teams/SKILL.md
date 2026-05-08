@@ -125,7 +125,7 @@ task의 `index.json` + phase 파일을 읽고 규모를 판정하여 팀원 모�
 | **중** | `total_phases: 2~3`, 기존 기능 확장/리팩토링/스키마 단순 추가 |
 | **대** | `total_phases: 4+` 또는 아키텍처/신규 도메인/DB 스키마 대규모 변경 |
 
-### 규모별 모델 매트릭스
+### 규모별 모델 표
 
 | 규모 | team-lead | critic | executor | code-reviewer | docs-verifier |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -298,13 +298,13 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
 
 **dooray-cli 특화 docs-verifier 검사 항목 (CLI 변형 — 위 6 항목에 추가):**
 
-7. **planning 매트릭스 100% 적용 검증** — `.claude/skills/planning/SKILL.md` 8단계 A항 "변경 유형별 docs 영향 매트릭스" 의 해당 행을 식별하고, 표시된 모든 docs 가 갱신됐는지 확인. 단일 항목(✓표시)이라도 누락이면 UPDATE_NEEDED. 이 매트릭스가 검증 항목의 단일 소스 — docs-verifier 는 **별도 체크리스트 보유 금지**, 매트릭스 거울만 본다.
+7. **planning docs 영향 표 100% 적용 검증** — `.claude/skills/planning/SKILL.md` 8단계 A항 "변경 유형별 docs 영향 표" 의 해당 행을 식별하고, 표시된 모든 docs 가 갱신됐는지 확인. 단일 항목(✓표시)이라도 누락이면 UPDATE_NEEDED. 이 표가 검증 항목의 단일 소스 — docs-verifier 는 **별도 체크리스트 보유 금지**, 표 거울만 본다.
 
 8. **역참조 규칙 준수**: 새 ADR 추가 시 `docs/code-architecture.md` 또는 `CLAUDE.md` ADR 참조 표 둘 중 한 곳에 ADR-NNN 한 줄 추가 됐는가? (planning SKILL C항 "역참조 규칙")
 
 9. **갱신 시점 분리 위반 없는가**: planning 결정 docs (`adr.md`/`code-architecture.md`/`CLAUDE.md`/`data-schema.md`/`flow.md`/`prd.md`/`dooray-api-reference.md`) 를 phase 안에서 변경하면 VIOLATION. 사용자 가이드 docs (`README.md`/`skills/dooray-cli/SKILL.md`) 는 phase 마지막에서만 변경 OK.
 
-10. **`skills/dooray-cli/SKILL.md` (공개 스킬) dogfooding** — CLI 는 공개 스킬도 검증 대상. 새/삭제/변경된 명령·옵션이 공개 스킬에 반영되지 않으면 외부 사용자가 오작동 경로를 따라감 (매트릭스 행에 표시되어 있을 때).
+10. **`skills/dooray-cli/SKILL.md` (공개 스킬) dogfooding** — CLI 는 공개 스킬도 검증 대상. 새/삭제/변경된 명령·옵션이 공개 스킬에 반영되지 않으면 외부 사용자가 오작동 경로를 따라감 (docs 영향 표 행에 표시되어 있을 때).
 
 판정:
 - **PASS** → 9단계로
