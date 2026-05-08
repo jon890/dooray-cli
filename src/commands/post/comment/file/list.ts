@@ -24,7 +24,6 @@ export const listCommentFileCommand = new Command("list")
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
-    startSpinner("댓글 첨부 파일 목록 조회 중...");
     const { projectId, postId, commentId } = await resolveCommentFileInput(client, {
       arg1, arg2, arg3,
       idOpt: opts.id,
@@ -32,6 +31,7 @@ export const listCommentFileCommand = new Command("list")
       commentIdOpt: opts.commentId,
       requireSecondary: false,
     });
+    startSpinner("댓글 첨부 파일 목록 조회 중...");
     const res = await client.getPostComment(projectId, postId, commentId);
     const files = res.result.files ?? [];
     stopSpinner(true, `첨부 파일 ${files.length}개`);
