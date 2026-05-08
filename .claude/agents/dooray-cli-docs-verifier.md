@@ -39,7 +39,7 @@ disallowedTools: Write, Edit
 
 ## 2. ADR 인덱스 (24개 — 검증 시 자동 참조)
 
-ADR-001 TypeScript / ADR-002 ky / ADR-003 tsup / ADR-004 디스크 캐시 / ADR-005 postNumber 식별자 / ADR-006 $EDITOR / ADR-007 config 전용 / ADR-008 멤버 모호성 / ADR-009 WikiResolver / ADR-010 캐시 파일 분리 / ADR-011 Me 캐시 / ADR-012 IMAP / ADR-013 SMTP / ADR-014 Path Alias 보류 / ADR-015 307 리다이렉트 / ADR-016 setup 마법사 / ADR-017 api/types.ts 단일 / ADR-018 setup 스킬 설치 / ADR-019 post 메타 옵션 / ADR-020 post input 통합 / ADR-021 member 명령 / ADR-022 feedback / ADR-023 feedback --last / ADR-024 post comment file
+ADR-001 TypeScript / ADR-002 ky / ADR-004 디스크 캐시 / ADR-005 postNumber 식별자 / ADR-006 $EDITOR / ADR-007 config 전용 / ADR-008 멤버 모호성 / ADR-010 캐시 파일 분리 / ADR-012 IMAP / ADR-013 SMTP / ADR-014 Path Alias 보류 / ADR-015 307 리다이렉트 / ADR-016 setup 마법사 / ADR-017 api/types.ts 단일 / ADR-018 setup 스킬 설치 / ADR-019 post 메타 옵션 / ADR-020 post input 통합 / ADR-021 member 명령 / ADR-022 feedback / ADR-023 feedback --last / ADR-024 post comment file. **결번**: 003 / 009 / 011 (자명성 폐기, 재할당 금지).
 
 ## 3. 캐시 디렉터리 규약 (data-schema.md ↔ src/cache/store.ts)
 

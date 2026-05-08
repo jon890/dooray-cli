@@ -6,15 +6,12 @@
 
 - [ADR-001](#adr-001) — TypeScript (Node.js) 선택
 - [ADR-002](#adr-002) — ky (HTTP 클라이언트)
-- [ADR-003](#adr-003) — tsup (빌드 툴)
 - [ADR-004](#adr-004) — 디스크 캐시 (project·member·workflow)
 - [ADR-005](#adr-005) — postNumber 를 Post 식별자로 사용
 - [ADR-006](#adr-006) — $EDITOR 기반 수정 플로우
 - [ADR-007](#adr-007) — config 파일 전용 (env var 폴백 없음)
 - [ADR-008](#adr-008) — 멤버 모호성: 에러 + 후보 출력
-- [ADR-009](#adr-009) — WikiResolver 는 ProjectCache 활용
 - [ADR-010](#adr-010) — 캐시 파일 분리 (디렉토리 기반)
-- [ADR-011](#adr-011) — 내 정보 (Me) 캐시
 - [ADR-012](#adr-012) — IMAP 메일 연동
 - [ADR-013](#adr-013) — SMTP 메일 발송
 - [ADR-014](#adr-014) — TypeScript Path Alias 보류
@@ -61,20 +58,6 @@
 - CLI 툴에서 axios의 XMLHttpRequest 레거시 불필요
 
 **제약**: Node 18+ 필수 (`engines: { node: ">=18" }` 명시)
-
----
-
-<a id="adr-003"></a>
-
-## ADR-003: tsup (빌드 툴)
-
-**결정**: tsc 대신 tsup 사용
-
-**이유**:
-
-- esbuild 기반으로 tsc 대비 10배 빠른 빌드
-- 단일 번들 파일 출력 → npm 배포 단순화
-- tsconfig.json 자동 인식, 설정 최소화
 
 ---
 
@@ -150,20 +133,6 @@
 
 ---
 
-<a id="adr-009"></a>
-
-## ADR-009: WikiResolver는 ProjectCache 활용
-
-**결정**: 별도 wiki API 호출 없이 `project.wiki.id`를 project 캐시에 저장해 사용
-
-**이유**:
-
-- Dooray Project 응답에 `wiki: { id }` 포함 → 추가 API 호출 0회
-- project cache fetch 시 자동으로 wikiId도 확보
-- Wiki가 없는 프로젝트는 명확한 에러 출력
-
----
-
 <a id="adr-010"></a>
 
 ## ADR-010: 캐시 파일 분리 (디렉토리 기반)
@@ -178,20 +147,6 @@
 - 파일별 `updatedAt`으로 TTL 독립 관리
 
 **구조**: 자세한 파일 트리·스키마는 `docs/data-schema.md` 참조
-
----
-
-<a id="adr-011"></a>
-
-## ADR-011: 내 정보(Me) 캐시
-
-**결정**: `/common/v1/members/me` 응답을 `cache/me.json`에 캐시 (id, name)
-
-**이유**:
-
-- `doctor` 실행 시 자동 캐싱 → 이후 커맨드에서 현재 사용자 정보 즉시 참조 가능
-- TTL 24h (사용자 정보는 거의 불변)
-- post 생성 시 `from` 자동 설정 등 향후 확장 기반
 
 ---
 
@@ -315,32 +270,17 @@
 
 <a id="adr-018"></a>
 
-## ADR-018: `dooray setup`에서 Claude Code 스킬 설치
+## ADR-018: `dooray setup` 에서 Claude Code 스킬 설치
 
-**결정**: `dooray setup` 마지막 단계에서 Claude Code 스킬 설치 여부를 물어보고, 심볼릭 링크로 설치
+**결정**: setup 마지막 단계에서 스킬 설치 여부를 물어보고 심볼릭 링크로 설치 (`~/.claude/skills/dooray-cli` → 패키지 내부 `skills/dooray-cli/`). idempotent 재실행 가능. npx 임시 경로 감지 시 경고 + skip (global install 전용).
 
-**이유**:
+**맥락**: 별도 `dooray install skills` 커맨드보다 setup 일원화가 UX 간결. 심볼릭 링크는 `npm update -g` 시 스킬도 자동 최신화 (유지보수 비용 0). `~/.claude/skills/` 의 다른 스킬 (gstack 등) 도 동일 패턴이라 일관성. 스킬 포맷은 Claude Code SKILL.md frontmatter 규격 — 타 에이전트 지원은 요청 시 확장.
 
-- 별도 `dooray install skills` 커맨드 대신 setup 한 곳에서 완결하는 게 UX가 간결
-- 심볼릭 링크 방식으로 `npm update -g` 시 스킬도 자동 최신화 (유지보수 비용 0)
-- 기존 `~/.claude/skills/` 폴더의 다른 스킬들(gstack 등)도 전부 심볼릭 링크 패턴 → 일관성
+**대안 기각**:
+- `postinstall` 훅 — npm 정책상 interactive postinstall 비권장, CI/Docker 비-TTY 실패 (ADR-016 과 동일 사유)
+- 파일 복사 — `npm update` 시 자동 최신화 안 됨, 사용자가 재설치 명령 알아야
 
-**설치 메커니즘**:
-
-- 원본 경로: `__dirname` 기반으로 `../skills/dooray-cli/` 참조 (tsup 번들이 `dist/`에 위치)
-- 설치 경로: `~/.claude/skills/dooray-cli` → 원본 경로로 심볼릭 링크
-- 재실행 시: 기존 링크 삭제 후 재생성 (idempotent)
-- npx 환경: 임시 경로 감지 시 경고 + 건너뛰기 (global install 전용)
-
-**doctor 검증**:
-
-- 심볼릭 링크 → 유효성 체크 (링크 대상 존재 여부)
-- 일반 파일 → 패키지 원본과 해시 비교로 최신 여부 판단
-- 미설치 → `dooray setup` 안내
-
-**package.json**: `files` 필드에 `skills/` 추가 필수 (npm publish 시 포함)
-
-**스킬 포맷**: Claude Code 전용 (SKILL.md frontmatter 규격). 타 에이전트(Cursor, Windsurf 등) 지원은 요청 시 확장
+세부 (origin 경로 / doctor 검증 / package.json `files` 필드) 는 `src/commands/setup.ts` + `src/commands/doctor.ts` 참조.
 
 ---
 
