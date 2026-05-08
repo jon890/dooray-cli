@@ -12,23 +12,35 @@ export interface CommentFileSecondaryLabel {
   identifier: string;
 }
 
-export interface CommentFileInputArgs {
-  // positional 4 인자 원본 (action 의 arg1~arg4)
+/** delete / download 명령이 공용으로 쓰는 fileId 라벨 (PR #47 review 4번 — 중복 리터럴 제거) */
+export const FILE_ID_SECONDARY_LABEL: CommentFileSecondaryLabel = {
+  positional: "4번째",
+  option: "--file-id",
+  identifier: "<fileId>",
+};
+
+interface CommentFileInputBaseArgs {
   arg1?: string;
   arg2?: string;
   arg3?: string;
   arg4?: string;
-  // 옵션
   idOpt?: string;
   urlOpt?: string;
   commentIdOpt?: string;
-  // secondary positional 의 옵션 폴백 (file path / fileId 중 명령마다 다름)
+  /** secondary positional 의 옵션 폴백 (file path / fileId 중 명령마다 다름) */
   secondaryOpt?: string;
-  // secondary 인자가 필수인지 (list = false, upload/download/delete = true)
-  requireSecondary: boolean;
-  // 누락 시 에러 메시지에 들어갈 caller-specific 라벨 (requireSecondary=true 일 때 필수)
-  secondaryLabel?: CommentFileSecondaryLabel;
 }
+
+/**
+ * 호출자별 secondary 필수 여부에 따라 secondaryLabel 강제. discriminated union 으로
+ * `requireSecondary: true` 시 라벨 누락을 컴파일 타임에 차단 (PR #47 review 1번).
+ */
+export type CommentFileInputArgs =
+  | (CommentFileInputBaseArgs & { requireSecondary: false })
+  | (CommentFileInputBaseArgs & {
+      requireSecondary: true;
+      secondaryLabel: CommentFileSecondaryLabel;
+    });
 
 export interface CommentFilePositionalResult {
   projectArg?: string;
@@ -44,10 +56,27 @@ export interface CommentFileInputResult {
   secondary?: string;
 }
 
-/** 분기 로직 pure 헬퍼 — client 호출 없이 단위 테스트 가능. */
-export function parseCommentFilePositional(
-  args: CommentFileInputArgs,
-): CommentFilePositionalResult {
+/**
+ * `requireSecondary: true` 호출은 `secondary: string` 으로 좁혀서
+ * 호출부 non-null 단언(`!`)을 제거 (PR #47 review 2번).
+ */
+export type CommentFilePositionalRequiredResult = CommentFilePositionalResult & {
+  secondary: string;
+};
+export type CommentFileInputRequiredResult = CommentFileInputResult & {
+  secondary: string;
+};
+
+function assertNonEmpty(value: string, fieldName: string): void {
+  if (value.trim() === "") {
+    throw new DoorayCliError(
+      `${fieldName} 가 비어 있습니다.`,
+      EXIT_PARAM_ERROR,
+    );
+  }
+}
+
+function parseImpl(args: CommentFileInputArgs): CommentFilePositionalResult {
   const isOptionMode = !!(args.idOpt || args.urlOpt);
 
   let projectArg: string | undefined;
@@ -79,23 +108,56 @@ export function parseCommentFilePositional(
       EXIT_PARAM_ERROR,
     );
   }
-  if (args.requireSecondary && !secondary) {
-    const label = args.secondaryLabel;
-    const msg = label
-      ? `${label.identifier} 가 필요합니다. positional ${label.positional} 또는 ${label.option} 옵션을 사용하세요.`
-      : "secondary positional 이 필요합니다.";
-    throw new DoorayCliError(msg, EXIT_PARAM_ERROR);
+  assertNonEmpty(commentId, "<comment-id>");
+
+  if (args.requireSecondary) {
+    if (!secondary) {
+      const { identifier, positional, option } = args.secondaryLabel;
+      throw new DoorayCliError(
+        `${identifier} 가 필요합니다. positional ${positional} 또는 ${option} 옵션을 사용하세요.`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+    assertNonEmpty(secondary, args.secondaryLabel.identifier);
+  } else if (secondary !== undefined) {
+    assertNonEmpty(secondary, "<secondary>");
   }
 
   return { projectArg, postNumberArg, commentId, secondary };
 }
 
+/** 분기 로직 pure 헬퍼 — client 호출 없이 단위 테스트 가능. */
+export function parseCommentFilePositional(
+  args: CommentFileInputBaseArgs & {
+    requireSecondary: true;
+    secondaryLabel: CommentFileSecondaryLabel;
+  },
+): CommentFilePositionalRequiredResult;
+export function parseCommentFilePositional(
+  args: CommentFileInputBaseArgs & { requireSecondary: false },
+): CommentFilePositionalResult;
+export function parseCommentFilePositional(
+  args: CommentFileInputArgs,
+): CommentFilePositionalResult {
+  return parseImpl(args);
+}
+
+export function resolveCommentFileInput(
+  client: DoorayApiClient,
+  args: CommentFileInputBaseArgs & {
+    requireSecondary: true;
+    secondaryLabel: CommentFileSecondaryLabel;
+  },
+): Promise<CommentFileInputRequiredResult>;
+export function resolveCommentFileInput(
+  client: DoorayApiClient,
+  args: CommentFileInputBaseArgs & { requireSecondary: false },
+): Promise<CommentFileInputResult>;
 export async function resolveCommentFileInput(
   client: DoorayApiClient,
   args: CommentFileInputArgs,
 ): Promise<CommentFileInputResult> {
-  const { projectArg, postNumberArg, commentId, secondary } =
-    parseCommentFilePositional(args);
+  const { projectArg, postNumberArg, commentId, secondary } = parseImpl(args);
 
   const { projectId, postId } = await resolvePostInput(client, {
     projectArg,

@@ -36,9 +36,9 @@ export const uploadCommentFileCommand = new Command("upload")
 
     // Step 1: 파일 업로드
     startSpinner("파일 업로드 중...");
-    const uploadRes = await client.uploadPostFile(projectId, postId, filePath!);
+    const uploadRes = await client.uploadPostFile(projectId, postId, filePath);
     const fileId = uploadRes.result.id;
-    const fileName = basename(filePath!);
+    const fileName = basename(filePath);
     stopSpinner(true, "업로드 완료");
 
     // Step 2: 댓글 본문에 reference 추가

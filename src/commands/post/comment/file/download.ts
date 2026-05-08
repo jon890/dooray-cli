@@ -3,7 +3,10 @@ import { writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { getConfigOrThrow } from "../../../../config/store.js";
 import { DoorayApiClient } from "../../../../api/client.js";
-import { resolveCommentFileInput } from "../../../../resolvers/comment-file-input.js";
+import {
+  resolveCommentFileInput,
+  FILE_ID_SECONDARY_LABEL,
+} from "../../../../resolvers/comment-file-input.js";
 import { startSpinner, stopSpinner } from "../../../../utils/spinner.js";
 
 export const downloadCommentFileCommand = new Command("download")
@@ -31,11 +34,11 @@ export const downloadCommentFileCommand = new Command("download")
       commentIdOpt: opts.commentId,
       secondaryOpt: opts.fileId,
       requireSecondary: true,
-      secondaryLabel: { positional: "4번째", option: "--file-id", identifier: "<fileId>" },
+      secondaryLabel: FILE_ID_SECONDARY_LABEL,
     });
 
     startSpinner("파일 다운로드 중...");
-    const { buffer, fileName } = await client.downloadPostFile(projectId, postId, fileId!);
+    const { buffer, fileName } = await client.downloadPostFile(projectId, postId, fileId);
 
     const safeName = basename(fileName);
     const outputPath = join(opts.out, safeName);

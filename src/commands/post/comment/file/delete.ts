@@ -1,7 +1,10 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../../config/store.js";
 import { DoorayApiClient } from "../../../../api/client.js";
-import { resolveCommentFileInput } from "../../../../resolvers/comment-file-input.js";
+import {
+  resolveCommentFileInput,
+  FILE_ID_SECONDARY_LABEL,
+} from "../../../../resolvers/comment-file-input.js";
 import { startSpinner, stopSpinner } from "../../../../utils/spinner.js";
 import { DoorayCliError } from "../../../../utils/errors.js";
 import { EXIT_API_ERROR } from "../../../../utils/exit-codes.js";
@@ -29,7 +32,7 @@ export const deleteCommentFileCommand = new Command("delete")
       commentIdOpt: opts.commentId,
       secondaryOpt: opts.fileId,
       requireSecondary: true,
-      secondaryLabel: { positional: "4번째", option: "--file-id", identifier: "<fileId>" },
+      secondaryLabel: FILE_ID_SECONDARY_LABEL,
     });
 
     if (!opts.yes) {
@@ -48,7 +51,7 @@ export const deleteCommentFileCommand = new Command("delete")
     try {
       const commentRes = await client.getPostComment(projectId, postId, commentId);
       const currentBody = commentRes.result.body.content;
-      const newBody = removeFileReference(currentBody, fileId!);
+      const newBody = removeFileReference(currentBody, fileId);
       await client.updatePostComment(projectId, postId, commentId, {
         body: { mimeType: "text/x-markdown", content: newBody },
       });
@@ -64,7 +67,7 @@ export const deleteCommentFileCommand = new Command("delete")
     // Step 2: 파일 삭제
     startSpinner("파일 삭제 중...");
     try {
-      await client.deletePostFile(projectId, postId, fileId!);
+      await client.deletePostFile(projectId, postId, fileId);
       stopSpinner(true, "파일 삭제 완료");
     } catch {
       stopSpinner(false, "");
