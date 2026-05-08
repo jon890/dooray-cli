@@ -30,15 +30,17 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray doctor` — 설정·연결 검증
 - `dooray cache` — 캐시 관리
 - `dooray project` — 목록·멤버·워크플로우 조회
-- `dooray post` — 목록·검색·조회·생성·수정($EDITOR)·완료·상태변경
+- `dooray member` — 표시명/이메일 조회 (`get`/`list`, ADR-021)
+- `dooray post` — 목록·검색·조회·생성·수정($EDITOR)·완료·상태변경 + `--tag`/`--parent`/`--workflow`/`--milestone` 메타데이터 (ADR-019) + `--mention`/`--mention-group`/`--link-task`/`--dry-run` (post comment 도 동일)
 - `dooray post comment` — 목록·추가·수정($EDITOR)·삭제
 - `dooray post file` — 목록·다운로드·전체다운로드·업로드·삭제 (v0.3.0)
+- `dooray post comment file` — 댓글 첨부 파일 목록·업로드·다운로드·삭제 (post-level files API + 댓글 PUT 합성, ADR-024)
 - `dooray wiki` — 목록·페이지 조회·생성·수정($EDITOR)
 - `dooray mail` — 목록·조회·검색·발송·답장 (v0.2.0)
+- `dooray feedback` — `gh` CLI 위임으로 GitHub 이슈 자동 생성 (`--last` 옵션으로 직전 명령 sanitized argv + 에러 자동 첨부, ADR-022/023)
 
 ### 제외 (v1)
 
-- 마일스톤·태그 관리
 - 알림 설정
 - 멀티 계정·프로파일
 

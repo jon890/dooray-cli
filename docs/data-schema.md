@@ -5,11 +5,15 @@
 ```
 ~/.dooray/
   config.json                 # 인증·연결 설정
+  last-run.json               # 직전 명령 sanitized argv + 에러 (ADR-023, opt-in)
   cache/
     me.json                   # 내 정보 캐시
     projects.json             # 프로젝트 목록 캐시
-    members/{projectId}.json  # 프로젝트별 멤버 캐시
-    workflows/{projectId}.json # 프로젝트별 워크플로우 캐시
+    members/{projectId}.json       # 프로젝트별 멤버 캐시
+    workflows/{projectId}.json      # 프로젝트별 워크플로우 캐시
+    tags/{projectId}.json           # 프로젝트별 태그 캐시 (ADR-019)
+    milestones/{projectId}.json     # 프로젝트별 마일스톤 캐시 (ADR-019)
+    member-groups/{projectId}.json  # 프로젝트별 멤버 그룹 캐시 (`--mention-group`)
 ```
 
 ---
@@ -111,14 +115,52 @@ interface CachedWorkflow {
 }
 ```
 
+### tags/{projectId}.json (ADR-019)
+
+```typescript
+interface CachedTag {
+  id: string;
+  name: string;
+  color?: string;
+  // mandatoryTagGroup 등 메타는 코드 src/cache/types.ts 참조
+}
+```
+
+`post create --tag <name>` 시 사전 검증 (mandatory-tag 그룹 누락 시 클라이언트 에러).
+
+### milestones/{projectId}.json (ADR-019)
+
+```typescript
+interface CachedMilestone {
+  id: string;
+  name: string;
+}
+```
+
+`post create --milestone <name>` 시 이름 lookup.
+
+### member-groups/{projectId}.json
+
+```typescript
+interface CachedMemberGroup {
+  id: string;
+  name: string;
+}
+```
+
+`post create/edit --mention-group <name>` 시 이름 lookup. members/ 와 분리된 별도 캐시 (Dooray 의 그룹 멘션 endpoint 가 별도).
+
 ### TTL 설계 근거
 
-| 엔티티    | TTL | 이유                                 |
-| --------- | --- | ------------------------------------ |
-| me        | 24h | 거의 불변                            |
-| projects  | 1h  | 자주 안 바뀌나 새 프로젝트 생성 가능 |
-| members   | 1h  | 팀원 추가·변경 반영 필요             |
-| workflows | 24h | 프로젝트 생성 후 거의 고정           |
+| 엔티티        | TTL | 이유                                 |
+| ------------- | --- | ------------------------------------ |
+| me            | 24h | 거의 불변                            |
+| projects      | 1h  | 자주 안 바뀌나 새 프로젝트 생성 가능 |
+| members       | 1h  | 팀원 추가·변경 반영 필요             |
+| workflows     | 24h | 프로젝트 생성 후 거의 고정           |
+| tags          | 1h  | 태그는 추가/변경 빈도 보통           |
+| milestones    | 1h  | 분기/스프린트 단위로 추가됨          |
+| member-groups | 1h  | 그룹 구성 변경 반영 필요             |
 
 ### Lazy Loading 전략
 
