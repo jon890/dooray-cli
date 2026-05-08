@@ -6,7 +6,9 @@ import { resolveMember, ensureMembers, buildMemberNameMap } from "../../resolver
 import { resolveMemberGroup } from "../../resolvers/member-group.js";
 import { ensureMe } from "../../resolvers/me.js";
 import { prependMentions } from "../../utils/mention.js";
-import { appendTaskLinks, parseLinkRef, type TaskLinkInput } from "../../utils/task-link.js";
+import { appendTaskLinks } from "../../utils/task-link.js";
+import { resolveTaskLinks } from "../../resolvers/task-link.js";
+import type { OutputOptions } from "../../formatters/table.js";
 import {
   openInEditor,
   serializePostFrontmatter,
@@ -106,27 +108,19 @@ export const postEditCommand = new Command("edit")
       if (linkInputs.length > 0) {
         const effectiveBody = newBody ?? post.body.content;
         const me = await ensureMe(client);
-        const links: TaskLinkInput[] = await Promise.all(
-          linkInputs.map(async (ref) => {
-            const { projectArg, postNumberArg, idOpt } = parseLinkRef(ref);
-            const { projectId: pid, postId: pidPost, projectCode: pCode, postNumber } =
-              await resolvePostInput(client, { projectArg, postNumberArg, idOpt });
-            const detail = await client.getPost(pid, pidPost);
-            return {
-              projectCode: pCode,
-              number: postNumber,
-              postId: pidPost,
-              subject: detail.result.subject,
-              workflowClass: detail.result.workflowClass,
-            };
-          }),
-        );
+        const links = await resolveTaskLinks(client, linkInputs);
         newBody = appendTaskLinks(effectiveBody, links, me);
       }
 
       if (opts.dryRun) {
         stopSpinner(false);
-        process.stdout.write((newBody ?? post.body.content) + "\n");
+        const globalOpts = postEditCommand.optsWithGlobals() as OutputOptions;
+        const previewBody = newBody ?? post.body.content;
+        if (globalOpts.json) {
+          process.stdout.write(JSON.stringify({ body: previewBody }) + "\n");
+        } else {
+          process.stdout.write(previewBody + "\n");
+        }
         return;
       }
 

@@ -7,11 +7,13 @@ import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { readBodyInputOrNull } from "../../../utils/body-input.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import type { OutputOptions } from "../../../formatters/table.js";
 import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js";
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";
 import { ensureMe } from "../../../resolvers/me.js";
 import { prependMentions } from "../../../utils/mention.js";
-import { appendTaskLinks, parseLinkRef, type TaskLinkInput } from "../../../utils/task-link.js";
+import { appendTaskLinks } from "../../../utils/task-link.js";
+import { resolveTaskLinks } from "../../../resolvers/task-link.js";
 import { checkAndGuardDropped } from "../../../utils/attachment-check.js";
 
 export const commentEditCommand = new Command("edit")
@@ -149,27 +151,18 @@ export const commentEditCommand = new Command("edit")
 
     if (linkInputs.length > 0) {
       const me = await ensureMe(client);
-      const links: TaskLinkInput[] = await Promise.all(
-        linkInputs.map(async (ref) => {
-          const { projectArg, postNumberArg, idOpt } = parseLinkRef(ref);
-          const { projectId: pid, postId: pidPost, projectCode: pCode, postNumber } =
-            await resolvePostInput(client, { projectArg, postNumberArg, idOpt });
-          const detail = await client.getPost(pid, pidPost);
-          return {
-            projectCode: pCode,
-            number: postNumber,
-            postId: pidPost,
-            subject: detail.result.subject,
-            workflowClass: detail.result.workflowClass,
-          };
-        }),
-      );
+      const links = await resolveTaskLinks(client, linkInputs);
       edited = appendTaskLinks(edited, links, me);
     }
 
     if (opts.dryRun) {
       stopSpinner(false);
-      process.stdout.write(edited + "\n");
+      const globalOpts = commentEditCommand.optsWithGlobals() as OutputOptions;
+      if (globalOpts.json) {
+        process.stdout.write(JSON.stringify({ body: edited }) + "\n");
+      } else {
+        process.stdout.write(edited + "\n");
+      }
       return;
     }
 

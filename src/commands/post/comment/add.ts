@@ -11,7 +11,8 @@ import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js"
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";
 import { ensureMe } from "../../../resolvers/me.js";
 import { prependMentions } from "../../../utils/mention.js";
-import { appendTaskLinks, parseLinkRef, type TaskLinkInput } from "../../../utils/task-link.js";
+import { appendTaskLinks } from "../../../utils/task-link.js";
+import { resolveTaskLinks } from "../../../resolvers/task-link.js";
 
 export const commentAddCommand = new Command("add")
   .description("댓글 추가")
@@ -84,21 +85,7 @@ export const commentAddCommand = new Command("add")
 
     if (linkInputs.length > 0) {
       const me = await ensureMe(client);
-      const links: TaskLinkInput[] = await Promise.all(
-        linkInputs.map(async (ref) => {
-          const { projectArg, postNumberArg, idOpt } = parseLinkRef(ref);
-          const { projectId: pid, postId: pidPost, projectCode: pCode, postNumber } =
-            await resolvePostInput(client, { projectArg, postNumberArg, idOpt });
-          const detail = await client.getPost(pid, pidPost);
-          return {
-            projectCode: pCode,
-            number: postNumber,
-            postId: pidPost,
-            subject: detail.result.subject,
-            workflowClass: detail.result.workflowClass,
-          };
-        }),
-      );
+      const links = await resolveTaskLinks(client, linkInputs);
       bodyContent = appendTaskLinks(bodyContent, links, me);
     }
 

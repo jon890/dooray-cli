@@ -15,7 +15,8 @@ import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { readBodyInput } from "../../utils/body-input.js";
 import { prependMentions } from "../../utils/mention.js";
-import { appendTaskLinks, parseLinkRef, type TaskLinkInput } from "../../utils/task-link.js";
+import { appendTaskLinks } from "../../utils/task-link.js";
+import { resolveTaskLinks } from "../../resolvers/task-link.js";
 import type { CreatePostUser } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
@@ -104,7 +105,7 @@ export const postCreateCommand = new Command("create")
       const groups = await Promise.all(
         groupInputs.map(async (code) => {
           const g = await resolveMemberGroup(client, projectId, code);
-          return { groupId: g.id, code: g.code, projectCode: projectCode! };
+          return { groupId: g.id, code: g.code, projectCode: projectCode ?? "" };
         }),
       );
       bodyContent = prependMentions(bodyContent, members, groups, me);
@@ -112,21 +113,7 @@ export const postCreateCommand = new Command("create")
 
     if (linkInputs.length > 0) {
       const me = await ensureMe(client);
-      const links: TaskLinkInput[] = await Promise.all(
-        linkInputs.map(async (ref) => {
-          const { projectArg, postNumberArg, idOpt } = parseLinkRef(ref);
-          const { projectId: pid, postId: pidPost, projectCode: pCode, postNumber } =
-            await resolvePostInput(client, { projectArg, postNumberArg, idOpt });
-          const detail = await client.getPost(pid, pidPost);
-          return {
-            projectCode: pCode,
-            number: postNumber,
-            postId: pidPost,
-            subject: detail.result.subject,
-            workflowClass: detail.result.workflowClass,
-          };
-        }),
-      );
+      const links = await resolveTaskLinks(client, linkInputs);
       bodyContent = appendTaskLinks(bodyContent, links, me);
     }
 
