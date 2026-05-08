@@ -250,10 +250,24 @@ INDEX=$(grep -oE '\[ADR-[0-9]+\]\(#adr-[0-9]+\)' docs/adr.md | grep -oE 'ADR-[0-
 diff <(echo "$BODY") <(echo "$INDEX") && echo "OK: ADR Index synced"
 
 # 4) anchor 누락 검증 — 모든 ADR 헤딩 직전에 <a id="adr-XXX"></a>
+#    bash 3.2 호환 위해 tr 로 소문자화 (${var,,} 는 bash 4+ 전용)
 for n in $BODY; do
-  num=${n#"## ADR-"}
-  grep -B 1 "^## ADR-$num\." docs/adr.md | grep -q "<a id=\"adr-$num\"" \
-    || echo "MISSING anchor: ADR-$num"
+  lower=$(echo "$n" | tr '[:upper:]' '[:lower:]')
+  grep -B 1 "^## $n\." docs/adr.md | grep -q "<a id=\"$lower\"" \
+    || echo "MISSING anchor: $n"
+done
+
+# 5) 본문 30 줄 초과 ADR — \"기능 명세서 변질\" 의심 (B 과대화 자동 검출)
+#    plan019~024 시점 6 ADR 이 261 줄까지 비대화한 사례 회피.
+#    awk 의 끝 매칭이 다음 --- 까지 흘러가지 않도록 구분선 누락 먼저 검증.
+SEP_COUNT=$(grep -cE "^---$" docs/adr.md)
+ADR_COUNT=$(grep -cE "^<a id=\"adr-" docs/adr.md)
+if [ "$SEP_COUNT" -ne "$ADR_COUNT" ]; then
+  echo "WARN: 구분선 ($SEP_COUNT) ≠ ADR ($ADR_COUNT) — ADR 사이 --- 누락. 변질 검사 부정확"
+fi
+for n in $(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE '[0-9]+'); do
+  size=$(awk "/<a id=\"adr-$n\"/,/^---$/" docs/adr.md | wc -l | tr -d ' ')
+  [ "$size" -gt 30 ] && echo "BLOAT: ADR-$n ($size lines, > 30) — 결정/맥락/대안 기각 외 기능 명세 의심. 슬림화 검토"
 done
 ```
 

@@ -251,6 +251,8 @@
 
 **재검토 시점**: 디렉토리 깊이가 4단계 이상으로 증가하거나 대규모 리팩토링 시
 
+---
+
 <a id="adr-015"></a>
 
 ## ADR-015: 파일 첨부 API 307 리다이렉트 수동 처리
@@ -269,6 +271,8 @@
 - 업로드: `fetch` 직접 사용 (`ky`는 307 + `redirect: "manual"` 조합에서 정상 동작하지 않음)
 - 2차 요청 시 동일한 Authorization 헤더 첨부
 - 업로드: FormData + Blob, 다운로드: ArrayBuffer로 수신 후 파일 저장
+
+---
 
 <a id="adr-016"></a>
 
@@ -429,6 +433,8 @@
 - argv 전체 제외 (명령 이름만) — 재현 명령을 손으로 적어야, `--last` 가치 ↓
 
 저장 위치 / sanitization 룰 / 시작 패턴은 `src/cache/last-run.ts` 참조. cache 외부 (`cache clear` 영향 없음).
+
+---
 
 <a id="adr-024"></a>
 

@@ -115,8 +115,13 @@ grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u
 ADR 본문 줄 수 30 줄 이상이면 변질 의심. 검증:
 
 ```bash
+# 사전: 구분선 누락 검증 (awk 끝 매칭이 다음 ADR 까지 흘러가지 않도록)
+SEP=$(grep -cE "^---$" docs/adr.md)
+ADR=$(grep -cE "^<a id=\"adr-" docs/adr.md)
+[ "$SEP" -ne "$ADR" ] && echo "WARN: 구분선 ($SEP) ≠ ADR ($ADR) — 변질 검사 부정확"
+
 for n in $(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE '[0-9]+'); do
-  size=$(awk "/<a id=\"adr-$n\"/,/^---$/" docs/adr.md | wc -l)
+  size=$(awk "/<a id=\"adr-$n\"/,/^---$/" docs/adr.md | wc -l | tr -d ' ')
   [ "$size" -gt 30 ] && echo "ADR-$n: $size lines (변질 의심)"
 done
 ```
