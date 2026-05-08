@@ -344,98 +344,34 @@
 
 ## ADR-019: `post create` 메타데이터 옵션 (`--tag`/`--parent`/`--workflow`/`--milestone`)
 
-**결정**:
+**결정**: 4개 옵션 모두 이름 lookup. 클라이언트가 `tagGroup.mandatory` / `selectOne` 사전 검증. `--workflow` 만 create 후 `setPostWorkflow` 후속 호출 — 실패 시 `stderr` warn + `exit 0` (post 는 이미 생성됨).
 
-- `post create`에 4개 옵션 추가. `--tag`는 반복 가능(variadic), 모두 이름 기반 lookup
-- 매칭 정책: **정확일치 → 부분일치 → 모호시 후보 + 에러** (`resolveMember`/`resolveWorkflow` 등 전체 resolver에 동일 적용)
-- `--parent`: `code/number` (슬래시 포함) 또는 raw `postId` (슬래시 없음). 두 형태만 허용, 자릿수 휴리스틱 없음
-- `--workflow`: create API에 필드 없음 → create 후 `setPostWorkflow` 후속 호출. 실패 시 `stderr` warn + `exit 0` (post 자체는 생성 성공)
-- 클라이언트 사전 검증: `tagGroup.mandatory === true` 그룹은 1개 이상 선택 강제, `selectOne === true` 그룹은 다중 선택 시 에러
-
-**이유**:
-
-- mandatory-tag 정책 프로젝트(예: `<project>`)에서 CLI로 단 한 건의 업무도 생성 불가 → 차단 이슈 (Issue #18)
-- ID 직접 입력 미지원: 사용자가 ID를 손에 들고 있는 흐름은 거의 없음. 이름 lookup만으로 단순화. 단 `--parent`만 raw postId 허용 — 부모 업무가 다른 프로젝트 또는 번호 미상일 수 있어
-- `--workflow` 실패시 exit 0: 업무 ID는 이미 발급됨. CI는 `--json`으로 후처리 가능. 전체 실패 처리하면 사용자가 두 번 만들 위험
-- 클라이언트 mandatory 검증: 캐시된 `tagGroup` 정보로 무료 제공. API의 `USER_INVALID_TAG_MANDATORY_PREFIX` 에러보다 친절한 메시지 (어느 그룹이 누락인지 명시)
-- 전체 resolver 부분일치 통일: 멤버만 부분일치였던 비대칭 해소
-
-**필드명 검증**:
-
-- POST `/project/v1/projects/{projectId}/posts` body: `parentPostId`, `milestoneId`, `tagIds` (Dooray 공식 문서 확인 — 이슈 본문 curl의 `tagIdList`는 사용자 오타)
-- 목록 엔드포인트: `GET /project/v1/projects/{id}/tags`, `GET /project/v1/projects/{id}/milestones` (page/size 페이지네이션, max 100)
-
-**캐시**:
-
-- `~/.dooray/cache/tags/{projectId}.json`, `~/.dooray/cache/milestones/{projectId}.json` (멤버·워크플로우 패턴 답습)
-- TTL 24h (ADR-010)
-- `CachedTag`에 `groupMandatory`, `groupSelectOne` 보존 — mandatory 검증에 필요
+**맥락**: mandatory-tag 정책 프로젝트는 CLI 로 단 한 건도 생성 불가 (Issue #18). API 의 `USER_INVALID_TAG_MANDATORY_PREFIX` 에러는 어느 그룹이 누락인지 안내 안 함 → 친절한 메시지 직접 생성 필요. 멤버만 부분일치였던 resolver 비대칭도 해소 (전체 정확→부분→모호+후보).
 
 **대안 기각**:
+- `--workflow` 실패 시 exit non-zero — post 가 이미 발급된 상태에서 전체 실패는 사용자가 두 번 만드는 혼란
+- ID 직접 입력 허용 — `--workflow xxx-uuid` 같은 폴백은 거의 사용 안 되는 흐름, 복잡도만 ↑
+- `--tag` 에 자릿수 휴리스틱 — ID 형식 변경 시 깨짐. `--parent` 만 `code/number` ↔ raw postId 분기
 
-- `--tag`에 휴리스틱(짧은 숫자→postNumber) 도입: ID 형식 변경 시 깨짐, A안(`/` 분기)이 단순·명확
-- `--workflow` 실패시 exit non-zero: post는 이미 생성된 상태에서 전체 실패 처리는 사용자에게 "다시 만들까" 혼란 유발
-- ID 직접 입력 허용: 이름 lookup 실패 시 `--workflow xxx-uuid` 폴백은 거의 사용되지 않을 흐름 — 복잡도만 증가
-
-**후속 작업**: `post edit`에 `--tag`/`--milestone` 동일 옵션 추가 (별도 task `010-2`).
+세부 시그니처·동작은 `src/commands/post/create.ts` + `src/resolvers/{tag,milestone,postRef}.ts` 참조. 캐시 디렉터리는 `data-schema.md`.
 
 ---
 
 <a id="adr-020"></a>
 
-## ADR-020: post 명령 input 통합 (`--id`/URL/positional) + 첫 테스트 인프라(vitest)
+## ADR-020: post 명령 input 통합 (`--id`/URL/positional) + 첫 테스트 인프라 (vitest)
 
-**결정**:
+**결정**: post 하위 명령에 3 가지 입력 모드 (기존 `<project> <post-number>` + `--id <postId>` + `--url <url>` + 첫 positional 이 Dooray URL 이면 자동) 도입. sub-id (`<comment-id>`, `<file-id>`) 는 옵션화 (positional 호환). 분기는 `resolvePostInput` 단일 헬퍼. 동시 사용은 명시적 에러. 첫 테스트 인프라로 vitest 도입.
 
-- post 하위 12개 명령(get/edit/done/workflow + comment 4개 + file 5개)에 통합 입력 방식 도입
-  - 기존: `<project> <post-number>` (호환 유지)
-  - 신규: `--id <postId>` 옵션 / `--url <url>` 옵션 / 첫 positional이 Dooray URL이면 자동 분기
-- comment/file 명령의 sub-id(`<comment-id>`, `<file-id>`)는 **옵션화** (`--comment-id`, `--file-id`). 기존 positional도 호환 — agent 친화
-- 입력 검증은 `resolvePostInput` 단일 헬퍼에 집중. `--id`/`--url`/positional 동시 사용 시 명시적 에러
-- standalone API `GET /project/v1/posts/{postId}` 활용 — 응답에 `project.{id,code}`, `taskNumber`, `number` 포함되어 한 번의 lookup으로 기존 코드 경로 재사용
-- URL 매칭은 두 형태 모두 지원 (Issue #35 item 4):
-  - 공식 short form: `^https?://[\w.-]+\.dooray\.com/task/to/(\d+)(?:[/?#].*)?$` → 캡처 1 = postId
-  - 브라우저 주소창 복사본 alt form: `^https?://[\w.-]+\.dooray\.com/task/(\d+)/(\d+)(?:[/?#].*)?$` → 캡처 2 = postId. 캡처 1 은 projectId 이지만 `parseDoorayTaskUrl` 의 `string | null` 시그니처 유지를 위해 미반환 — `resolvePostInput` 이 postId 로 standalone API 재호출하면서 project 정보 획득
-- 매칭 실패 시 명확한 에러
-- **테스트 인프라로 vitest 도입** — dooray-cli 첫 테스트 환경. URL parser와 resolvePostInput 단위 테스트로 분기 안전성 확보
-
-**이유**:
-
-- Dooray URL은 post-id만 포함하므로(예: `https://x.dooray.com/task/to/{postId}`), 동료가 URL만 공유하면 project 코드를 모를 때 CLI 사용 불가 (Issue #16)
-- agent 친화: AI 에이전트가 사용자 메시지에서 추출한 URL을 그대로 CLI 첫 인자로 전달 가능 + `--id`로 구조화 호출도 가능 — 둘 다 지원하면 agent의 라우팅 부담 0
-- `<project> <post-number>` breaking 회피: 기존 사용자/스크립트는 그대로 동작
-- sub-id 옵션화: 기존 `comment edit <project> <post-number> <comment-id>`에서 URL 모드 시 positional 개수가 가변되어 모호. 옵션 제공으로 모호 제거
-- vitest 채택: Node 빌트인 `node:test`도 검토했으나, mock 지원·watch UX·향후 통합 테스트 확장성에서 vitest 우위. 이번 변경은 분기 규칙이 다수라 단위 테스트로 회귀 방지가 핵심
-
-**분기 규칙 (resolvePostInput 우선순위)**:
-
-1. `--id` + `--url` 동시 → 에러
-2. `--id` 또는 `--url` + positional 동시 → 에러
-3. `--url` 단독 → URL parse → standalone 호출
-4. `--id` 단독 → standalone 호출
-5. positional 1개이고 `http(s)://`로 시작 → URL parse → standalone
-6. positional 2개 → 기존 `resolveProject` + `resolvePost`
-7. 그 외 → 입력 형식 안내 에러 (3개 형식 모두 예시 노출)
+**맥락**: Dooray URL 은 postId 만 포함 (`/task/to/{postId}`) — 동료가 URL 만 공유하면 project 코드 모르는 사용자가 CLI 사용 불가 (Issue #16). AI 에이전트도 사용자 메시지에서 URL 을 그대로 첫 인자로 전달하면 라우팅 부담 0. standalone API `GET /project/v1/posts/{postId}` 응답에 `project.{id,code}` 포함 → 한 lookup 으로 기존 코드 경로 재사용. 분기 규칙이 7 가지라 단위 테스트로 회귀 방지 필수.
 
 **대안 기각**:
+- positional 단일 `<ref>` 통합 (`<project>/337` | postId | URL) — 기존 두 인자 breaking, 영향 범위 ↑
+- positional 1개 numeric → postId 자동 인식 — 19자리 임계는 임의값, ID 길이 변경 시 깨짐
+- sub-id 를 인자 개수로 분기 — `comment edit <project> cmt-abc` 같은 사용자 실수에 모호한 에러
+- `node:test` 빌트인 — mocking·watch·확장성에서 vitest 우위
 
-- positional 단일 `<ref>` 통합 (`<project>/337` | postId | URL): 기존 `<project> <post-number>` 두 인자 깨지는 breaking — 영향 범위 너무 큼
-- positional 1개 numeric을 postId로 자동 인식: postId 길이 변경 시 휴리스틱 깨짐. 19자리 임계는 임의값. → URL 또는 명시 옵션만 인정
-- sub-id를 인자 개수로 분기: `comment edit <project> cmt-abc`(post-number 누락) 같은 사용자 실수에 모호한 에러 발생. 옵션화가 안전
-- `node:test` 빌트인 사용: deps 0 장점은 있으나 mocking·watch·향후 코드 확장성에서 vitest 우위
-
-**테스트 인프라**:
-
-- vitest dev dependency, `test`/`test:watch` scripts. 코로케이션(`*.test.ts`) 패턴
-- `vitest.config.ts` 생략 — 디폴트로 자동 검색
-- tsup 번들 영향 없음 (entry import 안 하면 미포함)
-- coverage 도구·CI 통합은 후속 task
-
-**후속 작업**:
-
-- 다른 도메인(wiki 등)의 입력 방식도 동일 패턴으로 통합 — 별도 task
-- vitest 기반 추가 테스트 확대 (resolver, formatter 등)
-- GitHub Actions CI에 `pnpm test` 통합
+분기 규칙·URL 정규식·테스트 케이스는 `src/resolvers/post-input.ts` + `src/utils/dooray-url.ts` 참조. 후속 (wiki input 통합, CI 통합) 은 별도 task.
 
 ---
 
@@ -443,145 +379,73 @@
 
 ## ADR-021: `member` 명령 + comment list Creator 이름 자동 채우기
 
-**결정**:
+**결정**: `dooray member get/list` 서브커맨드 신설. `post comment list` 의 table 출력만 Creator 컬럼을 project 멤버 캐시로 enrich, `--json` 은 raw 유지. 기존 project 단위 캐시 (`members/{projectId}.json`) 만 사용 — organization-wide reverse lookup 미도입.
 
-- `dooray member` 서브커맨드 신설:
-  - `dooray member get <member-id>` — `GET /common/v1/members/{id}` 단건 조회 (이미 client 메서드 존재)
-  - `dooray member list <project>` — `GET /project/v1/projects/{id}/members` (project 필수 positional, 다른 list 명령과 일관)
-- `post comment list`의 table 출력 Creator 컬럼을 project 멤버 캐시(`CachedMember`)로 enrich. `--json`은 raw 응답 그대로 (호환성)
-- 캐시 전략: 기존 project 단위 캐시(`~/.dooray/cache/members/{projectId}.json`) 그대로 유지. organization 단위 reverse lookup은 도입하지 않음. `member get`은 cache miss하면 `getMemberDetail` 직접 호출, 결과 캐시는 안 함
-
-**이유**:
-
-- 응답 메타에 `organizationMemberId`만 있고 표시명 없음 — 댓글 작성자가 누구인지 즉시 알 수 없어 자동화 흐름이 끊김 (Issue #17)
-- table 출력만 enrich: `--json`은 외부 도구 파이프 입력으로 자주 쓰이므로 스키마 안정성 우선. 사용자가 enriched JSON 원하면 후속 옵션(`--enriched-json` 등) 도입 가능
-- project 단위 캐시 유지: 새 캐시 패턴(organization-wide) 도입 비용 대비, 표시명 채우기 사용 시점에 항상 projectId가 함께 있어 기존 캐시로 충분
-- `member get`은 캐시 우회: 기존 project 캐시들에서 reverse lookup하려면 모든 파일 스캔 — 일회성 단건 조회는 직접 API가 단순. 반복 조회 최적화는 사용 패턴 데이터 축적 후 결정
-
-**`member list` 시그니처가 positional인 이유**:
-
-- 다른 list 명령(`post list`, `wiki page list`)이 모두 `<project>` positional → 일관성. Issue 본문은 `--project` 옵션 형태였으나 본 레포 컨벤션 우선
+**맥락**: 댓글 응답에 `organizationMemberId` 만 있고 표시명 없어 자동화 흐름이 끊김 (Issue #17). table 만 enrich 한 이유는 `--json` 의 외부 도구 호환성 (스키마 변경 = breaking). project 단위 캐시 유지는 enrich 사용 시점에 항상 projectId 가 동반됨.
 
 **대안 기각**:
-
-- organization 단위 캐시(`~/.dooray/cache/org-members.json`): 본 task의 사용 패턴(comment list enrich + member get 단건)에서 이득 부족. 캐시 invalidation 로직 추가 부담
-- `--json`도 enrich: 응답 스키마 변경 = breaking. 외부 자동화 도구의 기대치 깨질 위험
-- `member search` 본 task 포함: `GET /common/v1/members`의 `name=keyword` 단독 호출 동작이 공식 doc 모순(externalEmailAddresses 필수 명시 + name 필터 동시 나열) — 실호출 검증 필요. 별도 task
-
-**후속 작업**:
-
-- `feat(post comment): --mention <name>` — 이름 → ID 자동 변환 + 멘션 마크업 생성
-- `feat(member): member search` — organization-wide 검색. API 동작 검증 후 설계
-- 다른 출력(`post get` 작성자/담당자 등)도 동일 enrich 패턴 확대 (응답에 name 비어있는 경우)
+- organization 단위 캐시 — 사용 패턴 (comment list enrich + member get 단건) 에서 이득 부족 + invalidation 부담
+- `--json` 도 enrich — 응답 스키마 변경 = breaking, 외부 자동화 깨짐
+- `member search` 같은 task 포함 — `GET /common/v1/members?name=` 동작이 공식 doc 모순, 실호출 검증 필요로 별도 task
 
 ---
 
 <a id="adr-022"></a>
 
-## ADR-022: `dooray feedback` 명령 + GitHub 호출은 `gh` CLI에 위임
+## ADR-022: `dooray feedback` 명령 — GitHub 호출은 `gh` CLI 에 위임
 
-**결정**:
+**결정**: GitHub issue 생성은 `gh` CLI 위임 (`execFile('gh', ['issue', 'create', ...])`). 본문 자동 메타는 환경 정보만 (`process.version` / `platform` / `arch` / `package.json` 버전) — config 객체에 접근 자체 안 함 (`apiKey` / IMAP 비밀번호 / `baseUrl` 모두 노출 0). 대상 repo 하드코딩 (`jon890/dooray-cli`).
 
-- `dooray feedback` 명령 신설. 인터랙티브(`@inquirer/prompts` editor) + non-interactive(`--title`/`--body`/`--body-file`/`--label` 반복) + `--dry-run` 미리보기 지원
-- GitHub issue 생성은 **`gh` CLI에 위임** (`execFile('gh', ['issue', 'create', '--repo', 'jon890/dooray-cli', '--title', ..., '--body-file', tmp])`)
-- 본문 자동 메타: dooray-cli 버전, Node 버전, OS/arch만 첨부. **baseUrl 미포함**, API key/IMAP 비밀번호 등 시크릿은 메타 수집 단계에서 접근 자체를 안 함
-- 라벨은 `--label` 자유 입력 (반복). repo의 라벨 동적 fetch는 후속
-- 대상 repo는 하드코딩(`jon890/dooray-cli`). 포크 사용자용 config 옵션은 후속
-- `--last` 모드(직전 명령 + 에러 자동 첨부)는 본 task 제외 — 별도 후속 이슈
-
-**이유**:
-
-- 피드백 루프 마찰 제거 (Issue #19): "에러 만남 → 한 줄로 issue 등록 → 작업 복귀" 흐름 완성
-- gh CLI 위임이 보안·구현 모두 우위: 토큰 관리·만료·refresh·OAuth 앱 등록 부담 0. dooray-cli의 보안 표면이 늘지 않음. 본 CLI 사용자(개발자) 환경에서 gh 설치율 높음
-- 본문은 임시 파일 + `--body-file`: 긴 markdown / 특수문자 / shell escaping 안전
-- baseUrl 미포함: 사내 endpoint 사용자가 OSS public repo로 보낼 때 회사/프로젝트 정보 누출 위험. issue 디버깅 가치 대비 비용 ↑
-- `--last` 분리: 모든 명령 종료 시점에 argv·에러를 디스크에 기록하는 hook은 전역 부수 효과(I/O + argv 시크릿 위험). 별도 의사결정 가치
+**맥락**: 피드백 루프 마찰 제거 (Issue #19) — "에러 만남 → 한 줄로 issue 등록 → 작업 복귀". gh CLI 위임은 토큰 관리·OAuth 앱 등록 부담을 0 으로. dooray-cli 의 보안 표면도 늘지 않음. baseUrl 노출 시 사내 endpoint 사용자가 OSS public repo 로 보낼 때 회사 정보 누출 위험.
 
 **대안 기각**:
+- PAT 를 config.json 에 저장 — 토큰 만료/회수/스코프 관리 부담, UX 약함
+- OAuth Device Flow + 직접 토큰 — 매끄러우나 앱 등록·보관 코드 ↑, 가치 대비 과함
+- octokit SDK — 외부 dep 추가, gh 위임이면 0
+- baseUrl host 마스킹 — suffix 로 회사 식별 가능, 누출 0 인 "제외" 가 단순·안전
 
-- PAT를 `~/.dooray/config.json`에 저장: 토큰 만료/회수/스코프 관리 부담. 사용자가 PAT 만들어 입력하는 UX 약함
-- OAuth Device Flow + 직접 토큰 저장: 가장 매끄러우나 OAuth 앱 등록·관리 + 토큰 보관 코드 추가. 본 기능 가치 대비 과함
-- octokit 등 SDK 도입: 외부 dep 추가. gh CLI 위임이면 0
-- 라벨 동적 fetch: 첫 실행 비용 + 캐시 관리 부담. 자유 입력으로 충분
-- baseUrl 마스킹(host만 가림): suffix는 노출되어 회사 식별 가능 — 누출 0인 "제외"가 단순·안전
-
-**Sanitization 범위**:
-
-- 자동 메타: 환경 정보만 (`process.version`, `process.platform`, `process.arch`, `package.json` 버전)
-- config 객체에 절대 접근 안 함 (apiKey/IMAP 비밀번호/baseUrl 모두)
-- 사용자 본문은 그대로 — 사용자 책임. `--dry-run`으로 사전 확인 가능
-
-**후속 작업**:
-
-- `feat(cli): dooray feedback --last` — 직전 명령 추적 + 자동 첨부 (별도 issue)
-- repo 라벨 동적 fetch + select prompt
-- `feedbackRepo` config 옵션 (포크 사용자)
+세부 옵션 (`--title` / `--body-file` / `--label` / `--dry-run`) 동작은 `src/commands/feedback.ts` 참조.
 
 ---
 
 <a id="adr-023"></a>
 
-## ADR-023: `dooray feedback --last` last-run 추적 — opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹
+## ADR-023: `feedback --last` last-run 추적 — opt-in + 에러시만 + 최소 세트 + argv 마스킹
 
-**결정**:
+**결정**: 4 가지 정책 동시 적용.
+1. **opt-in**: `config.json` 의 `trackLastRun: true` 일 때만 동작
+2. **에러시만**: `src/index.ts` 최상위 `catch` 에서만 `~/.dooray/last-run.json` 작성
+3. **최소 세트**: argv (sanitized) + exitCode + errorMessage + timestamp. `cwd`/`env` 제외
+4. **argv 패턴 마스킹**: `--api-key=*` / `--token=*` / `--password=*` / `Authorization: Bearer *`
 
-- last-run 추적은 **opt-in**: `~/.dooray/config.json`의 `trackLastRun: true` 플래그가 있을 때만 동작. 기본 off
-- **에러 발생 시만 기록**: `src/index.ts` 최상위 `catch` 블록에서만 `~/.dooray/last-run.json` 작성. 성공 종료는 기록 안 함
-- 저장 항목 **최소 세트**: argv (sanitized) + exitCode + errorMessage + timestamp. `cwd`/`env`/Node 버전 등 미포함 (PII 위험 회피)
-- argv **패턴 마스킹**: `--api-key=*`, `--token=*`, `--password=*`, `Authorization: Bearer *` 등 시크릿 패턴 자동 마스킹 (`***`)
-- 단일 파일 덮어쓰기 — 최근 N개 보관 X (use case는 "직전 1건 보고")
-- `dooray feedback` 자체는 기록 안 함 (재귀 방지)
-- `--last` 사용 시 last-run.json 없으면 친절한 안내: "기록된 직전 실행 없음. config.json에 trackLastRun: true 설정 후 재시도"
+`feedback` 자체는 기록 안 함 (재귀 방지). 단일 파일 덮어쓰기 (use case = 직전 1건).
 
-**이유**:
-
-- **opt-in 채택**: 모든 명령 종료 시점 디스크 I/O는 전역 부수 효과. 사용자가 명시적으로 켜야 의도 명확. dooray-cli는 자동화 스크립트에서 자주 호출 — 의도 없이 매번 파일 쓰기는 부담
-- **에러시만 기록**: feedback --last의 use case는 "에러 만남 → 그 자리에서 보고". 성공 명령 기록은 효용 ↓ 부수효과 ↑. preAction/postAction commander hook 같은 추가 코드 불필요(catch 블록 한 곳만)
-- **최소 세트 + cwd 제외**: cwd가 사내 경로(예: `/Users/.../my-project/...`)일 가능성 — CLAUDE.md "PII 노출 금지" 정책과 일관. 디버깅 가치 < privacy 위험
-- **패턴 마스킹**: dooray-cli는 config.json만 사용하므로 argv에 시크릿 들어갈 일 거의 없으나 **0은 아님** (사용자가 `--header "Authorization: ..."` 같은 옵션 추가 가능성). 안전망 차원
-- **재귀 방지**: feedback 명령 자체가 자기 argv를 last-run에 남기면 다음 feedback에서 fed back → 답답한 UX
+**맥락**: 모든 명령 종료 시점 디스크 I/O 는 전역 부수 효과 — dooray-cli 는 자동화 스크립트에서 자주 호출되어 의도 없는 매번 파일 쓰기는 부담. 성공 명령 기록은 효용 ↓ 부수효과 ↑. cwd 가 사내 경로일 가능성 (`/Users/.../<project>/...`) — CLAUDE.md PII gate 와 일관. 사용자가 `--header "Authorization: ..."` 추가 가능성으로 마스킹은 안전망.
 
 **대안 기각**:
+- 기본 on + opt-out — 부수 효과가 사용자 인지 없이 작동 (privacy 우려)
+- 모든 명령 hook (commander preAction/postAction) — src/index.ts 구조 변경 ↑, 성공 명령 가치 낮음
+- 풀세트 (cwd/env 포함) — PII gate 모순
+- argv 전체 제외 (명령 이름만) — 재현 명령을 손으로 적어야, `--last` 가치 ↓
 
-- 기본 on + opt-out: 부수 효과가 사용자 인지 없이 작동 — privacy/disk I/O 우려. opt-in이 안전 디폴트
-- 모든 명령 hook: commander `preAction`/`postAction` 추가는 src/index.ts 구조 변경 폭 ↑. 또한 성공 명령은 디버깅 가치 낮음
-- 풀세트(cwd/env 포함): cwd가 사내 경로 노출. PII gate(CLAUDE.md)와 모순
-- argv 전체 제외(명령 이름만): 재현 명령을 사용자가 손으로 다시 적어야 함 — feedback --last의 가치 ↓
-- 사용자 확인 (interactive sanitize): UX 좋으나 비-TTY/CI에서 동작 안 함, 구현 복잡
-
-**Sanitization 룰** (argv → 안전 argv):
-
-| 패턴 | 마스킹 |
-|---|---|
-| `--api-key=VALUE` 또는 `--api-key VALUE` | `--api-key=***` |
-| `--token=VALUE` / `--password=VALUE` | `***` |
-| `Authorization: Bearer X` 등 헤더 인자 | `Authorization: ***` |
-| (확장) 사용자 보고 기반 추가 패턴 | 추후 |
-
-**저장 위치**: `~/.dooray/last-run.json` (config 옆, cache 외부 — `cache clear`로 지워지지 않음). 단일 파일 덮어쓰기.
-
-**후속 작업**:
-
-- `feedback --last` 실행 시 sanitized argv 미리보기 + confirm (현재 `--dry-run`으로 사전 확인 가능, 강제 confirm은 후속)
-- Sanitization 패턴 확장 (사용자 보고 기반)
+저장 위치 / sanitization 룰 / 시작 패턴은 `src/cache/last-run.ts` 참조. cache 외부 (`cache clear` 영향 없음).
 
 <a id="adr-024"></a>
 
-## ADR-024: `dooray post comment file *` — post-level files API + 댓글 PUT 합성으로 구현
+## ADR-024: `dooray post comment file *` — post-level files API + 댓글 PUT 합성
 
-- **결정**: `comment file list/upload/download/delete` 4 명령을 신설하되, **댓글 전용 attachment REST endpoint 가 없으므로** 내부적으론 (a) post-level files API (`/posts/{postId}/files`) + (b) 댓글 본문 PUT (`/logs/{logId}`) 의 합성으로 구현. 인라인 이미지 자동화의 사용자 멘탈 모델은 "댓글 첨부" 이지만 실제 데이터 모델은 post-level files + 댓글 본문 markdown reference (`![filename](/files/<fileId>)`).
-- **맥락**: Issue #34 의 자동화 시나리오 (스킬이 댓글에 인라인 이미지 삽입) 가 빈번. Dooray 공식 API 문서 (helpdesk.dooray.com share page) 와 실 호출 검증 결과 댓글 attachment 별도 endpoint **부재** 확인 — 공식 문서 `Project > Posts > Logs` 섹션에 logs/{logId}/files 같은 경로 없음. 댓글 단건 GET 응답에 `files: PostFileDetail[]` embedded 만 존재. 기존 `post file *` 4 명령은 post 본문 attachment 만 다루므로 댓글 전용 UX 부재.
-- **합성 동작 (각 명령)**:
-  - `list <comment-id>` — `GET /logs/{logId}` 후 `.result.files` 반환 (별도 endpoint 호출 0)
-  - `upload <comment-id> <path>` — 2-step: (1) `POST /posts/{postId}/files` 로 업로드 + fileId 획득, (2) `PUT /logs/{logId}` 로 본문에 `![filename](/files/<fileId>)` append
-  - `download <comment-id> <file-id>` — `GET /posts/{postId}/files/{fileId}?media=raw` (기존 `downloadPostFile` 재사용 — 사실상 thin wrapper, UX 일관성 목적)
-  - `delete <comment-id> <file-id>` — 2-step: (1) `PUT /logs/{logId}` 로 본문에서 `![*](/files/<fileId>)` 라인 제거, (2) `DELETE /posts/{postId}/files/{fileId}`
-- **트레이드오프**:
-  - **Atomic 보장 부재**: 2-step 동작 (`upload`, `delete`) 중 1 step 만 성공해도 사용자 명령은 부분 성공. 첫 step 실패 시 두 번째 안 함, 두 번째 실패 시 첫 번째 결과 stderr 안내 + non-zero exit. 동시성 충돌 (다른 사용자가 댓글 동시 수정) 은 PUT 의 last-write-wins 로 노출.
-  - **fileId namespace 가 post-level**: 같은 fileId 가 여러 댓글/post 본문에서 동시 참조 가능. `delete` 가 항상 실제 파일 삭제 → 다른 참조가 broken link 됨. 사용자 의도 명확화 위해 delete 는 항상 markdown 제거 + 파일 삭제 (옵션 분기 없이 단일 동작).
-  - **list 의 source 선택**: `.files` 배열 그대로 반환 (단일 소스 원칙). 댓글 본문에 markdown 으로 미참조된 orphan file 도 노출 — 내부 투명성 우선.
-- **대안 기각**:
-  - 댓글 전용 endpoint 사용: 부재. 비공개 endpoint 역공학은 리스크 + 유지보수 부담
-  - markdown reference 제거 없이 파일만 삭제: 댓글 본문에 broken link 잔존 → UX 회귀
-  - 기존 `post file *` 만 사용하도록 안내: 사용자가 댓글 ↔ post 본문 first attachment 구분 못함. 자동화 스킬도 4-명령 일관 패턴이 더 단순
-- **적용 범위**: dooray-cli 의 `comment file *` 4 명령 한정. 다른 commands 는 영향 없음. 추후 Dooray 가 댓글 전용 endpoint 도입하면 client API 만 교체 (CLI 시그니처 그대로).
+**결정**: `comment file {list,upload,download,delete}` 4 명령을 post-level files API (`/posts/{postId}/files`) + 댓글 본문 PUT (`/logs/{logId}`) 합성으로 구현. 사용자 멘탈 모델 = "댓글 첨부", 실제 데이터 모델 = post-level files + 댓글 본문 markdown reference (`![filename](/files/<fileId>)`). `delete` 는 항상 markdown 제거 + 파일 삭제 단일 동작 (옵션 분기 없음).
+
+**맥락**: Dooray 공식 API + 실 호출 검증 결과 댓글 전용 attachment endpoint **부재** (Issue #34) — 댓글 단건 GET 응답에 `files: PostFileDetail[]` embedded 만 존재. 인라인 이미지 자동화 (스킬이 댓글에 이미지 삽입) 가 빈번해 댓글 전용 UX 가 필요.
+
+**트레이드오프 (수용)**:
+- **Atomic 부재**: 2-step (`upload`, `delete`) 중 1 step 만 성공 가능 — 부분 성공 시 stderr 안내 + non-zero exit
+- **fileId namespace 가 post-level**: 같은 fileId 가 여러 댓글에서 참조 가능 → `delete` 가 다른 참조를 broken link 화 가능. 의도 명확화 위해 단일 동작
+- **orphan file 노출**: `list` 가 `.files` 그대로 반환 (단일 소스 원칙), 본문 markdown 미참조 파일도 노출
+
+**대안 기각**:
+- 댓글 전용 endpoint — 부재. 비공개 endpoint 역공학 리스크 + 유지보수 부담
+- markdown reference 제거 없이 파일만 삭제 — 본문 broken link 잔존 → UX 회귀
+- 기존 `post file *` 안내 — 사용자가 댓글 ↔ post 본문 first attachment 구분 못함
+
+각 명령 합성 동작은 `src/commands/post/comment/file/*.ts` 참조. 향후 Dooray 가 댓글 endpoint 도입하면 client API 만 교체 (CLI 시그니처 보존).
