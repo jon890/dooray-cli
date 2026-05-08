@@ -84,6 +84,84 @@ CI 실패 픽스는 리뷰 댓글 처리와 **동일한 단계** 를 따른다:
 
 리뷰 댓글이 같이 있으면, **CI 픽스 먼저 완료 → 같은 PR 에 리뷰 픽스 추가 commit** 순서. 둘을 한 commit 에 섞지 않는다 (회귀 시 분리 revert).
 
+### Merge conflict 점검 (필수)
+
+CI 와 함께 머지 차단 사유. CI 가 PASS 여도 base 와 conflict 가 있으면 PR 머지 불가 — 리뷰 픽스 push 후에야 발견하면 PR 한 번 더 왕복해야 한다. 댓글 분석 전에 점검.
+
+```bash
+# mergeable 상태 확인
+gh pr view <N> --json mergeable,mergeStateStatus
+
+# UNKNOWN 이면 GitHub 가 계산 중 — 잠시 후 재조회
+# CONFLICTING 이면 conflict 있음 → 아래 절차
+# MERGEABLE 이면 통과 → 댓글 수집 단계로
+```
+
+### Conflict 해결 절차 (`mergeable=CONFLICTING` 일 때)
+
+이 repo 의 머지 정책은 **Merge commit** (PR commit history 보존). 따라서 base 동기화는 `git merge origin/<base>` 사용 (force-push 불필요).
+
+```bash
+# 1) PR 브랜치 체크아웃
+gh pr checkout <N>
+
+# 2) base 최신화
+BASE=$(gh pr view <N> --json baseRefName --jq '.baseRefName')
+git fetch origin "$BASE"
+
+# 3) merge 시도 (--no-commit --no-ff 으로 충돌 시 로컬에서 멈춤)
+git merge "origin/$BASE" --no-commit --no-ff
+
+# 4) 충돌 파일 + 마커 위치 확인
+git status --short | grep "^UU"
+grep -nE "^(<<<<<<<|=======|>>>>>>>)" $(git diff --name-only --diff-filter=U)
+```
+
+### Conflict resolution 분류 + 처리
+
+각 충돌 hunk 를 다음 4 카테고리 중 하나로 분류:
+
+| 카테고리 | 예시 | 자동 처리 |
+|---|---|---|
+| **양쪽 추가** (서로 다른 항목 추가) | `code-architecture.md` 에 양쪽이 다른 resolver 항목 추가 | ✅ 둘 다 보존 |
+| **수치/카운트 갱신** | `CLAUDE.md` "16개 → 17개" (다른 PR 머지로 수 증가) | ✅ 더 큰 수치 + 본 PR 변경 의미 합성 |
+| **same-line different-content** | 같은 함수 시그니처 양쪽 수정 | ⚠️ claude 가 의도 추론 → **사용자 confirm 필수** |
+| **delete vs modify** | 한쪽이 파일/함수 제거, 한쪽은 수정 | 🛑 사용자 confirm 필수 (제거가 의도된 변경인지 확인) |
+
+처리 후 검증:
+```bash
+# 마커 0건 + build/test PASS
+grep -rE "^(<<<<<<<|=======|>>>>>>>)" $(git diff --name-only --diff-filter=U) ; echo "exit=$?"
+# 위 출력이 0건이고 grep exit 1 (no match) 이면 OK
+pnpm build && pnpm test
+```
+
+### Conflict resolution 결과 사용자 confirm (필수)
+
+자동 처리 가능한 카테고리(양쪽 추가 / 수치 갱신)만 적용한 결과라도 commit 전에 `AskUserQuestion` 으로 한 번 더 확인:
+- 옵션: "Push (권장)" / "Diff 다시 확인"
+- 변경 요약 (충돌 파일별 1줄 요약) 을 질문 본문에 함께 노출
+
+### Conflict resolution commit
+
+```bash
+# merge commit 메시지 (HEREDOC, conflict 파일별 한 줄 + 검증 결과)
+git add <충돌 파일들>
+git commit -m "$(cat <<'EOF'
+Merge origin/<base> into <head>
+
+Conflicts:
+- <file1>: <한 줄 결정 요약>
+- <file2>: <한 줄 결정 요약>
+
+Build/test PASS (<test counts>).
+EOF
+)"
+git push origin HEAD
+```
+
+머지 commit 은 review fix commit 과 **별도** 로 둔다 — 회귀 시 분리 revert 가능. 머지 commit 먼저 push 한 후 review 픽스 진행.
+
 ### PR 번호 결정
 
 인수가 있으면 그 번호를, 없으면 현재 브랜치의 PR을 찾는다:
@@ -252,6 +330,17 @@ git push origin HEAD
 COMMIT_HASH=$(git rev-parse --short HEAD)
 ```
 
+### Push 후 mergeable 재확인
+
+리뷰 픽스 push 가 base 갱신과 시간차로 새 conflict 를 만들 수 있다 (다른 PR 머지로 base 가 움직였을 때). push 직후 한 번 더:
+
+```bash
+sleep 3   # GitHub 가 mergeable 재계산할 시간
+gh pr view <N> --json mergeable,mergeStateStatus
+```
+
+`CONFLICTING` 이면 1단계 "Conflict 해결 절차" 로 돌아가 다시 처리. `MERGEABLE` / `UNKNOWN` 이면 6단계 (인라인 reply) 로 진행.
+
 ---
 
 ## 6단계: 인라인 코멘트에 해결 내용 reply
@@ -370,6 +459,9 @@ git push origin main
 
 🛠️ CI 픽스 (<count>건)
   - <체크 이름>: <원인 요약> → <적용 픽스>
+
+🔀 Conflict 해결 (<count>건)
+  - <파일>: <한 줄 결정 요약>
 
 ✅ 적용된 수정 (<count>건)
   - <파일>: <무엇을 수정했는지>
