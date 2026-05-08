@@ -149,7 +149,7 @@ export class DoorayApiClient {
         .get("common/v1/members/me")
         .json<MeResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -170,7 +170,7 @@ export class DoorayApiClient {
         })
         .json<ProjectListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -201,7 +201,7 @@ export class DoorayApiClient {
         })
         .json<PostListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -211,7 +211,7 @@ export class DoorayApiClient {
         .get(`project/v1/projects/${projectId}/posts/${postId}`)
         .json<PostDetailResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -221,7 +221,7 @@ export class DoorayApiClient {
         .get(`project/v1/posts/${postId}`)
         .json<PostDetailResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -231,7 +231,7 @@ export class DoorayApiClient {
         .post(`project/v1/projects/${projectId}/posts`, { json: body })
         .json<CreatePostApiResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -241,7 +241,7 @@ export class DoorayApiClient {
         .put(`project/v1/projects/${projectId}/posts/${postId}`, { json: body })
         .json<UpdatePostResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -251,7 +251,7 @@ export class DoorayApiClient {
         .post(`project/v1/projects/${projectId}/posts/${postId}/set-done`)
         .json<DoorayApiUnitResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -263,7 +263,7 @@ export class DoorayApiClient {
         })
         .json<DoorayApiUnitResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -275,7 +275,7 @@ export class DoorayApiClient {
         })
         .json<DoorayApiUnitResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -293,7 +293,7 @@ export class DoorayApiClient {
         })
         .json<PostCommentListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -307,7 +307,7 @@ export class DoorayApiClient {
         .get(`project/v1/projects/${projectId}/posts/${postId}/logs/${logId}`)
         .json<PostCommentDetailResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -317,7 +317,7 @@ export class DoorayApiClient {
         .post(`project/v1/projects/${projectId}/posts/${postId}/logs`, { json: body })
         .json<CreateCommentApiResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -327,7 +327,7 @@ export class DoorayApiClient {
         .put(`project/v1/projects/${projectId}/posts/${postId}/logs/${logId}`, { json: body })
         .json<UpdateCommentResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -337,7 +337,7 @@ export class DoorayApiClient {
         .delete(`project/v1/projects/${projectId}/posts/${postId}/logs/${logId}`)
         .json<DeleteCommentResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -355,7 +355,7 @@ export class DoorayApiClient {
         })
         .json<ProjectMemberListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -365,7 +365,7 @@ export class DoorayApiClient {
         .get(`common/v1/members/${memberId}`)
         .json<MemberDetailResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -385,7 +385,7 @@ export class DoorayApiClient {
         })
         .json<MemberSearchResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -397,7 +397,7 @@ export class DoorayApiClient {
         .get(`project/v1/projects/${projectId}/workflows`)
         .json<ProjectWorkflowListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -417,7 +417,7 @@ export class DoorayApiClient {
         })
         .json<TagListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -437,7 +437,7 @@ export class DoorayApiClient {
         })
         .json<MemberGroupListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -457,7 +457,7 @@ export class DoorayApiClient {
         })
         .json<MilestoneListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -474,7 +474,7 @@ export class DoorayApiClient {
         })
         .json<WikiListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -488,7 +488,7 @@ export class DoorayApiClient {
         })
         .json<WikiPagesResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -498,7 +498,7 @@ export class DoorayApiClient {
         .get(`wiki/v1/wikis/${wikiId}/pages/${pageId}`)
         .json<WikiPageResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -508,7 +508,7 @@ export class DoorayApiClient {
         .post(`wiki/v1/wikis/${wikiId}/pages`, { json: body })
         .json<CreateWikiPageResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -518,7 +518,7 @@ export class DoorayApiClient {
         .put(`wiki/v1/wikis/${wikiId}/pages/${pageId}`, { json: body })
         .json<DoorayApiUnitResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -532,7 +532,7 @@ export class DoorayApiClient {
         .put(`wiki/v1/wikis/${wikiId}/pages/${pageId}/title`, { json: body })
         .json<DoorayApiUnitResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -546,7 +546,7 @@ export class DoorayApiClient {
         .put(`wiki/v1/wikis/${wikiId}/pages/${pageId}/content`, { json: body })
         .json<DoorayApiUnitResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -558,7 +558,7 @@ export class DoorayApiClient {
         .get(`project/v1/projects/${projectId}/posts/${postId}/files`)
         .json<PostFileListResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -570,7 +570,7 @@ export class DoorayApiClient {
         })
         .json<PostFileMetaResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -607,7 +607,7 @@ export class DoorayApiClient {
       return { buffer, fileName };
     } catch (e) {
       if (e instanceof DoorayCliError) throw e;
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -653,7 +653,7 @@ export class DoorayApiClient {
       return await res.json() as UploadFileResponse;
     } catch (e) {
       if (e instanceof DoorayCliError) throw e;
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 
@@ -663,7 +663,7 @@ export class DoorayApiClient {
         .delete(`project/v1/projects/${projectId}/posts/${postId}/files/${fileId}`)
         .json<DoorayApiUnitResponse>();
     } catch (e) {
-      return toDoorayCliError(e);
+      await toDoorayCliError(e);
     }
   }
 }
