@@ -243,6 +243,8 @@ executor 완료 후 team-lead가 **code-reviewer 팀원에게 SendMessage로 검
 
 **code-reviewer 스폰 시점**: executor와 동시에 `run_in_background: true`로 스폰하되, executor 완료 후 SendMessage로 검사 시작 지시.
 
+**사전 소진 게이트 (필수)**: code-reviewer 검사 시작 전에 `.claude/skills/_shared/code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인. 적용 안 됐으면 그 자리에서 FIX_NEEDED 회신 (executor 재투입). 본 docs 가 회피 패턴의 단일 소스 — 13 항목과 별도로 grep 게이트.
+
 **code-reviewer에게 전달할 검사 항목:**
 
 1. **금지사항**: `console.log`, `as any`, native UI dialogs (alert/confirm/prompt) — grep 검증
@@ -339,7 +341,16 @@ code-reviewer 와 동일 원칙 (위 7단계 "자기-면제 금지" 박스 참�
      - main에 진행 중인 다른 작업(다른 plan의 미푸시 커밋, unstaged 변경)과 의도치 않게 섞여 push될 위험
      - PR 머지로 자동 반영되므로 중복 커밋
    - "재실행 사고 방지"는 main 커밋이 아니라 **실행 전 3중 사전 검증**(status + 원격 feat 브랜치 + 오픈 PR)으로 막는다
-7. 팀 shutdown (SendMessage `shutdown_request`)
+7. **review 회고 (조건부 필수 — 학습 루프)** — PR 생성 직후, 팀 shutdown 직전. **트리거 조건**: 이번 plan 에서 critic 의 **REVISE** 또는 code-reviewer 의 **FIX_NEEDED** 또는 docs-verifier 의 **UPDATE_NEEDED / VIOLATION** 이 1회 이상 발생한 경우. 1-shot APPROVE + PASS + PASS 로 진행된 plan 은 회고 단계 skip.
+
+   회고가 트리거된 경우 team-lead 가 자문 후 필요 시 회고 commit (main 디렉터리에서):
+   - **critic** REVISE 지적 중 *반복 가능성* 있는 패턴 → `.claude/skills/_shared/common-pitfalls.md` 해당 섹션에 항목 추가
+   - **code-reviewer** FIX_NEEDED 지적 중 *반복 가능성* 있는 패턴 → `.claude/skills/_shared/code-review-pitfalls.md` 해당 카테고리에 항목 추가 (또는 새 카테고리 신설)
+   - **docs-verifier** UPDATE_NEEDED / VIOLATION 지적 중 *반복 가능성* 있는 항목 → `.claude/skills/planning/SKILL.md` 8단계 A항 docs 영향 표에 행 추가 또는 기존 행 보강 (별도 회고 docs 신설 금지 — 거울 구조 유지)
+   - **반복 가능성 판정 기준**: 다른 plan 에서 같은 카테고리 (예: 헬퍼 추출 / 새 resolver / spinner UX) 작업 시 또 발생할 수 있는가? 1회성 typo / 명령 이름 오타 등은 제외
+   - 회고 commit 메시지 규약: `docs(skill): accumulate review learnings from PR #<N>`. PR 번호와 사고 plan 번호를 본문에 명시
+   - 트리거됐지만 추가할 패턴이 0개여도 **자문 자체는 수행**. "이번엔 신규 항목 없음" 결정 보고 후 다음 단계로
+8. 팀 shutdown (SendMessage `shutdown_request`)
 
 ## worktree 기반 격리 실행 (필수)
 
@@ -404,6 +415,7 @@ executor가 phase 실패 보고 시:
     → [docs-verifier 검증 (문서 부패 포함)] ←─ VIOLATION/UPDATE_NEEDED면 재투입 (한도 2회) → 추가 fix commit
     → [team-lead 일괄 push]  ← PR 브랜치에 phase 별 atomic commit + 필요 시 fix commit 누적
     → [PR 생성]  ← main에 별도 커밋 금지
+    → [review 회고]  ← critic/code-reviewer/docs-verifier 반복 패턴 → common-pitfalls / code-review-pitfalls / planning docs 영향 표 갱신
     → [worktree 정리 + 팀 shutdown]
 ```
 

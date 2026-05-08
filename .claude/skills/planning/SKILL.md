@@ -13,14 +13,41 @@ description: 새 기능/변경사항 구현 전 8단계 설계 워크플로우. 
 - **모호함 제로**: 각 단계에서 조금이라도 모호하면 반드시 사용자와 논의. 넘어가지 않는다
 - **AI 에이전트 관점**: 최종 문서는 AI 에이전트가 읽고 구현할 수 있을 정도로 명확해야 한다
 - **간결한 문서**: 컨텍스트 낭비 금지. 의사결정 의도는 보존하되 구현 상세는 코드에
-- **Critic 반복 지적 사전 소진**: task 파일 작성 시 `common-pitfalls.md`의 패턴을 모두 self-check. critic이 매번 똑같은 지적을 반복하지 않도록 plan 단계에서 미리 해결
+- **review 반복 지적 사전 소진**: task 파일 작성 시 `common-pitfalls.md` (critic 회피) + `code-review-pitfalls.md` (코드 작성 회피) 두 docs 의 패턴을 모두 self-check. critic / code-reviewer 가 매번 같은 지적을 반복하지 않도록 plan 단계에서 미리 해결
 - **선택지 제시는 AskUserQuestion 으로**: 옵션 중 하나를 고르게 할 때는 `AskUserQuestion`. 1~4개 질문, 옵션 2~4개, 추천안은 첫 번째 + label 끝 `(추천)`. 글로 늘어놓는 long-form 옵션 비교는 사용자가 답변 작성에 시간 들이게 됨 — 클릭 한 번으로 끝나도록 인터랙티브화. 단, 결정이 이미 명확하거나 자유 답변이 필요한 경우(예: 카피 문구)는 일반 질문 사용
 
-## Critic 패턴 사전 소진 (필수)
+## Review 패턴 사전 소진 (필수)
 
-task 파일을 **사용자에게 제출하기 전**에 반드시 [`common-pitfalls.md`](../_shared/common-pitfalls.md)의 섹션 1 시드 9 패턴 + 섹션 4 레포별 +α를 모두 self-check한다. 이 체크리스트를 거치지 않으면 `/build-with-teams` 실행 시 critic이 REVISE를 내놓고 재평가 사이클이 돈다.
+task 파일을 **사용자에게 제출하기 전**에 두 docs 를 모두 self-check 한다. 이 체크리스트를 거치지 않으면 `/build-with-teams` 실행 시 critic 이 REVISE / code-reviewer 가 FIX_NEEDED 를 내놓고 재평가 / 재검사 사이클이 돈다.
 
-**축적 규칙**: critic이 **새로운 타입**의 지적을 하면 세션 종료 후 `common-pitfalls.md`에 패턴을 추가한다. 이 파일은 시간이 지날수록 두꺼워지고, critic이 할 말은 줄어든다.
+| docs | 회피 대상 | 호출 시점 |
+|---|---|---|
+| [`common-pitfalls.md`](../_shared/common-pitfalls.md) 섹션 1 + 4 | critic 의 plan 평가 지적 | task 파일 작성 직후 self-check |
+| [`code-review-pitfalls.md`](../_shared/code-review-pitfalls.md) 전체 | code-reviewer 의 코드 검사 지적 | phase 본문에 회피 항목 1줄 인용 + executor 코드 작성 시작 직전 self-check |
+
+**축적 규칙**: critic / code-reviewer 가 **새로운 타입** 의 지적을 하면 build-with-teams 9단계 회고에서 해당 docs 에 패턴을 추가한다 (build-with-teams SKILL 9-7항 참조). 두 파일은 시간이 지날수록 두꺼워지고, review 사이클에서 할 말은 줄어든다.
+
+**docs-verifier 사전 소진은 별도 회고 docs 를 두지 않는다** — 아래 "거울 구조 원칙" 섹션 참조. docs-verifier 의 반복 지적은 본 SKILL 8단계 A항 docs 영향 표에 행 추가 / 보강 형태로 흡수된다.
+
+## 거울 구조 원칙 (단일 소스 + docs-verifier 흡수)
+
+build-with-teams 의 docs-verifier 검증 항목과 본 SKILL 의 docs 영향 표가 **같은 정의 두 곳에 두지 않는다** 는 원칙. 같은 체크리스트를 두 곳에 유지하면 시간이 지나며 한쪽만 갱신되는 사고가 반드시 발생한다.
+
+**규칙**:
+
+1. **단일 소스**: 본 SKILL 8단계 A항 "변경 유형별 docs 영향 표" 가 docs 갱신의 **유일한 정의**. 모든 변경 유형 (새 resolver, 새 명령, ADR 추가 등) 은 이 표에 행으로 등록되어 있어야 한다.
+
+2. **거울**: `build-with-teams/SKILL.md` 의 docs-verifier 검증 항목 7~10 (planning docs 영향 표 100% 적용 / 역참조 / 갱신 시점 분리 / 공개 스킬 dogfooding) 은 위 표를 거울처럼 참조한다 — 별도 체크리스트 보유 금지. docs-verifier 가 *"별도 체크 항목 X 도 보겠다"* 며 자체 항목을 늘리면 거울이 깨진다.
+
+3. **별도 회고 docs 신설 금지**: docs-verifier 의 UPDATE_NEEDED / VIOLATION 회고는 `_shared/docs-verifier-pitfalls.md` 같은 새 파일을 만드는 게 아니라 **본 SKILL 8단계 A항 표에 행 추가 또는 기존 행 보강** 으로 흡수한다 (build-with-teams 9-7 회고 단계 참조). critic/code-reviewer 와 처리 방식이 비대칭인 이유: 두 검증자는 *코드/계획 패턴* 회피라 별도 docs 가 자연스럽지만, docs-verifier 는 *docs 갱신 누락* 만 잡으므로 표 자체가 곧 회피 docs.
+
+4. **표 수정 시 두 곳 동기 검토**: 본 표를 수정하면 즉시 `build-with-teams/SKILL.md` 의 docs-verifier 검증 항목 (7~10) 이 새 행을 자연스럽게 커버하는지 확인. 새 검증 카테고리가 필요하면 거기 추가 — 표에는 추가 안 함.
+
+5. **새 변경 유형 추가**: 새 외부 통합 모듈 / 새 CLI 도메인 영역 등이 등장하면 본 표에 행 1줄 추가하면 docs-verifier 가 자동으로 그 변경 유형을 검증하기 시작한다 (별도 코드 변경 불요).
+
+**Why**: 이전엔 docs-verifier 가 매번 같은 항목 (`code-architecture.md` 디렉터리 트리, README 사용법, "N개 명령" 카운트) 을 반복 지적했고, 그때마다 별도 docs-sync-checklist 를 만드는 유혹이 있었다. 한 번 두 곳에 둔 정의는 항상 한쪽만 갱신되어 다른 쪽이 낡는다 (실제 사고 사례). 거울 구조로 단일 소스를 강제하면 갱신 누락 자체가 불가능해진다.
+
+도입 출처: 2026-05-07 ~ 05-08 plan024/025 회고 (사용자 제안). 자세한 도입 맥락은 사용자 로컬 project memory `feedback_planning_docs_impact_table.md` 에 동일 내용 기록 (skill 본문이 단일 진실원, memory 는 출처 기록용).
 
 ## 실행 절차
 
