@@ -2,7 +2,7 @@
   "name": "025-refactor-comment-file-input-helper",
   "description": "GitHub Issue #41 — `post comment file` 4 명령 (list/upload/download/delete) 의 positional 분기 로직을 `resolveCommentFileInput` 헬퍼로 통합 (ADR-020 정신 답습). 4 파일 중복 제거 + 옵션 폴백 일관성. 기존 사용자 호환성 유지 (positional 모드 그대로 동작).",
   "created_at": "2026-05-08T00:00:00Z",
-  "status": "pending",
+  "status": "completed",
   "current_phase": 1,
   "total_phases": 2,
   "error_message": null,
@@ -12,14 +12,14 @@
       "number": 1,
       "title": "resolveCommentFileInput 헬퍼 신설 + tests",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "4 명령에 헬퍼 적용 + 빌드 검증 + 완료 마킹",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
