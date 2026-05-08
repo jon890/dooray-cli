@@ -7,10 +7,13 @@ import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { readBodyInputOrNull } from "../../../utils/body-input.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import type { OutputOptions } from "../../../formatters/table.js";
 import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js";
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";
 import { ensureMe } from "../../../resolvers/me.js";
 import { prependMentions } from "../../../utils/mention.js";
+import { appendTaskLinks } from "../../../utils/task-link.js";
+import { resolveTaskLinks } from "../../../resolvers/task-link.js";
 import { checkAndGuardDropped } from "../../../utils/attachment-check.js";
 
 export const commentEditCommand = new Command("edit")
@@ -36,6 +39,8 @@ export const commentEditCommand = new Command("edit")
     (value: string, prev: string[]) => [...prev, value],
     [] as string[],
   )
+  .option("--link-task <ref>", "다른 업무 링크 추가 (<project>/<number> 또는 postId, 반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
   .action(async (arg1, arg2, arg3, opts) => {
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
@@ -105,6 +110,7 @@ export const commentEditCommand = new Command("edit")
     // 멘션 옵션 처리
     const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
     const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);
+    const linkInputs: string[] = (opts.linkTask ?? []).filter((s: string) => s.length > 0);
 
     let mentionPrefix = "";
     if (mentionInputs.length > 0 || groupInputs.length > 0) {
@@ -141,6 +147,23 @@ export const commentEditCommand = new Command("edit")
       }
     } else if (mentionPrefix) {
       edited = mentionPrefix + " " + edited;
+    }
+
+    if (linkInputs.length > 0) {
+      const me = await ensureMe(client);
+      const links = await resolveTaskLinks(client, linkInputs);
+      edited = appendTaskLinks(edited, links, me);
+    }
+
+    if (opts.dryRun) {
+      stopSpinner(false);
+      const globalOpts = commentEditCommand.optsWithGlobals() as OutputOptions;
+      if (globalOpts.json) {
+        process.stdout.write(JSON.stringify({ body: edited }) + "\n");
+      } else {
+        process.stdout.write(edited + "\n");
+      }
+      return;
     }
 
     const attachments = (comment.files ?? []).map((f) => ({ id: f.id, name: f.name }));

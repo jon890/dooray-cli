@@ -289,9 +289,14 @@ dooray post comment latest <project> <number>
 
 ---
 
-## 멘션 자동 작성 (post comment add/edit)
+## 멘션·링크 자동 삽입 (first-class)
 
-`--mention <name>` (반복) 또는 `--mention-group <code>` (반복)으로 본문 앞에 멘션 마크업을 자동 prepend한다. 아래 "Dooray 마크다운 링크 형식" 섹션의 URL 형식을 자동 출력한다.
+`post create`, `post edit`, `post comment add`, `post comment edit` 모두 지원:
+
+- `--mention <name>` (반복) — 이름으로 멤버 resolve 후 dooray:// markdown prepend
+- `--mention-group <code>` (반복) — 그룹 코드로 resolve
+- `--link-task <project>/<number>` (반복) — 다른 업무 link 를 본문 끝에 append. 19자리 postId 도 가능
+- `--dry-run` — API 호출 없이 합성 결과만 stdout. CI / 자동화 검증용
 
 ```bash
 dooray post comment add P 1 --mention 홍길동 --mention-group 개발 --body "..."
@@ -300,7 +305,7 @@ dooray post comment add P 1 --mention 홍길동 --mention-group 개발 --body ".
 
 - 이름 부분일치 지원 (모호하면 에러 + 후보 목록 출력)
 - 멤버 먼저, 그룹 다음 순서 고정
-- comment edit에도 동일 옵션 사용 (`$EDITOR` 모드에서는 EDITOR 진입 전에 prepend)
+- interactive (`$EDITOR`) 모드의 `post edit` 는 mention/link-task 무시 + stderr 경고
 
 ## Dooray 마크다운 링크 형식 (멤버·그룹·업무 멘션)
 
