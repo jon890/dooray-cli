@@ -16,6 +16,7 @@ import type {
   SetWorkflowRequest,
   SetParentPostRequest,
   PostCommentListResponse,
+  PostCommentDetailResponse,
   CreateCommentApiResponse,
   CreateCommentRequest,
   UpdateCommentRequest,
