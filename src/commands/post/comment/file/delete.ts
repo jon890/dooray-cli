@@ -1,10 +1,13 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../../config/store.js";
 import { DoorayApiClient } from "../../../../api/client.js";
-import { resolvePostInput } from "../../../../resolvers/post-input.js";
+import {
+  resolveCommentFileInput,
+  FILE_ID_SECONDARY_LABEL,
+} from "../../../../resolvers/comment-file-input.js";
 import { startSpinner, stopSpinner } from "../../../../utils/spinner.js";
 import { DoorayCliError } from "../../../../utils/errors.js";
-import { EXIT_PARAM_ERROR, EXIT_API_ERROR } from "../../../../utils/exit-codes.js";
+import { EXIT_API_ERROR } from "../../../../utils/exit-codes.js";
 import { removeFileReference } from "../../../../utils/comment-files.js";
 
 export const deleteCommentFileCommand = new Command("delete")
@@ -22,48 +25,15 @@ export const deleteCommentFileCommand = new Command("delete")
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
-    let projectArg: string | undefined;
-    let postNumberArg: string | undefined;
-    let logId: string | undefined = opts.commentId;
-    let fileId: string | undefined = opts.fileId;
-
-    if (opts.id || opts.url) {
-      if (arg3 || arg4) {
-        throw new DoorayCliError(
-          "--id/--url 모드에서는 댓글 ID 와 파일 ID 외 추가 positional 인자를 받지 않습니다.",
-          EXIT_PARAM_ERROR,
-        );
-      }
-      logId = logId ?? arg1;
-      fileId = fileId ?? arg2;
-    } else if (arg4) {
-      projectArg = arg1;
-      postNumberArg = arg2;
-      logId = logId ?? arg3;
-      fileId = fileId ?? arg4;
-    } else if (arg3) {
-      projectArg = arg1;
-      postNumberArg = arg2;
-      logId = logId ?? arg3;
-    } else if (arg1 && !arg2) {
-      projectArg = arg1;
-    } else {
-      projectArg = arg1;
-      postNumberArg = arg2;
-    }
-
-    if (!logId) {
-      throw new DoorayCliError(
-        "<comment-id>가 필요합니다. positional 3번째 또는 --comment-id 옵션을 사용하세요.",
-        EXIT_PARAM_ERROR,
-      );
-    }
-    if (!fileId) {
-      throw new DoorayCliError(
-        "<file-id>가 필요합니다. positional 4번째 또는 --file-id 옵션을 사용하세요.",
-        EXIT_PARAM_ERROR,
-      );
-    }
+    const { projectId, postId, commentId, secondary: fileId } = await resolveCommentFileInput(client, {
+      arg1, arg2, arg3, arg4,
+      idOpt: opts.id,
+      urlOpt: opts.url,
+      commentIdOpt: opts.commentId,
+      secondaryOpt: opts.fileId,
+      requireSecondary: true,
+      secondaryLabel: FILE_ID_SECONDARY_LABEL,
+    });
 
     if (!opts.yes) {
       const { confirm } = await import("@inquirer/prompts");
@@ -76,20 +46,13 @@ export const deleteCommentFileCommand = new Command("delete")
       }
     }
 
-    const { projectId, postId } = await resolvePostInput(client, {
-      projectArg,
-      postNumberArg,
-      idOpt: opts.id,
-      urlOpt: opts.url,
-    });
-
     // Step 1: 댓글 본문에서 reference 제거
     startSpinner("댓글 본문 reference 제거 중...");
     try {
-      const commentRes = await client.getPostComment(projectId, postId, logId);
+      const commentRes = await client.getPostComment(projectId, postId, commentId);
       const currentBody = commentRes.result.body.content;
       const newBody = removeFileReference(currentBody, fileId);
-      await client.updatePostComment(projectId, postId, logId, {
+      await client.updatePostComment(projectId, postId, commentId, {
         body: { mimeType: "text/x-markdown", content: newBody },
       });
       stopSpinner(true, "reference 제거 완료");
@@ -114,5 +77,5 @@ export const deleteCommentFileCommand = new Command("delete")
       );
     }
 
-    process.stdout.write(`파일(${fileId})이 댓글(${logId})에서 삭제되었습니다.\n`);
+    process.stdout.write(`파일(${fileId})이 댓글(${commentId})에서 삭제되었습니다.\n`);
   });

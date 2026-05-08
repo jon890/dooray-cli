@@ -40,6 +40,7 @@ src/
     milestone.ts            # name → milestoneId
     match.ts                # 공용: 정확일치 → 부분일치 → 모호 시 에러
     post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020)
+    comment-file-input.ts   # comment file 4개 명령 입력 분기 헬퍼 (parseCommentFilePositional pure + resolveCommentFileInput orchestrator, ADR-020 확장)
     task-link.ts            # --link-task ref[] → TaskLinkInput[] (resolvePostInput + getPost detail 합성, post create/edit 인라인 변환)
     member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선)
 
@@ -204,7 +205,7 @@ class DoorayApiClient {
 
 - vitest (코로케이션 `*.test.ts` 패턴 — 소스 옆에 테스트 배치)
 - `pnpm test` (단발) / `pnpm test:watch` (개발 중)
-- 현재 커버: `src/utils/dooray-url.ts` (URL parser), `src/resolvers/post-input.ts` (7-branch 분기, ADR-020)
+- 현재 커버: `src/utils/dooray-url.ts` (URL parser), `src/resolvers/post-input.ts` (7-branch 분기, ADR-020), `src/resolvers/comment-file-input.ts` (option-mode/positional-mode 분기 + secondaryLabel 메시지 customization, plan025)
 - 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 (ADR-020 도입 근거)
 
 ## 빌드·배포
