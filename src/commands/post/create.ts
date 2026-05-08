@@ -15,7 +15,7 @@ import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { readBodyInput } from "../../utils/body-input.js";
 import { prependMentions } from "../../utils/mention.js";
-import { appendTaskLinks, type TaskLinkInput } from "../../utils/task-link.js";
+import { appendTaskLinks, parseLinkRef, type TaskLinkInput } from "../../utils/task-link.js";
 import type { CreatePostUser } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
@@ -114,27 +114,7 @@ export const postCreateCommand = new Command("create")
       const me = await ensureMe(client);
       const links: TaskLinkInput[] = await Promise.all(
         linkInputs.map(async (ref) => {
-          let projectArg: string | undefined;
-          let postNumberArg: string | undefined;
-          let idOpt: string | undefined;
-          if (/^[0-9]{15,}$/.test(ref)) {
-            idOpt = ref;
-          } else if (ref.includes("/")) {
-            const [p, n] = ref.split("/");
-            if (!p || !n) {
-              throw new DoorayCliError(
-                `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
-                EXIT_PARAM_ERROR,
-              );
-            }
-            projectArg = p;
-            postNumberArg = n;
-          } else {
-            throw new DoorayCliError(
-              `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
-              EXIT_PARAM_ERROR,
-            );
-          }
+          const { projectArg, postNumberArg, idOpt } = parseLinkRef(ref);
           const { projectId: pid, postId: pidPost, projectCode: pCode, postNumber } =
             await resolvePostInput(client, { projectArg, postNumberArg, idOpt });
           const detail = await client.getPost(pid, pidPost);

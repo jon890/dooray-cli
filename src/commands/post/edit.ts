@@ -6,15 +6,13 @@ import { resolveMember, ensureMembers, buildMemberNameMap } from "../../resolver
 import { resolveMemberGroup } from "../../resolvers/member-group.js";
 import { ensureMe } from "../../resolvers/me.js";
 import { prependMentions } from "../../utils/mention.js";
-import { appendTaskLinks, type TaskLinkInput } from "../../utils/task-link.js";
+import { appendTaskLinks, parseLinkRef, type TaskLinkInput } from "../../utils/task-link.js";
 import {
   openInEditor,
   serializePostFrontmatter,
   parsePostFrontmatter,
 } from "../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
-import { DoorayCliError } from "../../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { readBodyInputOrNull } from "../../utils/body-input.js";
 import { checkAndGuardDropped } from "../../utils/attachment-check.js";
 import type { CreatePostUser } from "../../api/types.js";
@@ -110,27 +108,7 @@ export const postEditCommand = new Command("edit")
         const me = await ensureMe(client);
         const links: TaskLinkInput[] = await Promise.all(
           linkInputs.map(async (ref) => {
-            let projectArg: string | undefined;
-            let postNumberArg: string | undefined;
-            let idOpt: string | undefined;
-            if (/^[0-9]{15,}$/.test(ref)) {
-              idOpt = ref;
-            } else if (ref.includes("/")) {
-              const [p, n] = ref.split("/");
-              if (!p || !n) {
-                throw new DoorayCliError(
-                  `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
-                  EXIT_PARAM_ERROR,
-                );
-              }
-              projectArg = p;
-              postNumberArg = n;
-            } else {
-              throw new DoorayCliError(
-                `--link-task 형식이 올바르지 않습니다: "${ref}". <project>/<number> 또는 postId를 입력하세요.`,
-                EXIT_PARAM_ERROR,
-              );
-            }
+            const { projectArg, postNumberArg, idOpt } = parseLinkRef(ref);
             const { projectId: pid, postId: pidPost, projectCode: pCode, postNumber } =
               await resolvePostInput(client, { projectArg, postNumberArg, idOpt });
             const detail = await client.getPost(pid, pidPost);
@@ -183,6 +161,11 @@ export const postEditCommand = new Command("edit")
       if (mentionInputs.length > 0 || groupInputs.length > 0) {
         process.stderr.write(
           "⚠  --mention/--mention-group 은 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
+        );
+      }
+      if (linkInputs.length > 0) {
+        process.stderr.write(
+          "⚠  --link-task 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
         );
       }
       const original = serializePostFrontmatter(post, members);
