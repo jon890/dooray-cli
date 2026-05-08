@@ -13,7 +13,7 @@ GitHub Issue #42 — PR #40 claude bot 리뷰에서 제기된 cross-cutting 기�
 ## 변경 파일 (정확)
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/026-refactor-client-never-return
 git diff <base>..HEAD --name-only -- src/api/client.ts tasks/026-refactor-client-never-return/
 ```
 
@@ -28,7 +28,7 @@ tasks/026-refactor-client-never-return/index.json
 ### 1. `src/api/client.ts` — 34곳 mechanical 치환
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/026-refactor-client-never-return
 
 # 변경 전 카운트
 BEFORE=$(grep -c "return toDoorayCliError" src/api/client.ts)
@@ -71,7 +71,7 @@ async function toDoorayCliError(error: unknown): Promise<never>
 ### 3. 검증
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/026-refactor-client-never-return
 
 # 변경 후 카운트
 AFTER_RETURN=$(grep -c "return toDoorayCliError" src/api/client.ts)
@@ -87,7 +87,7 @@ pnpm build && pnpm test
 ### 4. 마지막 phase — index.json 완료 마킹
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/026-refactor-client-never-return
 sed -i '' 's/"status": "pending"/"status": "completed"/g' tasks/026-refactor-client-never-return/index.json
 grep -c '"status": "completed"' tasks/026-refactor-client-never-return/index.json
 # 기대: 2 (root + phase 1)
@@ -96,7 +96,7 @@ grep -c '"status": "completed"' tasks/026-refactor-client-never-return/index.jso
 ## 성공 기준
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/026-refactor-client-never-return
 
 # 1. 빌드 + 테스트 통과 (단순 키워드 치환이므로 회귀 가능성 매우 낮음 — 컴파일러가 잡아줌)
 pnpm build && pnpm test
@@ -120,11 +120,12 @@ grep -c '"status": "completed"' tasks/026-refactor-client-never-return/index.jso
 - 다른 파일 (`src/utils/errors.ts`, resolvers, commands) 변경 금지 — client.ts 만
 - catch 절의 다른 로직 변경 금지 (예: 추가 컨텍스트 로깅) — 본 task 는 mechanical 치환만
 - ADR 추가 금지 (자명성 게이트 — TypeScript 일반 패턴)
+- `client.ts:304` 의 `PostCommentDetailResponse` 미임포트는 pre-existing — 본 task scope 외, 자체 수정 금지. 발견 시 SendMessage 로 team-lead 보고.
 
 ## 커밋
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/026-refactor-client-never-return
 # branch: feat/026-refactor-client-never-return
 git add src/api/client.ts tasks/026-refactor-client-never-return/index.json
 git commit -m "refactor(api): use await toDoorayCliError instead of return
