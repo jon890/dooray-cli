@@ -20,9 +20,53 @@ build-with-teams 의 code-reviewer 가 반복 지적한 코드 패턴. **plan �
 
 ---
 
-# 1. spinner·UX 순서 회귀 (예약 — plan### 회고에서 채움)
+# 1. spinner·UX 순서 회귀
 
-executor 가 헬퍼 추출·재배치 리팩토링 시 spinner / 로깅 / validation 순서를 의도치 않게 바꾸는 사고가 들어갈 자리.
+executor 가 헬퍼 추출·재배치 리팩토링 / 신규 명령 작성 시 spinner / validation / cleanup 순서를 의도치 않게 바꾸는 사고.
+
+## 1-1. validation 전에 spinner 시작 (param 에러 시 spinner leak)
+
+**증상**: `startSpinner(...)` 가 `resolve*Input(...)` / param 검증 **앞** 에 있음. 파라미터 오류 발생 시 spinner 가 떠 있는 채 stderr 에 에러 메시지가 흘러 ora 애니메이션 문자와 섞임.
+**Good**: 헬퍼 호출 (`resolveCommentFileInput` / `resolvePostInput` 등) 을 spinner 보다 앞에 두고, 같은 명령군 내 일관성 유지.
+
+```bash
+# 같은 명령군 내 spinner ↔ 헬퍼 순서 일관성 검증
+for f in src/commands/<scope>/*.ts; do
+  echo "--- $f ---"
+  awk '/\.action\(async/,/^  \}\)\;/' "$f" | \
+    grep -nE "(startSpinner|resolve[A-Z][A-Za-z]*Input)" | head -5
+done
+```
+
+**Why**: plan025 PR #47 — `comment/file/list.ts` 만 4 명령 중 spinner 가 헬퍼 앞에 있어 회귀.
+
+## 1-2. spinner 시작 후 try/catch 없이 API 호출 → 에러 시 spinner leak
+
+**증상**: `startSpinner` 직후 외부 API 호출 (`resolvePostInput`, `client.getXxx` 등) 을 평이하게 호출. 호출 중 예외 발생 시 `stopSpinner` 가 절대 호출 안 됨 → spinner 가 화면에 정지 상태로 잔존.
+**Good**: spinner 가 떠 있는 동안의 모든 외부 호출을 try/catch 로 감싸고 catch 에서 `stopSpinner(false)` 명시 호출 후 re-throw.
+
+```ts
+startSpinner("...");
+try {
+  const result = await client.fetchSomething(...);
+  stopSpinner(true, "...");
+  // 이후 처리
+} catch (e) {
+  stopSpinner(false);
+  throw e;
+}
+```
+
+**검출**: `grep -A 20 "startSpinner" src/commands/` 결과에서 `try\s*\{` 가 같은 블록 내 없으면 의심.
+**Why**: PR #46 — `comment/get.ts` 의 `startSpinner` 후 `resolvePostInput` / `getPostComment` 가 try 없이 호출 → 에러 경로 spinner 잔존. 1-1 과 다른 패턴 (1-1 은 호출 위치, 1-2 는 cleanup 누락).
+
+---
+
+# 2. 에러 처리 일관성 (예약)
+
+# 3. 매직 넘버·문자열 (예약)
+
+# 4. CLI 도메인 규칙 회귀 (예약 — exitCode / stdout vs stderr / ky 강제)
 
 # 2. 에러 처리 일관성 (예약)
 

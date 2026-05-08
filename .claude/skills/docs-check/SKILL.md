@@ -99,9 +99,9 @@ ADR이 "왜"를 담고 있는가. "결정 / 맥락 / 대안 기각" 구조가 �
 
 ## 실행 절차
 
-### 0. 검증 위임 (권장 — agent 활용)
+### 0. 검증 위임 (필수 — 단일 진실원)
 
-dooray-cli 도메인 지식 (ADR-001~024 / planning 8단계 A항 docs 영향 표 / 캐시 규약 / PII gate / 거울 구조 원칙) 이 박힌 custom agent `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`) 에 위임:
+docs-check 의 5축 검증은 **반드시** custom agent `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`) 에 위임한다. agent 본문이 검증 항목·자동 grep 명령·도메인 지식의 단일 진실원 — main session 이 직접 5축 grep 을 따라 적는 순간 정의 두 곳 동기화 부담 발생 (거울 구조 원칙 위반).
 
 ```
 Agent({
@@ -111,9 +111,23 @@ Agent({
 })
 ```
 
-agent 가 자동 grep 검증 (resolvers/ 트리 vs src/, 캐시 디렉터리 vs store.ts, PRD 명령 vs CLI, ADR Index sync, PII grep) 까지 수행하므로 main session 부담 감소. 결과 받아 Critical 항목부터 사용자 승인 후 수정.
+agent 가 수행하는 자동 grep 검증 (도메인 지식 박힌 단일 소스):
+- ADR Index sync + 본문 30줄 BLOAT + 구분선 누락
+- PRD MVP 명령 ↔ `node dist/index.js --help`
+- data-schema.md 캐시 디렉터리 ↔ `src/cache/store.ts` 의 `*_DIR` 상수
+- flow.md 명령 ↔ 실제 명령 (변경 시 반영 누락 자동 감지)
+- code-architecture.md resolvers/ 트리 ↔ `src/resolvers/`
+- PII gate (사내 식별자 / 19자리 ID 노출 검출)
 
-agent 위임 안 하고 main session 이 직접 점검할 경우 아래 1~5 단계 진행 (legacy 경로).
+team-lead 는 agent 회신을 받아 Critical 항목부터 사용자 승인 후 수정 (agent 자체는 read-only — `disallowedTools: Write, Edit`).
+
+### Fallback — agent 사용 불가 환경
+
+아래 두 경우만 1~5 단계 (legacy) 로 fallback:
+1. agent 본문이 도메인 변경 후 미갱신 — 이때도 agent 우선 갱신 후 재위임 권장
+2. Claude Code 가 아닌 다른 환경에서 실행 (custom agent 미지원)
+
+legacy 경로는 5축 grep 명령이 docs-check skill 본문에 명시되지 않음 → main session 이 agent 본문의 grep 을 직접 복사해서 실행. 이때도 검증 항목의 진실원은 여전히 agent 본문.
 
 ### 1. 대상 파일 수집
 
