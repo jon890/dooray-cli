@@ -169,10 +169,10 @@ PHASE_FAILED: {오류}     # 복구 불가능 → exit 1
 
 | Phase | 제목               | 모델    | 내용                                                               |
 | ----- | ------------------ | ------- | ------------------------------------------------------------------ |
-| N-1   | 빌드 검증 + 테스트 + 사용자 가이드 docs 갱신 | `haiku` | `pnpm build`, 금지사항 grep, `README.md` + `skills/dooray-cli/SKILL.md` 갱신 (planning SKILL 8단계 A항 매트릭스의 해당 행 따라) |
+| N-1   | 빌드 검증 + 테스트 + 사용자 가이드 docs 갱신 | `haiku` | `pnpm build`, 금지사항 grep, `README.md` + `skills/dooray-cli/SKILL.md` 갱신 (planning SKILL 8단계 A항 docs 영향 표의 해당 행 따라) |
 | N     | 커밋 + push        | `haiku` | 변경 파일 `git add` → `git commit` → `git push`. task 파일도 포함. |
 
-**docs 갱신 시점 분리 (필수)** — planning SKILL 8단계 A항 매트릭스 그대로:
+**docs 갱신 시점 분리 (필수)** — planning SKILL 8단계 A항 docs 영향 표 그대로:
 
 - planning 결정 docs (`adr.md`/`code-architecture.md`/`CLAUDE.md`/`data-schema.md`/`flow.md`/`prd.md`/`dooray-api-reference.md`) 는 **planning 단계에서 이미 commit 됐다고 가정** — phase 안에서 변경 금지 (변경하면 docs-verifier VIOLATION).
 - 사용자 가이드 docs (`README.md`/`skills/dooray-cli/SKILL.md`) 만 phase N-1 에서 변경. 코드 산출물에 의존하므로 phase-1·2 후에야 정확히 작성 가능.

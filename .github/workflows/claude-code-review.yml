@@ -28,12 +28,33 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
+      checks: write
 
     steps:
       - name: 저장소 체크아웃
         uses: actions/checkout@v6
         with:
           fetch-depth: 1
+
+      # /review 댓글 트리거는 PR Checks 탭에 자동 등록되지 않으므로
+      # PR head SHA 에 Check Run 을 수동 생성하여 PR 과 workflow 연동
+      - name: PR 에 Check Run 등록 (issue_comment 트리거 전용)
+        id: check-create
+        if: github.event_name == 'issue_comment'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          HEAD_SHA=$(gh pr view "${{ env.PR_NUMBER }}" --repo "${{ github.repository }}" \
+            --json headRefOid -q .headRefOid)
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          CHECK_ID=$(gh api "repos/${{ github.repository }}/check-runs" -X POST \
+            -f name="Claude 코드 리뷰" \
+            -f head_sha="$HEAD_SHA" \
+            -f status="in_progress" \
+            -f details_url="$RUN_URL" \
+            -q .id)
+          echo "check_id=$CHECK_ID" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
 
       # /review 트리거 댓글에 👀 이모지로 즉시 작업 시작 시그널
       - name: /review 댓글에 시작 reaction 추가
@@ -447,3 +468,20 @@ jobs:
           gh api "repos/${{ github.repository }}/issues/comments/${{ github.event.comment.id }}/reactions" \
             --method POST \
             --field content="$CONTENT" || true
+
+      # PR Checks 탭에서 결과 확인 가능하도록 Check Run 완료 마킹
+      # job.status (success/failure/cancelled) → check-run conclusion 매핑
+      - name: Check Run 완료 마킹
+        if: github.event_name == 'issue_comment' && always() && steps.check-create.outputs.check_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUTCOME: ${{ job.status }}
+        run: |
+          case "$OUTCOME" in
+            success)   CONCLUSION="success" ;;
+            cancelled) CONCLUSION="cancelled" ;;
+            *)         CONCLUSION="failure" ;;
+          esac
+          gh api "repos/${{ github.repository }}/check-runs/${{ steps.check-create.outputs.check_id }}" -X PATCH \
+            -f status="completed" \
+            -f conclusion="$CONCLUSION" || true

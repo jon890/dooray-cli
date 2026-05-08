@@ -41,6 +41,7 @@ src/
     match.ts                # 공용: 정확일치 → 부분일치 → 모호 시 에러
     post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020)
     comment-file-input.ts   # comment file 4개 명령 입력 분기 헬퍼 (parseCommentFilePositional pure + resolveCommentFileInput orchestrator, ADR-020 확장)
+    task-link.ts            # --link-task ref[] → TaskLinkInput[] (resolvePostInput + getPost detail 합성, post create/edit 인라인 변환)
     member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선)
 
   cache/
@@ -61,6 +62,7 @@ src/
     post.ts                 # Post 전용 포맷 (workflow 이름 등)
     wiki.ts                 # Wiki 전용 포맷
     member.ts               # Member 상세/목록 포맷 (ADR-021)
+    comment.ts              # PostComment 상세 포맷 (table/JSON/quiet, Issue #45)
 
   utils/
     errors.ts               # DoorayCliError (message + exitCode)
@@ -105,6 +107,7 @@ src/
       comment/
         list.ts
         latest.ts             # 최신 댓글 N개 단축 조회
+        get.ts                # 단일 댓글 상세 (positional 3 / --id / --url + --comment-id, Issue #45)
         add.ts
         edit.ts
         delete.ts

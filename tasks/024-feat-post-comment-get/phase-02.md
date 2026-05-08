@@ -1,95 +1,52 @@
-# Phase 02 — `post comment get` 명령 + formatter + tests
-
-## 컨텍스트
-
-phase-01 의 `getPostCommentDetail` 을 사용하는 CLI 명령. ADR-020 분기 (positional / `--id` / `--url`) + 추가 `--comment-id` 옵션.
-
-코드 현황:
-- `src/commands/post/comment/edit.ts:18-50` — `<arg1> <arg2> <arg3>` + `--id`/`--url`/`--comment-id` 분기 패턴 (그대로 답습)
-- `src/commands/post/comment/list.ts` — table/JSON/quiet 출력 패턴
-- `src/formatters/` — comment 전용 formatter 없음 (list 의 enrich 만 있음)
+# Phase 02 — README / SKILL.md + 빌드 검증 + 완료 마킹
 
 ## 변경 파일 (정확)
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
-git diff <base>..HEAD --name-only -- src/commands/post/comment/get.ts src/formatters/comment.ts src/index.ts
+git diff <base>..HEAD --name-only -- README.md skills/ tasks/024-feat-post-comment-get/
 ```
 
 기대 결과 (총 3 파일):
 ```
-src/commands/post/comment/get.ts       (신규)
-src/formatters/comment.ts              (신규 — 단일 댓글 detail 포매터)
-src/index.ts                           (Commander 등록)
+README.md
+skills/dooray-cli/SKILL.md
+tasks/024-feat-post-comment-get/index.json
 ```
 
-## 작업 항목
+## 작업 항목 (3개)
 
-### 1. `src/commands/post/comment/get.ts` — 명령 정의
+### 1. `README.md` — 댓글 명령 섹션에 `get` 사용 예 추가
 
-`comment edit.ts` 의 argv 분기 패턴 그대로 답습 (commentId 결정 로직). action 안에서:
-
-```ts
-const detail = await client.getPostCommentDetail(projectId, postId, commentId);
-formatCommentDetail(detail.result, globalOpts, projectId, client);
+```markdown
+# 단일 댓글 조회 (자동화 친화)
+dooray post comment get <project> <post-number> <comment-id> --json | jq -r '.body.content'
 ```
 
-옵션:
-- `[arg1]` / `[arg2]` / `[arg3]` (positional)
-- `--id <postId>` / `--url <url>` (post 식별)
-- `--comment-id <id>` (positional 대체)
+기존 `comment list` / `comment edit` 예시 옆에 자연스럽게 배치.
 
-### 2. `src/formatters/comment.ts` — `formatCommentDetail`
+### 2. `skills/dooray-cli/SKILL.md` — AI 에이전트 자동화 시나리오
 
-table 모드: 댓글 메타 (id / 작성자 / 시각 / mimeType) + body 본문 + attachments 목록 (있으면).
-JSON 모드: `printJson(comment)`.
-quiet 모드: id 만.
+```markdown
+## 단일 댓글 본문 fetch
 
-작성자 이름 enrich 는 기존 `comment-enrich.ts` 패턴 답습 (project member cache).
+`post comment get <project> <post-number> <comment-id> --json` 으로 단일 댓글의 본문 + attachments 를 곧장 fetch. `comment list` 후 jq 필터링 우회 불필요.
 
-```ts
-export async function formatCommentDetail(
-  comment: PostComment,
-  opts: OutputOptions,
-  projectId: string,
-  client: DoorayApiClient,
-): Promise<void> {
-  if (opts.json) { printJson(comment); return; }
-  if (opts.quiet) { process.stdout.write(comment.id + "\n"); return; }
-  // table 모드 — chalk + cli-table3 사용
-  // 1. 메타 표 (Field / Value)
-  // 2. 본문 (구분선 후 raw markdown)
-  // 3. attachments (있으면 별도 표)
-}
+본문 patch 흐름:
+1. `dooray post comment get <p> <n> <id> --json | jq -r '.body.content' > current.md`
+2. (편집)
+3. `dooray post comment edit <p> <n> <id> --body-file current.md --no-confirm` (attachment guard 통과)
 ```
 
-### 3. `src/index.ts` — Commander 등록
-
-기존 `commentCommand` 그룹에 `commentGetCommand` 추가:
-
-```ts
-import { commentGetCommand } from "./commands/post/comment/get.js";
-// ...
-commentCommand.addCommand(commentGetCommand);
-```
-
-### 4. 동작 실증 (executor)
+### 3. 마지막 phase — 빌드 검증 + index.json 완료 마킹
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
-pnpm build
+pnpm build && pnpm test
 
-# positional
-node dist/index.js post comment get <project> <post-number> <comment-id>
-
-# --id 모드
-node dist/index.js post comment get --id <postId> --comment-id <comment-id>
-
-# --url 모드
-node dist/index.js post comment get --url "<dooray-task-url>" --comment-id <comment-id>
-
-# --json 자동화 호환성
-node dist/index.js post comment get <project> <post-number> <comment-id> --json | jq -r '.body.content'
+sed -i '' 's/"status": "pending"/"status": "completed"/g' tasks/024-feat-post-comment-get/index.json
+grep -c '"status": "completed"' tasks/024-feat-post-comment-get/index.json
+# 기대: 3 (root + 2 phase)
 ```
 
 ## 성공 기준
@@ -97,37 +54,28 @@ node dist/index.js post comment get <project> <post-number> <comment-id> --json 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 pnpm build && pnpm test
-# 기대: exit 0
 
-# 명령 파일 + formatter 추가
-ls src/commands/post/comment/get.ts src/formatters/comment.ts
-# 기대: 둘 다 존재
+grep -cE "post comment get" README.md skills/dooray-cli/SKILL.md
+# 기대: 2 이상
 
-# Commander 등록
-grep -nE "commentGetCommand" src/index.ts
-# 기대: 2줄 (import + addCommand)
+grep -c '"status": "completed"' tasks/024-feat-post-comment-get/index.json
+# 기대: 3
 
-# CLI help 노출
-node dist/index.js post comment --help 2>&1 | grep -cE "^\s+get\b"
-# 기대: 1
+grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ tasks/024-feat-post-comment-get/ 2>/dev/null
+# 기대: 0건
 ```
 
 ## 작업 외 금지
 
-- comment edit/list 변경 금지 (이번 phase scope 외)
-- comment cache 도입 금지
-- attachment 인라인 미리보기 (이미지 렌더 등) 금지
+- 코드 (src/) 변경 금지
 - ADR 추가 금지
+- 결정 docs (adr.md/code-architecture.md/CLAUDE.md/data-schema.md/flow.md) 변경 금지
 
 ## 커밋
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 # branch: feat/024-feat-post-comment-get
-git add src/commands/post/comment/get.ts src/formatters/comment.ts src/index.ts
-git commit -m "feat(commands): add post comment get for single-comment fetch
-
-Issue #45: positional <project> <post-number> <comment-id> + ADR-020
-branching (--id / --url + --comment-id). table / JSON / quiet outputs.
-Creator name enriched via existing comment-enrich pattern."
+git add README.md skills/dooray-cli/SKILL.md tasks/024-feat-post-comment-get/index.json
+git commit -m "docs: document post comment get + complete task 024"
 ```

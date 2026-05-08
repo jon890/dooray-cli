@@ -99,6 +99,36 @@ ADR이 "왜"를 담고 있는가. "결정 / 맥락 / 대안 기각" 구조가 �
 
 ## 실행 절차
 
+### 0. 검증 위임 (필수 — 단일 진실원)
+
+docs-check 의 5축 검증은 **반드시** custom agent `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`) 에 위임한다. agent 본문이 검증 항목·자동 grep 명령·도메인 지식의 단일 진실원 — main session 이 직접 5축 grep 을 따라 적는 순간 정의 두 곳 동기화 부담 발생 (거울 구조 원칙 위반).
+
+```
+Agent({
+  subagent_type: "dooray-cli-docs-verifier",
+  description: "5-axis docs audit",
+  prompt: "전체 docs (docs/*.md + .claude/skills/*/SKILL.md + _shared/*.md) 5축 점검. Critical / Warning / Safe 분류 보고."
+})
+```
+
+agent 가 수행하는 자동 grep 검증 (도메인 지식 박힌 단일 소스):
+- ADR Index sync + 본문 30줄 BLOAT + 구분선 누락
+- PRD MVP 명령 ↔ `node dist/index.js --help`
+- data-schema.md 캐시 디렉터리 ↔ `src/cache/store.ts` 의 `*_DIR` 상수
+- flow.md 명령 ↔ 실제 명령 (변경 시 반영 누락 자동 감지)
+- code-architecture.md resolvers/ 트리 ↔ `src/resolvers/`
+- PII gate (사내 식별자 / 19자리 ID 노출 검출)
+
+team-lead 는 agent 회신을 받아 Critical 항목부터 사용자 승인 후 수정 (agent 자체는 read-only — `disallowedTools: Write, Edit`).
+
+### Fallback — agent 사용 불가 환경
+
+아래 두 경우만 1~5 단계 (legacy) 로 fallback:
+1. agent 본문이 도메인 변경 후 미갱신 — 이때도 agent 우선 갱신 후 재위임 권장
+2. Claude Code 가 아닌 다른 환경에서 실행 (custom agent 미지원)
+
+legacy 경로는 5축 grep 명령이 docs-check skill 본문에 명시되지 않음 → main session 이 agent 본문의 grep 을 직접 복사해서 실행. 이때도 검증 항목의 진실원은 여전히 agent 본문.
+
 ### 1. 대상 파일 수집
 
 ```bash
@@ -224,8 +254,8 @@ ADR 본문에 새 ADR 이 추가됐는데 상단 Index 에 누락되면 AI 에�
 ```bash
 # cwd: <repo root>
 
-# 1) 본문에 정의된 ADR 번호 목록
-BODY=$(grep -oE '^## ADR-[0-9]+' docs/adr.md | sort -u)
+# 1) 본문에 정의된 ADR 번호 목록 (좌우 형식 일치를 위해 'ADR-NNN' 만 추출)
+BODY=$(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u)
 
 # 2) Index 에 링크된 ADR 번호 목록
 INDEX=$(grep -oE '\[ADR-[0-9]+\]\(#adr-[0-9]+\)' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u)
@@ -234,10 +264,24 @@ INDEX=$(grep -oE '\[ADR-[0-9]+\]\(#adr-[0-9]+\)' docs/adr.md | grep -oE 'ADR-[0-
 diff <(echo "$BODY") <(echo "$INDEX") && echo "OK: ADR Index synced"
 
 # 4) anchor 누락 검증 — 모든 ADR 헤딩 직전에 <a id="adr-XXX"></a>
+#    bash 3.2 호환 위해 tr 로 소문자화 (${var,,} 는 bash 4+ 전용)
 for n in $BODY; do
-  num=${n#"## ADR-"}
-  grep -B 1 "^## ADR-$num\." docs/adr.md | grep -q "<a id=\"adr-$num\"" \
-    || echo "MISSING anchor: ADR-$num"
+  lower=$(echo "$n" | tr '[:upper:]' '[:lower:]')
+  grep -B 1 "^## $n\." docs/adr.md | grep -q "<a id=\"$lower\"" \
+    || echo "MISSING anchor: $n"
+done
+
+# 5) 본문 30 줄 초과 ADR — \"기능 명세서 변질\" 의심 (B 과대화 자동 검출)
+#    plan019~024 시점 6 ADR 이 261 줄까지 비대화한 사례 회피.
+#    awk 의 끝 매칭이 다음 --- 까지 흘러가지 않도록 구분선 누락 먼저 검증.
+SEP_COUNT=$(grep -cE "^---$" docs/adr.md)
+ADR_COUNT=$(grep -cE "^<a id=\"adr-" docs/adr.md)
+if [ "$SEP_COUNT" -ne "$ADR_COUNT" ]; then
+  echo "WARN: 구분선 ($SEP_COUNT) ≠ ADR ($ADR_COUNT) — ADR 사이 --- 누락. 변질 검사 부정확"
+fi
+for n in $(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE '[0-9]+'); do
+  size=$(awk "/<a id=\"adr-$n\"/,/^---$/" docs/adr.md | wc -l | tr -d ' ')
+  [ "$size" -gt 30 ] && echo "BLOAT: ADR-$n ($size lines, > 30) — 결정/맥락/대안 기각 외 기능 명세 의심. 슬림화 검토"
 done
 ```
 
@@ -245,6 +289,7 @@ done
 
 - **의사결정이 번복된 경우**: 대체 ADR 작성 + 과거 ADR 본문 **완전 삭제** (Superseded 표기 남기지 않음). 과거 결정의 근거는 git log + 새 ADR 본문에 녹여 보존
 - **변경 사항을 부분적으로 수용한 경우**: 기존 ADR 본문에서 해당 부분만 삭제/수정. 대안 기각에 "옵션 X는 Y 이유로 번복됨" 한 줄 추가
+- **자명성 폐기 시**: 본문 + Index 에서 동시 삭제. **폐기된 번호는 결번으로 영구 보존, 새 ADR 에 재할당 금지** — git log 와 외부 참조 (issue / commit / docs-verifier 메모리) 가 과거 ADR 번호를 가리킬 때 다른 결정으로 오인되지 않도록. agent 본문의 ADR 인덱스 섹션에도 *"결번: NNN / NNN (사유). 재할당 금지"* 명시
 
 ## 실행 주기 권장
 

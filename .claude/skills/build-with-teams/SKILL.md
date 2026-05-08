@@ -61,7 +61,7 @@ plan 인자를 받으면 **가장 먼저** 3중 검증. 하나라도 걸리면 �
 | **critic** | `oh-my-claudecode:critic` | opus | 계획 평가 (APPROVE/REVISE), 실제 코드 대조 |
 | **executor** | `oh-my-claudecode:executor` | sonnet | phase 순차 실행, 코드 수정 (커밋 제외), `bypassPermissions` |
 | **code-reviewer** | `oh-my-claudecode:code-reviewer` | sonnet | 코드 품질 검사 (PASS/FIX_NEEDED), AI slop/금지사항 탐지 |
-| **docs-verifier** | `oh-my-claudecode:architect` | opus | 코드↔docs 정합성 검증 (PASS/UPDATE_NEEDED/VIOLATION) |
+| **docs-verifier** | `dooray-cli-docs-verifier` (custom, project-local at `.claude/agents/`) | sonnet | 코드↔docs 정합성 검증 (PASS/UPDATE_NEEDED/VIOLATION). dooray-cli 도메인 지식 (ADR-001~024 / docs 영향 표 / 캐시 규약 / PII gate) 자동 적용 — 매번 검사 항목 길게 전달 불요 |
 
 ### 정식 팀원 스폰 규칙 (필수)
 
@@ -125,7 +125,7 @@ task의 `index.json` + phase 파일을 읽고 규모를 판정하여 팀원 모�
 | **중** | `total_phases: 2~3`, 기존 기능 확장/리팩토링/스키마 단순 추가 |
 | **대** | `total_phases: 4+` 또는 아키텍처/신규 도메인/DB 스키마 대규모 변경 |
 
-### 규모별 모델 매트릭스
+### 규모별 모델 표
 
 | 규모 | team-lead | critic | executor | code-reviewer | docs-verifier |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -243,6 +243,8 @@ executor 완료 후 team-lead가 **code-reviewer 팀원에게 SendMessage로 검
 
 **code-reviewer 스폰 시점**: executor와 동시에 `run_in_background: true`로 스폰하되, executor 완료 후 SendMessage로 검사 시작 지시.
 
+**사전 소진 게이트 (필수)**: code-reviewer 검사 시작 전에 `.claude/skills/_shared/code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인. 적용 안 됐으면 그 자리에서 FIX_NEEDED 회신 (executor 재투입). 본 docs 가 회피 패턴의 단일 소스 — 13 항목과 별도로 grep 게이트.
+
 **code-reviewer에게 전달할 검사 항목:**
 
 1. **금지사항**: `console.log`, `as any`, native UI dialogs (alert/confirm/prompt) — grep 검증
@@ -268,6 +270,22 @@ executor 완료 후 team-lead가 **code-reviewer 팀원에게 SendMessage로 검
 - **PASS** → 8단계로
 - **FIX_NEEDED** → team-lead가 executor에게 수정 목록 전달 → executor 수정 → code-reviewer 재검사 (한도 2회)
 
+**FIX_NEEDED 처리 시 필수 루프 — 자기-면제 금지 (CRITICAL)**:
+
+code-reviewer 가 FIX 회신에 *"재검사 불필요"* / *"단순 변경이라 검증 생략 가능"* 같은 자기-면제 문구를 포함하더라도 **그대로 수용 금지**. 자기 자신의 검토를 자기가 면제하는 것은 OMC `<execution_protocols>` 의 "Never self-approve in the same active context" 위반.
+
+수정 주체와 무관하게 **모든 FIX 후 재검사 SendMessage 강제**:
+
+| 수정 시나리오 | 처리 |
+|---|---|
+| executor 가 수정 (다중 파일·로직 변경) | executor 수정 commit → code-reviewer 재검사 SendMessage |
+| team-lead 직접 수정 (1줄 이동·rename·typo 등 trivial fix) | team-lead 수정 commit → **여전히** code-reviewer 재검사 SendMessage |
+| code-reviewer 본인 *"재검사 불필요"* 명시 | 무시. 재검사 SendMessage. |
+
+빌드/테스트 통과는 자체 검증을 대신하지 못한다 (정적 검사·관습·매직넘버 같은 항목은 빌드를 통과해도 잡혀야 한다). 재검사 한도 2회 카운터는 동일하게 적용 — 한도 초과 시 `PHASE_BLOCKED`.
+
+**Why**: trivial 한 1줄 수정도 회귀 가능. 더 중요한 건 일관성 — "code-reviewer 가 면제했으니 OK" 가 한 번 통과되면 다음 plan 부터는 더 큰 수정도 면제 요청이 들어올 수 있고 그때도 자기-승인 회피 원칙이 깨진다.
+
 ### 8. docs-verifier 검증 (문서 부패 포함)
 
 executor 완료 후 team-lead → docs-verifier에게 검증 요청.
@@ -282,18 +300,32 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
 
 **dooray-cli 특화 docs-verifier 검사 항목 (CLI 변형 — 위 6 항목에 추가):**
 
-7. **planning 매트릭스 100% 적용 검증** — `.claude/skills/planning/SKILL.md` 8단계 A항 "변경 유형별 docs 영향 매트릭스" 의 해당 행을 식별하고, 표시된 모든 docs 가 갱신됐는지 확인. 단일 항목(✓표시)이라도 누락이면 UPDATE_NEEDED. 이 매트릭스가 검증 항목의 단일 소스 — docs-verifier 는 **별도 체크리스트 보유 금지**, 매트릭스 거울만 본다.
+7. **planning docs 영향 표 100% 적용 검증** — `.claude/skills/planning/SKILL.md` 8단계 A항 "변경 유형별 docs 영향 표" 의 해당 행을 식별하고, 표시된 모든 docs 가 갱신됐는지 확인. 단일 항목(✓표시)이라도 누락이면 UPDATE_NEEDED. 이 표가 검증 항목의 단일 소스 — docs-verifier 는 **별도 체크리스트 보유 금지**, 표 거울만 본다.
 
 8. **역참조 규칙 준수**: 새 ADR 추가 시 `docs/code-architecture.md` 또는 `CLAUDE.md` ADR 참조 표 둘 중 한 곳에 ADR-NNN 한 줄 추가 됐는가? (planning SKILL C항 "역참조 규칙")
 
 9. **갱신 시점 분리 위반 없는가**: planning 결정 docs (`adr.md`/`code-architecture.md`/`CLAUDE.md`/`data-schema.md`/`flow.md`/`prd.md`/`dooray-api-reference.md`) 를 phase 안에서 변경하면 VIOLATION. 사용자 가이드 docs (`README.md`/`skills/dooray-cli/SKILL.md`) 는 phase 마지막에서만 변경 OK.
 
-10. **`skills/dooray-cli/SKILL.md` (공개 스킬) dogfooding** — CLI 는 공개 스킬도 검증 대상. 새/삭제/변경된 명령·옵션이 공개 스킬에 반영되지 않으면 외부 사용자가 오작동 경로를 따라감 (매트릭스 행에 표시되어 있을 때).
+10. **`skills/dooray-cli/SKILL.md` (공개 스킬) dogfooding** — CLI 는 공개 스킬도 검증 대상. 새/삭제/변경된 명령·옵션이 공개 스킬에 반영되지 않으면 외부 사용자가 오작동 경로를 따라감 (docs 영향 표 행에 표시되어 있을 때).
 
 판정:
 - **PASS** → 9단계로
 - **UPDATE_NEEDED** → team-lead가 docs 업데이트 후 재검증 (한도 2회)
 - **VIOLATION** → team-lead가 코드 수정 지시 (executor 재투입, 한도 2회)
+
+**UPDATE_NEEDED / VIOLATION 처리 시 필수 루프 — 자기-면제 금지**:
+
+code-reviewer 와 동일 원칙 (위 7단계 "자기-면제 금지" 박스 참조). docs-verifier 가 *"내용 확인 수준으로 충분"* / *"재검증 없이 PR 진행 가능"* 같은 자기-면제 문구를 회신에 포함하더라도 **그대로 수용 금지**.
+
+| 수정 시나리오 | 처리 |
+|---|---|
+| docs 갱신 (UPDATE_NEEDED) — team-lead 직접 수정 / executor 재투입 무관 | docs 수정 commit → docs-verifier 재검증 SendMessage 강제 |
+| 코드 수정 (VIOLATION) — executor 재투입 | executor 수정 commit → docs-verifier 재검증 SendMessage 강제 |
+| docs-verifier 본인 *"재검증 불요"* 명시 | 무시. 재검증 SendMessage. |
+
+재검증 한도 2회 카운터 동일 적용. 한도 초과 시 `PHASE_BLOCKED: docs-verifier 한도 초과 — docs/코드 정합성 수동 점검`.
+
+**Why**: 7단계와 동일. 일관성 측면. UPDATE_NEEDED 가 3곳 같이 잡혔는데 그중 1곳을 잘못 갱신했어도 자기-면제로 묻히면 다음 plan 부터 PASS 신뢰성이 떨어진다.
 
 ### 9. 완료 + PR 생성
 
@@ -309,7 +341,16 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
      - main에 진행 중인 다른 작업(다른 plan의 미푸시 커밋, unstaged 변경)과 의도치 않게 섞여 push될 위험
      - PR 머지로 자동 반영되므로 중복 커밋
    - "재실행 사고 방지"는 main 커밋이 아니라 **실행 전 3중 사전 검증**(status + 원격 feat 브랜치 + 오픈 PR)으로 막는다
-7. 팀 shutdown (SendMessage `shutdown_request`)
+7. **review 회고 (조건부 필수 — 학습 루프)** — PR 생성 직후, 팀 shutdown 직전. **트리거 조건**: 이번 plan 에서 critic 의 **REVISE** 또는 code-reviewer 의 **FIX_NEEDED** 또는 docs-verifier 의 **UPDATE_NEEDED / VIOLATION** 이 1회 이상 발생한 경우. 1-shot APPROVE + PASS + PASS 로 진행된 plan 은 회고 단계 skip.
+
+   회고가 트리거된 경우 team-lead 가 자문 후 필요 시 회고 commit (main 디렉터리에서):
+   - **critic** REVISE 지적 중 *반복 가능성* 있는 패턴 → `.claude/skills/_shared/common-pitfalls.md` 해당 섹션에 항목 추가
+   - **code-reviewer** FIX_NEEDED 지적 중 *반복 가능성* 있는 패턴 → `.claude/skills/_shared/code-review-pitfalls.md` 해당 카테고리에 항목 추가 (또는 새 카테고리 신설)
+   - **docs-verifier** UPDATE_NEEDED / VIOLATION 지적 중 *반복 가능성* 있는 항목 → `.claude/skills/planning/SKILL.md` 8단계 A항 docs 영향 표에 행 추가 또는 기존 행 보강 (별도 회고 docs 신설 금지 — 거울 구조 유지)
+   - **반복 가능성 판정 기준**: 다른 plan 에서 같은 카테고리 (예: 헬퍼 추출 / 새 resolver / spinner UX) 작업 시 또 발생할 수 있는가? 1회성 typo / 명령 이름 오타 등은 제외
+   - 회고 commit 메시지 규약: `docs(skill): accumulate review learnings from PR #<N>`. PR 번호와 사고 plan 번호를 본문에 명시
+   - 트리거됐지만 추가할 패턴이 0개여도 **자문 자체는 수행**. "이번엔 신규 항목 없음" 결정 보고 후 다음 단계로
+8. 팀 shutdown (SendMessage `shutdown_request`)
 
 ## worktree 기반 격리 실행 (필수)
 
@@ -374,6 +415,7 @@ executor가 phase 실패 보고 시:
     → [docs-verifier 검증 (문서 부패 포함)] ←─ VIOLATION/UPDATE_NEEDED면 재투입 (한도 2회) → 추가 fix commit
     → [team-lead 일괄 push]  ← PR 브랜치에 phase 별 atomic commit + 필요 시 fix commit 누적
     → [PR 생성]  ← main에 별도 커밋 금지
+    → [review 회고]  ← critic/code-reviewer/docs-verifier 반복 패턴 → common-pitfalls / code-review-pitfalls / planning docs 영향 표 갱신
     → [worktree 정리 + 팀 shutdown]
 ```
 
