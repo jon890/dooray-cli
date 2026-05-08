@@ -64,4 +64,17 @@ describe("parseGetArgs", () => {
     expect(result.postNumberArg).toBe("337");
     expect(result.commentId).toBe("comment-789");
   });
+
+  it("positional 3개 + --comment-id 동시 → DoorayCliError (EXIT_PARAM_ERROR)", () => {
+    // ADR-020 분기 규칙: 모호한 입력은 silent fallback 대신 명시적 에러
+    const err = (() => {
+      try {
+        parseGetArgs("myproject", "337", "comment-A", { commentId: "comment-B" });
+      } catch (e) {
+        return e;
+      }
+    })();
+    expect(err).toBeInstanceOf(DoorayCliError);
+    expect((err as DoorayCliError).exitCode).toBe(EXIT_PARAM_ERROR);
+  });
 });

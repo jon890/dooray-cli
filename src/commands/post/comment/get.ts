@@ -51,10 +51,16 @@ export function parseGetArgs(
 
   if (arg3) {
     // positional 3개 모드: project + post-number + comment-id
+    if (opts.commentId) {
+      throw new DoorayCliError(
+        "positional 댓글 ID 와 --comment-id 옵션은 동시에 사용할 수 없습니다.",
+        EXIT_PARAM_ERROR,
+      );
+    }
     return {
       projectArg: arg1,
       postNumberArg: arg2,
-      commentId: opts.commentId ?? arg3,
+      commentId: arg3,
     };
   }
 
@@ -89,20 +95,33 @@ export const commentGetCommand = new Command("get")
     const globalOpts = commentGetCommand.optsWithGlobals() as OutputOptions;
 
     startSpinner("댓글 조회 중...");
-    const { projectId, postId } = await resolvePostInput(client, {
-      projectArg: parsed.projectArg,
-      postNumberArg: parsed.postNumberArg,
-      idOpt: parsed.idOpt,
-      urlOpt: parsed.urlOpt,
-    });
+    let projectId: string;
+    let comment;
+    try {
+      const resolved = await resolvePostInput(client, {
+        projectArg: parsed.projectArg,
+        postNumberArg: parsed.postNumberArg,
+        idOpt: parsed.idOpt,
+        urlOpt: parsed.urlOpt,
+      });
+      projectId = resolved.projectId;
 
-    const detail = await client.getPostComment(projectId, postId, parsed.commentId);
-    let comment = detail.result;
-    stopSpinner(true, "댓글 조회 완료");
+      const detail = await client.getPostComment(resolved.projectId, resolved.postId, parsed.commentId);
+      comment = detail.result;
+      stopSpinner(true, "댓글 조회 완료");
+    } catch (e) {
+      stopSpinner(false);
+      throw e;
+    }
 
     if (!globalOpts.json) {
       // table/quiet 모드만 enrich — --json 은 raw 유지 (comment list 와 동일 정책)
-      const nameMap = await buildMemberNameMap(client, projectId);
+      let nameMap = new Map<string, string>();
+      try {
+        nameMap = await buildMemberNameMap(client, projectId);
+      } catch {
+        // enrich 실패 시 빈 이름으로 폴백 (comment list 와 동일 정책)
+      }
       comment = enrichCommentCreators([comment], nameMap)[0]!;
     }
 
