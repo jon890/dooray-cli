@@ -1,32 +1,25 @@
 {
   "name": "024-feat-post-comment-get",
-  "description": "GitHub Issue #45 — `dooray post comment get <project> <post-number> <comment-id>` 신설. 단일 댓글 본문 + 메타 + attachments 를 ID 로 곧장 조회. ADR-020 분기 (positional / `--id`/`--url` + 추가 `--comment-id`) 답습. table / JSON / quiet 출력 지원.",
+  "description": "GitHub Issue #45 — `dooray post comment get <project> <post-number> <comment-id>` 신설. 단일 댓글 본문 + 메타 + attachments 를 ID 로 곧장 조회. ADR-020 분기 (positional / `--id`/`--url` + 추가 `--comment-id`) 답습. table / JSON / quiet 출력 지원. API 메서드(`getPostComment`)와 타입(`PostCommentDetailResponse`)은 이미 구현돼 있어 CLI 노출만 신설.",
   "created_at": "2026-05-08T00:00:00Z",
-  "status": "pending",
+  "status": "completed",
   "current_phase": 1,
-  "total_phases": 3,
+  "total_phases": 2,
   "error_message": null,
   "blocked_reason": null,
   "phases": [
     {
       "number": 1,
-      "title": "API client getPostCommentDetail 메서드 + types",
+      "title": "post comment get 명령 + formatter + argv 단위 테스트",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
-      "title": "post comment get 명령 + formatter + tests",
-      "file": "phase-02.md",
-      "status": "pending",
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
-    },
-    {
-      "number": 3,
       "title": "README / SKILL.md + 빌드 검증 + 완료 마킹",
-      "file": "phase-03.md",
-      "status": "pending",
+      "file": "phase-02.md",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],

@@ -196,6 +196,18 @@ dooray post comment latest <project> 42 -n 3
 dooray post comment latest --url <dooray-url>
 ```
 
+#### comment get
+
+단일 댓글 ID 로 본문·메타·attachments 를 직접 fetch. `comment list` 후 jq 필터링 없이 바로 사용할 수 있어 자동화 파이프라인에 적합하다.
+
+```bash
+# 단일 댓글 조회 (자동화 친화)
+dooray post comment get <project> <post-number> <comment-id> --json | jq -r '.body.content'
+
+# ID / URL 모드
+dooray post comment get --id <postId> --comment-id <commentId> --json
+```
+
 ### 상태 변경
 
 ```bash
