@@ -126,9 +126,27 @@ grep -lE "index\.json.*completed" tasks/{plan}/phase-*.md   # 마지막 phase �
 
 **Self-check**: rename / mass-replace plan 에 `sed \b` 사용? 있으면 perl 로 치환.
 
+## 1-10. type 추가/삭제 phase 의 성공 기준에 `tsc --noEmit` 누락
+
+**증상**: phase 성공 기준이 `pnpm build && pnpm test` 만 명시. 신규 type 정의/import/시그니처 변경을 포함한 phase 가 빌드/테스트 통과해도 tsc 검증을 우회 → 머지 후 다음 PR 에서 회귀 발견.
+**왜**: tsup (esbuild) 과 vitest 모두 type-check 를 스킵. dooray-cli CI 도 historically `pnpm build && pnpm test` 만 돌림. type 회귀가 생산 build 에서는 안 보이고 type 전용 step (`tsc --noEmit`) 에서만 보인다.
+
+**Good** (type 변경을 포함한 phase 의 성공 기준):
+```bash
+# 새/수정된 type 의 회귀 검사
+pnpm tsc --noEmit 2>&1 | grep -E "^src/" | wc -l
+# 기대: <baseline 수치>  (변경 전 기준선 또는 0)
+```
+
+**검출 (plan 작성 시 grep)**: phase 본문에 `interface ` / `export type ` / `import type` / `: Promise<` / `: never` / 새 시그니처 추가 / catch 블록 패턴 변경 같은 키워드가 등장하는데 성공 기준에 `tsc --noEmit` 0건. → 누락.
+
+**Self-check**: type 추가·변경·삭제를 포함한 phase 면 성공 기준에 `pnpm tsc --noEmit` 의 baseline 비교 명령이 있는가? CI 가 tsc 게이트를 돌리는 경우라도 phase 가드는 별도로 명시 (CI 는 PR scope 외 회귀까지 잡아주지만, phase 자체 검증은 plan-local).
+
+**Why**: PR #46 (post comment get) 가 `PostCommentDetailResponse` 를 사용했지만 import 누락. plan026 (PR #48) `await Promise<never>` 패턴이 TS2366 발생. 둘 다 build/test PASS 로 머지 → 다음 PR 의 review-fix 단계에서야 발견. tsup 의 type-check 우회 특성은 dooray-cli 모든 type-touching phase 의 공통 함정.
+
 ## 섹션 1 소진 체크리스트
 
-plan 제출 전 9개 패턴 모두 self-check:
+plan 제출 전 10개 패턴 모두 self-check:
 
 - [ ] **1-1**: 모든 수치가 실측 명령 결과
 - [ ] **1-2**: 파일 목록이 `--name-only` 결과와 일치
@@ -139,6 +157,7 @@ plan 제출 전 9개 패턴 모두 self-check:
 - [ ] **1-7**: load-bearing 불변식 도입 시 4면 가드
 - [ ] **1-8**: 마지막 phase 에 index.json `completed` 마킹 지시
 - [ ] **1-9**: rename 시 `sed \b` 대신 `perl`
+- [ ] **1-10**: type 변경 phase 면 성공 기준에 `pnpm tsc --noEmit` baseline 비교
 
 ---
 
