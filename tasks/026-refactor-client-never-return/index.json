@@ -1,0 +1,20 @@
+{
+  "name": "026-refactor-client-never-return",
+  "description": "GitHub Issue #42 — `toDoorayCliError` 의 반환 타입을 `Promise<never>` 그대로 유지하되, client.ts 의 모든 catch 절에서 `return toDoorayCliError(e)` 를 `await toDoorayCliError(e)` 로 통일하여 TypeScript 의 control flow 분석을 명확히 한다. `return` 키워드는 호출자 시그니처가 메서드 반환값으로 해석할 여지를 만들어 future 메서드 추가 시 silent 회귀 위험. 약 34 곳 mechanical 치환.",
+  "created_at": "2026-05-08T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 1,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "client.ts 전체 catch 절 패턴 통일 + 빌드 검증 + 완료 마킹",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-05-08T00:00:00Z"
+}
