@@ -171,22 +171,6 @@ COMMENT_ID=$(dooray post comment add <project> <post-num> --body "스크린샷 �
 dooray post comment file upload <project> <post-num> "$COMMENT_ID" ./screenshot.png
 ```
 
-### 시나리오 — 단일 댓글 본문 fetch + patch
-
-`post comment get <project> <post-number> <comment-id> --json` 으로 단일 댓글의 본문 + attachments 를 곧장 fetch. `comment list` 후 jq 필터링 우회 불필요.
-
-본문 patch 흐름:
-
-```bash
-# 1. 현재 본문 저장 (attachment markdown 포함)
-dooray post comment get <project> <post-number> <comment-id> --json | jq -r '.body.content' > current.md
-
-# 2. (편집)
-
-# 3. attachment guard 통과하여 수정 완료
-dooray post comment edit <project> <post-number> <comment-id> --body-file current.md --no-confirm
-```
-
 ### 위키 페이지 조회
 
 ```bash
@@ -197,6 +181,17 @@ dooray wiki pages <project> --json
 # 2. 페이지 내용 조회
 dooray wiki page get <project> <pageId> --json
 ```
+
+## 단일 댓글 본문 fetch
+
+`post comment get <project> <post-number> <comment-id> --json` 으로 단일 댓글의 본문 + attachments 를 곧장 fetch. `comment list` 후 jq 필터링 우회 불필요.
+
+본문 patch 흐름:
+1. `dooray post comment get <p> <n> <id> --json | jq -r '.body.content' > current.md`
+2. (편집)
+3. `dooray post comment edit <p> <n> <id> --body-file current.md --no-confirm` (attachment guard 통과)
+
+---
 
 ## 본문 수정 (attachment 보호)
 
