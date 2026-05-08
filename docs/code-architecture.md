@@ -40,6 +40,7 @@ src/
     milestone.ts            # name → milestoneId
     match.ts                # 공용: 정확일치 → 부분일치 → 모호 시 에러
     post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020)
+    task-link.ts            # --link-task ref[] → TaskLinkInput[] (resolvePostInput + getPost detail 합성, post create/edit 인라인 변환)
     member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선)
 
   cache/

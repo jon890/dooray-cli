@@ -224,8 +224,8 @@ ADR 본문에 새 ADR 이 추가됐는데 상단 Index 에 누락되면 AI 에�
 ```bash
 # cwd: <repo root>
 
-# 1) 본문에 정의된 ADR 번호 목록
-BODY=$(grep -oE '^## ADR-[0-9]+' docs/adr.md | sort -u)
+# 1) 본문에 정의된 ADR 번호 목록 (좌우 형식 일치를 위해 'ADR-NNN' 만 추출)
+BODY=$(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u)
 
 # 2) Index 에 링크된 ADR 번호 목록
 INDEX=$(grep -oE '\[ADR-[0-9]+\]\(#adr-[0-9]+\)' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u)

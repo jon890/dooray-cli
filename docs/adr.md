@@ -1,5 +1,38 @@
 # ADR — dooray-cli 기술 결정 기록
 
+## ADR Index
+
+각 ADR 한 줄 요약. 상황별 코드 작업 시 참조 ADR 은 [`CLAUDE.md` "상황별 ADR 필수 참조" 표](../CLAUDE.md) 에서 빠르게 찾는다.
+
+- [ADR-001](#adr-001) — TypeScript (Node.js) 선택
+- [ADR-002](#adr-002) — ky (HTTP 클라이언트)
+- [ADR-003](#adr-003) — tsup (빌드 툴)
+- [ADR-004](#adr-004) — 디스크 캐시 (project·member·workflow)
+- [ADR-005](#adr-005) — postNumber 를 Post 식별자로 사용
+- [ADR-006](#adr-006) — $EDITOR 기반 수정 플로우
+- [ADR-007](#adr-007) — config 파일 전용 (env var 폴백 없음)
+- [ADR-008](#adr-008) — 멤버 모호성: 에러 + 후보 출력
+- [ADR-009](#adr-009) — WikiResolver 는 ProjectCache 활용
+- [ADR-010](#adr-010) — 캐시 파일 분리 (디렉토리 기반)
+- [ADR-011](#adr-011) — 내 정보 (Me) 캐시
+- [ADR-012](#adr-012) — IMAP 메일 연동
+- [ADR-013](#adr-013) — SMTP 메일 발송
+- [ADR-014](#adr-014) — TypeScript Path Alias 보류
+- [ADR-015](#adr-015) — 파일 첨부 API 307 리다이렉트 수동 처리
+- [ADR-016](#adr-016) — `dooray setup` 대화형 초기 설정 마법사
+- [ADR-017](#adr-017) — `api/types.ts` 단일 파일 유지
+- [ADR-018](#adr-018) — `dooray setup` 에서 Claude Code 스킬 설치
+- [ADR-019](#adr-019) — `post create` 메타데이터 옵션 (`--tag`/`--parent`/`--workflow`/`--milestone`)
+- [ADR-020](#adr-020) — post 명령 input 통합 (`--id`/URL/positional) + 첫 테스트 인프라 (vitest)
+- [ADR-021](#adr-021) — `member` 명령 + `comment list` Creator 이름 자동 채우기
+- [ADR-022](#adr-022) — `dooray feedback` 명령 + GitHub 호출은 `gh` CLI 위임
+- [ADR-023](#adr-023) — `dooray feedback --last` last-run 추적 (opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹)
+- [ADR-024](#adr-024) — `dooray post comment file *` (post-level files API + 댓글 PUT 합성)
+
+---
+
+<a id="adr-001"></a>
+
 ## ADR-001: TypeScript (Node.js) 선택
 
 **결정**: Kotlin(기존 MCP 서버) 대신 TypeScript로 새로 작성
@@ -13,6 +46,8 @@
 **대안 기각**: Kotlin MCP 서버 코드 재사용 포기 → 다른 ADR과 형식 일관성 확보. types.ts 포팅 비용은 1일 내라 상쇄 가능.
 
 ---
+
+<a id="adr-002"></a>
 
 ## ADR-002: ky (HTTP 클라이언트)
 
@@ -29,6 +64,8 @@
 
 ---
 
+<a id="adr-003"></a>
+
 ## ADR-003: tsup (빌드 툴)
 
 **결정**: tsc 대신 tsup 사용
@@ -40,6 +77,8 @@
 - tsconfig.json 자동 인식, 설정 최소화
 
 ---
+
+<a id="adr-004"></a>
 
 ## ADR-004: 디스크 캐시 (project·member·workflow)
 
@@ -55,6 +94,8 @@
 
 ---
 
+<a id="adr-005"></a>
+
 ## ADR-005: postNumber를 Post 식별자로 사용
 
 **결정**: 내부 UUID(postId) 대신 `postNumber`(정수)를 CLI 인터페이스로 노출
@@ -66,6 +107,8 @@
 - API의 `postNumber` 필터 파라미터로 postId 변환 가능
 
 ---
+
+<a id="adr-006"></a>
 
 ## ADR-006: $EDITOR 기반 수정 플로우
 
@@ -80,6 +123,8 @@
 
 ---
 
+<a id="adr-007"></a>
+
 ## ADR-007: config 파일 전용 (env var 폴백 없음)
 
 **결정**: API key를 환경변수로 받지 않음. `~/.dooray/config.json`만 사용
@@ -92,6 +137,8 @@
 
 ---
 
+<a id="adr-008"></a>
+
 ## ADR-008: 멤버 모호성 — 에러 + 후보 출력
 
 **결정**: 이름 검색 시 복수 매칭이면 인터랙티브 선택 대신 에러 출력
@@ -102,6 +149,8 @@
 - 에러 메시지에 후보 목록 포함 → 에이전트가 다음 시도에 정확한 값 사용 가능
 
 ---
+
+<a id="adr-009"></a>
 
 ## ADR-009: WikiResolver는 ProjectCache 활용
 
@@ -114,6 +163,8 @@
 - Wiki가 없는 프로젝트는 명확한 에러 출력
 
 ---
+
+<a id="adr-010"></a>
 
 ## ADR-010: 캐시 파일 분리 (디렉토리 기반)
 
@@ -130,6 +181,8 @@
 
 ---
 
+<a id="adr-011"></a>
+
 ## ADR-011: 내 정보(Me) 캐시
 
 **결정**: `/common/v1/members/me` 응답을 `cache/me.json`에 캐시 (id, name)
@@ -141,6 +194,8 @@
 - post 생성 시 `from` 자동 설정 등 향후 확장 기반
 
 ---
+
+<a id="adr-012"></a>
 
 ## ADR-012: IMAP 메일 연동
 
@@ -164,6 +219,8 @@
 
 ---
 
+<a id="adr-013"></a>
+
 ## ADR-013: SMTP 메일 발송
 
 **결정**: nodemailer를 사용하여 Dooray SMTP(smtp.dooray.com:465)로 메일 발송
@@ -180,6 +237,8 @@
 
 ---
 
+<a id="adr-014"></a>
+
 ## ADR-014: TypeScript Path Alias 보류
 
 **결정**: `@/` 등 path alias 도입 보류
@@ -191,6 +250,8 @@
 - 프로젝트 규모 대비 실익이 크지 않음
 
 **재검토 시점**: 디렉토리 깊이가 4단계 이상으로 증가하거나 대규모 리팩토링 시
+
+<a id="adr-015"></a>
 
 ## ADR-015: 파일 첨부 API 307 리다이렉트 수동 처리
 
@@ -208,6 +269,8 @@
 - 업로드: `fetch` 직접 사용 (`ky`는 307 + `redirect: "manual"` 조합에서 정상 동작하지 않음)
 - 2차 요청 시 동일한 Authorization 헤더 첨부
 - 업로드: FormData + Blob, 다운로드: ArrayBuffer로 수신 후 파일 저장
+
+<a id="adr-016"></a>
 
 ## ADR-016: `dooray setup` 대화형 초기 설정 마법사
 
@@ -229,6 +292,8 @@
 
 ---
 
+<a id="adr-017"></a>
+
 ## ADR-017: api/types.ts 단일 파일 유지
 
 **결정**: `api/types.ts`를 도메인별로 분리하지 않고 단일 파일로 유지
@@ -243,6 +308,8 @@
 **재검토 시점**: 800줄 이상이거나 새 도메인(Drive 등)이 2개 이상 추가될 때
 
 ---
+
+<a id="adr-018"></a>
 
 ## ADR-018: `dooray setup`에서 Claude Code 스킬 설치
 
@@ -272,6 +339,8 @@
 **스킬 포맷**: Claude Code 전용 (SKILL.md frontmatter 규격). 타 에이전트(Cursor, Windsurf 등) 지원은 요청 시 확장
 
 ---
+
+<a id="adr-019"></a>
 
 ## ADR-019: `post create` 메타데이터 옵션 (`--tag`/`--parent`/`--workflow`/`--milestone`)
 
@@ -311,6 +380,8 @@
 **후속 작업**: `post edit`에 `--tag`/`--milestone` 동일 옵션 추가 (별도 task `010-2`).
 
 ---
+
+<a id="adr-020"></a>
 
 ## ADR-020: post 명령 input 통합 (`--id`/URL/positional) + 첫 테스트 인프라(vitest)
 
@@ -368,6 +439,8 @@
 
 ---
 
+<a id="adr-021"></a>
+
 ## ADR-021: `member` 명령 + comment list Creator 이름 자동 채우기
 
 **결정**:
@@ -402,6 +475,8 @@
 - 다른 출력(`post get` 작성자/담당자 등)도 동일 enrich 패턴 확대 (응답에 name 비어있는 경우)
 
 ---
+
+<a id="adr-022"></a>
 
 ## ADR-022: `dooray feedback` 명령 + GitHub 호출은 `gh` CLI에 위임
 
@@ -443,6 +518,8 @@
 - `feedbackRepo` config 옵션 (포크 사용자)
 
 ---
+
+<a id="adr-023"></a>
 
 ## ADR-023: `dooray feedback --last` last-run 추적 — opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹
 
@@ -487,6 +564,8 @@
 
 - `feedback --last` 실행 시 sanitized argv 미리보기 + confirm (현재 `--dry-run`으로 사전 확인 가능, 강제 confirm은 후속)
 - Sanitization 패턴 확장 (사용자 보고 기반)
+
+<a id="adr-024"></a>
 
 ## ADR-024: `dooray post comment file *` — post-level files API + 댓글 PUT 합성으로 구현
 
