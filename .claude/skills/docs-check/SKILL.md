@@ -99,6 +99,22 @@ ADR이 "왜"를 담고 있는가. "결정 / 맥락 / 대안 기각" 구조가 �
 
 ## 실행 절차
 
+### 0. 검증 위임 (권장 — agent 활용)
+
+dooray-cli 도메인 지식 (ADR-001~024 / planning 8단계 A항 docs 영향 표 / 캐시 규약 / PII gate / 거울 구조 원칙) 이 박힌 custom agent `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`) 에 위임:
+
+```
+Agent({
+  subagent_type: "dooray-cli-docs-verifier",
+  description: "5-axis docs audit",
+  prompt: "전체 docs (docs/*.md + .claude/skills/*/SKILL.md + _shared/*.md) 5축 점검. Critical / Warning / Safe 분류 보고."
+})
+```
+
+agent 가 자동 grep 검증 (resolvers/ 트리 vs src/, 캐시 디렉터리 vs store.ts, PRD 명령 vs CLI, ADR Index sync, PII grep) 까지 수행하므로 main session 부담 감소. 결과 받아 Critical 항목부터 사용자 승인 후 수정.
+
+agent 위임 안 하고 main session 이 직접 점검할 경우 아래 1~5 단계 진행 (legacy 경로).
+
 ### 1. 대상 파일 수집
 
 ```bash

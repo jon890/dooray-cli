@@ -61,7 +61,7 @@ plan 인자를 받으면 **가장 먼저** 3중 검증. 하나라도 걸리면 �
 | **critic** | `oh-my-claudecode:critic` | opus | 계획 평가 (APPROVE/REVISE), 실제 코드 대조 |
 | **executor** | `oh-my-claudecode:executor` | sonnet | phase 순차 실행, 코드 수정 (커밋 제외), `bypassPermissions` |
 | **code-reviewer** | `oh-my-claudecode:code-reviewer` | sonnet | 코드 품질 검사 (PASS/FIX_NEEDED), AI slop/금지사항 탐지 |
-| **docs-verifier** | `oh-my-claudecode:architect` | opus | 코드↔docs 정합성 검증 (PASS/UPDATE_NEEDED/VIOLATION) |
+| **docs-verifier** | `dooray-cli-docs-verifier` (custom, project-local at `.claude/agents/`) | sonnet | 코드↔docs 정합성 검증 (PASS/UPDATE_NEEDED/VIOLATION). dooray-cli 도메인 지식 (ADR-001~024 / docs 영향 표 / 캐시 규약 / PII gate) 자동 적용 — 매번 검사 항목 길게 전달 불요 |
 
 ### 정식 팀원 스폰 규칙 (필수)
 
