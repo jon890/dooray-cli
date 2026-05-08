@@ -66,6 +66,7 @@ dooray doctor                                 # 설정 검증
 | 업무 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
 | 댓글 조회 | `dooray post comment list <project> <number>` — `--sort asc\|desc`, `--reverse`, `--latest <n>`, `--since <iso>`, `--from-author <name>` 필터 지원. table 출력은 Creator 이름 자동 채움, `--json`은 raw 유지 (ADR-021) |
 | 최신 댓글 조회 | `dooray post comment latest <project> <number>` — 최신 댓글 1개 빠른 조회. `-n <N>`으로 N개 지정 |
+| 단일 댓글 조회 | `dooray post comment get <project> <number> <comment-id> --json` — 단일 댓글 본문·메타·attachments 직접 fetch. `comment list` 후 jq 필터 우회 불필요. `--id <postId> --comment-id <id>` / `--url <url> --comment-id <id>` 모드 지원 |
 | 댓글 추가 | `dooray post comment add <project> <number> --body "..."` 또는 `--body-file <path>` |
 | 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` 또는 `--body-file <path>` |
 | 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` |
@@ -168,6 +169,22 @@ COMMENT_ID=$(dooray post comment add <project> <post-num> --body "스크린샷 �
 
 # 2. 그 댓글에 파일을 첨부 (post-level 업로드 + 댓글 본문 markdown 자동 추가)
 dooray post comment file upload <project> <post-num> "$COMMENT_ID" ./screenshot.png
+```
+
+### 시나리오 — 단일 댓글 본문 fetch + patch
+
+`post comment get <project> <post-number> <comment-id> --json` 으로 단일 댓글의 본문 + attachments 를 곧장 fetch. `comment list` 후 jq 필터링 우회 불필요.
+
+본문 patch 흐름:
+
+```bash
+# 1. 현재 본문 저장 (attachment markdown 포함)
+dooray post comment get <project> <post-number> <comment-id> --json | jq -r '.body.content' > current.md
+
+# 2. (편집)
+
+# 3. attachment guard 통과하여 수정 완료
+dooray post comment edit <project> <post-number> <comment-id> --body-file current.md --no-confirm
 ```
 
 ### 위키 페이지 조회
