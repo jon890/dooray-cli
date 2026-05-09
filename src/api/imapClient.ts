@@ -131,6 +131,7 @@ export async function getMail(
       }
 
       const parsed: ParsedMail = await simpleParser(source);
+      // parsed.html can be false (mailparser); || collapses false and empty string both → fallback
       const body: string = parsed.text || (parsed.html || "") || "(본문 없음)";
 
       return {
