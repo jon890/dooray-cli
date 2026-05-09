@@ -73,7 +73,7 @@ function memberIdToEmail(
   const member = members.find(
     (m) => m.organizationMemberId === memberId,
   );
-  return member?.emailAddress ?? memberId;
+  return member?.name ?? memberId;
 }
 
 export function serializePostFrontmatter(
