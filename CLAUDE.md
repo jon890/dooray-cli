@@ -9,9 +9,12 @@ NHN Dooray REST API CLI 도구. TypeScript + Commander.js 기반.
 ```bash
 pnpm install          # 의존성 설치
 pnpm run build        # tsup 빌드 (dist/index.js 단일 번들)
+pnpm tsc --noEmit     # 타입 체크 전용 (런타임 번들에는 미사용)
 node dist/index.js    # 직접 실행
 dooray                # 글로벌 링크 시
 ```
+
+**역할 분리 (`tsconfig.json` `moduleResolution: "Bundler"`)**: `tsup`(esbuild) 이 ESM-only 패키지 (`chalk`/`ora`/`ky`/`@inquirer/prompts`)를 inline transform 으로 처리해 단일 CJS 번들 생성. `tsc` 는 타입 체크 전용이며 런타임 번들에는 관여하지 않음. 새 의존성 추가 시 `package.json` `exports` 맵 진입점이 의도와 맞는지 한 번 확인 (Bundler 모드는 Node16 대비 exports 검증이 완화됨).
 
 ## 디렉토리 구조
 
