@@ -435,6 +435,13 @@ git -C /Users/.../dooray-cli/.claude/worktrees/{plan} status --short
 **검출**: tsc fix PR 작성 시 변경된 함수명을 `git diff <base>..HEAD --diff-filter=M -U0 src/` 로 추출 → 함수 시그니처가 *값의 의미를 전달* 하는데 동작이 바뀌었으면 rename 후보. 자동 검출 어렵지만 review 단계에 명시적 self-check 항목으로.
 **Why**: PR #52 review — `memberIdToEmail` 이 dead `.emailAddress` fix 후 `.name` 반환하는데 함수명은 email 시사. 흐름상 SMTP 와 무관해 실제 위험 0 이었지만, 다음에 비슷한 케이스에서는 진짜 SMTP 흐름과 엮일 수 있음. tsc fix 와 rename 을 한 묶음으로 처리하는 습관이 회귀 방어.
 
+## CLI19. `T | false` union 반환 라이브러리에 `??` 사용 부적합
+
+**증상**: `mailparser.ParsedMail.html: string | false`. `parsed.text ?? parsed.html ?? "(default)"` 작성 시 `parsed.text === undefined` 이고 `parsed.html === false` 면 `??` 가 `false` 를 통과시켜 `body = false` 로 결과 — 타입 string 위반 + 런타임 false 노출.
+**Good**: 외부 라이브러리가 `T | false` / `T | 0` / `T | ""` 반환 가능하면 `||` 사용 (falsy 전체를 default 로 흘림). 단 의도된 빈 문자열 보존이 필요하면 명시적 `typeof` / `=== false` 가드 + 한 줄 주석으로 의도 명시.
+**검출**: `grep -rnE "\?\?.*(html|raw)\b" src/` 로 nullish coalescing 후보 리뷰. 타입 정의에 `| false` / `| 0` / `| ""` 이 있는 union 이면 `??` 부적합.
+**Why**: PR #53 review — `parsed.text ?? parsed.html ?? "(본문 없음)"` 에서 `parsed.html: string | false` 의 `false` 통과 위험. `||` 로 교체 + 의도 주석. 다른 라이브러리 (`yaml.load` 일부 형, `dotenv` 등) 도 유사 패턴 가능.
+
 ---
 
 이 파일은 dooray-cli 전용. 시드 1 / 2 패턴은 fos-blog 와 동일 구조이지만 도메인별 예시는 dooray-cli 컨텍스트로 표현. 3 / 4 / ... 는 이 레포 고유.
