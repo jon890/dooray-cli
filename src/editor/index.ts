@@ -66,7 +66,7 @@ export interface ParsedPost extends PostFrontmatter {
   body: string;
 }
 
-function memberIdToEmail(
+function memberIdToName(
   memberId: string,
   members: CachedMember[],
 ): string {
@@ -86,14 +86,14 @@ export function serializePostFrontmatter(
     due_date: post.dueDate ?? null,
     to: post.users.to
       .map((u) => {
-        if (u.member) return memberIdToEmail(u.member.organizationMemberId, members);
+        if (u.member) return memberIdToName(u.member.organizationMemberId, members);
         if (u.emailUser) return u.emailUser.emailAddress;
         return "";
       })
       .filter(Boolean),
     cc: post.users.cc
       .map((u) => {
-        if (u.member) return memberIdToEmail(u.member.organizationMemberId, members);
+        if (u.member) return memberIdToName(u.member.organizationMemberId, members);
         if (u.emailUser) return u.emailUser.emailAddress;
         return "";
       })
