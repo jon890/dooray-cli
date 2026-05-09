@@ -1,5 +1,5 @@
 import { ImapFlow } from "imapflow";
-import { simpleParser } from "mailparser";
+import { simpleParser, type ParsedMail } from "mailparser";
 import type { Config } from "../config/types.js";
 import { DEFAULTS } from "../config/types.js";
 import { DoorayCliError } from "../utils/errors.js";
@@ -62,10 +62,10 @@ export async function listMails(
       if (Object.keys(query).length === 0) query.all = true;
 
       const uids = await client.search(query, { uid: true });
-      if (uids.length === 0) return [];
+      if (!Array.isArray(uids) || uids.length === 0) return [];
 
       // Take latest N UIDs (highest UID = newest)
-      const sorted = uids.sort((a, b) => b - a).slice(0, limit);
+      const sorted = uids.sort((a: number, b: number) => b - a).slice(0, limit);
       const uidSet = sorted.join(",");
 
       const messages: MailMessage[] = [];
@@ -74,17 +74,19 @@ export async function listMails(
         flags: true,
         envelope: true,
       }, { uid: true })) {
+        const { envelope, flags } = msg;
+        if (!envelope || !flags) continue;
         messages.push({
           uid: msg.uid,
-          subject: msg.envelope.subject ?? "(제목 없음)",
-          from: msg.envelope.from?.[0]
-            ? `${msg.envelope.from[0].name || ""} <${msg.envelope.from[0].address || ""}>`
+          subject: envelope.subject ?? "(제목 없음)",
+          from: envelope.from?.[0]
+            ? `${envelope.from[0].name || ""} <${envelope.from[0].address || ""}>`
             : "(unknown)",
-          to: (msg.envelope.to ?? []).map(
+          to: (envelope.to ?? []).map(
             (t) => `${t.name || ""} <${t.address || ""}>`,
           ),
-          date: msg.envelope.date ?? null,
-          isRead: msg.flags.has("\\Seen"),
+          date: envelope.date ?? null,
+          isRead: flags.has("\\Seen"),
         });
       }
 
@@ -120,21 +122,28 @@ export async function getMail(
       if (!msg) {
         throw new DoorayCliError(`메일을 찾을 수 없습니다: UID ${uid}`, 1);
       }
+      const { envelope, flags, source } = msg;
+      if (!envelope || !flags || !source) {
+        throw new DoorayCliError(
+          `메일 메타데이터가 불완전합니다 (UID ${uid}): envelope/flags/source 누락`,
+          1,
+        );
+      }
 
-      const parsed = await simpleParser(msg.source);
-      const body = parsed.text ?? parsed.html ?? "(본문 없음)";
+      const parsed: ParsedMail = await simpleParser(source);
+      const body: string = parsed.text || (parsed.html || "") || "(본문 없음)";
 
       return {
         uid: msg.uid,
-        subject: msg.envelope.subject ?? "(제목 없음)",
-        from: msg.envelope.from?.[0]
-          ? `${msg.envelope.from[0].name || ""} <${msg.envelope.from[0].address || ""}>`
+        subject: envelope.subject ?? "(제목 없음)",
+        from: envelope.from?.[0]
+          ? `${envelope.from[0].name || ""} <${envelope.from[0].address || ""}>`
           : "(unknown)",
-        to: (msg.envelope.to ?? []).map(
+        to: (envelope.to ?? []).map(
           (t) => `${t.name || ""} <${t.address || ""}>`,
         ),
-        date: msg.envelope.date ?? null,
-        isRead: msg.flags.has("\\Seen"),
+        date: envelope.date ?? null,
+        isRead: flags.has("\\Seen"),
         body,
       };
     } finally {

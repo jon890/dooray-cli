@@ -28,7 +28,8 @@ async function getMessageId(config: Parameters<typeof getImapConfigOrThrow>[0], 
         uid: true,
         envelope: true,
       }, { uid: true });
-      return msg?.envelope.messageId ?? null;
+      if (!msg) return null;
+      return msg.envelope?.messageId ?? null;
     } finally {
       lock.release();
     }
