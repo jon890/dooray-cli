@@ -40,7 +40,7 @@ export const setupCommand = new Command("setup")
       const defaultEndpoint =
         existing?.baseUrl ?? API_ENDPOINTS["민간 클라우드"];
 
-      const baseUrl = await select({
+      const baseUrl = await select<string>({
         message: "API Endpoint를 선택하세요",
         choices: endpointChoices,
         default: defaultEndpoint,

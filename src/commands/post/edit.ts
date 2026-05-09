@@ -22,11 +22,11 @@ import type { CreatePostUser } from "../../api/types.js";
 async function resolveUsers(
   client: DoorayApiClient,
   projectId: string,
-  emails: string[],
+  names: string[],
 ): Promise<CreatePostUser[]> {
   const users: CreatePostUser[] = [];
-  for (const email of emails) {
-    const memberId = await resolveMember(client, projectId, email);
+  for (const name of names) {
+    const memberId = await resolveMember(client, projectId, name);
     users.push({ type: "member", member: { organizationMemberId: memberId } });
   }
   return users;
