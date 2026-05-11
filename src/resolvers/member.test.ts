@@ -92,7 +92,7 @@ describe("resolveMember 입력 자동 분기", () => {
     });
     await expect(
       resolveMember(client, "proj", "dup@example.com"),
-    ).rejects.toThrow(/이메일 매칭이 모호합니다.*A.*B/s);
+    ).rejects.toThrow(/복수의 멤버가 매칭됩니다\(이메일\).*A.*B/s);
   });
 
   it("이름 입력 (기존 matchByName 분기) → ensureMembers 경로 사용", async () => {

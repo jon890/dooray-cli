@@ -118,8 +118,10 @@ export async function resolveMember(
       // "찾을 수 없습니다" 로 변환하고, 인증(EXIT_AUTH_ERROR) / 네트워크(원본
       // Error — DoorayCliError 아님) 는 그대로 re-throw 해서 에러 분류 보존.
       if (err instanceof DoorayCliError && err.exitCode === EXIT_API_ERROR) {
+        // 원본 에러 메시지를 (원인: ...) 로 보존 — Dooray 서버 응답이나 HTTP
+        // 상태 코드 등 디버깅에 필요한 컨텍스트 손실 방지.
         throw new DoorayCliError(
-          `organizationMemberId 를 찾을 수 없습니다: ${input}`,
+          `organizationMemberId 를 찾을 수 없습니다: ${input} (원인: ${err.message})`,
           EXIT_PARAM_ERROR,
         );
       }
@@ -138,9 +140,10 @@ export async function resolveMember(
       );
     }
     if (hits.length > 1) {
-      const candidates = hits.map((m) => `${m.name} (${m.id})`).join(", ");
+      // matchByName 의 모호 에러 포맷과 일치 — multi-line bullet 으로 통일.
       throw new DoorayCliError(
-        `이메일 매칭이 모호합니다: ${input}\n후보: ${candidates}`,
+        `복수의 멤버가 매칭됩니다(이메일): "${input}"\n` +
+          hits.map((m) => `  - ${m.name} (${m.id})`).join("\n"),
         EXIT_PARAM_ERROR,
       );
     }
