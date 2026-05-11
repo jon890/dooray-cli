@@ -43,6 +43,7 @@ src/
     comment-file-input.ts   # comment file 4개 명령 입력 분기 헬퍼 (parseCommentFilePositional pure + resolveCommentFileInput orchestrator, ADR-020 확장)
     task-link.ts            # --link-task ref[] → TaskLinkInput[] (resolvePostInput + getPost detail 합성, post create/edit 인라인 변환)
     member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선)
+    post-users.ts           # parseUserSpec + mergeUsers + resolveUserAdditions — post edit/create 의 cc/to 멤버·그룹 입력 분기 + 기존 users 와 append/clear/dedupe (ADR-025)
 
   cache/
     store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크

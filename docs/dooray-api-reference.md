@@ -144,6 +144,11 @@ CLI `wiki page edit` 분기 (Issue #4):
 - 파일 업로드/다운로드는 `api.dooray.com` 대신 `file-api.dooray.com`으로 라우팅 필요
 - 첫 요청이 307 응답 → Location 헤더의 실제 파일 서버로 재요청 (클라이언트에서 `redirect: "manual"` 후 처리)
 
+### Post cc/to 변경 (ADR-025)
+- `PUT /project/v1/projects/{projectId}/posts/{postId}` 는 **full payload** 요구 — `users.cc` 만 단독 patch 불가
+- 시도: `POST .../set-cc`, `.../cc`, `.../to-and-cc` 같은 추정 endpoint → 모두 `null` 응답 (Issue #54 실측)
+- 그룹 추가 시 PostUser 객체 형식: `{ "type": "group", "group": { "projectMemberGroupId": "<id>" } }` (이슈 본문에 적힌 `"memberGroup"` / `"memberGroupId"` 는 잘못된 추측 — `type: "group"` + `projectMemberGroupId` 가 정상)
+
 ## 8. 유지보수 규칙
 
 - size 최댓값이 확인되면 "명시되지 않음" → 실제 값 교체

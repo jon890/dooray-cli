@@ -162,6 +162,28 @@ dooray post comment file delete my-project 42 <comment-id> <file-id>    # 삭제
 
 `delete` 는 atomic 보장 없음 — 부분 성공 시 stderr 안내 + non-zero exit.
 
+## 참조자(cc) / 담당자(to) 변경 흐름 (ADR-025)
+
+기존 업무의 참조자·담당자에 멤버 또는 그룹 추가/제거. 자동화 시나리오: 신규 업무 생성 후 후속으로 특정 그룹을 참조에 첨부.
+
+```
+# 멤버/그룹 추가 (append + dedupe)
+dooray post edit my-project 42 \
+  --cc 홍길동 --cc-group dev-team               # 이름·코드 부분일치
+  --to 김철수
+
+# 전체 비우고 신규만 (clear + 신규 입력)
+dooray post edit my-project 42 \
+  --cc-clear --cc 홍길동                         # 기존 cc 전부 제거 + 홍길동만
+
+# 신규 업무 생성 시 그룹 cc 동봉
+dooray post create my-project \
+  --title "주간 audit 리포트" \
+  --cc 홍길동 --cc-group dev-team               # post create 는 clear 없음
+```
+
+interactive ($EDITOR) 모드에서는 이 옵션들 무시 + stderr 경고 (mention/link-task 패턴 답습).
+
 ## 업무 메타데이터 흐름 (ADR-019)
 
 ```

@@ -69,6 +69,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - post 목록은 최신순 정렬 (`-createdAt`)
 - `post edit` / `post comment edit` 는 본문 full-replace. 새 본문에 기존 attachment markdown(`![](/files/<id>)`) 누락 시 (y/N) confirm. non-TTY 는 abort, `--no-confirm` 으로 우회.
 - `post create` / `post edit` / `post comment add/edit` 4 명령 모두 `--mention` / `--mention-group` / `--link-task` / `--dry-run` 동일 옵션 지원. mention 은 prepend, link-task 는 append, 적용 순서는 mention → link-task. interactive ($EDITOR) 모드의 `post edit` 는 mention/link-task 무시 + 경고
+- `post edit` 는 참조자/담당자 변경 옵션 6개 지원: `--cc <name>` / `--cc-group <code>` (반복) + `--cc-clear` + 동일 `--to` 3개. 기본 append (기존 cc/to 유지 + dedupe), `--*-clear` 는 기존 비우고 신규만. `post create` 는 `--cc-group` / `--to-group` 2개 추가. group 은 `type: "group"` + `projectMemberGroupId` 로 전송 (ADR-025). interactive 모드는 이 6+2 옵션 무시 + 경고
 
 ## 상황별 ADR 필수 참조
 
@@ -87,6 +88,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | `feedback` 명령 (GitHub issue 등록) | **ADR-022** (gh CLI 위임 + sanitization 정책) |
 | `feedback --last` (last-run 추적) | **ADR-023** (opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹) |
 | `comment file *` 명령 (list/upload/download/delete) | **ADR-024** (post-level files API + 댓글 PUT 합성 — Dooray 댓글 전용 endpoint 부재) |
+| `post edit/create` 의 cc/to 변경 (멤버/그룹) | **ADR-025** (full payload PUT + `type: "group"` + `projectMemberGroupId`) |
 | 파일 업로드/다운로드 (307 처리) | **ADR-015** (수동 redirect + Auth 헤더 재첨부) |
 | `dooray setup` 마법사 변경 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치) |
 | 새 Commander.js 서브커맨드 추가 | (ADR 없음 — 기존 `commands/*.ts` 패턴 참조) |

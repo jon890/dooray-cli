@@ -25,6 +25,7 @@
 - [ADR-022](#adr-022) — `dooray feedback` 명령 + GitHub 호출은 `gh` CLI 위임
 - [ADR-023](#adr-023) — `dooray feedback --last` last-run 추적 (opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹)
 - [ADR-024](#adr-024) — `dooray post comment file *` (post-level files API + 댓글 PUT 합성)
+- [ADR-025](#adr-025) — `post edit/create` cc/to 에 member-group 추가 (full payload PUT + `type: "group"`)
 
 ---
 
@@ -395,3 +396,18 @@
 - 기존 `post file *` 안내 — 사용자가 댓글 ↔ post 본문 first attachment 구분 못함
 
 각 명령 합성 동작은 `src/commands/post/comment/file/*.ts` 참조. 향후 Dooray 가 댓글 endpoint 도입하면 client API 만 교체 (CLI 시그니처 보존).
+
+<a id="adr-025"></a>
+
+## ADR-025: `post edit/create` cc/to 에 member-group 추가 (full payload PUT + `type: "group"`)
+
+**결정**: `post edit` 에 `--cc <name>` / `--cc-group <code>` / `--cc-clear` (+ `--to` / `--to-group` / `--to-clear`) 6 옵션 추가. `post create` 에 `--cc-group` / `--to-group` 2 옵션 추가. 모두 기존 `updatePost` / `createPost` 의 **full payload PUT** 흐름 (`users: { to, cc }`) 으로 처리. 그룹은 `{ type: "group", group: { projectMemberGroupId } }` 객체로 전송.
+
+**맥락**: Issue #54 — 자동화 스크립트가 신규 업무 생성 후 후속으로 특정 그룹을 참조에 추가하려는 워크플로우 (audit 리포트 → 신규 업무 → 그룹 cc 첨부). Dooray API 는 cc-only patch 단독 엔드포인트 미제공. PUT post 의 full payload 만 cc/to 갱신 가능. 또한 PostUser type 의 그룹 분기는 `type: "memberGroup"` 이 아니라 `type: "group"` + `Group.projectMemberGroupId` (이슈 본문의 시도가 실패한 원인).
+
+**대안 기각**:
+- cc-only patch endpoint 역공학 — 부재 확인 (`POST .../set-cc`, `.../cc`, `.../to-and-cc` 모두 null 응답)
+- subcommand 분리 (`post participants {add,set,remove}`) — `post edit` 의 다른 옵션 (title/body/mention/link-task) 과 조합 불가, 한 번 PUT 으로 끝낼 수 없어 race 위험
+- replace 기본 정책 — 사용자가 매번 전체 멤버/그룹 알아야 함, 자동화 친화성 떨어짐. append + `--cc-clear` / `--to-clear` 채택
+
+**적용 범위**: `post edit` + `post create`. interactive ($EDITOR) 모드는 frontmatter 와 충돌 → 옵션 사용 시 stderr 경고 후 무시 (mention/link-task 패턴 답습).
