@@ -398,6 +398,8 @@
 
 각 명령 합성 동작은 `src/commands/post/comment/file/*.ts` 참조. 향후 Dooray 가 댓글 endpoint 도입하면 client API 만 교체 (CLI 시그니처 보존).
 
+---
+
 <a id="adr-025"></a>
 
 ## ADR-025: `post edit/create` cc/to 에 member-group 추가 (full payload PUT + `type: "group"`)
@@ -413,6 +415,8 @@
 - replace 기본 정책 — 사용자가 매번 전체 멤버/그룹 알아야 함, 자동화 친화성 떨어짐. append + `--cc-clear` / `--to-clear` 채택
 
 **적용 범위**: `post edit` + `post create`. interactive ($EDITOR) 모드는 frontmatter 와 충돌 → 옵션 사용 시 stderr 경고 후 무시 (mention/link-task 패턴 답습).
+
+---
 
 <a id="adr-026"></a>
 

@@ -74,7 +74,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - `dooray feedback`은 GitHub issue를 `gh` CLI에 위임해서 생성. baseUrl/시크릿은 자동 메타에 미포함. `--last`로 직전 명령의 sanitized argv + 에러를 본문 상단에 자동 첨부 (opt-in: `dooray config set track-last-run true`, ADR-023)
 - 제목 옵션 이름은 post·wiki 모두 `--title`로 통일 (Issue #8)
 - resolver(멤버·워크플로우·태그·마일스톤)는 정확일치 → 이름 부분일치, 모호하면 에러 + 후보 목록 출력
-- 멤버 resolver (`resolveMember`) 는 입력 형식 자동 분기: 19자리 이상 숫자 → `getMemberDetail` 로 organizationMemberId 검증 / 이메일 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) → `searchMembers({externalEmailAddresses})` exact / 그 외 → matchByName. `--to`/`--cc`/`--mention` 모두 동일
+- 멤버 resolver (`resolveMember`) 는 입력 형식 자동 분기: 15자리 이상 숫자 → `getMemberDetail` 로 organizationMemberId 검증 / 이메일 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) → `searchMembers({externalEmailAddresses})` exact / 그 외 → matchByName. `--to`/`--cc`/`--mention` 모두 동일
 - post 목록은 최신순 정렬 (`-createdAt`)
 - `post edit` / `post comment edit` 는 본문 full-replace. 새 본문에 기존 attachment markdown(`![](/files/<id>)`) 누락 시 (y/N) confirm. non-TTY 는 abort, `--no-confirm` 으로 우회.
 - `post create` / `post edit` / `post comment add/edit` 4 명령 모두 `--mention` / `--mention-group` / `--link-task` / `--dry-run` 동일 옵션 지원. mention 은 prepend, link-task 는 append, 적용 순서는 mention → link-task. interactive ($EDITOR) 모드의 `post edit` 는 mention/link-task 무시 + 경고
