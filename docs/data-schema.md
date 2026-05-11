@@ -14,7 +14,10 @@
     tags/{projectId}.json           # 프로젝트별 태그 캐시 (ADR-019)
     milestones/{projectId}.json     # 프로젝트별 마일스톤 캐시 (ADR-019)
     member-groups/{projectId}.json  # 프로젝트별 멤버 그룹 캐시 (`--mention-group`)
+    templates/{projectId}.json      # 프로젝트별 템플릿 목록 캐시 (ADR-027, TTL 24h)
 ```
+
+`templates/{projectId}.json` — `GET /project/v1/projects/{projectId}/templates` 응답의 id/templateName/메타만 보존 (body 는 미포함 — list 응답 자체가 body 제외). `--template <name|id>` 시 캐시에서 templateName 부분일치 후 단건 GET 으로 본문/interpolation 받음.
 
 ---
 
