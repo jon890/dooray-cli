@@ -200,6 +200,8 @@ dooray post edit --id <postId> --title "<원제목>" --parent <other-parent-post
 
 interactive ($EDITOR) 모드에서 `--parent` 사용 시 무시 + stderr 경고. **parent 만 단독 변경하려면 `--title "<원제목>"` 동반 필요** — `post edit` 가 본문 변경(`--title`/`--body`) 동반 시에만 non-interactive 분기로 들어가며, parent 변경은 그 분기 안에서만 수행됨. (Issue #60)
 
+`--dry-run --json` 출력의 `parentChange` 필드는 **사용자 입력 원문 그대로** (`<project>/<number>` 또는 raw postId) — resolver 처리 전 미리보기 값이며 실제 호출 대상 `postId` 가 아님. dry-run 은 API 미호출 원칙을 유지해 `resolvePostRef` 도 건너뜀.
+
 #### comment list 필터 옵션
 
 ```bash
