@@ -43,6 +43,8 @@ import type {
   PostFileListResponse,
   PostFileMetaResponse,
   UploadFileResponse,
+  TemplateListResponse,
+  TemplateDetailResponse,
 } from "./types.js";
 
 export interface GetPostsParams {
@@ -663,6 +665,42 @@ export class DoorayApiClient {
       return await this.api
         .delete(`project/v1/projects/${projectId}/posts/${postId}/files/${fileId}`)
         .json<DoorayApiUnitResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  // ─── Templates ──────────────────────────────────────
+
+  async getProjectTemplates(
+    projectId: string,
+    params?: { page?: number; size?: number },
+  ): Promise<TemplateListResponse> {
+    try {
+      return await this.api
+        .get(`project/v1/projects/${projectId}/templates`, {
+          searchParams: {
+            ...(params?.page != null && { page: params.page }),
+            ...(params?.size != null && { size: params.size }),
+          },
+        })
+        .json<TemplateListResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async getProjectTemplateDetail(
+    projectId: string,
+    templateId: string,
+    interpolation: boolean = true,
+  ): Promise<TemplateDetailResponse> {
+    try {
+      return await this.api
+        .get(`project/v1/projects/${projectId}/templates/${templateId}`, {
+          searchParams: { interpolation: String(interpolation) },
+        })
+        .json<TemplateDetailResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);
     }

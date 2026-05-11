@@ -11,6 +11,7 @@ import type {
   CachedMilestone,
   CachedWiki,
   CachedMemberGroup,
+  CachedTemplate,
 } from "./types.js";
 
 const CACHE_DIR = join(homedir(), ".dooray", "cache");
@@ -23,6 +24,7 @@ const TAGS_DIR = join(CACHE_DIR, "tags");
 const MILESTONES_DIR = join(CACHE_DIR, "milestones");
 const MEMBER_GROUPS_DIR = join(CACHE_DIR, "member-groups");
 const WIKIS_PATH = join(CACHE_DIR, "wikis.json");
+const TEMPLATES_DIR = join(CACHE_DIR, "templates");
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -150,6 +152,20 @@ export async function getMemberGroups(projectId: string): Promise<CacheEntry<Cac
 
 export async function setMemberGroups(projectId: string, items: CachedMemberGroup[]): Promise<void> {
   await writeJson(memberGroupsPath(projectId), { updatedAt: now(), data: items } satisfies CacheEntry<CachedMemberGroup[]>);
+}
+
+// ─── Templates (per project) ─────────────────────────────
+
+function templatesPath(projectId: string): string {
+  return join(TEMPLATES_DIR, `${projectId}.json`);
+}
+
+export async function getTemplates(projectId: string): Promise<CacheEntry<CachedTemplate[]> | null> {
+  return readJson<CacheEntry<CachedTemplate[]>>(templatesPath(projectId));
+}
+
+export async function setTemplates(projectId: string, items: CachedTemplate[]): Promise<void> {
+  await writeJson(templatesPath(projectId), { updatedAt: now(), data: items } satisfies CacheEntry<CachedTemplate[]>);
 }
 
 // ─── Wikis ────────────────────────────────────────────────
