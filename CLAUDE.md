@@ -4,6 +4,14 @@
 
 NHN Dooray REST API CLI 도구. TypeScript + Commander.js 기반.
 
+## API 스펙 확인 절차 (필수 — 신규 endpoint 사용 / 동작 검증 시)
+
+Dooray 공식 API 문서: <https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419>
+
+위 URL 은 인증 필요한 share 페이지 — `WebFetch` 로 직접 접근 안 됨. **`cmux-browser` skill** 로 열어서 본문 / endpoint / request·response 스키마 / 동작 특이점 확인 후 코드 작성. 본 repo 는 공식 문서 사본을 두지 않는다 (stale 위험 회피) — 공식이 단일 진실원.
+
+문서에 명시되지 않거나 직관에 반하는 동작은 ADR 로 보존 (예: ADR-015 파일 307, ADR-025 post cc/to full PUT, ADR-026 wiki 함정 묶음). `CLAUDE.md` "상황별 ADR 필수 참조" 표에서 영역별로 빠르게 찾는다.
+
 ## 빌드 & 실행
 
 ```bash
