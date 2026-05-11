@@ -442,6 +442,13 @@ git -C /Users/.../dooray-cli/.claude/worktrees/{plan} status --short
 **검출**: `grep -rnE "\?\?.*(html|raw)\b" src/` 로 nullish coalescing 후보 리뷰. 타입 정의에 `| false` / `| 0` / `| ""` 이 있는 union 이면 `??` 부적합.
 **Why**: PR #53 review — `parsed.text ?? parsed.html ?? "(본문 없음)"` 에서 `parsed.html: string | false` 의 `false` 통과 위험. `||` 로 교체 + 의도 주석. 다른 라이브러리 (`yaml.load` 일부 형, `dotenv` 등) 도 유사 패턴 가능.
 
+## CLI20. 같은 옵션을 두 명령에 추가할 때 dry-run 분기 위치 비대칭
+
+**증상**: 새 옵션 (`--cc-group` / `--to-group` 등) 을 `post edit` + `post create` 양쪽에 추가. `post edit` 은 dry-run 분기 *이후* 에 cc/to resolve 가 일어나도록 작성돼서 `--dry-run --json` 출력이 `{ body, users: { to, cc } }` 를 포함. `post create` 는 dry-run 분기가 cc/to resolve *이전* 에 조기 반환되어 `{ body }` 만 출력. 같은 옵션 + 같은 `--dry-run --json` 입력에 대해 명령마다 출력 범위 비대칭 → README 가 "포함된다" 로 일괄 서술하면 한 쪽 명령에서 docs↔코드 불일치.
+**Good**: phase 작성 시 새 옵션이 두 명령 (`edit` + `create` 등) 에 들어가면 **양 명령의 dry-run 분기 라인을 phase 본문에 명시** + "dry-run JSON 출력 범위가 두 명령에서 동일한가" self-check. 범위 통일이 불가능하면 (예: create 가 신규 자원이라 resolve 비용 회피) README/SKILL.md 에 **명령별로 범위를 분리 서술**.
+**검출**: phase diff 에 동일 옵션이 2 개 이상 `commands/post/*.ts` 에 추가됐으면 `grep -nE "opts\.dryRun|JSON\.stringify" <변경 파일들>` 결과 비교 — dry-run 분기 직전 코드에 무엇이 resolve 됐는지 라인 단위로 대조. 비대칭이면 docs 도 두 명령을 분리해서 서술.
+**Why**: PR #55 review — `post edit` 은 dry-run 가드를 cc/to resolve 후에 두는 게 자연스러웠고 (기존 mention/link-task 답습), `post create` 는 dry-run 가드가 다른 resolve 보다 위에 있었음. README 가 "post edit/create 의 --dry-run --json 출력에 users 포함" 으로 일괄 서술 → docs-verifier UPDATE_NEEDED. CLI13 의 변형: 같은 옵션 4 명령 dry-run 분기 누락은 CLI13 이 잡고, 같은 옵션 2 명령 dry-run *위치 차이로 출력 범위 비대칭* 은 CLI20.
+
 ---
 
 이 파일은 dooray-cli 전용. 시드 1 / 2 패턴은 fos-blog 와 동일 구조이지만 도메인별 예시는 dooray-cli 컨텍스트로 표현. 3 / 4 / ... 는 이 레포 고유.
