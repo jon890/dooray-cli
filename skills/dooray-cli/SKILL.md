@@ -95,7 +95,7 @@ dooray doctor                                 # 설정 검증
 | 참조자(cc) 멤버/그룹 추가 | `dooray post edit <project> <number> --cc-group <code>` — 기존 참조자 유지 + 그룹 추가 (dedupe, ADR-025) |
 | 참조자 전체 교체 | `dooray post edit <project> <number> --cc-clear --cc <name>` — 기존 참조자 비우고 신규 멤버만 |
 | 신규 업무 + 그룹 cc | `dooray post create <project> --title "..." --cc-group <code>` — 생성 시 그룹 참조자 포함 |
-| `dooray post edit <project> <number> --parent <ref>` | 상위 업무 설정/변경 (Issue #60) |
+| 상위 업무 설정/변경 | `dooray post edit <project> <number> --title "<원제목>" --parent <ref>` — `<ref>` 는 `<project>/<number>` 또는 raw postId. `--title` 미동반 시 interactive 모드로 진입해 무시. unset 미지원 (Issue #60) |
 
 > **제목 옵션 네이밍**: `post` 와 `wiki page` 모두 `--title` 표준. `post`의 `--subject`는 deprecated alias로 당분간 동작하되, 새 코드에서는 `--title` 사용을 권장.
 
