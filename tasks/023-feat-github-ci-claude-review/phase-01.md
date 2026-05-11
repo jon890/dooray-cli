@@ -127,7 +127,7 @@ pnpm build && pnpm test
 - README 갱신 금지 — phase-03 에서
 - 다른 OS matrix (windows / macos) 추가 금지 (단순화)
 - pnpm install 옵션 변경 (`--no-frozen-lockfile` 등) 금지
-- ADR 추가 금지 (자명성 게이트 — 일반적 CI 셋업)
+- ADR 추가 금지 (ADR 작성 전 점검 — 일반적 CI 셋업)
 
 ## 커밋
 

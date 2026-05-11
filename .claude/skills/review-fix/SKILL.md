@@ -407,7 +407,7 @@ reply 까지 완료되면 이번 PR 의 리뷰에서 **재발 가능 패턴**을
 |---|---|---|
 | 라이브러리 / API / 타입 함정 (ky / vitest / commander / imapflow 등) | `_shared/common-pitfalls.md` | `### dooray-cli` 의 CLI# |
 | 일반 critic 시드 패턴 (수치 추측 / cwd 모호 / 눈으로 확인 등) | 같은 파일 | 섹션 1 시드 패턴 |
-| 도메인 의사결정 / ADR 가치 | `docs/adr.md` | 신규 ADR (자명성 게이트 통과 후) |
+| 도메인 의사결정 / ADR 가치 | `docs/adr.md` | 신규 ADR (ADR 작성 전 점검 통과 후) |
 | 명령 동작 / 사용법 변경 | `CLAUDE.md` | 주의사항 표 |
 
 ### 작성 형식 (CLI# 추가 예시)

@@ -299,7 +299,7 @@ git -C /Users/.../dooray-cli/.claude/worktrees/{plan} status --short
 
 - 누적 대상: 재현 가능한 라이브러리 / API / 타입 함정 (ky / vitest / commander / imapflow / mailparser / nodemailer 등)
 - 누적 금지: 1회성 오타, 특정 plan 컨텍스트 종속 코멘트, 칭찬, 단순 확인 요청
-- 도메인 의사결정 가치가 있으면 `docs/adr.md` 신규 ADR 로 (자명성 게이트 통과 시)
+- 도메인 의사결정 가치가 있으면 `docs/adr.md` 신규 ADR 로 (ADR 작성 전 점검 통과 시)
 
 ---
 

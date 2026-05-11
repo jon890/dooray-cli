@@ -179,7 +179,7 @@ node dist/index.js --help >/dev/null 2>&1
 - 다른 명령의 spinner 메시지 wording 변경 금지 (별도 PR 사항)
 - ora 버전 변경 금지
 - `--no-progress` 같은 신규 옵션 추가 금지 (이번 phase scope 외)
-- ADR 추가 금지 (자명성 게이트 통과 못 함 — 일반적 CLI 패턴)
+- ADR 추가 금지 (ADR 작성 전 점검 통과 못 함 — 일반적 CLI 패턴)
 
 ## 커밋
 

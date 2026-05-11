@@ -174,7 +174,7 @@ grep -nE "export async function guardDroppedAttachments" src/utils/attachment-ch
 - `--preserve-attachments` 자동 append 옵션 추가 금지 (이번 phase scope 외 — 옵션 B)
 - diff 출력 (옵션 C) 추가 금지
 - attachment 자체를 서버에서 제거하는 cleanup 추가 금지
-- ADR 추가 금지 (자명성 게이트 — 일반적 confirm UX 패턴)
+- ADR 추가 금지 (ADR 작성 전 점검 — 일반적 confirm UX 패턴)
 
 ## 커밋
 
