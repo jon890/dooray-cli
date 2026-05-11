@@ -150,7 +150,7 @@ grep -nE "함께 사용|--title/--body 와 함께" src/commands/post/edit.ts
 - `--link-task` 옵션 추가 금지 — phase-02 에서
 - `--dry-run` 추가 금지 — phase-03 에서
 - comment add/edit 의 mention 흐름 변경 금지
-- ADR 추가 금지 (자명성 게이트 — 기존 mention 패턴의 단순 확장)
+- ADR 추가 금지 (ADR 작성 전 점검 — 기존 mention 패턴의 단순 확장)
 
 ## 커밋
 

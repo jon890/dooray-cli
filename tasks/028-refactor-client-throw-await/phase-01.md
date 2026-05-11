@@ -127,7 +127,7 @@ grep -c '"status": "completed"' tasks/028-refactor-client-throw-await/index.json
 - 시그니처 sync 변환 금지 (옵션 C — 호출자 분산 + 중복)
 - 다른 파일 (`src/utils/errors.ts`, resolvers, commands) 변경 금지
 - catch 블록 내 다른 로직 (로깅 등) 추가 금지 — 본 task 는 mechanical 치환만
-- ADR / docs 변경 금지 (자명성 게이트 — TypeScript 일반 패턴, 사용자 가시 동작 0)
+- ADR / docs 변경 금지 (ADR 작성 전 점검 — TypeScript 일반 패턴, 사용자 가시 동작 0)
 
 ## 커밋
 

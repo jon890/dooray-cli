@@ -119,7 +119,7 @@ grep -c '"status": "completed"' tasks/026-refactor-client-never-return/index.jso
 - `toDoorayCliError` 를 sync `function ...(): never` 로 바꾸기 금지 (await 패턴이 더 안전 — promise rejection 까지 unwind)
 - 다른 파일 (`src/utils/errors.ts`, resolvers, commands) 변경 금지 — client.ts 만
 - catch 절의 다른 로직 변경 금지 (예: 추가 컨텍스트 로깅) — 본 task 는 mechanical 치환만
-- ADR 추가 금지 (자명성 게이트 — TypeScript 일반 패턴)
+- ADR 추가 금지 (ADR 작성 전 점검 — TypeScript 일반 패턴)
 - `client.ts:304` 의 `PostCommentDetailResponse` 미임포트는 pre-existing — 본 task scope 외, 자체 수정 금지. 발견 시 SendMessage 로 team-lead 보고.
 
 ## 커밋

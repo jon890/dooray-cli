@@ -206,7 +206,7 @@ grep -c '"status": "completed"' tasks/019-feat-cli-automation-quickwins/index.js
 - `--interactive-tags` 같은 신규 옵션 도입 금지 (이번 phase scope 외)
 - `post edit` 시 mandatory 검증 추가 금지 (post create 만)
 - tag cache TTL 변경 금지
-- ADR 추가 금지 (자명성 게이트 통과 못 함 — 일반적 UX 개선)
+- ADR 추가 금지 (ADR 작성 전 점검 통과 못 함 — 일반적 UX 개선)
 
 ## 커밋
 
