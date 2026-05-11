@@ -1,0 +1,27 @@
+{
+  "name": "030-feat-post-edit-parent",
+  "description": "GitHub Issue #60 — dooray post edit 에 --parent <ref> 옵션 추가 (상위 업무 설정/변경). client.setPostParent (이미 존재, POST .../set-parent-post endpoint) 호출. resolvePostRef 재사용 — `project/number` 또는 raw postId. interactive ($EDITOR) 모드 무시 + 경고. cmux-browser spike 결과 unset-parent-post 부재 확인 → --parent-clear 옵션 제외 (웹 UI 에서 처리).",
+  "created_at": "2026-05-11T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 2,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "post edit --parent 옵션 추가 + setPostParent 호출 + 실증",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "README + skills/dooray-cli/SKILL.md + 완료 마킹",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-05-11T00:00:00Z"
+}
