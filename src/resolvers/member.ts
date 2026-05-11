@@ -3,6 +3,11 @@ import type { CachedMember } from "../cache/types.js";
 import { getMembers, setMembers, isExpired } from "../cache/store.js";
 import { MEMBERS_TTL_MS } from "../cache/types.js";
 import { matchByName } from "./match.js";
+import { DoorayCliError } from "../utils/errors.js";
+import { EXIT_API_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+
+const MEMBER_ID_RE = /^\d{15,}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function fetchAllMembers(
   client: DoorayApiClient,
@@ -103,6 +108,49 @@ export async function resolveMember(
   projectId: string,
   input: string,
 ): Promise<string> {
+  // 1. 15자리 이상 숫자 → organizationMemberId 직접 (getMemberDetail 로 존재 검증)
+  if (MEMBER_ID_RE.test(input)) {
+    try {
+      await client.getMemberDetail(input);
+      return input;
+    } catch (err) {
+      // toDoorayCliError 가 404 류 HTTP 에러에 EXIT_API_ERROR 부여. 그 케이스만
+      // "찾을 수 없습니다" 로 변환하고, 인증(EXIT_AUTH_ERROR) / 네트워크(원본
+      // Error — DoorayCliError 아님) 는 그대로 re-throw 해서 에러 분류 보존.
+      if (err instanceof DoorayCliError && err.exitCode === EXIT_API_ERROR) {
+        // 원본 에러 메시지를 (원인: ...) 로 보존 — Dooray 서버 응답이나 HTTP
+        // 상태 코드 등 디버깅에 필요한 컨텍스트 손실 방지.
+        throw new DoorayCliError(
+          `organizationMemberId 를 찾을 수 없습니다: ${input} (원인: ${err.message})`,
+          EXIT_PARAM_ERROR,
+        );
+      }
+      throw err;
+    }
+  }
+
+  // 2. 이메일 형식 → searchMembers exact
+  if (EMAIL_RE.test(input)) {
+    const res = await client.searchMembers({ externalEmailAddresses: input });
+    const hits = res.result;
+    if (hits.length === 0) {
+      throw new DoorayCliError(
+        `이메일로 멤버를 찾을 수 없습니다: ${input}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+    if (hits.length > 1) {
+      // matchByName 의 모호 에러 포맷과 일치 — multi-line bullet 으로 통일.
+      throw new DoorayCliError(
+        `복수의 멤버가 매칭됩니다(이메일): "${input}"\n` +
+          hits.map((m) => `  - ${m.name} (${m.id})`).join("\n"),
+        EXIT_PARAM_ERROR,
+      );
+    }
+    return hits[0]!.id;
+  }
+
+  // 3. 그 외 → 기존 matchByName
   const members = await ensureMembers(client, projectId);
   const match = matchByName(
     members,

@@ -181,7 +181,7 @@ dooray post create my-project \
   --title "주간 audit 리포트" \
   --cc 홍길동 --cc-group dev-team               # post create 는 clear 없음
 
-# 입력 형식 자동 분기 (Issue #58): 이름 / 이메일 / 19자리 organizationMemberId
+# 입력 형식 자동 분기 (Issue #58): 이름 / 이메일 / 15자리 이상 organizationMemberId
 dooray post edit my-project 42 \
   --cc user@example.com \                       # 이메일 (동명이인 우회)
   --cc 1234567890123456789                       # organizationMemberId 직접

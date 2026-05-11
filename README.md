@@ -202,6 +202,23 @@ interactive ($EDITOR) 모드에서 `--parent` 사용 시 무시 + stderr 경고.
 
 `--dry-run --json` 출력의 `parentChange` 필드는 **사용자 입력 원문 그대로** (`<project>/<number>` 또는 raw postId) — resolver 처리 전 미리보기 값이며 실제 호출 대상 `postId` 가 아님. dry-run 은 API 미호출 원칙을 유지해 `resolvePostRef` 도 건너뜀.
 
+#### `--to` / `--cc` / `--mention` 입력 형식 (자동 분기)
+
+이름 외에도 이메일 / organizationMemberId 직접 입력 가능 — **동명이인 우회 + ID 직접 입력** (Issue #58):
+
+```bash
+# 이름 (이전부터 지원, 부분일치)
+dooray post create <project> --title "..." --cc 홍길동
+
+# 이메일 (동명이인 우회)
+dooray post create <project> --title "..." --cc user@example.com
+
+# organizationMemberId 직접
+dooray post create <project> --title "..." --cc 1234567890123456789
+```
+
+분기 규칙: `^\d{15,}$` → memberId / `^[^\s@]+@[^\s@]+\.[^\s@]+$` → 이메일 / 그 외 → 이름 부분일치. `member search --email` 의 인프라 재사용.
+
 #### comment list 필터 옵션
 
 ```bash

@@ -45,7 +45,7 @@ export async function resolveMember(
   projectId: string,
   input: string,
 ): Promise<string> {
-  // 1. 19자리 이상 숫자 → organizationMemberId 직접 (getMemberDetail 로 존재 검증)
+  // 1. 15자리 이상 숫자 → organizationMemberId 직접 (getMemberDetail 로 존재 검증)
   if (MEMBER_ID_RE.test(input)) {
     try {
       await client.getMemberDetail(input);
@@ -125,12 +125,12 @@ function mockClient(opts: {
 }
 
 describe("resolveMember 입력 자동 분기", () => {
-  it("19자리 숫자 → getMemberDetail 호출 후 input 반환", async () => {
+  it("15자리 이상 숫자 → getMemberDetail 호출 후 input 반환", async () => {
     const id = "1234567890123456789";
     const client = mockClient({ getMemberDetail: vi.fn().mockResolvedValue({ result: { id, name: "X" } }) });
     expect(await resolveMember(client, "proj", id)).toBe(id);
   });
-  it("19자리 숫자 + getMemberDetail 404 → DoorayCliError", async () => {
+  it("15자리 이상 숫자 + getMemberDetail 404 → DoorayCliError", async () => {
     const client = mockClient({ getMemberDetail: vi.fn().mockRejectedValue(new Error("404")) });
     await expect(resolveMember(client, "proj", "1234567890123456789")).rejects.toThrow();
   });
@@ -224,7 +224,7 @@ git add src/resolvers/member.ts src/resolvers/member.test.ts
 git commit -m "feat(resolvers): resolveMember 입력 자동 분기 (email / memberId / name)
 
 Issue #58 (phase 1/2):
-- 19자리 숫자 → getMemberDetail 로 존재 검증 후 그대로 사용
+- 15자리 이상 숫자 → getMemberDetail 로 존재 검증 후 그대로 사용
 - 이메일 (정규형 매칭) → searchMembers({externalEmailAddresses}) exact
 - 그 외 → 기존 matchByName (이름 부분일치)
 
