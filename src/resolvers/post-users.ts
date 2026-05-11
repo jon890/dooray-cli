@@ -54,10 +54,20 @@ export async function resolveUserAdditions(
   groupCodes: string[],
 ): Promise<CreatePostUser[]> {
   const memberIds = await Promise.all(
-    names.map((n) => resolveMember(client, projectId, n)),
+    names.map((n) =>
+      resolveMember(client, projectId, n).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(`멤버 '${n}' 조회 실패: ${msg}`);
+      }),
+    ),
   );
   const groups = await Promise.all(
-    groupCodes.map((c) => resolveMemberGroup(client, projectId, c)),
+    groupCodes.map((c) =>
+      resolveMemberGroup(client, projectId, c).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(`그룹 '${c}' 조회 실패: ${msg}`);
+      }),
+    ),
   );
   const groupIds = groups.map((g) => g.id);
   return parseUserSpec(memberIds, groupIds);

@@ -181,6 +181,11 @@ dooray post create <project> --title "주간 audit" --cc-group dev-team
 interactive ($EDITOR) 모드에서는 위 6개 옵션이 무시되고 stderr 경고가 출력됩니다.
 `post edit --dry-run --json` 사용 시 출력에 `users: { to, cc }` 가 포함되어 API 호출 없이 변경 결과 미리보기 가능. (`post create --dry-run` 은 본문만 출력하며 `users` 는 포함하지 않음.)
 
+```bash
+dooray post edit <project> <post-number> --cc-group dev-team --dry-run --json | jq '.users.cc'
+# 출력 예: [{ "type": "group", "group": { "projectMemberGroupId": "...", "members": [] } }, ...]
+```
+
 #### comment list 필터 옵션
 
 ```bash
