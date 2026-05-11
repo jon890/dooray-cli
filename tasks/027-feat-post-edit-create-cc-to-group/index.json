@@ -1,0 +1,34 @@
+{
+  "name": "027-feat-post-edit-create-cc-to-group",
+  "description": "GitHub Issue #54 — post edit 에 참조자(cc) / 담당자(to) 추가/수정 + memberGroup 지원. post edit: --cc / --cc-group / --cc-clear + --to / --to-group / --to-clear (6 옵션). post create: --cc-group / --to-group (2 옵션). 기본 append + dedupe, --*-clear 는 기존 비우고 신규만. group 은 type:'group' + Group.projectMemberGroupId (ADR-025). interactive 모드 무시 + 경고. 신규 helper resolvers/post-users.ts (parseUserSpec / mergeUsers pure + resolveUserAdditions orchestrator).",
+  "created_at": "2026-05-11T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 3,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "resolvers/post-users.ts (parseUserSpec / mergeUsers / resolveUserAdditions) + tests",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "post edit (6 옵션) + post create (2 옵션) 통합 + API 실증",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 3,
+      "title": "README + skills/dooray-cli/SKILL.md + 완료 마킹",
+      "file": "phase-03.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-05-11T00:00:00Z"
+}
