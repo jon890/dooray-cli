@@ -96,6 +96,59 @@ grep -nE "^\s+await\s+\w+\(.*\);?\s*$" src/api/client.ts | grep -v "return"
 
 **Why**: plan026 PR #48 — `return toDoorayCliError(e)` → `await toDoorayCliError(e)` 일괄 치환 시 34곳 모두 TS2366. tsup 빌드 + 91 tests 통과로 1차 검증을 빠져나갔고, code-reviewer 가 `tsc --noEmit` 으로 잡음. async 시그니처를 유지한 호출자 리팩토링은 type-check 없이는 안전하지 않다.
 
+## 2-2. catch 의 `err.exitCode` 분기 시 `toDoorayCliError` 의 실제 매핑 미확인
+
+**증상**: resolver / command 에서 `catch (err)` 후 `err instanceof DoorayCliError && err.exitCode === EXIT_PARAM_ERROR` 같은 분기로 "특정 에러만 변환 + 나머지 re-throw" 를 시도. 하지만 `toDoorayCliError` (src/api/client.ts) 는 HTTP 에러에 `EXIT_AUTH_ERROR` (401/403) 또는 `EXIT_API_ERROR` (그 외, 404 포함) 만 부여. `EXIT_PARAM_ERROR` (3) 는 CLI 자체 입력 검증 경로에서만 발생 — API 호출 경로의 catch 에서는 절대 매칭 안 됨. 결과: 분기 조건이 항상 false → "특정 에러 변환" 코드가 dead path 가 되고, 사용자는 의도된 친절 메시지 대신 raw 에러를 봄.
+
+**Good**: catch 안에서 HTTP 에러를 분류하려면 `EXIT_API_ERROR` (404 포함 4xx/5xx) 와 `EXIT_AUTH_ERROR` (401/403) 중에서 선택. status code 까지 구분하려면 `err.message` 의 `(404)` 패턴이나 별도 metadata 가 필요 — 단순 exitCode 비교로는 404 / 5xx / timeout 을 구별 못함을 인지하고 설계.
+
+```ts
+// BAD — EXIT_PARAM_ERROR 는 API 경로에서 절대 발생 안 함 → 분기 항상 false
+try { await client.getMemberDetail(input); } catch (err) {
+  if (err instanceof DoorayCliError && err.exitCode === EXIT_PARAM_ERROR) {
+    throw new DoorayCliError("찾을 수 없습니다", EXIT_PARAM_ERROR);
+  }
+  throw err;
+}
+
+// GOOD — toDoorayCliError 의 실제 매핑 (EXIT_API_ERROR for 404) 사용
+try { await client.getMemberDetail(input); } catch (err) {
+  if (err instanceof DoorayCliError && err.exitCode === EXIT_API_ERROR) {
+    throw new DoorayCliError("찾을 수 없습니다", EXIT_PARAM_ERROR);
+  }
+  throw err;   // EXIT_AUTH_ERROR / 네트워크 에러는 분류 보존
+}
+```
+
+**검출**: catch 안의 exitCode 검사 패턴 + `EXIT_PARAM_ERROR` 사용 여부.
+```bash
+grep -rnE "exitCode\s*===\s*EXIT_PARAM_ERROR" src/resolvers/ src/commands/ src/api/
+# 결과 있으면 → API 경로의 catch 인지 확인. API 경로면 → EXIT_API_ERROR 로 교체
+```
+
+**Self-check**: catch 안에서 exitCode 분기를 쓰는 코드를 작성/리뷰할 때, `src/api/client.ts` 의 `toDoorayCliError` 가 그 에러 케이스에 어떤 exitCode 를 *실제로* 부여하는지 grep 으로 확인했는가? mock 으로 짠 테스트가 그 exitCode 를 mirror 하는가?
+
+**Why**: PR #63 (plan029) — `resolveMember` 의 catch 가 `EXIT_PARAM_ERROR` 검사. 테스트도 같은 값으로 reject 해서 7/7 PASS 였지만 실제 production path 의 `toDoorayCliError` 는 `EXIT_API_ERROR` 부여 → 분기 dead. code-reviewer 가 catch 케이스 ↔ toDoorayCliError 매핑 대조해서 잡음. 다른 resolver/command 에서 같은 패턴 추가 시 또 발생 가능.
+
+## 2-3. 테스트 mock 의 reject value 가 production path 를 mirror 안 함
+
+**증상**: `vi.fn().mockRejectedValue(new DoorayCliError("...", EXIT_PARAM_ERROR))` 같이 mock 을 만들 때, 실제 production path 의 에러 객체 (`toDoorayCliError` 가 부여하는 exitCode / 메시지 prefix) 와 다른 값을 사용. 테스트는 통과 (mock 이 그 값을 reject 하니까) 하지만 실제 코드 경로는 다른 exitCode 를 받음 → 분기/메시지 변환 코드가 실제로는 동작 안 함. 테스트가 자기 자신만 검증하고 production 검증 못함.
+
+**Good**: API client 함수의 throw path 가 `toDoorayCliError` 를 통과한다면 mock 도 같은 함수가 만들 객체를 흉내내야 함:
+- HTTP 4xx (404 포함) → `new DoorayCliError("API 호출 실패: <메시지>", EXIT_API_ERROR)`
+- HTTP 401/403 → `new DoorayCliError(..., EXIT_AUTH_ERROR)`
+- 네트워크 / timeout → `new Error("ECONNREFUSED")` 등 raw Error (DoorayCliError 아님 — toDoorayCliError 가 unwrap 안 함)
+
+**검출**:
+```bash
+grep -rnE "mockRejectedValue\(new DoorayCliError" src/ test/
+# 결과의 EXIT_* 값이 toDoorayCliError 매핑 (EXIT_API_ERROR / EXIT_AUTH_ERROR) 인지 확인
+```
+
+**Self-check**: mock 의 reject value 를 작성할 때, "이 mock 이 흉내내려는 production 호출 경로에서 실제로 어떤 형태의 Error 가 던져지는가?" 를 코드로 직접 확인했는가 — 아니면 "에러면 그냥 Error 든 DoorayCliError 든 통과하니까" 로 임시값 넣었는가?
+
+**Why**: PR #63 (plan029) — 7/7 테스트 PASS 였지만 mock 이 production 동작 mirror 안 함. mock 만 보면 분기 코드 검증된 것처럼 보이지만 실제 path 는 dead. code-reviewer 가 production path (`toDoorayCliError`) 와 mock 의 exitCode 대조로 잡음. 2-2 와 짝 — 같은 사고가 코드와 테스트 양쪽에서 동시 발생.
+
 # 3. 매직 넘버·문자열 (예약)
 
 # 4. CLI 도메인 규칙 회귀 (예약 — exitCode / stdout vs stderr / ky 강제)
