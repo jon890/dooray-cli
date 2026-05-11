@@ -186,6 +186,22 @@ dooray post edit <project> <post-number> --cc-group dev-team --dry-run --json | 
 # 출력 예: [{ "type": "group", "group": { "projectMemberGroupId": "...", "members": [] } }, ...]
 ```
 
+#### 상위 업무 변경 (`--parent`)
+
+```bash
+# 자식 업무에 부모 지정
+dooray post edit <project> <child-number> --title "<원제목>" --parent <project>/<parent-number>
+
+# 다른 부모로 변경
+dooray post edit --id <postId> --title "<원제목>" --parent <other-parent-postId>
+```
+
+내부적으로 `client.updatePost` 호출 후 별도 `POST .../set-parent-post` endpoint 추가 호출. **parent 해제 (top-level 화)** 는 Dooray API 가 미지원이라 웹 UI 에서 수동 처리.
+
+interactive ($EDITOR) 모드에서 `--parent` 사용 시 무시 + stderr 경고. **parent 만 단독 변경하려면 `--title "<원제목>"` 동반 필요** — `post edit` 가 본문 변경(`--title`/`--body`) 동반 시에만 non-interactive 분기로 들어가며, parent 변경은 그 분기 안에서만 수행됨. (Issue #60)
+
+`--dry-run --json` 출력의 `parentChange` 필드는 **사용자 입력 원문 그대로** (`<project>/<number>` 또는 raw postId) — resolver 처리 전 미리보기 값이며 실제 호출 대상 `postId` 가 아님. dry-run 은 API 미호출 원칙을 유지해 `resolvePostRef` 도 건너뜀.
+
 #### `--to` / `--cc` / `--mention` 입력 형식 (자동 분기)
 
 이름 외에도 이메일 / organizationMemberId 직접 입력 가능 — **동명이인 우회 + ID 직접 입력** (Issue #58):

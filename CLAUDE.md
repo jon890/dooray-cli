@@ -51,7 +51,7 @@ src/
 - HTTP 클라이언트: `ky` (axios 사용 금지)
 - 빌드: `tsup` (CJS 단일 번들, shebang 포함)
 - 패키지 매니저: `pnpm`
-- 캐시: `~/.dooray/cache/` 디렉토리에 파일별 분리 (me.json, projects.json, members/{id}.json, workflows/{id}.json)
+- 캐시: `~/.dooray/cache/` 디렉토리에 파일별 분리 (me.json, projects.json, members/{id}.json, workflows/{id}.json, templates/{id}.json)
 - config: `~/.dooray/config.json` (env var 폴백 없음)
 - 에러: `DoorayCliError(message, exitCode)` 로 통일
 - 출력: 데이터는 stdout, 스피너/에러는 stderr
@@ -80,6 +80,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - `post create` / `post edit` / `post comment add/edit` 4 명령 모두 `--mention` / `--mention-group` / `--link-task` / `--dry-run` 동일 옵션 지원. mention 은 prepend, link-task 는 append, 적용 순서는 mention → link-task. interactive ($EDITOR) 모드의 `post edit` 는 mention/link-task 무시 + 경고
 - `post edit` 는 참조자/담당자 변경 옵션 6개 지원: `--cc <name>` / `--cc-group <code>` (반복) + `--cc-clear` + 동일 `--to` 3개. 기본 append (기존 cc/to 유지 + dedupe), `--*-clear` 는 기존 비우고 신규만. `post create` 는 `--cc-group` / `--to-group` 2개 추가. group 은 `type: "group"` + `projectMemberGroupId` 로 전송 (ADR-025). interactive 모드는 이 6+2 옵션 무시 + 경고
 - `post edit --parent <ref>` 는 상위 업무 설정/변경 — `client.setPostParent` (별도 `POST .../set-parent-post` endpoint) 호출. `updatePost` 의 full payload 가 아닌 dedicated endpoint 사용 (Dooray API contract). Dooray 가 `unset-parent-post` 미제공 → **parent 해제 (top-level 화) 는 웹 UI 에서 처리**. interactive 모드 무시 + 경고
+- `post create --template <name|id>` 는 템플릿으로 정형 task 생성. `GET .../templates` 목록 (resolver matchByName 부분일치) + `GET .../templates/{id}?interpolation=true` 로 시스템 매크로 (`${year}` 등) 치환된 본문/users/tags 자동 채움. 사용자 옵션 (`--title`/`--body`/`--tag`/`--to`/`--cc`) 명시 입력 시 override (ADR-027). `--field key=value` 사용자 정의 변수는 본 task scope 외 (별도 후속). 신규 명령 `dooray project templates <project>` 로 목록 조회. 캐시 TTL 24h (tag/workflow 답습)
 
 ## 상황별 ADR 필수 참조
 
@@ -100,6 +101,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | `comment file *` 명령 (list/upload/download/delete) | **ADR-024** (post-level files API + 댓글 PUT 합성 — Dooray 댓글 전용 endpoint 부재) |
 | `post edit/create` 의 cc/to 변경 (멤버/그룹) | **ADR-025** (full payload PUT + `type: "group"` + `projectMemberGroupId`) |
 | Wiki 명령 (`wiki page create/edit`) 추가/수정 | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기) |
+| `post create --template` + `project templates` 명령 | **ADR-027** (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외) |
 | 파일 업로드/다운로드 (307 처리) | **ADR-015** (수동 redirect + Auth 헤더 재첨부) |
 | `dooray setup` 마법사 변경 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치) |
 | 새 Commander.js 서브커맨드 추가 | (ADR 없음 — 기존 `commands/*.ts` 패턴 참조) |

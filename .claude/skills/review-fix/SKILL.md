@@ -343,25 +343,53 @@ gh pr view <N> --json mergeable,mergeStateStatus
 
 ---
 
-## 6단계: 인라인 코멘트에 해결 내용 reply
+## 6단계: 리뷰 댓글에 해결 내용 reply
 
-코드 수정이 완료되고 push된 후, 처리한 인라인 리뷰 댓글 각각에 reply를 달아 해결됐음을 알린다.
+코드 수정이 완료되고 push된 후, 처리한 리뷰 댓글에 reply 를 달아 해결됐음을 알린다.
 
-### 인라인 댓글 ID 수집
+### ⚠️ 자동 재트리거 토큰 금지 (CRITICAL)
+
+reply 본문에 다음 토큰을 **포함하면 안 된다** — `.github/workflows/claude-code-review.yml` 의 `if:` 조건에 의해 자동 review 재실행 유발 또는 사용자가 봇 멘션으로 인지:
+
+- `/review` — workflow 의 `contains(github.event.comment.body, '/review')` 트리거 (확정 재실행)
+- `@claude` — 현재 workflow `if:` 절은 `@claude` 를 트리거하지 않지만 사용자가 "봇 멘션" 으로 인지 + 향후 workflow 변경 시 위험. 봇을 지칭해야 하면 `` `@claude` `` 백틱 코드 fence 또는 평문 "Claude bot" 사용
+- `@github-actions`, `@dependabot` 등 다른 봇 멘션도 동일
+
+검증 grep (reply 등록 전):
 
 ```bash
-gh api repos/<owner>/<repo>/pulls/<N>/comments \
-  --jq '[.[] | {id: .id, path: .path, line: .line, body: .body}]'
+echo "$REPLY_BODY" | grep -nE "(^|[^\`])(/review|@claude|@github-actions)\b"
+# 결과 있으면 → 본문 수정 (백틱으로 감싸거나 평문으로)
 ```
 
-**주의: `diff_hunk` 필드를 반드시 제외한다** — diff_hunk는 댓글당 수백~수천 토큰을 차지하며 reply 작성에 불필요하다.
-1단계에서 인라인 댓글로 수집한 `id`를 사용한다. 일반 PR 댓글(`gh pr view --comments`)의 id와 혼동하지 않는다.
+### 리뷰 형식 분기 (CRITICAL)
 
-### 각 처리된 항목에 reply
+claude bot 의 리뷰는 두 형식 중 하나로 등록된다 — 형식에 따라 reply API 가 다르다:
 
-수정한 항목에 해당하는 인라인 댓글 ID마다 아래 형식으로 reply를 남긴다:
+**A. 인라인 review 형식 (선호)**: bot 이 `gh api .../pulls/N/reviews` POST 로 file/line 단위 댓글 N건 + 일반 요약 1건. `gh api repos/.../pulls/N/comments` 응답에 `in_reply_to_id: null` 인 claude[bot] top-level 댓글 존재. 1:1 reply 가능.
+
+**B. 통합 댓글 형식 (fallback)**: bot 이 인라인 등록 실패 (예: GENERAL 발견사항만 / line 매핑 실패 / API 422) → 일반 PR 댓글 1건에 모든 발견사항 통합. body 끝에 *"💬 인라인 코멘트는 API 접근 제약으로 인해 Files changed 탭 대신 이 댓글에 통합되었습니다"* 명시. 인라인 reply 대상 없음.
+
+판별:
 
 ```bash
+INLINE_COUNT=$(gh api repos/<owner>/<repo>/pulls/<N>/comments --jq 'length')
+
+if [ "$INLINE_COUNT" -gt 0 ]; then
+  # A: 인라인 형식 → /comments/<id>/replies 로 1:1 reply
+else
+  # B: 통합 댓글만 → gh pr comment 로 통합 reply 1건
+fi
+```
+
+### A. 인라인 review 형식 — 1:1 reply
+
+```bash
+# 인라인 댓글 ID + path + line 수집 (diff_hunk 제외 — 토큰 절약)
+gh api repos/<owner>/<repo>/pulls/<N>/comments \
+  --jq '[.[] | select(.in_reply_to_id == null) | select(.user.login == "claude[bot]") | {id, path, line, body: .body[0:300]}]'
+
+# 각 처리한 인라인 댓글에 reply
 gh api repos/<owner>/<repo>/pulls/<N>/comments/<comment_id>/replies \
   -X POST -f body="✅ **반영 완료** (커밋: <COMMIT_HASH>)
 
@@ -369,14 +397,38 @@ gh api repos/<owner>/<repo>/pulls/<N>/comments/<comment_id>/replies \
 ```
 
 reply 본문 작성 원칙:
+- 커밋 해시 명시 (추적성)
+- 지적 → 해결책 간결 기술
+- 건너뛴 항목 (이미 반영 / 해당 없음) 은 reply 안 함
+- **자동 트리거 토큰 금지** (위 박스 참조)
 
-- 커밋 해시를 명시해 추적 가능하게 한다
-- 리뷰가 지적한 문제와 적용한 해결책을 간결하게 기술한다
-- 건너뛴 항목(이미 반영됐거나 해당 없음)은 reply하지 않는다
+### B. 통합 댓글 형식 — 단일 통합 reply
+
+인라인 1:1 매핑 불가 → 일반 PR 댓글로 처리 결과 통합 1건 등록:
+
+```bash
+gh pr comment <N> --body "$(cat <<'EOF'
+리뷰 반영 결과:
+
+**🟡 #1 (<항목 요약>)**: ✅ 반영 완료 (commit `<hash>`).
+<무엇을 어떻게 수정했는지>
+
+**🟡 #2 (<항목 요약>)**: ❌ skip — <이유>
+
+**🟡 #3 (<항목 요약>)**: ✅ 반영 완료 (commit `<hash>`).
+<무엇을 어떻게 수정했는지>
+EOF
+)"
+```
+
+본문 작성 원칙:
+- 봇 멘션 불필요 — PR 컨텍스트에 등록되므로 봇이 발견사항 작성자임이 자명
+- `@claude` / `/review` 토큰 금지 (위 박스 참조)
+- 첫 줄에 멘션 시작 금지 (예: ❌ `@claude 리뷰 반영 결과:` / ✅ `리뷰 반영 결과:`)
 
 ### 대범위 항목 — 이슈 등록 후 reply
 
-대범위로 판단한 항목은 코드 수정 대신 이슈를 등록하고 해당 댓글에 reply한다:
+대범위로 판단한 항목은 코드 수정 대신 이슈를 등록하고 해당 댓글에 reply:
 
 ```bash
 ISSUE_URL=$(gh issue create \
@@ -384,6 +436,7 @@ ISSUE_URL=$(gh issue create \
   --body "<리뷰 내용 요약 및 배경>" \
   --json url --jq '.url')
 
+# A 형식이면 /replies, B 형식이면 통합 reply 본문에 포함
 gh api repos/<owner>/<repo>/pulls/<N>/comments/<comment_id>/replies \
   -X POST -f body="📋 **이슈로 등록** — 변경 범위가 커서 별도 이슈로 추적합니다.
 

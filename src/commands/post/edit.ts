@@ -9,6 +9,7 @@ import { prependMentions } from "../../utils/mention.js";
 import { appendTaskLinks } from "../../utils/task-link.js";
 import { resolveTaskLinks } from "../../resolvers/task-link.js";
 import { resolveUserAdditions, mergeUsers } from "../../resolvers/post-users.js";
+import { resolvePostRef } from "../../resolvers/postRef.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import {
   openInEditor,
@@ -52,6 +53,7 @@ export const postEditCommand = new Command("edit")
   .option("--to <name>", "담당자(to) 멤버 추가 (반복 가능, 이름 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--to-group <code>", "담당자(to) 그룹 추가 (반복 가능, 그룹 코드 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--to-clear", "기존 담당자 전부 제거 후 신규만 적용")
+  .option("--parent <ref>", "상위 업무 변경 — project/number 또는 raw postId (post create 와 동일 — unset 은 미지원, 웹 UI 에서 처리)")
   .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
   .option("--no-confirm", "누락 attachment 경고 시 confirm 없이 진행 (자동화용)")
   .action(async (project, postNumberStr, opts) => {
@@ -150,7 +152,11 @@ export const postEditCommand = new Command("edit")
         const globalOpts = postEditCommand.optsWithGlobals() as OutputOptions;
         const previewBody = newBody ?? post.body.content;
         if (globalOpts.json) {
-          process.stdout.write(JSON.stringify({ body: previewBody, users: { to: toUsers, cc: ccUsers } }) + "\n");
+          process.stdout.write(JSON.stringify({
+            body: previewBody,
+            users: { to: toUsers, cc: ccUsers },
+            ...(opts.parent && { parentChange: opts.parent }),
+          }) + "\n");
         } else {
           process.stdout.write(previewBody + "\n");
         }
@@ -170,6 +176,21 @@ export const postEditCommand = new Command("edit")
         users: { to: toUsers, cc: ccUsers },
       });
       stopSpinner(true, "업무 수정 완료");
+
+      if (opts.parent) {
+        startSpinner("상위 업무 변경 중...");
+        try {
+          const newParentPostId = await resolvePostRef(client, opts.parent);
+          await client.setPostParent(projectId, postId, newParentPostId);
+          stopSpinner(true, "상위 업무 변경 완료");
+        } catch (err) {
+          stopSpinner(false, "상위 업무 변경 실패");
+          process.stderr.write(
+            "⚠  본문은 수정되었으나 상위 업무 변경에 실패했습니다. 본문 재실행 금지 — 웹 UI 또는 dooray post edit --parent 단독 재시도 권장.\n",
+          );
+          throw err;
+        }
+      }
     } else {
       // Interactive mode: $EDITOR
       if (mentionInputs.length > 0 || groupInputs.length > 0) {
@@ -186,6 +207,11 @@ export const postEditCommand = new Command("edit")
           toNames.length > 0 || toGroups.length > 0 || opts.toClear) {
         process.stderr.write(
           "⚠  --cc/--cc-group/--cc-clear/--to/--to-group/--to-clear 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
+        );
+      }
+      if (opts.parent) {
+        process.stderr.write(
+          "⚠  --parent 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
         );
       }
       const original = serializePostFrontmatter(post, members);

@@ -187,6 +187,25 @@ dooray post edit my-project 42 \
   --cc 1234567890123456789                       # organizationMemberId 직접
 ```
 
+## 템플릿으로 정형 업무 생성 흐름 (ADR-027)
+
+자동화 시나리오: 프로젝트의 정형 task (릴리스 플랜, 요청서, 공지 등) 를 매번 templateName 으로 인스턴스화.
+
+```
+# 1. 사용 가능한 템플릿 목록 (이름·ID 확인)
+dooray project templates my-project
+
+# 2. 템플릿으로 업무 생성 (body/users/tags 자동 채움 + ${year} 같은 시스템 매크로 치환)
+dooray post create my-project --template "릴리스 플랜"
+
+# 3. 사용자 옵션 override — 템플릿 위에 일부 필드만 다르게
+dooray post create my-project --template "릴리스 플랜" \
+  --title "v0.9 릴리스 계획" \
+  --tag "p0"                       # 템플릿 tags 를 덮음
+```
+
+`interpolation=true` 가 기본 — Dooray 가 `${year}`, `${month}` 같은 시스템 매크로를 응답에서 자동 치환. 사용자 정의 변수 (`--field key=value`) 는 본 release scope 외 (별도 후속). 사용자 옵션이 명시 입력되면 템플릿 값을 override.
+
 ## 상위 업무 변경 흐름 (Issue #60)
 
 자동화 시나리오: 자식 업무를 먼저 만든 뒤 후속으로 부모를 지정하거나, 진행 중 부모-자식 관계 재구성.
