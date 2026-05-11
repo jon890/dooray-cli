@@ -17,6 +17,7 @@ import { readBodyInput } from "../../utils/body-input.js";
 import { prependMentions } from "../../utils/mention.js";
 import { appendTaskLinks } from "../../utils/task-link.js";
 import { resolveTaskLinks } from "../../resolvers/task-link.js";
+import { resolveUserAdditions } from "../../resolvers/post-users.js";
 import type { CreatePostUser } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
@@ -40,7 +41,9 @@ export const postCreateCommand = new Command("create")
   .option("--title <title>", "업무 제목")
   .option("--subject <subject>", "--title의 deprecated alias")
   .option("--to <members...>", "담당자 (이름 또는 이메일, 여러 명 가능)")
+  .option("--to-group <code>", "담당자(to) 그룹 추가 (반복 가능, 그룹 코드 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--cc <members...>", "참조자 (이름 또는 이메일, 여러 명 가능)")
+  .option("--cc-group <code>", "참조자(cc) 그룹 추가 (반복 가능, 그룹 코드 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--body <text>", "본문 텍스트 (- 입력 시 stdin에서 읽기)")
   .option("--body-file <path>", "본문 파일 경로 (- 입력 시 stdin에서 읽기)")
   .option("--priority <level>", "우선순위 (highest, high, normal, low, lowest)", "normal")
@@ -127,8 +130,20 @@ export const postCreateCommand = new Command("create")
       return;
     }
 
-    const toUsers = opts.to ? await resolveUsers(client, projectId, opts.to) : [];
-    const ccUsers = opts.cc ? await resolveUsers(client, projectId, opts.cc) : [];
+    const ccGroupCodes: string[] = (opts.ccGroup ?? []).filter((s: string) => s.length > 0);
+    const toGroupCodes: string[] = (opts.toGroup ?? []).filter((s: string) => s.length > 0);
+
+    const toUsersMembers = opts.to ? await resolveUsers(client, projectId, opts.to) : [];
+    const ccUsersMembers = opts.cc ? await resolveUsers(client, projectId, opts.cc) : [];
+    const toUsersGroups = toGroupCodes.length > 0
+      ? await resolveUserAdditions(client, projectId, [], toGroupCodes)
+      : [];
+    const ccUsersGroups = ccGroupCodes.length > 0
+      ? await resolveUserAdditions(client, projectId, [], ccGroupCodes)
+      : [];
+
+    const toUsers = [...toUsersMembers, ...toUsersGroups];
+    const ccUsers = [...ccUsersMembers, ...ccUsersGroups];
 
     const tagInputs = (opts.tag ?? []).filter((s: string) => s.length > 0);
 

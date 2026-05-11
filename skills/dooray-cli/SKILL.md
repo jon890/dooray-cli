@@ -92,6 +92,9 @@ dooray doctor                                 # 설정 검증
 | 댓글 파일 업로드 | `dooray post comment file upload <project> <number> <comment-id> <path>` |
 | 댓글 파일 다운로드 | `dooray post comment file download <project> <number> <comment-id> <file-id>` |
 | 댓글 파일 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id> --yes` |
+| 참조자(cc) 멤버/그룹 추가 | `dooray post edit <project> <number> --cc-group <code>` — 기존 참조자 유지 + 그룹 추가 (dedupe, ADR-025) |
+| 참조자 전체 교체 | `dooray post edit <project> <number> --cc-clear --cc <name>` — 기존 참조자 비우고 신규 멤버만 |
+| 신규 업무 + 그룹 cc | `dooray post create <project> --title "..." --cc-group <code>` — 생성 시 그룹 참조자 포함 |
 
 > **제목 옵션 네이밍**: `post` 와 `wiki page` 모두 `--title` 표준. `post`의 `--subject`는 deprecated alias로 당분간 동작하되, 새 코드에서는 `--title` 사용을 권장.
 
@@ -103,7 +106,7 @@ CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI �
 
 | 작업 | 대체 경로 | 근거 |
 |---|---|---|
-| 위키 페이지 **삭제** | 웹 UI (`https://{tenant}.dooray.com/wiki/...`) | Dooray REST API에 해당 엔드포인트 없음 (위키 댓글·첨부파일 삭제는 있지만 페이지 자체는 없음, `docs/dooray-api-reference.md` §7 참조) |
+| 위키 페이지 **삭제** | 웹 UI (`https://{tenant}.dooray.com/wiki/...`) | Dooray REST API에 해당 엔드포인트 없음 (위키 댓글·첨부파일 삭제는 있지만 페이지 자체는 없음 — ADR 또는 Dooray 공식 API 문서 미제공) |
 | 프로젝트 삭제 | 웹 UI (admin 페이지) | API 미지원 |
 
 위키 페이지를 잘못 만든 경우(테스트/중복) **soft delete(빈 제목·본문) 우회 금지** — 페이지가 트리에 남아 사용자 혼란 유발.
@@ -278,6 +281,46 @@ dooray post edit <project> <number> --body "새 본문"
 # 제목 + 본문 동시 변경
 dooray post edit <project> <number> --title "새 제목" --body-file ./updated.md
 ```
+
+### 참조자(cc) / 담당자(to) 변경 — 멤버 · 그룹 (ADR-025)
+
+```bash
+# 기존 참조자 유지 + 그룹 추가 (dedupe: organizationMemberId / projectMemberGroupId)
+dooray post edit <project> <number> --cc-group dev-team
+
+# 기존 참조자 전부 비우고 신규 멤버만
+dooray post edit <project> <number> --cc-clear --cc 홍길동
+
+# 담당자(to)도 동일 패턴: --to / --to-group / --to-clear
+dooray post edit <project> <number> --to 김철수 --to-group qa-team
+```
+
+dry-run 으로 변경 결과 미리보기 (API 호출 없음):
+
+```bash
+dooray post edit --id "$POST_ID" --cc-group qa-team --dry-run --json \
+  | jq '.users.cc'
+```
+
+> interactive (`$EDITOR`) 모드에서는 위 옵션이 무시되고 stderr 경고가 출력됩니다.
+
+## 신규 업무 생성 후 그룹 cc 첨부 (ADR-025)
+
+audit 리포트 분석 → 신규 업무 생성 → 후속으로 특정 그룹을 참조에 추가하는 자동화 패턴:
+
+```bash
+# 1. 신규 업무 생성 (그룹 cc 포함)
+POST_ID=$(dooray post create <project> \
+  --title "주간 audit 리포트" \
+  --body-file ./report.md \
+  --cc-group dev-team \
+  --json | jq -r '.id')
+
+# 2. (필요 시) 후속으로 cc 추가
+dooray post edit --id "$POST_ID" --cc-group qa-team
+```
+
+---
 
 ### 댓글 추가 (non-interactive)
 
