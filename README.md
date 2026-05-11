@@ -186,6 +186,23 @@ dooray post edit <project> <post-number> --cc-group dev-team --dry-run --json | 
 # 출력 예: [{ "type": "group", "group": { "projectMemberGroupId": "...", "members": [] } }, ...]
 ```
 
+#### `--to` / `--cc` / `--mention` 입력 형식 (자동 분기)
+
+이름 외에도 이메일 / organizationMemberId 직접 입력 가능 — **동명이인 우회 + ID 직접 입력** (Issue #58):
+
+```bash
+# 이름 (이전부터 지원, 부분일치)
+dooray post create <project> --title "..." --cc 홍길동
+
+# 이메일 (동명이인 우회)
+dooray post create <project> --title "..." --cc user@example.com
+
+# organizationMemberId 직접
+dooray post create <project> --title "..." --cc 1234567890123456789
+```
+
+분기 규칙: `^\d{15,}$` → memberId / `^[^\s@]+@[^\s@]+\.[^\s@]+$` → 이메일 / 그 외 → 이름 부분일치. `member search --email` 의 인프라 재사용.
+
 #### comment list 필터 옵션
 
 ```bash

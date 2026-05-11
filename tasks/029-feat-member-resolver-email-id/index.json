@@ -1,9 +1,9 @@
 {
   "name": "029-feat-member-resolver-email-id",
-  "description": "GitHub Issue #58 — resolveMember 가 입력 형식 자동 분기: 19자리 숫자 → getMemberDetail 로 organizationMemberId 검증 / 이메일 (`@` 포함 정규형) → searchMembers exact / 그 외 → matchByName (기존). CLI 옵션 시그니처 변경 0 — `--to`/`--cc`/`--mention` 모두 동일 인프라 답습. 동명이인 우회 + ID 직접 입력 지원. ADR 불요 (자명성 게이트 통과).",
+  "description": "GitHub Issue #58 — resolveMember 가 입력 형식 자동 분기: 15자리 이상 숫자 → getMemberDetail 로 organizationMemberId 검증 / 이메일 (`@` 포함 정규형) → searchMembers exact / 그 외 → matchByName (기존). CLI 옵션 시그니처 변경 0 — `--to`/`--cc`/`--mention` 모두 동일 인프라 답습. 동명이인 우회 + ID 직접 입력 지원. ADR 불요 (ADR 작성 전 점검 통과).",
   "created_at": "2026-05-11T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "completed",
+  "current_phase": 2,
   "total_phases": 2,
   "error_message": null,
   "blocked_reason": null,
@@ -12,14 +12,14 @@
       "number": 1,
       "title": "resolvers/member.ts 입력 분기 추가 + 단위 테스트",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "README + skills/dooray-cli/SKILL.md + 완료 마킹",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
