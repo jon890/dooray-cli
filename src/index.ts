@@ -9,6 +9,7 @@ import { projectMembersCommand } from "./commands/project/members.js";
 import { projectWorkflowsCommand } from "./commands/project/workflows.js";
 import { projectGroupsCommand } from "./commands/project/groups.js";
 import { projectTagsCommand } from "./commands/project/tags.js";
+import { projectTemplatesCommand } from "./commands/project/templates.js";
 import { postListCommand } from "./commands/post/list.js";
 import { postSearchCommand } from "./commands/post/search.js";
 import { postGetCommand } from "./commands/post/get.js";
@@ -73,6 +74,7 @@ projectCommand.addCommand(projectMembersCommand);
 projectCommand.addCommand(projectWorkflowsCommand);
 projectCommand.addCommand(projectGroupsCommand);
 projectCommand.addCommand(projectTagsCommand);
+projectCommand.addCommand(projectTemplatesCommand);
 
 // post 커맨드 그룹
 const postCommand = new Command("post").description("업무 관련 명령");
