@@ -163,6 +163,24 @@ dooray post comment add <project> <post-number> --body "..." --link-task <projec
 > `--mention` / `--mention-group` / `--link-task` / `--dry-run` 은 `post create`, `post edit`, `post comment add`, `post comment edit` 4 명령 모두 지원.
 > 이전 버전 캐시는 orgId가 없으므로 첫 호출 시 자동 갱신됩니다 (또는 `dooray cache clear`).
 
+#### 참조자(cc) / 담당자(to) 변경 (ADR-025)
+
+```bash
+# 멤버/그룹 추가 (기존 참조자 유지 + dedupe)
+dooray post edit <project> <post-number> \
+  --cc 홍길동 --cc-group dev-team \
+  --to 김철수
+
+# 기존 참조자 전부 비우고 신규만
+dooray post edit <project> <post-number> --cc-clear --cc 홍길동
+
+# 신규 업무 생성 시 그룹 cc 동봉
+dooray post create <project> --title "주간 audit" --cc-group dev-team
+```
+
+interactive ($EDITOR) 모드에서는 위 6개 옵션이 무시되고 stderr 경고가 출력됩니다.
+`--dry-run` 사용 시 `--json` 출력에 `users: { to, cc }` 가 포함되어 API 호출 없이 변경 결과 미리보기 가능.
+
 #### comment list 필터 옵션
 
 ```bash
