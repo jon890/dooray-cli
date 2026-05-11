@@ -3,6 +3,11 @@ import type { CachedMember } from "../cache/types.js";
 import { getMembers, setMembers, isExpired } from "../cache/store.js";
 import { MEMBERS_TTL_MS } from "../cache/types.js";
 import { matchByName } from "./match.js";
+import { DoorayCliError } from "../utils/errors.js";
+import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+
+const MEMBER_ID_RE = /^\d{15,}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function fetchAllMembers(
   client: DoorayApiClient,
@@ -103,6 +108,45 @@ export async function resolveMember(
   projectId: string,
   input: string,
 ): Promise<string> {
+  // 1. 15자리 이상 숫자 → organizationMemberId 직접 (getMemberDetail 로 존재 검증)
+  if (MEMBER_ID_RE.test(input)) {
+    try {
+      await client.getMemberDetail(input);
+      return input;
+    } catch (err) {
+      // 404 / 잘못된 id 만 "찾을 수 없습니다" 로 변환. 네트워크/인증/5xx 등 다른
+      // DoorayCliError 는 그대로 re-throw 해서 에러 분류 보존.
+      if (err instanceof DoorayCliError && err.exitCode === EXIT_PARAM_ERROR) {
+        throw new DoorayCliError(
+          `organizationMemberId 를 찾을 수 없습니다: ${input}`,
+          EXIT_PARAM_ERROR,
+        );
+      }
+      throw err;
+    }
+  }
+
+  // 2. 이메일 형식 → searchMembers exact
+  if (EMAIL_RE.test(input)) {
+    const res = await client.searchMembers({ externalEmailAddresses: input });
+    const hits = res.result;
+    if (hits.length === 0) {
+      throw new DoorayCliError(
+        `이메일로 멤버를 찾을 수 없습니다: ${input}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+    if (hits.length > 1) {
+      const candidates = hits.map((m) => `${m.name} (${m.id})`).join(", ");
+      throw new DoorayCliError(
+        `이메일 매칭이 모호합니다: ${input}\n후보: ${candidates}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+    return hits[0]!.id;
+  }
+
+  // 3. 그 외 → 기존 matchByName
   const members = await ensureMembers(client, projectId);
   const match = matchByName(
     members,
