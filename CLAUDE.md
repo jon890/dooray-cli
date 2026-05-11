@@ -79,6 +79,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - `post edit` / `post comment edit` 는 본문 full-replace. 새 본문에 기존 attachment markdown(`![](/files/<id>)`) 누락 시 (y/N) confirm. non-TTY 는 abort, `--no-confirm` 으로 우회.
 - `post create` / `post edit` / `post comment add/edit` 4 명령 모두 `--mention` / `--mention-group` / `--link-task` / `--dry-run` 동일 옵션 지원. mention 은 prepend, link-task 는 append, 적용 순서는 mention → link-task. interactive ($EDITOR) 모드의 `post edit` 는 mention/link-task 무시 + 경고
 - `post edit` 는 참조자/담당자 변경 옵션 6개 지원: `--cc <name>` / `--cc-group <code>` (반복) + `--cc-clear` + 동일 `--to` 3개. 기본 append (기존 cc/to 유지 + dedupe), `--*-clear` 는 기존 비우고 신규만. `post create` 는 `--cc-group` / `--to-group` 2개 추가. group 은 `type: "group"` + `projectMemberGroupId` 로 전송 (ADR-025). interactive 모드는 이 6+2 옵션 무시 + 경고
+- `post edit --parent <ref>` 는 상위 업무 설정/변경 — `client.setPostParent` (별도 `POST .../set-parent-post` endpoint) 호출. `updatePost` 의 full payload 가 아닌 dedicated endpoint 사용 (Dooray API contract). Dooray 가 `unset-parent-post` 미제공 → **parent 해제 (top-level 화) 는 웹 UI 에서 처리**. interactive 모드 무시 + 경고
 
 ## 상황별 ADR 필수 참조
 

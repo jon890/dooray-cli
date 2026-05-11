@@ -187,6 +187,20 @@ dooray post edit my-project 42 \
   --cc 1234567890123456789                       # organizationMemberId 직접
 ```
 
+## 상위 업무 변경 흐름 (Issue #60)
+
+자동화 시나리오: 자식 업무를 먼저 만든 뒤 후속으로 부모를 지정하거나, 진행 중 부모-자식 관계 재구성.
+
+```
+# 상위 업무 설정/변경
+dooray post edit my-project 42 --parent my-project/40    # project/number
+dooray post edit --id <postId> --parent <parentPostId>   # 직접 postId
+```
+
+내부적으로 `client.updatePost` (subject/body/users) → `client.setPostParent` (별도 `POST .../set-parent-post` endpoint) 순차 호출. 둘 다 무관 endpoint 라 atomic 보장 없음 — partial 실패 시 stderr 안내 + non-zero exit.
+
+**한계**: Dooray API 가 `unset-parent-post` 미제공 → CLI 로 parent 해제 (top-level 화) 불가. 웹 UI 에서 수동 처리.
+
 interactive ($EDITOR) 모드에서는 이 옵션들 무시 + stderr 경고 (mention/link-task 패턴 답습).
 
 ## 업무 메타데이터 흐름 (ADR-019)

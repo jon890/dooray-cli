@@ -31,7 +31,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray cache` — 캐시 관리
 - `dooray project` — 목록·멤버·워크플로우 조회
 - `dooray member` — 표시명/이메일 조회 (`get`/`list`, ADR-021)
-- `dooray post` — 목록·검색·조회·생성·수정($EDITOR)·완료·상태변경 + `--tag`/`--parent`/`--workflow`/`--milestone` 메타데이터 (ADR-019) + `--mention`/`--mention-group`/`--link-task`/`--dry-run` (post comment 도 동일) + `--cc`/`--cc-group`/`--cc-clear`/`--to`/`--to-group`/`--to-clear` 참조자·담당자 추가/수정 (post edit, post create 는 `--*-group` 만 — ADR-025)
+- `dooray post` — 목록·검색·조회·생성·수정($EDITOR)·완료·상태변경 + `--tag`/`--parent`/`--workflow`/`--milestone` 메타데이터 (ADR-019) + `--mention`/`--mention-group`/`--link-task`/`--dry-run` (post comment 도 동일) + `--cc`/`--cc-group`/`--cc-clear`/`--to`/`--to-group`/`--to-clear` 참조자·담당자 추가/수정 (post edit, post create 는 `--*-group` 만 — ADR-025) + `post edit --parent <ref>` 상위 업무 변경 (dedicated `set-parent-post` endpoint — top-level 해제는 웹 UI)
 - `dooray post comment` — 목록·추가·수정($EDITOR)·삭제
 - `dooray post file` — 목록·다운로드·전체다운로드·업로드·삭제 (v0.3.0)
 - `dooray post comment file` — 댓글 첨부 파일 목록·업로드·다운로드·삭제 (post-level files API + 댓글 PUT 합성, ADR-024)
