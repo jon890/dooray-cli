@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { resolveMember } from "./member.js";
 import type { DoorayApiClient } from "../api/client.js";
 import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+import { EXIT_API_ERROR } from "../utils/exit-codes.js";
 
 vi.mock("../cache/store.js", () => ({
   getMembers: vi.fn().mockResolvedValue(null),
@@ -35,11 +35,12 @@ describe("resolveMember 입력 자동 분기", () => {
     expect(await resolveMember(client, "proj", id)).toBe(id);
   });
 
-  it("15자리 이상 숫자 + getMemberDetail 404 (DoorayCliError) → '찾을 수 없습니다' 메시지", async () => {
+  it("15자리 이상 숫자 + getMemberDetail 404 (DoorayCliError + EXIT_API_ERROR) → '찾을 수 없습니다' 메시지", async () => {
+    // toDoorayCliError 가 404 HTTP 에러에 EXIT_API_ERROR 부여 — 실제 동작 mirror
     const client = mockClient({
       getMemberDetail: vi
         .fn()
-        .mockRejectedValue(new DoorayCliError("404 not found", EXIT_PARAM_ERROR)),
+        .mockRejectedValue(new DoorayCliError("API 호출 실패: not found", EXIT_API_ERROR)),
     });
     await expect(
       resolveMember(client, "proj", "1234567890123456789"),

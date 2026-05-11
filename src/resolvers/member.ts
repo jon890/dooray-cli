@@ -4,7 +4,7 @@ import { getMembers, setMembers, isExpired } from "../cache/store.js";
 import { MEMBERS_TTL_MS } from "../cache/types.js";
 import { matchByName } from "./match.js";
 import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+import { EXIT_API_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 const MEMBER_ID_RE = /^\d{15,}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -114,9 +114,10 @@ export async function resolveMember(
       await client.getMemberDetail(input);
       return input;
     } catch (err) {
-      // 404 / 잘못된 id 만 "찾을 수 없습니다" 로 변환. 네트워크/인증/5xx 등 다른
-      // DoorayCliError 는 그대로 re-throw 해서 에러 분류 보존.
-      if (err instanceof DoorayCliError && err.exitCode === EXIT_PARAM_ERROR) {
+      // toDoorayCliError 가 404 류 HTTP 에러에 EXIT_API_ERROR 부여. 그 케이스만
+      // "찾을 수 없습니다" 로 변환하고, 인증(EXIT_AUTH_ERROR) / 네트워크(원본
+      // Error — DoorayCliError 아님) 는 그대로 re-throw 해서 에러 분류 보존.
+      if (err instanceof DoorayCliError && err.exitCode === EXIT_API_ERROR) {
         throw new DoorayCliError(
           `organizationMemberId 를 찾을 수 없습니다: ${input}`,
           EXIT_PARAM_ERROR,
