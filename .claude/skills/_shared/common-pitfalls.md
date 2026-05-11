@@ -116,6 +116,13 @@ grep -lE "index\.json.*completed" tasks/{plan}/phase-*.md   # 마지막 phase �
 
 **Self-check**: 마지막 phase 에 마킹 지시 + 단일 commit 포함 명시?
 
+**`current_phase` 도 함께 갱신** (PR #62 review 추가): 위 sed 는 `status` 3건만 치환. `index.json` 의 `current_phase` 필드는 그대로 남아 "완료지만 phase 1 진행 중" 모순 발생. 마지막 phase 본문에 다음 1줄 sed 도 명시:
+
+```bash
+sed -i '' 's/"current_phase": 1/"current_phase": 2/' tasks/{plan}/index.json
+grep -cE "\"current_phase\": {total_phases}" tasks/{plan}/index.json   # = 1
+```
+
 ## 1-9. macOS BSD `sed` `\b` 미지원
 
 **증상**: rename plan 에 `sed -i '' 's|foo\b|bar|g'`. macOS BSD `sed` 는 `\b` 미지원 → 0 매치.
@@ -448,6 +455,28 @@ git -C /Users/.../dooray-cli/.claude/worktrees/{plan} status --short
 **Good**: phase 작성 시 새 옵션이 두 명령 (`edit` + `create` 등) 에 들어가면 **양 명령의 dry-run 분기 라인을 phase 본문에 명시** + "dry-run JSON 출력 범위가 두 명령에서 동일한가" self-check. 범위 통일이 불가능하면 (예: create 가 신규 자원이라 resolve 비용 회피) README/SKILL.md 에 **명령별로 범위를 분리 서술**.
 **검출**: phase diff 에 동일 옵션이 2 개 이상 `commands/post/*.ts` 에 추가됐으면 `grep -nE "opts\.dryRun|JSON\.stringify" <변경 파일들>` 결과 비교 — dry-run 분기 직전 코드에 무엇이 resolve 됐는지 라인 단위로 대조. 비대칭이면 docs 도 두 명령을 분리해서 서술.
 **Why**: PR #55 review — `post edit` 은 dry-run 가드를 cc/to resolve 후에 두는 게 자연스러웠고 (기존 mention/link-task 답습), `post create` 는 dry-run 가드가 다른 resolve 보다 위에 있었음. README 가 "post edit/create 의 --dry-run --json 출력에 users 포함" 으로 일괄 서술 → docs-verifier UPDATE_NEEDED. CLI13 의 변형: 같은 옵션 4 명령 dry-run 분기 누락은 CLI13 이 잡고, 같은 옵션 2 명령 dry-run *위치 차이로 출력 범위 비대칭* 은 CLI20.
+
+## CLI21. dry-run 실증 시나리오에서 non-interactive 진입 조건 누락
+
+**증상**: phase 본문 실증 시나리오에 `--dry-run --json` 만 명시 (예: `node dist/index.js post edit <project> <number> --parent <ref> --dry-run --json`). 그런데 `post edit` 의 분기는 `nonInteractive = !!(title || body || bodyFile)` — `--dry-run` 자체는 non-interactive 진입 조건이 아니라서 interactive ($EDITOR) 분기로 빠짐. dry-run JSON 출력 블록은 non-interactive 안에만 존재 → 실증 시나리오가 통과 불가능.
+**Good**: post edit/comment edit 류의 실증 시나리오에 `--dry-run` 을 쓰려면 항상 `--title "<원제목>"` 또는 `--body "..."` 동반. phase 본문 실증 단계에 "non-interactive 진입 보장을 위해 `--title` 동반 필수" 한 줄 명시.
+**검출**: phase 본문에 `--dry-run` 등장 시 같은 명령 라인에 `--title` / `--body` / `--body-file` 중 하나가 있는지 grep:
+```bash
+grep -nE "\-\-dry-run" tasks/{plan}/phase-*.md | grep -vE "\-\-title|\-\-body"
+# 결과 있으면 의심
+```
+**Why**: PR #62 critic REVISE — phase-01 실증 시나리오 #5 가 `--parent --dry-run --json` 만 명시. 실제 코드에서 interactive 분기로 진입해 dry-run JSON 자체가 실행 안 됨. executor 가 "통과한 것처럼" 보고하거나 디버깅 미궁 위험. comment edit / post edit / wiki page edit 동일 패턴.
+
+## CLI22. sequential endpoint 호출 — partial-failure stderr 안내 + spinner pair 누락
+
+**증상**: 본문 변경(`updatePost`) + 메타데이터 변경(`setPostParent` / `setPostWorkflow` / `deletePostFile` + `updatePost` 댓글 PUT 합성 등) 을 sequential 로 호출. atomic 보장 없으므로 첫 호출 성공 + 두 번째 실패 시 부분 상태 발생. catch 가 `toDoorayCliError` 로 throw 만 하면 사용자는 "전체 실패" 로 오해 → 본문 재실행으로 mention prepend 중복 등 부작용.
+**Good**: sequential 호출의 catch 안에서 (1) `stopSpinner(false, "...")`, (2) `process.stderr.write("⚠  본문은 수정되었으나 X 변경에 실패했습니다. 본문 재실행 금지 — ...")`, (3) re-throw. phase 본문 작업 항목에 try/catch + stderr 안내 코드 스니펫 명시.
+**검출**: phase diff 에 `client.X` + `client.Y` 두 호출이 같은 비-Promise.all 블록에 있으면 의심. grep 패턴:
+```bash
+git diff main..HEAD -- src/commands/ | grep -E "^\+\s+await client\." | wc -l
+# 같은 함수에서 2 이상이면 sequential 패턴 — partial-failure 처리 확인
+```
+**Why**: PR #62 critic REVISE — `updatePost` 성공 후 `setPostParent` 실패 시 본문은 저장된 상태. 사용자가 명령 재실행하면 mention prepend 중복 / link-task 중복 추가 가능. ADR-019 (post create --workflow), ADR-024 (comment file delete) 도 동일 패턴 — sequential 추가 시 반드시 partial-failure UX 점검.
 
 ---
 
