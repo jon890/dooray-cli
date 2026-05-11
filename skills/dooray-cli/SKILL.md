@@ -55,12 +55,14 @@ dooray doctor                                 # 설정 검증
 | 프로젝트 멤버 보기 | `dooray project members <project>` 또는 `dooray member list <project>` (이름·organizationMemberId) |
 | 프로젝트 멤버 그룹 목록 | `dooray project groups <project>` (ID / Code) |
 | 프로젝트 태그 목록 | `dooray project tags <project>` (ID / Color / Name / Group / Mandatory) |
+| 프로젝트 템플릿 목록 | `dooray project templates <project>` (id / templateName) |
 | 멤버 상세 (organizationMemberId) | `dooray member get <organizationMemberId>` (cache 우회, ADR-021) |
 | organization 전체 멤버 검색 | `dooray member search <keyword>` (이름 기본), `--email`(이메일 exact), `--user-code`(사번 like), `--user-code-exact`(사번 exact), `--page`/`--size` |
 | 업무 목록 조회 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` |
 | 업무 상세 보기 | `dooray post get <project> <number>` |
 | 업무 생성 | `dooray post create <project> --title "..." --body "..."` 또는 `--body-file <path>` (`--body`와 `--body-file`은 동시 사용 불가, `--tag`/`--parent`/`--workflow`/`--milestone` 지원) |
+| 템플릿 기반 업무 생성 | `dooray post create <project> --template <name\|id>` — body/users/tags 자동 채움 (사용자 옵션 우선 override, ADR-027) |
 | 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` 또는 `--body-file <path>` |
 | 업무 완료 처리 | `dooray post done <project> <number>` |
 | 업무 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
@@ -461,6 +463,21 @@ CLI 에러 발생 시 복구 방법:
 | `API 호출 실패 (401)` | API 키 만료/오류 | `dooray doctor` 로 설정 검증 |
 
 ---
+
+## 정형 task 자동화 (Issue #59 / ADR-027)
+
+매주 같은 형식의 task 를 만드는 자동화는 템플릿 + override 패턴이 효율적:
+
+```bash
+# 매주 월요일 실행되는 cron — "주간 릴리스 체크" 템플릿으로 자동 생성
+TODAY=$(date +%Y-%m-%d)
+POST_ID=$(dooray post create <project> \
+  --template "주간 릴리스 체크" \
+  --title "주간 릴리스 체크 — $TODAY" \
+  --json | jq -r '.id')
+```
+
+템플릿 본문의 `${year}` / `${month}` 등 매크로는 Dooray 가 자동 치환 (`interpolation=true` 기본). 사용자 정의 변수는 미지원 — 필요 시 client 측 string replace 로 처리.
 
 ## 캐시
 

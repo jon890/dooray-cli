@@ -46,6 +46,7 @@ dooray project members <project>              # 멤버 목록
 dooray project workflows <project>            # 워크플로우 목록
 dooray project groups <project>              # 멤버 그룹 목록 (ID / Code)
 dooray project tags <project>                # 태그 목록 (ID / Color / Name / Group / Mandatory)
+dooray project templates <project>          # 템플릿 목록 (ID / Template Name, ADR-027)
 ```
 
 > **태그 캐시 갱신**: 이전 버전에서 캐시한 태그가 색상 없이 표시되면 `dooray cache clear` 실행 후 다시 조회하세요.
@@ -107,6 +108,24 @@ dooray post create <project> \
 ```
 
 > mandatory-tag 정책 프로젝트(예: `<project>`)에서는 mandatory 그룹마다 1개 이상 `--tag`로 지정해야 한다. 누락 시 클라이언트가 사전 검증으로 후보 목록과 함께 에러 출력.
+
+#### 템플릿 기반 정형 task (ADR-027)
+
+```bash
+# 프로젝트의 템플릿 목록
+dooray project templates <project>
+
+# 템플릿으로 업무 생성 (body/users/tags 자동 채움)
+dooray post create <project> --template "릴리스 플랜"
+
+# 사용자 옵션 override — 일부 필드만 다르게
+dooray post create <project> --template "릴리스 플랜" --title "v0.9 릴리스 계획" --tag "p0"
+
+# 19자리 templateId 직접 입력
+dooray post create <project> --template 1234567890123456789 --title "by id"
+```
+
+`interpolation=true` 가 기본 — Dooray 가 `${year}`, `${month}` 같은 시스템 매크로를 응답에서 자동 치환. 사용자 정의 변수 (`--field key=value`) 는 본 release scope 외.
 
 ### 업무 수정
 
