@@ -304,7 +304,7 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
 
 8. **역참조 규칙 준수**: 새 ADR 추가 시 `docs/code-architecture.md` 또는 `CLAUDE.md` ADR 참조 표 둘 중 한 곳에 ADR-NNN 한 줄 추가 됐는가? (planning SKILL C항 "역참조 규칙")
 
-9. **갱신 시점 분리 위반 없는가**: planning 결정 docs (`adr.md`/`code-architecture.md`/`CLAUDE.md`/`data-schema.md`/`flow.md`/`prd.md`/`dooray-api-reference.md`) 를 phase 안에서 변경하면 VIOLATION. 사용자 가이드 docs (`README.md`/`skills/dooray-cli/SKILL.md`) 는 phase 마지막에서만 변경 OK.
+9. **갱신 시점 분리 위반 없는가**: planning 결정 docs (`adr.md`/`code-architecture.md`/`CLAUDE.md`/`data-schema.md`/`flow.md`/`prd.md`) 를 phase 안에서 변경하면 VIOLATION. 사용자 가이드 docs (`README.md`/`skills/dooray-cli/SKILL.md`) 는 phase 마지막에서만 변경 OK.
 
 10. **`skills/dooray-cli/SKILL.md` (공개 스킬) dogfooding** — CLI 는 공개 스킬도 검증 대상. 새/삭제/변경된 명령·옵션이 공개 스킬에 반영되지 않으면 외부 사용자가 오작동 경로를 따라감 (docs 영향 표 행에 표시되어 있을 때).
 

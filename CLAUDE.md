@@ -89,6 +89,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | `feedback --last` (last-run 추적) | **ADR-023** (opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹) |
 | `comment file *` 명령 (list/upload/download/delete) | **ADR-024** (post-level files API + 댓글 PUT 합성 — Dooray 댓글 전용 endpoint 부재) |
 | `post edit/create` 의 cc/to 변경 (멤버/그룹) | **ADR-025** (full payload PUT + `type: "group"` + `projectMemberGroupId`) |
+| Wiki 명령 (`wiki page create/edit`) 추가/수정 | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기) |
 | 파일 업로드/다운로드 (307 처리) | **ADR-015** (수동 redirect + Auth 헤더 재첨부) |
 | `dooray setup` 마법사 변경 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치) |
 | 새 Commander.js 서브커맨드 추가 | (ADR 없음 — 기존 `commands/*.ts` 패턴 참조) |

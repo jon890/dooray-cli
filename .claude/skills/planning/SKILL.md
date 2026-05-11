@@ -155,7 +155,7 @@ build-with-teams 의 docs-verifier 검증 항목과 본 SKILL 의 docs 영향 �
 | 디렉터리 구조 / 레이어 | `docs/code-architecture.md` 디렉터리 구조 | `CLAUDE.md` (요약 한 블록) |
 | 기술 결정 근거 (왜) | `docs/adr.md` (해당 ADR) | `CLAUDE.md` ADR 참조 표, `docs/code-architecture.md` 해당 영역에 ADR-NNN 한 줄 |
 | 캐시 / 파일 레이아웃 | `docs/adr.md` (해당 ADR) | `CLAUDE.md` 캐시 규약 행 |
-| API 호출 패턴 / 엔드포인트 | `docs/dooray-api-reference.md` | `docs/code-architecture.md` api/ 섹션 |
+| API 호출 패턴 / 엔드포인트 함정 | `docs/adr.md` (해당 ADR — 예: ADR-015 파일 307, ADR-026 wiki 함정) | `docs/code-architecture.md` api/ 섹션 |
 | DB / 데이터 스키마 | `docs/data-schema.md` | `docs/adr.md` (스키마 결정 ADR) |
 | 사용자 흐름 / 시나리오 | `docs/flow.md` | `docs/prd.md` (기능 → 흐름 매핑) |
 
@@ -172,7 +172,6 @@ docs/adr.md  ←──── (ADR-NNN 역참조) ────  docs/code-archite
                        ↓
         skills/dooray-cli/SKILL.md (공개, 자동화 시나리오)
 
-docs/dooray-api-reference.md  ←  docs/code-architecture.md (api/ 섹션)
 docs/data-schema.md           ←  docs/adr.md (스키마 결정 ADR)
 docs/flow.md                  ←  docs/prd.md
 ```
@@ -185,21 +184,21 @@ docs/flow.md                  ←  docs/prd.md
 
 신규 작업 시 아래 표에서 해당 행을 찾아 **표시된 모든 docs 를 손댄다**. "(해당 시)" 같은 모호한 어휘 금지 — 표시되어 있으면 변경, 표시 없으면 미손.
 
-| 변경 유형 | CLAUDE.md | adr.md | code-architecture.md | prd.md | flow.md | data-schema.md | README.md | skills/dooray-cli/SKILL.md | dooray-api-reference.md |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 신규 CLI 명령 (소) | 주의사항 1줄 + "N개 명령" 카운트 | — | 디렉터리 트리 + 필요 시 utils 추가 | MVP 범위 한 줄 (`- \`dooray X\` — 한 줄 설명`) | 사용자 흐름 섹션 (대화 / 입출력 예시) | (캐시 도입 시) | 사용 예 섹션 | 빠른 참조 표 + 자동화 시나리오 | — |
-| 신규 ADR 동반 변경 | 주의사항 + ADR 참조 표 행 | ADR 본문 | 해당 영역에 ADR-NNN 역참조 한 줄 | (사용자 facing 변경 시) | (사용자 흐름 변경 시) | (스키마 결정 시) | 사용 예 (해당 명령 있을 때) | 시나리오 (해당 명령 있을 때) | — |
-| 캐시 schema / TTL 변경 | 캐시 규약 행 | ADR 갱신 (ADR-004/010) | utils/cache 섹션 | — | — | 캐시 디렉터리 + 스키마 본문 | — | — | — |
-| 새 API 호출 패턴 (재시도/redirect 등) | — | (정책 결정 시) | api/ 섹션 | — | — | — | — | — | 엔드포인트 + 동작 설명 |
-| DB 스키마 변경 | — | 결정 ADR | api/ 섹션 (해당 시) | — | — | 스키마 본문 | — | — | — |
-| 사용자 흐름 변경 (옵션 추가/UX) | — | — | — | (MVP 범위 변경 시) | 흐름 추가/수정 | — | 사용 예 (해당 시) | 시나리오 (해당 시) | — |
-| 의존성 추가 / 빌드 설정 | 빌드 명령 (해당 시) | 자명성 게이트 후 ADR | 기술 스택 표 | — | — | — | — | — | — |
+| 변경 유형 | CLAUDE.md | adr.md | code-architecture.md | prd.md | flow.md | data-schema.md | README.md | skills/dooray-cli/SKILL.md |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 신규 CLI 명령 (소) | 주의사항 1줄 + "N개 명령" 카운트 | — | 디렉터리 트리 + 필요 시 utils 추가 | MVP 범위 한 줄 (`- \`dooray X\` — 한 줄 설명`) | 사용자 흐름 섹션 (대화 / 입출력 예시) | (캐시 도입 시) | 사용 예 섹션 | 빠른 참조 표 + 자동화 시나리오 |
+| 신규 ADR 동반 변경 | 주의사항 + ADR 참조 표 행 | ADR 본문 | 해당 영역에 ADR-NNN 역참조 한 줄 | (사용자 facing 변경 시) | (사용자 흐름 변경 시) | (스키마 결정 시) | 사용 예 (해당 명령 있을 때) | 시나리오 (해당 명령 있을 때) |
+| 캐시 schema / TTL 변경 | 캐시 규약 행 | ADR 갱신 (ADR-004/010) | utils/cache 섹션 | — | — | 캐시 디렉터리 + 스키마 본문 | — | — |
+| 새 API 호출 패턴 (재시도/redirect 등) | — | 정책 결정 ADR (예: ADR-015, ADR-026) | api/ 섹션 + ADR-NNN 역참조 | — | — | — | — | — |
+| DB 스키마 변경 | — | 결정 ADR | api/ 섹션 (해당 시) | — | — | 스키마 본문 | — | — |
+| 사용자 흐름 변경 (옵션 추가/UX) | — | — | — | (MVP 범위 변경 시) | 흐름 추가/수정 | — | 사용 예 (해당 시) | 시나리오 (해당 시) |
+| 의존성 추가 / 빌드 설정 | 빌드 명령 (해당 시) | 자명성 게이트 후 ADR | 기술 스택 표 | — | — | — | — | — |
 
 **갱신 시점 분리** (executor 위임 vs 즉시 반영):
 
 | docs | 갱신 시점 | 이유 |
 |---|---|---|
-| `adr.md`, `code-architecture.md`, `CLAUDE.md`, `data-schema.md`, `flow.md`, `prd.md`, `dooray-api-reference.md` | **planning 단계에서 즉시 반영 + commit** | 기획 결정의 단일 소스. task 생성 후 변경 금지 (코드↔docs 결정 mismatch 회피) |
+| `adr.md`, `code-architecture.md`, `CLAUDE.md`, `data-schema.md`, `flow.md`, `prd.md` | **planning 단계에서 즉시 반영 + commit** | 기획 결정의 단일 소스. task 생성 후 변경 금지 (코드↔docs 결정 mismatch 회피) |
 | `README.md`, `skills/dooray-cli/SKILL.md` | **task 마지막 phase (phase-N)** | 코드 산출물 (실제 명령 인자/옵션) 에 의존 — phase-1·2 후에야 정확히 작성 가능 |
 
 이 분리를 phase 작성 시 명시적으로 따른다. planning 결정 docs 를 phase 안에서 변경하면 critic REVISE 또는 docs-verifier VIOLATION 사유.
