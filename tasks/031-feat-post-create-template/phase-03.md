@@ -73,8 +73,11 @@ POST_ID=$(dooray post create <project> \
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 sed -i '' 's/"status": "pending"/"status": "completed"/g' tasks/031-feat-post-create-template/index.json
+sed -i '' 's/"current_phase": 1/"current_phase": 3/' tasks/031-feat-post-create-template/index.json
 grep -c '"status": "completed"' tasks/031-feat-post-create-template/index.json
 # 기대: 4 (index + 3 phases)
+grep -cE "\"current_phase\": 3" tasks/031-feat-post-create-template/index.json
+# 기대: 1
 ```
 
 ## 성공 기준
@@ -99,9 +102,11 @@ grep -nE "ADR-027" README.md skills/dooray-cli/SKILL.md
 # 4. index.json 완료 마킹
 grep -c '"status": "completed"' tasks/031-feat-post-create-template/index.json
 # 기대: 4
+grep -cE "\"current_phase\": 3" tasks/031-feat-post-create-template/index.json
+# 기대: 1
 
-# 5. PII 0건
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ tasks/031-feat-post-create-template/ 2>/dev/null | grep -vE "사내 Dooray|NHN 도메인"
+# 5. PII 0건 (CLAUDE.md full pattern 동기화)
+grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com|kim@example\.com" README.md skills/ tasks/031-feat-post-create-template/ 2>/dev/null | grep -vE "사내 Dooray|NHN 도메인|grep -rnE"
 # 기대: 0건 (exit 1)
 ```
 
