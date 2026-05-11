@@ -8,6 +8,7 @@ import { ensureMe } from "../../resolvers/me.js";
 import { prependMentions } from "../../utils/mention.js";
 import { appendTaskLinks } from "../../utils/task-link.js";
 import { resolveTaskLinks } from "../../resolvers/task-link.js";
+import { resolveUserAdditions, mergeUsers } from "../../resolvers/post-users.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import {
   openInEditor,
@@ -45,6 +46,12 @@ export const postEditCommand = new Command("edit")
   .option("--mention <name>", "멤버 멘션 (반복 가능, 이름 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--mention-group <code>", "그룹 멘션 (반복 가능, code 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--link-task <ref>", "다른 업무 링크 추가 (<project>/<number> 또는 postId, 반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--cc <name>", "참조자(cc) 멤버 추가 (반복 가능, 이름 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--cc-group <code>", "참조자(cc) 그룹 추가 (반복 가능, 그룹 코드 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--cc-clear", "기존 참조자 전부 제거 후 신규만 적용 (--cc/--cc-group 와 조합 가능)")
+  .option("--to <name>", "담당자(to) 멤버 추가 (반복 가능, 이름 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--to-group <code>", "담당자(to) 그룹 추가 (반복 가능, 그룹 코드 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--to-clear", "기존 담당자 전부 제거 후 신규만 적용")
   .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
   .option("--no-confirm", "누락 attachment 경고 시 confirm 없이 진행 (자동화용)")
   .action(async (project, postNumberStr, opts) => {
@@ -54,6 +61,10 @@ export const postEditCommand = new Command("edit")
     const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
     const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);
     const linkInputs: string[] = (opts.linkTask ?? []).filter((s: string) => s.length > 0);
+    const ccNames: string[] = (opts.cc ?? []).filter((s: string) => s.length > 0);
+    const ccGroups: string[] = (opts.ccGroup ?? []).filter((s: string) => s.length > 0);
+    const toNames: string[] = (opts.to ?? []).filter((s: string) => s.length > 0);
+    const toGroups: string[] = (opts.toGroup ?? []).filter((s: string) => s.length > 0);
 
     startSpinner("업무 조회 중...");
     const { projectId, postId, postNumber, projectCode } = await resolvePostInput(client, {
@@ -112,12 +123,34 @@ export const postEditCommand = new Command("edit")
         newBody = appendTaskLinks(effectiveBody, links, me);
       }
 
+      let toUsers: CreatePostUser[] = post.users.to.map((u) => ({
+        type: u.type,
+        member: u.member,
+        emailUser: u.emailUser,
+        group: u.group,
+      }));
+      let ccUsers: CreatePostUser[] = post.users.cc.map((u) => ({
+        type: u.type,
+        member: u.member,
+        emailUser: u.emailUser,
+        group: u.group,
+      }));
+
+      if (toNames.length > 0 || toGroups.length > 0 || opts.toClear) {
+        const additions = await resolveUserAdditions(client, projectId, toNames, toGroups);
+        toUsers = mergeUsers(toUsers, additions, !!opts.toClear);
+      }
+      if (ccNames.length > 0 || ccGroups.length > 0 || opts.ccClear) {
+        const additions = await resolveUserAdditions(client, projectId, ccNames, ccGroups);
+        ccUsers = mergeUsers(ccUsers, additions, !!opts.ccClear);
+      }
+
       if (opts.dryRun) {
         stopSpinner(false);
         const globalOpts = postEditCommand.optsWithGlobals() as OutputOptions;
         const previewBody = newBody ?? post.body.content;
         if (globalOpts.json) {
-          process.stdout.write(JSON.stringify({ body: previewBody }) + "\n");
+          process.stdout.write(JSON.stringify({ body: previewBody, users: { to: toUsers, cc: ccUsers } }) + "\n");
         } else {
           process.stdout.write(previewBody + "\n");
         }
@@ -125,19 +158,6 @@ export const postEditCommand = new Command("edit")
       }
 
       startSpinner("업무 수정 중...");
-      const toUsers: CreatePostUser[] = post.users.to.map((u) => ({
-        type: u.type,
-        member: u.member,
-        emailUser: u.emailUser,
-        group: u.group,
-      }));
-      const ccUsers: CreatePostUser[] = post.users.cc.map((u) => ({
-        type: u.type,
-        member: u.member,
-        emailUser: u.emailUser,
-        group: u.group,
-      }));
-
       await client.updatePost(projectId, postId, {
         subject: title ?? post.subject,
         body: {
@@ -160,6 +180,12 @@ export const postEditCommand = new Command("edit")
       if (linkInputs.length > 0) {
         process.stderr.write(
           "⚠  --link-task 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
+        );
+      }
+      if (ccNames.length > 0 || ccGroups.length > 0 || opts.ccClear ||
+          toNames.length > 0 || toGroups.length > 0 || opts.toClear) {
+        process.stderr.write(
+          "⚠  --cc/--cc-group/--cc-clear/--to/--to-group/--to-clear 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
         );
       }
       const original = serializePostFrontmatter(post, members);
