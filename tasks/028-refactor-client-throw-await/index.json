@@ -1,0 +1,20 @@
+{
+  "name": "028-refactor-client-throw-await",
+  "description": "GitHub Issue #49 — toDoorayCliError 호출 패턴을 'return await' 에서 'throw await' 로 통일. 34곳 mechanical 치환. 시그니처 (async function ...: Promise<never>) 본문 (line 105-127) 그대로 — response body parsing 이 진짜 async I/O 라 sync 변환 옵션 C 부적합. 사용자 가시 동작 0 변경. ADR 불요 (자명성 게이트 통과 — TypeScript 일반 패턴).",
+  "created_at": "2026-05-11T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 1,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "src/api/client.ts 34곳 return await → throw await + 완료 마킹",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-05-11T00:00:00Z"
+}
