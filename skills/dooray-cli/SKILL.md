@@ -95,6 +95,7 @@ dooray doctor                                 # 설정 검증
 | 참조자(cc) 멤버/그룹 추가 | `dooray post edit <project> <number> --cc-group <code>` — 기존 참조자 유지 + 그룹 추가 (dedupe, ADR-025) |
 | 참조자 전체 교체 | `dooray post edit <project> <number> --cc-clear --cc <name>` — 기존 참조자 비우고 신규 멤버만 |
 | 신규 업무 + 그룹 cc | `dooray post create <project> --title "..." --cc-group <code>` — 생성 시 그룹 참조자 포함 |
+| 상위 업무 설정/변경 | `dooray post edit <project> <number> --title "<원제목>" --parent <ref>` — `<ref>` 는 `<project>/<number>` 또는 raw postId. `--title` 미동반 시 interactive 모드로 진입해 무시. unset 미지원 (Issue #60) |
 
 > **제목 옵션 네이밍**: `post` 와 `wiki page` 모두 `--title` 표준. `post`의 `--subject`는 deprecated alias로 당분간 동작하되, 새 코드에서는 `--title` 사용을 권장.
 
@@ -319,6 +320,20 @@ POST_ID=$(dooray post create <project> \
 # 2. (필요 시) 후속으로 cc 추가
 dooray post edit --id "$POST_ID" --cc-group qa-team
 ```
+
+---
+
+## 자식 업무 먼저 → 후속 부모 지정 (Issue #60)
+
+```bash
+# 1. 자식 업무 생성 (parent 모르고)
+CHILD_ID=$(dooray post create <project> --title "subtask A" --json | jq -r '.id')
+
+# 2. 부모 결정 후 후속 지정
+dooray post edit --id "$CHILD_ID" --title "subtask A" --parent <project>/<parent-number>
+```
+
+**한계** (cmux-browser spike 결과): Dooray API 가 `unset-parent-post` 미제공 → CLI 로 parent 해제 불가. 필요 시 웹 UI 에서 처리.
 
 ---
 

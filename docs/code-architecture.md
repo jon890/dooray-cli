@@ -35,7 +35,7 @@ src/
     workflow.ts             # name·class → workflowId
     post.ts                 # postNumber → postId (API 호출)
     wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시)
-    postRef.ts              # "code/number" 또는 raw postId → postId (post create --parent 전용)
+    postRef.ts              # "code/number" 또는 raw postId → postId (post create / post edit --parent 공용)
     tag.ts                  # name[] → tagIds + mandatory/selectOne 검증
     milestone.ts            # name → milestoneId
     match.ts                # 공용: 정확일치 → 부분일치 → 모호 시 에러
