@@ -33,7 +33,7 @@ dooray post edit --id <postId> --parent <other-parent-postId>
 
 내부적으로 `client.updatePost` 호출 후 별도 `POST .../set-parent-post` endpoint 추가 호출. **parent 해제 (top-level 화)** 는 Dooray API 가 미지원이라 웹 UI 에서 수동 처리.
 
-interactive ($EDITOR) 모드에서 `--parent` 사용 시 무시 + stderr 경고.
+interactive ($EDITOR) 모드에서 `--parent` 사용 시 무시 + stderr 경고. **parent 만 단독 변경하려면 `--title "<원제목>"` 동반 필요** — `post edit` 가 본문 변경(`--title`/`--body`) 동반 시에만 non-interactive 분기로 들어가며, parent 변경은 그 분기 안에서만 수행됨.
 ```
 
 ### 2. `skills/dooray-cli/SKILL.md` — AI 자동화 시나리오
@@ -65,8 +65,11 @@ dooray post edit --id "$CHILD_ID" --parent <project>/<parent-number>
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 sed -i '' 's/"status": "pending"/"status": "completed"/g' tasks/030-feat-post-edit-parent/index.json
+sed -i '' 's/"current_phase": 1/"current_phase": 2/' tasks/030-feat-post-edit-parent/index.json
 grep -c '"status": "completed"' tasks/030-feat-post-edit-parent/index.json
 # 기대: 3 (index 1 + phases 2)
+grep -nE "\"current_phase\": 2" tasks/030-feat-post-edit-parent/index.json
+# 기대: 1줄
 ```
 
 ## 성공 기준
@@ -91,6 +94,8 @@ grep -nE "Issue #60" README.md skills/dooray-cli/SKILL.md
 # 4. index.json 완료 마킹
 grep -c '"status": "completed"' tasks/030-feat-post-edit-parent/index.json
 # 기대: 3
+grep -cE "\"current_phase\": 2" tasks/030-feat-post-edit-parent/index.json
+# 기대: 1
 
 # 5. PII grep 0건
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ tasks/030-feat-post-edit-parent/ 2>/dev/null | grep -vE "사내 Dooray|NHN 도메인"

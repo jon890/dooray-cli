@@ -48,28 +48,40 @@ src/commands/post/edit.ts
 
 ### 2. action 안에서 처리
 
-post create 의 `--workflow` 후속 호출 패턴 답습. `client.updatePost` 호출 후 `--parent` 가 있으면 `setPostParent` 추가 호출.
+post create 의 `--workflow` 후속 호출 패턴 답습. **위치**: non-interactive 블록 내, `client.updatePost` 후 `stopSpinner(true, "업무 수정 완료")` 직후 (dry-run early-return 은 이미 위에서 처리됨).
 
 ```ts
 import { resolvePostRef } from "../../resolvers/postRef.js";
 
-// non-interactive 분기 — client.updatePost 직후, dry-run 체크 이후
-if (opts.parent && !opts.dryRun) {
+// non-interactive 블록 안, updatePost 의 stopSpinner 직후
+if (opts.parent) {
   startSpinner("상위 업무 변경 중...");
-  const newParentPostId = await resolvePostRef(client, opts.parent);
-  await client.setPostParent(projectId, postId, newParentPostId);
-  stopSpinner(true, "상위 업무 변경 완료");
+  try {
+    const newParentPostId = await resolvePostRef(client, opts.parent);
+    await client.setPostParent(projectId, postId, newParentPostId);
+    stopSpinner(true, "상위 업무 변경 완료");
+  } catch (err) {
+    stopSpinner(false, "상위 업무 변경 실패");
+    process.stderr.write(
+      "⚠  본문은 수정되었으나 상위 업무 변경에 실패했습니다. 본문 재실행 금지 — 웹 UI 또는 dooray post edit --parent 단독 재시도 권장.\n",
+    );
+    throw err;
+  }
 }
 ```
 
-**호출 순서**: `client.updatePost` (subject/body/users) → `client.setPostParent` (parent). 둘 다 무관 endpoint 라 atomic 보장 없음 — `updatePost` 가 성공하고 `setPostParent` 가 실패해도 body 변경은 유지됨. partial 실패 stderr 안내는 setPostParent 의 catch 가 자동 처리 (toDoorayCliError → DoorayCliError throw + non-zero exit).
+**호출 순서**: `client.updatePost` (subject/body/users) → `client.setPostParent` (parent). 두 endpoint atomic 보장 없음 — `updatePost` 성공 후 `setPostParent` 실패 시 본문은 이미 저장된 상태. partial-failure 사용자 오해 방지 위해 stderr 안내 필수 (재실행 시 본문 재저장으로 mention prepend 중복 등 부작용 가능).
+
+**손자 구조 시도 (400)**: Dooray 서버가 "상위업무를 가진 하위업무를 상위로 설정" 거부. `toDoorayCliError` 가 서버 메시지를 wrap → DoorayCliError throw → non-zero exit. 실증 시 stderr 에 Dooray 원본 에러 메시지 노출되면 통과.
 
 ### 3. interactive ($EDITOR) 모드 경고
 
-`opts.parent` 가 있고 interactive 분기로 들어가면 stderr 경고 + 옵션 무시 (mention/link-task/cc 패턴 답습):
+`opts.parent` 가 있고 interactive 분기 (`else` 블록) 로 들어가면 stderr 경고 + 옵션 무시 (mention/link-task/cc 패턴 답습).
+
+**위치**: interactive `else { ... }` 블록 첫머리, 기존 mention/cc 경고 바로 다음 줄에 추가. non-interactive 블록 진입 *전* if(opts.parent) 검사 금지 (non-interactive 일 때 잘못 경고 출력됨).
 
 ```ts
-// interactive 분기 진입 직전 또는 안:
+// interactive else 블록 첫머리 (cc 경고 옆):
 if (opts.parent) {
   process.stderr.write(
     "⚠  --parent 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
@@ -98,28 +110,31 @@ if (opts.dryRun) {
 }
 ```
 
+**주의**: `parentChange: opts.parent` 는 사용자 입력 그대로 (`<project>/<number>` 또는 raw postId). 실제 호출될 postId 로 변환 전 — 미리보기 목적이라 의도적. resolvePostRef 는 dry-run 에서 호출하지 않음 (API 미호출 원칙 유지).
+
 ### 5. 동작 실증 (필수)
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 pnpm build
 
-# 1) 자식 업무 1개 + 부모 후보 1개 준비 (없으면 사용자에게 요청)
-# 2) parent 설정
-node dist/index.js post edit <project> <child-number> --parent <project>/<parent-number>
+# 1) 자식 업무 + 부모 후보 (사용자 제공: child=<project>/<child>, parent=<project>/<parent>)
+# 2) parent 설정 — non-interactive 진입 위해 --title 또는 --body 동반 필수
+node dist/index.js post edit <project> <child-number> --title "<원제목 그대로>" --parent <project>/<parent-number>
 # 기대: '업무 수정 완료' + '상위 업무 변경 완료' 200 OK
 
-# 3) parent 변경 (다른 부모로)
-node dist/index.js post edit --id <child-postId> --parent <other-parent-postId>
+# 3) parent 재설정 (동일 또는 다른 부모로 — parent2 없으면 동일 ref 로 idempotent 확인)
+node dist/index.js post edit --id <child-postId> --title "<원제목 그대로>" --parent <other-parent-postId>
 
-# 4) Dooray 제약 케이스: 손자 구조 시도 (상위업무를 가진 하위업무를 상위로) → 400 에러 기대
-# 5) dry-run JSON
-node dist/index.js post edit <project> <child-number> --parent <project>/<other-parent> --dry-run --json
+# 4) Dooray 제약 케이스: 손자 구조 시도 → 400 에러 + stderr 에 Dooray 서버 메시지 노출 + non-zero exit
+
+# 5) dry-run JSON — non-interactive 진입 위해 --title 동반 필수
+node dist/index.js post edit <project> <child-number> --title "<원제목>" --parent <project>/<other-parent> --dry-run --json
 # 기대: { body, users, parentChange: '<project>/<other-parent>' }. API 미호출
 
-# 6) interactive 경고
-node dist/index.js post edit <project> <child-number> --parent <project>/<parent-number>   # --title/--body 없음
-# 기대: stderr 경고 + frontmatter 편집 후 parent 미적용
+# 6) interactive 경고 — --title/--body 미동반
+node dist/index.js post edit <project> <child-number> --parent <project>/<parent-number>
+# 기대: stderr "⚠  --parent 는 --title/--body 와 함께 사용 시에만 적용됩니다." + $EDITOR 진입. parent 미적용
 ```
 
 ## 성공 기준
