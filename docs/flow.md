@@ -180,6 +180,11 @@ dooray post edit my-project 42 \
 dooray post create my-project \
   --title "주간 audit 리포트" \
   --cc 홍길동 --cc-group dev-team               # post create 는 clear 없음
+
+# 입력 형식 자동 분기 (Issue #58): 이름 / 이메일 / 19자리 organizationMemberId
+dooray post edit my-project 42 \
+  --cc user@example.com \                       # 이메일 (동명이인 우회)
+  --cc 1234567890123456789                       # organizationMemberId 직접
 ```
 
 interactive ($EDITOR) 모드에서는 이 옵션들 무시 + stderr 경고 (mention/link-task 패턴 답습).

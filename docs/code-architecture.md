@@ -31,7 +31,7 @@ src/
   resolvers/
     me.ts                   # /common/v1/members/me → CachedMe (id·name·orgId; orgId 없으면 캐시 갱신)
     project.ts              # code·id → projectId
-    member.ts               # name → organizationMemberId + lookupMemberName / buildMemberNameMap (ADR-021)
+    member.ts               # 입력 자동 분기 → organizationMemberId: 19자리 숫자(getMemberDetail 검증) / 이메일(searchMembers exact) / 그 외(matchByName 부분일치). lookupMemberName / buildMemberNameMap (ADR-021)
     workflow.ts             # name·class → workflowId
     post.ts                 # postNumber → postId (API 호출)
     wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시)
