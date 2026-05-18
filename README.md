@@ -23,7 +23,11 @@ npm install -g @bifos/dooray-cli
 dooray setup
 ```
 
-API Endpoint 선택 → API Key 입력 → 연결 테스트 → 메일 설정(선택)을 순서대로 진행합니다.
+아래 순서로 진행합니다:
+1. API Endpoint 선택
+2. API Key 입력
+3. 연결 테스트
+4. 메일 설정 (선택)
 API 토큰은 `https://{tenant}.dooray.com/setting/api/token`에서 발급할 수 있습니다.
 
 수동 설정도 가능합니다:
@@ -262,7 +266,12 @@ dooray post create <project> --title "..." --cc user@example.com
 dooray post create <project> --title "..." --cc 1234567890123456789
 ```
 
-분기 규칙: `^\d{15,}$` → memberId / `^[^\s@]+@[^\s@]+\.[^\s@]+$` → 이메일 / 그 외 → 이름 부분일치. `member search --email` 의 인프라 재사용.
+분기 규칙 (`resolveMember` 자동 판단):
+- `^\d{15,}$` — memberId 직접 사용
+- `^[^\s@]+@[^\s@]+\.[^\s@]+$` — 이메일, `searchMembers` exact 조회
+- 그 외 — 이름 부분일치
+
+`member search --email` 의 인프라 재사용.
 
 #### comment list 필터 옵션
 
@@ -489,7 +498,7 @@ dooray --help
 
 ### CI (`.github/workflows/ci.yml`)
 - 트리거: `main` 으로 push, `main` 대상 PR
-- 동작: `pnpm install --frozen-lockfile` → `pnpm test` → `pnpm build` (Node 18, ubuntu-latest)
+- 동작: `pnpm install --frozen-lockfile`, `pnpm test`, `pnpm build` (Node 18, ubuntu-latest)
 - 별도 secret 불필요
 
 ### Claude code review (`.github/workflows/claude-code-review.yml`)

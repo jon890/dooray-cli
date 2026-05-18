@@ -104,7 +104,7 @@ types.ts 포팅 비용은 1일 내라 상쇄 가능.
 **이유**:
 
 - `--body "..."` flag로 긴 마크다운 입력은 현실적으로 불가능
-- `--body-file` + 별도 수정은 "기존 내용 조회 → 파일 저장 → 수정 → CLI 재실행" 4단계 필요
+- `--body-file` + 별도 수정은 4단계 필요: 기존 내용 조회, 파일 저장, 수정, CLI 재실행
 - $EDITOR 방식(`kubectl edit`, `git commit` 동일 패턴)은 1커맨드로 완결
 - YAML frontmatter로 메타데이터(subject, priority, due_date, to, cc) + 본문 통합 편집
 
@@ -227,7 +227,7 @@ types.ts 포팅 비용은 1일 내라 상쇄 가능.
 
 **구현**:
 
-- 다운로드: `?media=raw` 쿼리 파라미터로 307 유도 → Location 헤더 캡처 → fetch로 2차 요청
+- 다운로드: `?media=raw` 쿼리 파라미터로 307 유도 후 Location 헤더 캡처, fetch로 2차 요청
 - 업로드: `fetch` 직접 사용 (`ky`는 307 + `redirect: "manual"` 조합에서 정상 동작하지 않음)
 - 2차 요청 시 동일한 Authorization 헤더 첨부
 - 업로드: FormData + Blob, 다운로드: ArrayBuffer로 수신 후 파일 저장
@@ -306,7 +306,10 @@ npx 임시 경로 감지 시 경고 + skip (global install 전용).
 
 **맥락**: mandatory-tag 정책 프로젝트는 CLI 로 단 한 건도 생성 불가 (Issue #18).
 API 의 `USER_INVALID_TAG_MANDATORY_PREFIX` 에러는 어느 그룹이 누락인지 안내 안 함 → 친절한 메시지 직접 생성 필요.
-멤버만 부분일치였던 resolver 비대칭도 해소 — 정확 일치 → 부분 일치 → 모호 + 후보 출력 순서로 통일.
+멤버만 부분일치였던 resolver 비대칭도 해소 — 아래 순서로 통일:
+- 정확 일치
+- 부분 일치
+- 모호 + 후보 출력
 
 **대안 기각**:
 - `--workflow` 실패 시 exit non-zero — post 가 이미 발급된 상태에서 전체 실패는 사용자가 두 번 만드는 혼란
@@ -453,7 +456,10 @@ cwd 가 사내 경로일 가능성 (`/Users/.../<project>/...`) — CLAUDE.md PI
 모두 기존 `updatePost` / `createPost` 의 **full payload PUT** 흐름 (`users: { to, cc }`) 으로 처리.
 그룹은 `{ type: "group", group: { projectMemberGroupId } }` 객체로 전송.
 
-**맥락**: Issue #54 — 자동화 스크립트의 워크플로우: audit 리포트 생성 → 신규 업무 생성 → 그룹 cc 첨부.
+**맥락**: Issue #54 — 자동화 스크립트의 워크플로우:
+- audit 리포트 생성
+- 신규 업무 생성
+- 그룹 cc 첨부
 Dooray API 는 cc-only patch 단독 엔드포인트 미제공.
 PUT post 의 full payload 만 cc/to 갱신 가능.
 PostUser type 의 그룹 분기는 `type: "memberGroup"` 이 아니라 `type: "group"` + `Group.projectMemberGroupId` — 이슈 본문 시도가 실패한 원인.

@@ -332,11 +332,17 @@ MEMBER_ID=$(dooray member search 홍길동 --json | jq -r '.[] | select(.externa
 dooray post edit --id "$POST_ID" --cc "$MEMBER_ID"
 ```
 
-`--to` / `--mention` 동일 분기 (resolveMember 인프라). 분기 규칙: `^\d{15,}$` → memberId / 이메일 정규형 → searchMembers exact / 그 외 → 이름 부분일치.
+`--to` / `--mention` 동일 분기 (resolveMember 인프라). 분기 규칙:
+- `^\d{15,}$` — memberId 직접 사용
+- 이메일 정규형 — searchMembers exact
+- 그 외 — 이름 부분일치
 
 ## 신규 업무 생성 후 그룹 cc 첨부 (ADR-025)
 
-audit 리포트 분석 → 신규 업무 생성 → 후속으로 특정 그룹을 참조에 추가하는 자동화 패턴:
+자동화 패턴:
+1. audit 리포트 분석
+2. 신규 업무 생성
+3. 후속으로 특정 그룹을 참조에 추가
 
 ```bash
 # 1. 신규 업무 생성 (그룹 cc 포함)

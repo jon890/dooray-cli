@@ -104,7 +104,9 @@ cc: []
 ```
 
 3. `$EDITOR` 실행 → 저장·종료
-4. frontmatter 파싱 → member resolver → API PUT 호출
+4. frontmatter 파싱 후:
+   - member resolver 실행
+   - API PUT 호출
 
 `$EDITOR` 미설정 시:
 
