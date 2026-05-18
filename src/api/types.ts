@@ -383,7 +383,7 @@ export interface ProjectMemberListResponse {
 
 export interface MemberGroup {
   id: string;
-  code: string;
+  code?: string;  // optional — 실제 API 응답에서 누락 케이스 존재 (ADR-026)
   project: ProjectInfo;
   createdAt: string;
   updatedAt: string;

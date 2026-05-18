@@ -21,7 +21,7 @@ export const projectGroupsCommand = new Command("groups")
 
     output(globalOpts, {
       headers: ["ID", "Code"],
-      rows: groups.map((g) => [g.id, g.code]),
+      rows: groups.map((g) => [g.id, g.code ?? ""]),
       raw: groups,
       ids: groups.map((g) => g.id),
     });
