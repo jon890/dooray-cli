@@ -129,7 +129,7 @@ interface CachedTag {
 }
 ```
 
-`post create --tag <name>` 시 사전 검증 (mandatory-tag 그룹 누락 시 클라이언트 에러).
+`post create/edit --tag <name>` 시 사전 검증 (mandatory-tag 그룹 누락 시 클라이언트 에러). `post edit --tag-remove`/`--tag-clear` 도 동일 캐시 사용 (Issue #66, ADR-019 확장).
 
 ### milestones/{projectId}.json (ADR-019)
 

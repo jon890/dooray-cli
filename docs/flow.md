@@ -235,6 +235,22 @@ dooray post create my-project \
 
 resolver 모호성 (이름 부분일치 복수 매칭) 시 에러 + 후보 목록 출력.
 
+`post edit` 에서 사후 태그 변경 (`--tag`/`--tag-clear`/`--tag-remove`) 도 동일 정책 (Issue #66, ADR-019 확장):
+
+```
+# 기존 태그 유지 + 신규 추가 (dedupe)
+dooray post edit --id <postId> --tag "분류: <name>"
+
+# 기존 태그 전부 비우고 신규만
+dooray post edit --id <postId> --tag-clear --tag "분류: <name>"
+
+# 특정 태그만 제거 (기존 유지)
+dooray post edit --id <postId> --tag-remove "분류: <name>"
+```
+
+`--title`/`--body` 없이 단독 호출 허용 — 기존 본문 자동 재전송.
+mandatory tag 그룹 위반 시 친절한 에러.
+
 ## 업무 워크플로우 변경 흐름
 
 ```
