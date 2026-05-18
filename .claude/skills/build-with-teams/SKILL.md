@@ -287,7 +287,8 @@ executor 완료 후 team-lead가 **code-reviewer 팀원에게 SendMessage로 검
 
 **FIX_NEEDED 처리 시 필수 루프 — 자기-면제 금지 (CRITICAL)**:
 
-code-reviewer 가 FIX 회신에 *"재검사 불필요"* / *"단순 변경이라 검증 생략 가능"* 같은 자기-면제 문구를 포함하더라도 **그대로 수용 금지**. 자기 자신의 검토를 자기가 면제하는 것은 OMC `<execution_protocols>` 의 "Never self-approve in the same active context" 위반.
+code-reviewer 가 FIX 회신에 *"재검사 불필요"* / *"단순 변경이라 검증 생략 가능"* 같은 자기-면제 문구를 포함하더라도 **그대로 수용 금지**.
+자기 자신의 검토를 자기가 면제하는 것은 OMC `<execution_protocols>` 의 "Never self-approve in the same active context" 위반.
 
 수정 주체와 무관하게 **모든 FIX 후 재검사 SendMessage 강제**:
 
@@ -297,9 +298,12 @@ code-reviewer 가 FIX 회신에 *"재검사 불필요"* / *"단순 변경이라 
 | team-lead 직접 수정 (1줄 이동·rename·typo 등 trivial fix) | team-lead 수정 commit → **여전히** code-reviewer 재검사 SendMessage |
 | code-reviewer 본인 *"재검사 불필요"* 명시 | 무시. 재검사 SendMessage. |
 
-빌드/테스트 통과는 자체 검증을 대신하지 못한다 (정적 검사·관습·매직넘버 같은 항목은 빌드를 통과해도 잡혀야 한다). 재검사 한도 2회 카운터는 동일하게 적용 — 한도 초과 시 `PHASE_BLOCKED`.
+빌드/테스트 통과는 자체 검증을 대신하지 못한다 — 정적 검사·관습·매직넘버 같은 항목은 빌드를 통과해도 잡혀야 한다.
+재검사 한도 2회 카운터는 동일하게 적용 — 한도 초과 시 `PHASE_BLOCKED`.
 
-**Why**: trivial 한 1줄 수정도 회귀 가능. 더 중요한 건 일관성 — "code-reviewer 가 면제했으니 OK" 가 한 번 통과되면 다음 plan 부터는 더 큰 수정도 면제 요청이 들어올 수 있고 그때도 자기-승인 회피 원칙이 깨진다.
+**Why**: trivial 한 1줄 수정도 회귀 가능.
+더 중요한 건 일관성 — "code-reviewer 가 면제했으니 OK" 가 한 번 통과되면 다음 plan 부터는 더 큰 수정도 면제 요청이 들어올 수 있다.
+그때도 자기-승인 회피 원칙이 깨진다.
 
 ### 8. docs-verifier 검증 (문서 부패 포함)
 
@@ -315,13 +319,20 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
 
 **dooray-cli 특화 docs-verifier 검사 항목 (CLI 변형 — 위 6 항목에 추가):**
 
-7. **planning docs 영향 표 100% 적용 검증** — `.claude/skills/planning/SKILL.md` 8단계 A항 "변경 유형별 docs 영향 표" 의 해당 행을 식별하고, 표시된 모든 docs 가 갱신됐는지 확인. 단일 항목(✓표시)이라도 누락이면 UPDATE_NEEDED. 이 표가 검증 항목의 단일 소스 — docs-verifier 는 **별도 체크리스트 보유 금지**, 표 거울만 본다.
+7. **planning docs 영향 표 100% 적용 검증** — `.claude/skills/planning/SKILL.md` 8단계 A항 "변경 유형별 docs 영향 표" 의 해당 행 식별 + 표시된 모든 docs 갱신 확인
+   - 단일 항목 (✓ 표시) 이라도 누락이면 UPDATE_NEEDED
+   - 이 표가 검증 항목의 단일 소스 — docs-verifier 는 **별도 체크리스트 보유 금지**, 표 거울만 본다
 
-8. **역참조 규칙 준수**: 새 ADR 추가 시 `docs/code-architecture.md` 또는 `CLAUDE.md` ADR 참조 표 둘 중 한 곳에 ADR-NNN 한 줄 추가 됐는가? (planning SKILL C항 "역참조 규칙")
+8. **역참조 규칙 준수**: 새 ADR 추가 시 `docs/code-architecture.md` 또는 `CLAUDE.md` ADR 참조 표 둘 중 한 곳에 ADR-NNN 한 줄 추가 됐는가?
+   - 출처: planning SKILL C항 "역참조 규칙"
 
-9. **갱신 시점 분리 위반 없는가**: planning 결정 docs (`adr.md`/`code-architecture.md`/`CLAUDE.md`/`data-schema.md`/`flow.md`/`prd.md`) 를 phase 안에서 변경하면 VIOLATION. 사용자 가이드 docs (`README.md`/`skills/dooray-cli/SKILL.md`) 는 phase 마지막에서만 변경 OK.
+9. **갱신 시점 분리 위반 없는가**
+   - planning 결정 docs (`adr.md` / `code-architecture.md` / `CLAUDE.md` / `data-schema.md` / `flow.md` / `prd.md`) 를 phase 안에서 변경하면 VIOLATION
+   - 사용자 가이드 docs (`README.md` / `skills/dooray-cli/SKILL.md`) 는 phase 마지막에서만 변경 OK
 
-10. **`skills/dooray-cli/SKILL.md` (공개 스킬) dogfooding** — CLI 는 공개 스킬도 검증 대상. 새/삭제/변경된 명령·옵션이 공개 스킬에 반영되지 않으면 외부 사용자가 오작동 경로를 따라감 (docs 영향 표 행에 표시되어 있을 때).
+10. **`skills/dooray-cli/SKILL.md` (공개 스킬) dogfooding** — CLI 는 공개 스킬도 검증 대상
+    - 새/삭제/변경된 명령·옵션이 공개 스킬에 반영되지 않으면 외부 사용자가 오작동 경로를 따라감
+    - docs 영향 표 행에 표시되어 있을 때 적용
 
 판정:
 - **PASS** → 9단계로
@@ -330,7 +341,8 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
 
 **UPDATE_NEEDED / VIOLATION 처리 시 필수 루프 — 자기-면제 금지**:
 
-code-reviewer 와 동일 원칙 (위 7단계 "자기-면제 금지" 박스 참조). docs-verifier 가 *"내용 확인 수준으로 충분"* / *"재검증 없이 PR 진행 가능"* 같은 자기-면제 문구를 회신에 포함하더라도 **그대로 수용 금지**.
+code-reviewer 와 동일 원칙 (위 7단계 "자기-면제 금지" 박스 참조).
+docs-verifier 가 *"내용 확인 수준으로 충분"* / *"재검증 없이 PR 진행 가능"* 같은 자기-면제 문구를 회신에 포함하더라도 **그대로 수용 금지**.
 
 | 수정 시나리오 | 처리 |
 |---|---|
@@ -340,29 +352,36 @@ code-reviewer 와 동일 원칙 (위 7단계 "자기-면제 금지" 박스 참�
 
 재검증 한도 2회 카운터 동일 적용. 한도 초과 시 `PHASE_BLOCKED: docs-verifier 한도 초과 — docs/코드 정합성 수동 점검`.
 
-**Why**: 7단계와 동일. 일관성 측면. UPDATE_NEEDED 가 3곳 같이 잡혔는데 그중 1곳을 잘못 갱신했어도 자기-면제로 묻히면 다음 plan 부터 PASS 신뢰성이 떨어진다.
+**Why**: 7단계와 동일. 일관성 측면.
+UPDATE_NEEDED 가 3곳 같이 잡혔는데 그중 1곳을 잘못 갱신했어도 자기-면제로 묻히면 다음 plan 부터 PASS 신뢰성이 떨어진다.
 
 ### 9. 완료 + PR 생성
 
-1. team-lead가 누적 commit 검토 — `git log --oneline feat/{plan}..origin/main` 의 역순으로 phase 별 commit 이 의도대로 들어갔는지 확인. 마지막 phase commit 에 `index.json` completed 가 포함됐는지 grep 검증
+1. team-lead 가 누적 commit 검토 — `git log --oneline feat/{plan}..origin/main` 의 역순으로 phase 별 commit 이 의도대로 들어갔는지 확인
+   - 마지막 phase commit 에 `index.json` completed 가 포함됐는지 grep 검증
 2. 통합 검증 명령 (`{{CI_CMD}}`) 최종 확인 — 모든 phase 누적 후에도 build/test 통과 확인
 3. (FIX_NEEDED 처리 commit 들이 있었다면 그대로 push, amend 금지)
 4. `git push origin feat/{plan}` — n 개 commit 일괄 push
 5. **PR 생성** — `gh pr create` (main 대상). PR description 에 phase 별 commit 목록 자동 포함 (`gh pr create --body` 안에 `git log --oneline {base}..HEAD` 결과)
 6. **index.json 완료 상태는 PR 브랜치에만 존재** — 메인 워킹 디렉토리에서는 **건드리지 않는다**:
-   - 마지막 phase 커밋이 이미 `index.json`의 `status="completed"` + 모든 phase `status="completed"`를 포함해야 한다 (task 파일 설계 시 마지막 phase에 해당 업데이트 명시 — 4단계 참조)
+   - 마지막 phase 커밋이 이미 `index.json` 의 `status="completed"` + 모든 phase `status="completed"` 를 포함해야 한다
+   - task 파일 설계 시 마지막 phase 에 해당 업데이트 명시 (4단계 참조)
    - main에서 별도 커밋 **금지** 이유:
      - 이중 진실원 회피
      - main에 진행 중인 다른 작업(다른 plan의 미푸시 커밋, unstaged 변경)과 의도치 않게 섞여 push될 위험
      - PR 머지로 자동 반영되므로 중복 커밋
    - "재실행 사고 방지"는 main 커밋이 아니라 **실행 전 3중 사전 검증**(status + 원격 feat 브랜치 + 오픈 PR)으로 막는다
-7. **review 회고 (조건부 필수 — 학습 루프)** — PR 생성 직후, 팀 shutdown 직전. **트리거 조건**: 이번 plan 에서 critic 의 **REVISE** 또는 code-reviewer 의 **FIX_NEEDED** 또는 docs-verifier 의 **UPDATE_NEEDED / VIOLATION** 이 1회 이상 발생한 경우. 1-shot APPROVE + PASS + PASS 로 진행된 plan 은 회고 단계 skip.
+7. **review 회고 (조건부 필수 — 학습 루프)** — PR 생성 직후, 팀 shutdown 직전
+   - **트리거 조건**: 이번 plan 에서 critic 의 **REVISE** 또는 code-reviewer 의 **FIX_NEEDED** 또는 docs-verifier 의 **UPDATE_NEEDED / VIOLATION** 이 1회 이상 발생한 경우
+   - 1-shot APPROVE + PASS + PASS 로 진행된 plan 은 회고 단계 skip
 
    회고가 트리거된 경우 team-lead 가 자문 후 필요 시 회고 commit (main 디렉터리에서):
    - **critic** REVISE 지적 중 *반복 가능성* 있는 패턴 → `.claude/skills/_shared/common-pitfalls.md` 해당 섹션에 항목 추가
    - **code-reviewer** FIX_NEEDED 지적 중 *반복 가능성* 있는 패턴 → `.claude/skills/_shared/code-review-pitfalls.md` 해당 카테고리에 항목 추가 (또는 새 카테고리 신설)
-   - **docs-verifier** UPDATE_NEEDED / VIOLATION 지적 중 *반복 가능성* 있는 항목 → `.claude/skills/planning/SKILL.md` 8단계 A항 docs 영향 표에 행 추가 또는 기존 행 보강 (별도 회고 docs 신설 금지 — 거울 구조 유지)
-   - **반복 가능성 판정 기준**: 다른 plan 에서 같은 카테고리 (예: 헬퍼 추출 / 새 resolver / spinner UX) 작업 시 또 발생할 수 있는가? 1회성 typo / 명령 이름 오타 등은 제외
+   - **docs-verifier** UPDATE_NEEDED / VIOLATION 지적 중 *반복 가능성* 있는 항목 → planning SKILL 8단계 A항 docs 영향 표에 행 추가 또는 기존 행 보강
+     - 별도 회고 docs 신설 금지 — 거울 구조 유지
+   - **반복 가능성 판정 기준**: 다른 plan 에서 같은 카테고리 (예: 헬퍼 추출 / 새 resolver / spinner UX) 작업 시 또 발생할 수 있는가?
+     - 1회성 typo / 명령 이름 오타 등은 제외
    - 회고 commit 메시지 규약: `docs(skill): accumulate review learnings from PR #<N>`. PR 번호와 사고 plan 번호를 본문에 명시
    - 트리거됐지만 추가할 패턴이 0개여도 **자문 자체는 수행**. "이번엔 신규 항목 없음" 결정 보고 후 다음 단계로
 8. 팀 shutdown (SendMessage `shutdown_request`)
@@ -375,7 +394,8 @@ code-reviewer 와 동일 원칙 (위 7단계 "자기-면제 금지" 박스 참�
 
 **필수 선행 체크 — 로컬 main이 origin에 푸시되었는가?**
 
-worktree는 `origin/main`에서 분기되므로 **로컬 main에만 있고 푸시 안 된 커밋은 worktree에 반영되지 않는다**. critic이 "task 파일 없음"으로 오판하거나 executor가 구버전 환경에서 실행하는 사고 방지.
+worktree 는 `origin/main` 에서 분기되므로 **로컬 main 에만 있고 푸시 안 된 커밋은 worktree 에 반영되지 않는다**.
+critic 이 "task 파일 없음" 으로 오판하거나 executor 가 구버전 환경에서 실행하는 사고 방지.
 
 ```bash
 # cwd: <repo root>
@@ -456,4 +476,6 @@ executor / code-reviewer / docs-verifier 프롬프트에 아래 컨텍스트를 
 - **마이그레이션 도구**: 없음 — `~/.dooray/cache/` 파일 기반 캐시. schema 변경은 코드(`src/cache/`)로 처리
 - **worktree 직후 setup**: `pnpm install`
 - **코드 규칙 권위**: 프로젝트 루트 `CLAUDE.md` (ky 강제 / stdout vs stderr / `DoorayCliError` / 캐시 디렉토리 규약)
-- **스킬 폴더 이원화**: `skills/` = 공개 사용자 가이드, `.claude/skills/` = 내부 개발 스킬. 인사이트 이식·docs-verifier 모두 `.claude/skills/` 대상이지만, 공개 스킬 정합성 검사(dooray-cli docs-verifier 항목 10)만 예외적으로 `skills/dooray-cli/SKILL.md`를 참조
+- **스킬 폴더 이원화**: `skills/` = 공개 사용자 가이드, `.claude/skills/` = 내부 개발 스킬
+  - 인사이트 이식·docs-verifier 모두 `.claude/skills/` 대상
+  - 공개 스킬 정합성 검사 (dooray-cli docs-verifier 항목 10) 만 예외적으로 `skills/dooray-cli/SKILL.md` 참조
