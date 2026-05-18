@@ -1,6 +1,6 @@
 ---
 name: release
-description: dooray-cli 릴리스 자동화. 빌드 검증 → 버전 범프 → git tag → GitHub Release → npm publish 순서로 진행.
+description: dooray-cli 새 버전 릴리스 자동화 — 빌드 검증, 버전 범프, git tag, GitHub Release, npm publish, 해결된 이슈 자동 close 순으로 진행. "/release", "릴리스", "버전 범프", "npm publish", "새 버전 배포" 같은 요청 시 반드시 이 스킬 사용.
 ---
 
 # /release — dooray-cli Release

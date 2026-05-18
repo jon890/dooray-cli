@@ -1,6 +1,6 @@
 ---
 name: plan-and-build
-description: AI 에이전트 하네스를 사용한 대규모 구현 자동화. 논의 → 계획 → task 생성 → 순차 실행. 새 기능 추가, 리팩토링 등 multi-phase 작업에 사용.
+description: AI 에이전트 하네스 기반 대규모 구현 자동화. 논의·계획·task 생성·phase 순차 실행까지 자기완결로 진행. 새 기능 추가, 다중 phase 리팩토링에 사용. "/plan-and-build", "plan and build", "여러 phase 로 나눠 진행", "하네스로 자동 실행" 같은 요청 시 반드시 이 스킬 사용.
 ---
 
 # plan-and-build

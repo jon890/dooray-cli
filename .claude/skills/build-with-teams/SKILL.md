@@ -1,6 +1,6 @@
 ---
 name: build-with-teams
-description: Claude Agent Teams 기반 구현 자동화. 계획(team-lead) → 평가(critic) → 실행(executor) → 검증(docs-verifier) 파이프라인. run-phases.py 대신 에이전트 팀이 가시적으로 협업.
+description: Claude Agent Teams 파이프라인 — team-lead·critic·executor·docs-verifier 4 에이전트가 가시적으로 협업. run-phases.py 백그라운드 실행 대신 사용. "/build-with-teams", "agent team 으로 빌드", "teams 로 phase 실행", "critic 평가", "docs-verifier 검증" 같은 요청 시 반드시 이 스킬 사용.
 ---
 
 # build-with-teams
