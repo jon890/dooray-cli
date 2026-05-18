@@ -1,6 +1,6 @@
 ---
 name: docs-check
-description: 문서 점검 스킬. docs/ 전체를 5축(부패·과대화·추론성·중복·자명성)으로 검증하고 정리 제안 리포트를 생성. ADR은 "기술 의사결정만 / 최종 상태만 / 코드로 자명하지 않은 것만" 유지. build-with-teams 완료 후 주기적으로 실행 권장.
+description: 문서 점검 스킬. docs/ 전체를 6축(부패·과대화·추론성·중복·자명성·가독성)으로 검증하고 정리 제안 리포트를 생성. ADR은 "기술 의사결정만 / 최종 상태만 / 코드로 자명하지 않은 것만" 유지. 가독성은 CLAUDE.md "docs / ADR 작성 형식" 6가지 패턴 위반 점검. build-with-teams 완료 후 주기적으로 실행 권장.
 ---
 
 # docs-check
@@ -20,7 +20,7 @@ AI 에이전트는 코드만큼 docs를 신뢰한다. 그러나 docs가 다음 �
 - **중복**: 같은 내용이 여러 docs에 반복 → 한쪽만 수정되어 불일치
 - **자명**: 코드/설정만 봐도 알 수 있는 내용이 ADR에 기록 → 시그널 대비 노이즈 증가
 
-## 검증 5축
+## 검증 6축
 
 ### A. 부패 (Decay)
 
@@ -97,17 +97,41 @@ ADR이 "왜"를 담고 있는가. "결정 / 맥락 / 대안 기각" 구조가 �
 
 세 질문에 YES가 대부분이면 폐기 대상.
 
+### F. 가독성 (Readability) — 모든 docs
+
+`CLAUDE.md` "docs / ADR 작성 형식" 6가지 패턴 위반을 점검.
+정책 본문은 거기에 단일 소스 — 본 섹션은 검출 휴리스틱만.
+
+대상: `docs/*.md` / `CLAUDE.md` / `README.md` / `skills/dooray-cli/SKILL.md` / `tasks/**/*.md`.
+코드 블록 / 표 / 디렉터리 트리는 미적용.
+
+검출 휴리스틱:
+
+- **패턴 1** (semantic line break): 한 단락 안에 같은 줄에 마침표 후 새 문장 이어쓰기
+  - 휴리스틱: 한 줄에 `. ` 또는 `? ` 또는 `! ` 가 2회 이상
+- **패턴 2** (enumerated inline 금지): `grep -nE "①|②|③|④|⑤|⑥|⑦|⑧|⑨"` 또는 한 줄에 `/` 3개 이상의 병렬 나열
+- **패턴 3** (괄호 중첩): `grep -nE "\([^)]*\([^)]*\)"` — 2겹 이상
+- **패턴 4** (동치·인과 압축): 한 단락에 `=` 또는 `→` 가 2회 이상
+- **패턴 5** (의미 단위 분할): 한 줄 200자 초과 (`awk '{if (length($0) > 200) print FILENAME":"NR}'`)
+- **패턴 6** (다중 속성 sub-bullet): 한 bullet 안에 ` + ` / `, ` / `. ` 로 이은 다중 절 — 휴리스틱 검출 어려움, prose 단락은 수동 검토
+
+리포트 분류:
+
+- **Critical**: 패턴 1 / 2 / 3 위반 (가독성 직접 손실)
+- **Warning**: 패턴 4 / 5 / 6 위반 (수동 검토 권장)
+- **안전**: 위반 없음
+
 ## 실행 절차
 
 ### 0. 검증 위임 (필수 — 단일 진실원)
 
-docs-check 의 5축 검증은 **반드시** custom agent `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`) 에 위임한다. agent 본문이 검증 항목·자동 grep 명령·도메인 지식의 단일 진실원 — main session 이 직접 5축 grep 을 따라 적는 순간 정의 두 곳 동기화 부담 발생 (거울 구조 원칙 위반).
+docs-check 의 6축 검증은 **반드시** custom agent `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`) 에 위임한다. agent 본문이 검증 항목·자동 grep 명령·도메인 지식의 단일 진실원 — main session 이 직접 6축 grep 을 따라 적는 순간 정의 두 곳 동기화 부담 발생 (거울 구조 원칙 위반).
 
 ```
 Agent({
   subagent_type: "dooray-cli-docs-verifier",
   description: "5-axis docs audit",
-  prompt: "전체 docs (docs/*.md + .claude/skills/*/SKILL.md + _shared/*.md) 5축 점검. Critical / Warning / Safe 분류 보고."
+  prompt: "전체 docs (docs/*.md + .claude/skills/*/SKILL.md + _shared/*.md) 6축 점검. Critical / Warning / Safe 분류 보고."
 })
 ```
 
@@ -127,7 +151,7 @@ team-lead 는 agent 회신을 받아 Critical 항목부터 사용자 승인 후 
 1. agent 본문이 도메인 변경 후 미갱신 — 이때도 agent 우선 갱신 후 재위임 권장
 2. Claude Code 가 아닌 다른 환경에서 실행 (custom agent 미지원)
 
-legacy 경로는 5축 grep 명령이 docs-check skill 본문에 명시되지 않음 → main session 이 agent 본문의 grep 을 직접 복사해서 실행. 이때도 검증 항목의 진실원은 여전히 agent 본문.
+legacy 경로는 6축 grep 명령이 docs-check skill 본문에 명시되지 않음 → main session 이 agent 본문의 grep 을 직접 복사해서 실행. 이때도 검증 항목의 진실원은 여전히 agent 본문.
 
 ### 1. 대상 파일 수집
 
@@ -136,7 +160,7 @@ legacy 경로는 5축 grep 명령이 docs-check skill 본문에 명시되지 않
 ls docs/*.md .claude/skills/*/SKILL.md .claude/skills/_shared/*.md
 ```
 
-### 2. 각 문서에 5축 점검 수행
+### 2. 각 문서에 6축 점검 수행
 
 - **adr.md**: E(자명성) 최우선 + B(bloat) + C(추론성) + A(제거 ADR의 dead reference)
 - **flow.md**: A (언급 컴포넌트 존재 여부) + D (prd.md와 중복) + B (UI 목업·API 경로 나열)
@@ -146,7 +170,7 @@ ls docs/*.md .claude/skills/*/SKILL.md .claude/skills/_shared/*.md
 - **CLAUDE.md**: "상황별 ADR 필수 참조" 표의 ADR 번호가 실제 존재하는지
 - **`.claude/skills/*/SKILL.md`**: B (과대화) + C (추론성) + D (다른 스킬과 중복) + 자명성 변형 (아래)
 
-### 2-1. 스킬 SKILL.md 의 5축 적용 (특수 규칙)
+### 2-1. 스킬 SKILL.md 의 6축 적용 (특수 규칙)
 
 스킬은 AI 에이전트가 호출 시점에 컨텍스트로 로드 → 장황하면 토큰 낭비 + 핵심 지시가 묻힘. ADR 과 다른 자명성 기준 적용:
 
@@ -301,7 +325,7 @@ done
 
 ## build-with-teams 연계
 
-build-with-teams의 docs-verifier는 **해당 task 범위만** 검증. 이 스킬은 **전체 docs**를 5축으로 스캔.
+build-with-teams의 docs-verifier는 **해당 task 범위만** 검증. 이 스킬은 **전체 docs**를 6축으로 스캔.
 
 | 도구 | 범위 | 시점 | 축 |
 |---|---|---|---|

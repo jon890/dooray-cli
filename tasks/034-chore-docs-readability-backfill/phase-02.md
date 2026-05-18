@@ -2,7 +2,7 @@
 
 ## 컨텍스트
 
-phase-01 의 6 패턴 처방을 planning docs 4개에 적용한다. ADR.md 와 동일 정책 — manual Edit 필수.
+phase-01 의 6가지 패턴을 planning docs 4개에 적용한다. ADR.md 와 동일 정책 — manual Edit 필수.
 
 대상 4 파일:
 - `docs/code-architecture.md` — 디렉터리 트리 + 모듈 의존 관계 + 출력 원칙 등
@@ -24,8 +24,8 @@ docs/data-schema.md
 
 ### 1. `docs/code-architecture.md` 정리
 
-- 디렉터리 트리 (``` 안의 주석) — 한 줄 한 항목 형식 유지 (이미 6 패턴 준수에 가까움)
-- 트리 외부의 prose 단락 (모듈 의존 관계 / API Client 구조 / 에러 처리 원칙 / 출력 원칙 / 테스트 / 빌드·배포) 에 6 패턴 적용
+- 디렉터리 트리 (``` 안의 주석) — 한 줄 한 항목 형식 유지 (이미 6가지 패턴 준수에 가까움)
+- 트리 외부의 prose 단락 (모듈 의존 관계 / API Client 구조 / 에러 처리 원칙 / 출력 원칙 / 테스트 / 빌드·배포) 에 6가지 패턴 적용
 - 트리 주석 중 한 줄이 길어진 항목 (예: `match.ts` / `member-group.ts` / `post-tags.ts` — 본 task 진행 중 추가된 설명들) 은 의미 단위 분할
 
 자체 점검:
@@ -36,7 +36,7 @@ awk '{if (length($0) > 200) print NR": "length($0)"자"}' docs/code-architecture
 
 ### 2. `docs/prd.md` 정리
 
-MVP 범위 bullet list 가 메인이라 6 패턴 위반이 적을 가능성. 단:
+MVP 범위 bullet list 가 메인이라 6가지 패턴 위반이 적을 가능성. 단:
 - 각 기능 한 줄 설명에 슬래시 나열이나 괄호 중첩 있는지 점검
 - prose 단락 (있다면) 에 semantic line break
 
@@ -44,12 +44,12 @@ MVP 범위 bullet list 가 메인이라 6 패턴 위반이 적을 가능성. 단
 
 사용자 시나리오 단락이 핵심.
 - 시나리오 본문이 만연체로 흐르는지 점검
-- "사용자: ... AI: ... 시스템: ..." 같은 대화 형식이면 그 자체로 6 패턴 친화적
+- "사용자: ... AI: ... 시스템: ..." 같은 대화 형식이면 그 자체로 6가지 패턴 친화적
 
 ### 4. `docs/data-schema.md` 정리
 
 캐시 디렉터리 트리 / interface 정의 / 예시 JSON 이 핵심.
-- 코드 블록 자체는 6 패턴 미적용 (코드 / JSON 은 별 룰)
+- 코드 블록 자체는 6가지 패턴 미적용 (코드 / JSON 은 별 룰)
 - 코드 블록 외부 설명 prose 에만 적용
 
 ### 5. 전체 자체 점검 + commit
@@ -73,7 +73,7 @@ git add docs/code-architecture.md docs/prd.md docs/flow.md docs/data-schema.md
 git commit -m "$(cat <<'EOF'
 chore(docs): backfill planning docs to 5-pattern readability style
 
-CLAUDE.md "docs / ADR 작성 형식" 6 패턴 적용 (phase 2/3, task 034):
+CLAUDE.md "docs / ADR 작성 형식" 6가지 패턴 적용 (phase 2/3, task 034):
 - code-architecture.md / prd.md / flow.md / data-schema.md prose 단락
 - 코드 블록 / 디렉터리 트리 / interface 정의는 별 룰 — 미적용
 EOF

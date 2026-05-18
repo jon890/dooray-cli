@@ -238,9 +238,9 @@ markdown bullet list 로 변환한다.
 
 ### 적용 시점
 
-- **신규 작성**: 위 6 패턴 자체 점검 후 commit
+- **신규 작성**: 위 6가지 패턴 자체 점검 후 commit
 - **기존 docs**: 편집 중인 파일은 함께 정리. 일괄 정리는 별도 task
-- **review**: code-reviewer / critic / docs-verifier 가 6 패턴 위반을 지적할 수 있음
+- **review**: code-reviewer / critic / docs-verifier 가 6가지 패턴 위반을 지적할 수 있음
 
 ## 사용자에게 선택지 제시
 

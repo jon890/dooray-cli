@@ -211,7 +211,7 @@ docs/flow.md                  ←  docs/prd.md
 - 같은 내용을 두 문서에 "본문"으로 쓰지 않는다 (단일 소스 + 역참조)
 - 의사결정 의도("왜 이렇게 했는가")는 반드시 보존
 - 구현 세부사항은 코드에, docs에는 "무엇을·왜"만
-- **가독성 + 토큰 효율**: `dooray-cli/CLAUDE.md` "docs / ADR 작성 형식" 6 패턴 처방 따른다 — semantic line break / enumerated inline 금지 / 괄호 중첩 제한 / 동치 압축 제한 / 의미 단위 분할 / 다중 속성 sub-bullet 분리
+- **가독성 + 토큰 효율**: `dooray-cli/CLAUDE.md` "docs / ADR 작성 형식" 6가지 패턴 따른다 — semantic line break / enumerated inline 금지 / 괄호 중첩 제한 / 동치 압축 제한 / 의미 단위 분할 / 다중 속성 sub-bullet 분리
 
 ---
 
