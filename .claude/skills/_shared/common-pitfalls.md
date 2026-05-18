@@ -167,6 +167,50 @@ grep -nE "^\s*(export )?async function (validateMandatoryTags|resolveTags|toDoor
 
 **Why**: PR #46 (post comment get) 가 `PostCommentDetailResponse` 를 사용했지만 import 누락. plan026 (PR #48) `await Promise<never>` 패턴이 TS2366 발생. 둘 다 build/test PASS 로 머지 → 다음 PR 의 review-fix 단계에서야 발견. tsup 의 type-check 우회 특성은 dooray-cli 모든 type-touching phase 의 공통 함정.
 
+## 1-12. type optional 완화 시 cascade 파일 grep 누락
+
+**증상**: 기존 type 의 필드 `code: string` → `code?: string` 같은 optional 완화 / undefined 가능 변경을 plan 본문에 한 번 명시. 그러나 해당 필드를 *사용하는* 다른 파일 (`commands/project/groups.ts` 의 `[g.id, g.code]` 같은 `string[][]` 단언) 에서 type narrowing 실패 → tsc 실패. plan 본문 `## 변경 파일` 섹션에 그 cascade 파일이 누락.
+
+**Good**: type 변경 (특히 optional 완화 / 새 필드 추가 / 필드 제거) 을 plan 에 넣을 때 `grep -rn "\.{필드명}\b" src/` 로 모든 사용처 grep + `## 변경 파일` 에 추가. type narrowing 손실 가능성 (배열 element type, .map 결과 type, return type 추론 등) 도 같이 점검.
+
+```bash
+# plan 작성 시 (또는 critic 평가 시) 검증:
+# 예: MemberGroup.code 를 optional 로 완화
+grep -rn "\.code\b" src/ | grep -v "test\|\.md$"   # 사용처 전수 조사
+grep -rn "MemberGroup\|CachedMemberGroup" src/    # type 참조 전수 조사
+# 결과 파일들이 plan 의 `## 변경 파일` 에 모두 있는지 확인
+```
+
+**Why**: PR #67 (plan032) critic Major #1 — `MemberGroup.code: string → string | undefined` 완화로 `groups.ts:24` `[g.id, g.code]` 가 `(string | undefined)[][]` 가 되어 TS2322. plan 본문에 `groups.ts` 누락. executor 가 자체 `g.code ?? ""` 패치로 회피했지만 plan-only 실행이면 tsc 실패. 다른 resolver 의 type 완화 작업 시 동일 패턴 재발 가능.
+
+## 1-13. `.filter()` 후 TypeScript 타입 자동 미좁힘
+
+**증상**: `arr.filter((x) => typeof x.field === "string")` 후 `arr.map((x) => ({ name: x.field }))` 작성. 사람은 "필터 후니까 string 보장" 으로 이해하지만 TypeScript 는 filter callback 의 boolean return 으로 narrowing 안 함 → x.field 는 여전히 `string | undefined`. 다음 사용처에서 type 불만족 (`NameRecord extends { name: string }` 위반 등) 으로 TS2345/TS2339.
+
+**Good**: 두 가지 방법:
+- **type predicate** (선호 — 안전): `.filter((x): x is X & { field: string } => typeof x.field === "string" && x.field.length > 0)` — TypeScript 가 narrowing 인지
+- **`as string` 단언** (간단): `arr.map((x) => ({ name: x.field as string }))` + 단언 안전성 주석 (`// filter 로 string 보장`)
+
+```ts
+// BAD — narrowing 안 됨
+const valid = groups.filter((g) => typeof g.code === "string");
+const adapter = valid.map((g) => ({ name: g.code }));   // TS2345: string | undefined
+
+// GOOD A — type predicate
+const valid = groups.filter(
+  (g): g is CachedMemberGroup & { code: string } =>
+    typeof g.code === "string" && g.code.length > 0
+);
+const adapter = valid.map((g) => ({ name: g.code }));   // OK
+
+// GOOD B — as string + 주석
+const adapter = valid.map((g) => ({ name: g.code as string }));   // filter 로 string 보장
+```
+
+**검출**: type optional 완화 후 `filter` + `map` 체인이 plan 에 등장하면 narrowing 패턴 확인. 단언 사용 시 주석 필수.
+
+**Why**: PR #67 (plan032) critic Major #3 — `member-group.ts` 의 `valid.map((g) => ({ name: g.code }))` 에서 TS2345/TS2339. executor 가 `as string` 추가로 회피. type predicate 가 더 안전하나 본 케이스는 단언 + 주석으로 처리. 다른 resolver 의 optional 필드 filter 패턴에서 반복 가능.
+
 ## 섹션 1 소진 체크리스트
 
 plan 제출 전 10개 패턴 모두 self-check:
