@@ -19,7 +19,7 @@ import { appendTaskLinks } from "../../utils/task-link.js";
 import { resolveTaskLinks } from "../../resolvers/task-link.js";
 import { resolveUserAdditions } from "../../resolvers/post-users.js";
 import { resolveTemplate } from "../../resolvers/template.js";
-import type { CreatePostUser, TemplateDetail } from "../../api/types.js";
+import type { CreatePostUser, PostUser, TemplateDetail } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
 
@@ -34,6 +34,17 @@ async function resolveUsers(
     users.push({ type: "member", member: { organizationMemberId: memberId } });
   }
   return users;
+}
+
+// 템플릿 fetch 결과 (PostUser) → createPost payload (CreatePostUser) 변환.
+// workflow 필드는 CreatePostRequest 에 없어 제외 (api/types.ts:127/223 차이).
+function postUserToCreate(u: PostUser): CreatePostUser {
+  return {
+    type: u.type,
+    member: u.member,
+    emailUser: u.emailUser,
+    group: u.group,
+  };
 }
 
 export const postCreateCommand = new Command("create")
@@ -168,13 +179,13 @@ export const postCreateCommand = new Command("create")
     const ccGroupCodes: string[] = (opts.ccGroup ?? []).filter((s: string) => s.length > 0);
     const toGroupCodes: string[] = (opts.toGroup ?? []).filter((s: string) => s.length > 0);
 
-    // to/cc: 사용자 옵션 우선. 미지정 시 템플릿 users 폴백 (CreatePostUser 형식으로 type-cast)
+    // to/cc: 사용자 옵션 우선. 미지정 시 템플릿 users 폴백 (PostUser → CreatePostUser 변환)
     const toUsersMembers = opts.to
       ? await resolveUsers(client, projectId, opts.to)
-      : (templateDetail?.users?.to ?? []).map((u) => u as unknown as CreatePostUser);
+      : (templateDetail?.users?.to ?? []).map(postUserToCreate);
     const ccUsersMembers = opts.cc
       ? await resolveUsers(client, projectId, opts.cc)
-      : (templateDetail?.users?.cc ?? []).map((u) => u as unknown as CreatePostUser);
+      : (templateDetail?.users?.cc ?? []).map(postUserToCreate);
     const toUsersGroups = toGroupCodes.length > 0
       ? await resolveUserAdditions(client, projectId, [], toGroupCodes)
       : [];
