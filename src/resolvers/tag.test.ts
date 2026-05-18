@@ -7,7 +7,7 @@ vi.mock("../cache/store.js", () => ({
   isExpired: vi.fn().mockReturnValue(true),
 }));
 
-import { validateMandatoryTags } from "./tag.js";
+import { validateMandatoryTags, lookupTagIds, validateMandatoryCoverage } from "./tag.js";
 import { DoorayCliError } from "../utils/errors.js";
 import type { DoorayApiClient } from "../api/client.js";
 
@@ -54,5 +54,46 @@ describe("validateMandatoryTags", () => {
     const client = mockClient([{ id: "1", name: "x" }]);
     // tagGroup 없으므로 groupId = null, groupMandatory = false → 무시
     await expect(validateMandatoryTags(client, "<project>")).resolves.toBeUndefined();
+  });
+});
+
+describe("lookupTagIds", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("mandatory 그룹 있는 fixture 에서도 throw 안 함 (mandatory skip)", async () => {
+    // mandatory 그룹 있는 프로젝트에서 단순 name lookup — throw 하면 안 됨
+    const client = mockClient([
+      { id: "t1", name: "중요", tagGroup: { id: "g1", name: "분류", mandatory: true, selectOne: false } },
+      { id: "t2", name: "보통", tagGroup: { id: "g1", name: "분류", mandatory: true, selectOne: false } },
+    ]);
+    await expect(lookupTagIds(client, "<project>", ["중요"])).resolves.toEqual(["t1"]);
+  });
+
+  it("빈 names 배열 → 빈 배열 반환", async () => {
+    const client = mockClient([]);
+    await expect(lookupTagIds(client, "<project>", [])).resolves.toEqual([]);
+  });
+});
+
+describe("validateMandatoryCoverage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("mandatory 그룹 커버 시 통과", async () => {
+    const client = mockClient([
+      { id: "t1", name: "중요", tagGroup: { id: "g1", name: "분류", mandatory: true, selectOne: false } },
+    ]);
+    await expect(validateMandatoryCoverage(client, "<project>", ["t1"])).resolves.toBeUndefined();
+  });
+
+  it("mandatory 그룹 미충족 시 DoorayCliError throw", async () => {
+    const client = mockClient([
+      { id: "t1", name: "중요", tagGroup: { id: "g1", name: "분류", mandatory: true, selectOne: false } },
+    ]);
+    // "분류" 그룹의 태그가 selectedTagIds 에 없음
+    await expect(validateMandatoryCoverage(client, "<project>", [])).rejects.toBeInstanceOf(DoorayCliError);
   });
 });
