@@ -2,7 +2,7 @@
 
 ## 컨텍스트
 
-phase-01 / phase-02 와 동일 5 패턴 처방을 외부 노출 docs 2개에 적용 + task 034 완료 마킹.
+phase-01 / phase-02 와 동일 6가지 패턴을 외부 노출 docs 2개에 적용 + task 034 완료 마킹.
 
 대상:
 - `README.md` — npm / GitHub 공개 — 사용자가 가장 먼저 읽음. 가독성 가치 최대
@@ -22,7 +22,7 @@ tasks/034-chore-docs-readability-backfill/index.json
 ### 1. `README.md` 정리
 
 - "설치" / "사용법" / "환경 설정" / "라이선스" 등 섹션의 prose 단락
-- 명령 사용 예 (코드 블록) 은 그대로 — 코드는 5 패턴 미적용
+- 명령 사용 예 (코드 블록) 은 그대로 — 코드는 6가지 패턴 미적용
 - 각 명령 한 줄 설명에 슬래시 나열 (`A / B / C`) 또는 괄호 중첩 점검
 - "Issue #N (ADR-XXX)" 형식 inline 참조는 그대로 유지 (역참조 가치)
 
@@ -35,15 +35,15 @@ awk '{if (length($0) > 200) print NR": "length($0)"자"}' README.md
 
 - frontmatter (YAML) 는 그대로
 - "빠른 참조 표" 행 — 한 셀이 길면 의미 단위 분할 (단 표 행 자체는 한 줄 유지)
-- 자동화 시나리오 단락에 5 패턴 적용
+- 자동화 시나리오 단락에 6가지 패턴 적용
 - "AI 자동화 시 주의사항" 같은 prose 섹션 점검
 
 dogfooding 효과: AI 에이전트 (Claude Code) 가 자기 자신의 컨텍스트로 더 잘 읽음 — 가독성 + 토큰 효율 양립이 가장 직접적으로 보상되는 docs.
 
-### 3. 전체 5 패턴 자체 점검 (final)
+### 3. 전체 6가지 패턴 자체 점검 (final)
 
 ```bash
-# 5 패턴 위반 잔존 검색 — 본 task 전체 산출물 대상
+# 6가지 패턴 위반 잔존 검색 — 본 task 전체 산출물 대상
 grep -nE "①|②|③|④|⑤|⑥|⑦|⑧|⑨" docs/*.md README.md skills/dooray-cli/SKILL.md CLAUDE.md
 # 기대: 0건
 
@@ -70,7 +70,7 @@ git add README.md skills/dooray-cli/SKILL.md tasks/034-chore-docs-readability-ba
 git commit -m "$(cat <<'EOF'
 chore(docs): backfill README + skills/dooray-cli/SKILL.md to 5-pattern style; complete task 034
 
-CLAUDE.md "docs / ADR 작성 형식" 5 패턴 적용 (phase 3/3, final):
+CLAUDE.md "docs / ADR 작성 형식" 6가지 패턴 적용 (phase 3/3, final):
 - README 사용자 facing 단락
 - skills/dooray-cli/SKILL.md 자동화 시나리오 + 빠른 참조 표
 - 완료 마킹
@@ -111,7 +111,7 @@ grep -c '"status": "completed"' tasks/034-chore-docs-readability-backfill/index.
 # 3. CLAUDE.md / planning SKILL.md 정책 본문 보존
 grep -cE "docs / ADR 작성 형식" CLAUDE.md
 # 기대: 1
-grep -cE "5 패턴 처방" .claude/skills/planning/SKILL.md
+grep -cE "6가지 패턴" .claude/skills/planning/SKILL.md
 # 기대: 1
 
 # 4. 토큰 추이 (참고 — 가독성 우선, 토큰은 ±10% 허용)

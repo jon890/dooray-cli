@@ -186,6 +186,7 @@ markdown bullet list 로 변환한다.
 ```markdown
 나쁨: 정책 ① X 적용, ② Y 검증, ③ Z 제외.
 좋음:
+
 - X 적용
 - Y 검증
 - Z 제외
@@ -205,11 +206,41 @@ markdown bullet list 로 변환한다.
 한 문장이 약 80자 초과 + 백틱 3개 이상 또는 괄호 다수면 의미 단위로 나눈다.
 "한국어 문장 + 영어 약어 + 코드 inline" 혼재는 가독성 손실의 주범.
 
+### 6. 한 bullet 에 다중 속성 압축 금지 — sub-bullet 으로 분리
+
+한 bullet 안에 **무엇 / 어떻게 / 예외 / 조건 / 근거** 중 2개 이상의 독립 속성을 다음 연결로
+이어 압축하지 않는다.
+각 속성은 sub-bullet 으로 분리.
+
+- 마침표 (`. ... .`) — 여러 문장
+- 콤마 (`A, B, C`) — 병렬 항목
+- 더하기 (`A + B + C`) — 변경 사항·구성 요소 나열
+- 슬래시 (`A / B / C` 3개 이상) — 패턴 2 와 중첩
+
+특히 release 노트 / ADR / task 설명에서 "옵션 — 동작 + 정책 + 출처" 같은 다층 정보가
+한 줄에 모이기 쉬움.
+
+```markdown
+나쁨:
+- `--template <name|id>` — 템플릿 기반 task 생성. `interpolation=true` 기본으로 매크로
+  치환, 사용자 옵션 명시 시 override (Issue #59, ADR-027)
+- fix: `match.ts` undefined 가드 + adapter 사전 필터 + `Type.code` optional 완화
+
+좋음:
+- `--template <name|id>` — 템플릿 기반 task 생성 (Issue #59, ADR-027)
+  - 기본 동작: `interpolation=true` — 시스템 매크로 (`${year}` 등) 치환
+  - override: 사용자 옵션 명시 입력 시 우선
+- fix
+  - `match.ts` 에 undefined / 빈 문자열 가드
+  - adapter 단에서 사전 필터
+  - `Type.code` 를 optional 로 완화
+```
+
 ### 적용 시점
 
-- **신규 작성**: 위 5 패턴 자체 점검 후 commit
+- **신규 작성**: 위 6가지 패턴 자체 점검 후 commit
 - **기존 docs**: 편집 중인 파일은 함께 정리. 일괄 정리는 별도 task
-- **review**: code-reviewer / critic / docs-verifier 가 5 패턴 위반을 지적할 수 있음
+- **review**: code-reviewer / critic / docs-verifier 가 6가지 패턴 위반을 지적할 수 있음
 
 ## 사용자에게 선택지 제시
 

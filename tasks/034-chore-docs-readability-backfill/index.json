@@ -1,6 +1,6 @@
 {
   "name": "034-chore-docs-readability-backfill",
-  "description": "기존 docs 의 가독성 backfill — CLAUDE.md \"docs / ADR 작성 형식\" 5 패턴 처방을 ADR.md / planning docs 4개 / README / SKILL.md 에 일괄 적용. 정책 본문 + planning/SKILL.md 역참조는 task 생성 시점에 main 직접 commit 으로 선반영. 검증 자동화 없음 (정책만 명시). manual Edit 필수 — sed 일괄 치환은 자기참조 위험 (common-pitfalls 1-11). 범위 외: docs/guide-mvp-with-ai-agent.md (v1 구현 공유용 가이드, 사용자 명시 제외).",
+  "description": "기존 docs 의 가독성 backfill — CLAUDE.md \"docs / ADR 작성 형식\" 6가지 패턴을 ADR.md / planning docs 4개 / README / SKILL.md 에 일괄 적용. 정책 본문 + planning/SKILL.md 역참조는 task 생성 시점에 main 직접 commit 으로 선반영. 검증 자동화 없음 (정책만 명시). manual Edit 필수 — sed 일괄 치환은 자기참조 위험 (common-pitfalls 1-11).",
   "created_at": "2026-05-18T02:23:41Z",
   "status": "completed",
   "current_phase": 3,
@@ -10,7 +10,7 @@
   "phases": [
     {
       "number": 1,
-      "title": "docs/adr.md ADR-001~027 본문 정리 (5 패턴 처방 적용)",
+      "title": "docs/adr.md ADR-001~027 본문 정리 (6가지 패턴 적용)",
       "file": "phase-01.md",
       "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]

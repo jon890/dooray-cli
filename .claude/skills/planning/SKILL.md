@@ -1,20 +1,29 @@
 ---
 name: planning
-description: 새 기능/변경사항 구현 전 8단계 설계 워크플로우. 구현 가능성 검증 → 기술 스택 → 사용자 흐름 → 화면/API/데이터 설계 → docs 반영 → task 생성. 각 단계에서 모호함을 제거하고 의사결정을 즉시 docs에 기록. "/planning", "계획 세워보자", "설계해보자" 같은 요청 시 반드시 이 스킬 사용.
+description: 새 기능/변경사항 구현 전 8단계 설계 워크플로우. 구현 가능성·기술 스택·사용자 흐름·인터페이스·데이터 설계·docs 반영·task 생성까지 순차로 모호함을 제거하고 의사결정을 즉시 docs 에 기록한다. "/planning", "계획 세워보자", "설계해보자", "기능 설계", "MVP 계획", "구현 전 검토", "ADR 작성 전 정리" 같은 요청 시 반드시 이 스킬 사용.
 ---
 
 # planning
 
 새 기능/변경사항을 구현하기 전 8단계 설계 워크플로우. 모호한 부분을 모두 해소하고, 문서를 정비한 뒤 `/plan-and-build` 또는 `/build-with-teams`로 실행에 넘긴다.
 
-## 핵심 원칙
+## 핵심 원칙 (워크플로우 진행 룰)
 
-- **속도와 안정성의 트레이드오프**: 빠르게 MVP를 출시하되, 안정적인 서비스를 만든다
-- **모호함 제로**: 각 단계에서 조금이라도 모호하면 반드시 사용자와 논의. 넘어가지 않는다
-- **AI 에이전트 관점**: 최종 문서는 AI 에이전트가 읽고 구현할 수 있을 정도로 명확해야 한다
-- **간결한 문서**: 컨텍스트 낭비 금지. 의사결정 의도는 보존하되 구현 상세는 코드에
-- **review 반복 지적 사전 소진**: task 파일 작성 시 `common-pitfalls.md` (critic 회피) + `code-review-pitfalls.md` (코드 작성 회피) 두 docs 의 패턴을 모두 self-check. critic / code-reviewer 가 매번 같은 지적을 반복하지 않도록 plan 단계에서 미리 해결
-- **선택지 제시는 AskUserQuestion 으로**: 옵션 중 하나를 고르게 할 때는 `AskUserQuestion`. 1~4개 질문, 옵션 2~4개, 추천안은 첫 번째 + label 끝 `(추천)`. 글로 늘어놓는 long-form 옵션 비교는 사용자가 답변 작성에 시간 들이게 됨 — 클릭 한 번으로 끝나도록 인터랙티브화. 단, 결정이 이미 명확하거나 자유 답변이 필요한 경우(예: 카피 문구)는 일반 질문 사용
+- **속도와 안정성의 트레이드오프**: 빠르게 MVP 를 출시하되 안정적인 서비스를 만든다
+- **모호함 제로**: 각 단계에서 조금이라도 모호하면 반드시 사용자와 논의.
+  넘어가지 않는다
+- **review 반복 지적 사전 소진**: task 파일 작성 시 두 docs 의 패턴을 모두 self-check
+  - `common-pitfalls.md` (critic 회피)
+  - `code-review-pitfalls.md` (코드 작성 회피)
+  - 매번 같은 지적이 반복되지 않도록 plan 단계에서 미리 해결
+- **선택지 제시는 AskUserQuestion 으로**:
+  - 옵션 분기 / 결정 묻기 시 `AskUserQuestion` 사용
+  - 1~4개 질문, 옵션 2~4개, 추천안 첫 번째 + label 끝 `(추천)` 표기
+  - 글로 나열한 long-form 옵션 비교는 사용자 답변 부담 ↑ — 1클릭 인터랙티브화
+  - 예외: 결정이 이미 명확하거나 자유 답변 (카피 문구 등) 필요 시 일반 질문
+
+docs 작성 형식 원칙 (간결성·단일 소스·의사결정 의도 보존·6가지 패턴) 은
+하단 **8단계 B. 문서 작성 원칙** 단일 소스 참조.
 
 ## Review 패턴 사전 소진 (필수)
 
@@ -25,7 +34,8 @@ task 파일을 **사용자에게 제출하기 전**에 두 docs 를 모두 self-
 | [`common-pitfalls.md`](../_shared/common-pitfalls.md) 섹션 1 + 4 | critic 의 plan 평가 지적 | task 파일 작성 직후 self-check |
 | [`code-review-pitfalls.md`](../_shared/code-review-pitfalls.md) 전체 | code-reviewer 의 코드 검사 지적 | phase 본문에 회피 항목 1줄 인용 + executor 코드 작성 시작 직전 self-check |
 
-**축적 규칙**: critic / code-reviewer 가 **새로운 타입** 의 지적을 하면 build-with-teams 9단계 회고에서 해당 docs 에 패턴을 추가한다 (build-with-teams SKILL 9-7항 참조). 두 파일은 시간이 지날수록 두꺼워지고, review 사이클에서 할 말은 줄어든다.
+**축적 규칙**: critic / code-reviewer 가 **새로운 타입** 의 지적을 하면 build-with-teams 9단계 회고에서 해당 docs 에 패턴을 추가한다 (build-with-teams SKILL 9-7항 참조).
+두 파일은 시간이 지날수록 두꺼워지고, review 사이클에서 할 말은 줄어든다.
 
 **docs-verifier 사전 소진은 별도 회고 docs 를 두지 않는다** — 아래 "거울 구조 원칙" 섹션 참조. docs-verifier 의 반복 지적은 본 SKILL 8단계 A항 docs 영향 표에 행 추가 / 보강 형태로 흡수된다.
 
@@ -39,7 +49,10 @@ build-with-teams 의 docs-verifier 검증 항목과 본 SKILL 의 docs 영향 �
 
 2. **거울**: `build-with-teams/SKILL.md` 의 docs-verifier 검증 항목 7~10 (planning docs 영향 표 100% 적용 / 역참조 / 갱신 시점 분리 / 공개 스킬 dogfooding) 은 위 표를 거울처럼 참조한다 — 별도 체크리스트 보유 금지. docs-verifier 가 *"별도 체크 항목 X 도 보겠다"* 며 자체 항목을 늘리면 거울이 깨진다.
 
-3. **별도 회고 docs 신설 금지**: docs-verifier 의 UPDATE_NEEDED / VIOLATION 회고는 `_shared/docs-verifier-pitfalls.md` 같은 새 파일을 만드는 게 아니라 **본 SKILL 8단계 A항 표에 행 추가 또는 기존 행 보강** 으로 흡수한다 (build-with-teams 9-7 회고 단계 참조). critic/code-reviewer 와 처리 방식이 비대칭인 이유: 두 검증자는 *코드/계획 패턴* 회피라 별도 docs 가 자연스럽지만, docs-verifier 는 *docs 갱신 누락* 만 잡으므로 표 자체가 곧 회피 docs.
+3. **별도 회고 docs 신설 금지**: docs-verifier 의 UPDATE_NEEDED / VIOLATION 회고는 별도 파일 (`_shared/docs-verifier-pitfalls.md` 등) 신설이 아니라 **본 SKILL 8단계 A항 표 갱신**으로 흡수한다.
+   - 흡수 방법: 표에 행 추가 또는 기존 행 보강 (build-with-teams 9-7 회고 단계 참조)
+   - critic / code-reviewer 와 처리 방식이 비대칭인 이유: 두 검증자는 *코드/계획 패턴* 회피라 별도 docs 가 자연스러움
+   - 반면 docs-verifier 는 *docs 갱신 누락* 만 잡으므로 표 자체가 곧 회피 docs
 
 4. **표 수정 시 두 곳 동기 검토**: 본 표를 수정하면 즉시 `build-with-teams/SKILL.md` 의 docs-verifier 검증 항목 (7~10) 이 새 행을 자연스럽게 커버하는지 확인. 새 검증 카테고리가 필요하면 거기 추가 — 표에는 추가 안 함.
 
@@ -211,7 +224,7 @@ docs/flow.md                  ←  docs/prd.md
 - 같은 내용을 두 문서에 "본문"으로 쓰지 않는다 (단일 소스 + 역참조)
 - 의사결정 의도("왜 이렇게 했는가")는 반드시 보존
 - 구현 세부사항은 코드에, docs에는 "무엇을·왜"만
-- **가독성 + 토큰 효율**: `dooray-cli/CLAUDE.md` "docs / ADR 작성 형식" 5 패턴 처방 따른다 — semantic line break / enumerated inline 금지 / 괄호 중첩 제한 / 동치 압축 제한 / 의미 단위 분할
+- **가독성 + 토큰 효율**: `dooray-cli/CLAUDE.md` "docs / ADR 작성 형식" 6가지 패턴 따른다 (패턴 정의는 거기에 단일 소스)
 
 ---
 
