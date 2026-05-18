@@ -13,7 +13,7 @@ Issue #66: 생성된 업무에 태그를 사후 추가/교체/제거하는 자�
 코드 컨텍스트:
 - `src/commands/post/edit.ts:90` — `const nonInteractive = title || opts.body || opts.bodyFile;`
 - `src/commands/post/edit.ts:167-177` — `updatePost` 호출 (subject/body/priority/dueDate/users 만 — tagIds 미포함)
-- `src/resolvers/tag.ts` — `resolveTags(client, projectId, names): string[]` + `validateMandatoryTags(client, projectId, tagIds): void`
+- `src/resolvers/tag.ts` — `resolveTags(client, projectId, names): string[]` (mandatory 그룹 충족 검증 포함, post create 용) + `validateMandatoryTags(client, projectId): void` (2-인자, 입력 없이 mandatory 그룹 존재 여부만 검사 — post create 사전 검증 전용). 본 task 에서 신규 `lookupTagIds(client, projectId, names): string[]` (mandatory skip) + `validateMandatoryCoverage(client, projectId, selectedTagIds): void` (머지 결과 커버리지) 추가 export
 - `src/resolvers/post-users.ts` — `mergeUsers(existing, additions, clear)` pure function 패턴 (테스트 가능 단위로 분리)
 - `src/api/types.ts:211` — `PostDetail.tags: Tag[]`, `Tag.id: string`
 - `src/api/types.ts:250` — `UpdatePostRequest.tagIds?: string[]`
@@ -251,15 +251,17 @@ node dist/index.js post edit --id <postId> --tag "<g>: <n>" --dry-run --json
 # 5) interactive 모드 (--tag 만 있어도 단독 nonInteractive 진입 — 경고 없음. 반대로 $EDITOR 강제 분기에 --tag 주면 경고)
 ```
 
-executor 메모: post 가 mandatory tag 그룹 정책을 가진 프로젝트면 --tag-clear 가 mandatory 위반 → `validateMandatoryTags` 가 친절한 에러 (ADR-019). 그 흐름도 1회 실증.
+executor 메모: post 가 mandatory tag 그룹 정책을 가진 프로젝트면 --tag-clear 가 mandatory 위반 → `validateMandatoryCoverage` 가 친절한 에러 (ADR-019 확장). 그 흐름도 1회 실증.
+
+**tag.test.ts mock fixture (critic minor #3)**: `lookupTagIds` mandatory-skip 검증 케이스는 `ensureTags` mock 이 `groupMandatory: true` 인 CachedTag 를 포함하는 fixture 사용 — "mandatory 그룹 있는 프로젝트에서 lookup 만 호출 시 throw 안 함" 을 확인.
 
 ## code-review-pitfalls 회피 항목
 
-- **1-1 (validation 전 spinner)**: post 조회 spinner 는 기존 흐름. `resolveTags` / `validateMandatoryTags` 는 spinner 안에서 호출 — 기존 cc 흐름과 동일 패턴
+- **1-1 (validation 전 spinner)**: post 조회 spinner 는 기존 흐름. `lookupTagIds` / `validateMandatoryCoverage` 는 spinner 안에서 호출 — 기존 cc 흐름과 동일 패턴
 - **1-2 (spinner leak)**: try/catch 가 이미 있음 — 신규 코드는 그 안에서만
-- **2-2 (catch 분기)**: `validateMandatoryTags` 가 throw 하면 그대로 상위 catch 로 전파 — 별도 처리 없음
-- **3-3 (테스트 mock mirror)**: `mergeTagIds` pure function — mock 불요
-- **외과적 변경**: cc/to 단독 호출 동작은 본 task 에서 변경 금지 (trigger 확장만, 흐름 그대로)
+- **2-2 (catch 분기)**: `validateMandatoryCoverage` 가 throw 하면 그대로 상위 catch 로 전파 — 별도 처리 없음
+- **3-3 (테스트 mock mirror)**: `mergeTagIds` pure function — mock 불요. `tag.test.ts` 는 `ensureTags` mock 만 필요
+- **외과적 변경**: cc/to 단독 호출 동작은 본 task 에서 변경 금지 (trigger 확장 0 — tag 만)
 
 ## 성공 기준
 
