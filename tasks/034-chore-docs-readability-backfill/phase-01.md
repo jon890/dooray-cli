@@ -88,7 +88,6 @@ wc -c docs/adr.md
 위 점검 통과 시 commit:
 
 ```bash
-git add docs/adr.md tasks/034-chore-docs-readability-backfill/index.json
 # index.json 은 phase-03 에서 마킹 — phase-01 commit 에는 미포함
 git add docs/adr.md
 git commit -m "$(cat <<'EOF'
