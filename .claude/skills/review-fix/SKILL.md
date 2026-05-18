@@ -30,7 +30,8 @@ PR에 달린 코드 리뷰 댓글(주로 claude bot의 🔴/🟡 구조화 리�
 
 ### CI 상태 먼저 확인 (필수)
 
-리뷰 댓글 분석 전에 **CI 상태**를 먼저 확인한다. 봇 리뷰가 아무리 깨끗해도 CI 가 실패하면 PR 머지 불가 — 빌드/테스트 실패는 사실상 가장 시급한 "🔴 필수 수정" 이다.
+리뷰 댓글 분석 전에 **CI 상태**를 먼저 확인한다.
+봇 리뷰가 아무리 깨끗해도 CI 가 실패하면 PR 머지 불가 — 빌드/테스트 실패는 사실상 가장 시급한 "🔴 필수 수정" 이다.
 
 ```bash
 # 1) 한눈에 보기
@@ -86,7 +87,9 @@ CI 실패 픽스는 리뷰 댓글 처리와 **동일한 단계** 를 따른다:
 
 ### Merge conflict 점검 (필수)
 
-CI 와 함께 머지 차단 사유. CI 가 PASS 여도 base 와 conflict 가 있으면 PR 머지 불가 — 리뷰 픽스 push 후에야 발견하면 PR 한 번 더 왕복해야 한다. 댓글 분석 전에 점검.
+CI 와 함께 머지 차단 사유.
+CI 가 PASS 여도 base 와 conflict 가 있으면 PR 머지 불가 — 리뷰 픽스 push 후에야 발견하면 PR 한 번 더 왕복해야 한다.
+댓글 분석 전에 점검.
 
 ```bash
 # mergeable 상태 확인
@@ -349,10 +352,12 @@ gh pr view <N> --json mergeable,mergeStateStatus
 
 ### ⚠️ 자동 재트리거 토큰 금지 (CRITICAL)
 
-reply 본문에 다음 토큰을 **포함하면 안 된다** — `.github/workflows/claude-code-review.yml` 의 `if:` 조건에 의해 자동 review 재실행 유발 또는 사용자가 봇 멘션으로 인지:
+reply 본문에 다음 토큰을 **포함하면 안 된다**.
+`.github/workflows/claude-code-review.yml` 의 `if:` 조건에 의해 자동 review 재실행 유발 또는 사용자가 봇 멘션으로 인지:
 
 - `/review` — workflow 의 `contains(github.event.comment.body, '/review')` 트리거 (확정 재실행)
-- `@claude` — 현재 workflow `if:` 절은 `@claude` 를 트리거하지 않지만 사용자가 "봇 멘션" 으로 인지 + 향후 workflow 변경 시 위험. 봇을 지칭해야 하면 `` `@claude` `` 백틱 코드 fence 또는 평문 "Claude bot" 사용
+- `@claude` — 현재 workflow `if:` 절은 `@claude` 를 트리거하지 않지만 사용자가 "봇 멘션" 으로 인지 + 향후 workflow 변경 시 위험
+  - 봇을 지칭해야 하면 `` `@claude` `` 백틱 코드 fence 또는 평문 "Claude bot" 사용
 - `@github-actions`, `@dependabot` 등 다른 봇 멘션도 동일
 
 검증 grep (reply 등록 전):
@@ -384,9 +389,14 @@ echo "$REPLY_BODY" | grep -nE "(^|[^\`])#[0-9]+\b"
 
 claude bot 의 리뷰는 두 형식 중 하나로 등록된다 — 형식에 따라 reply API 가 다르다:
 
-**A. 인라인 review 형식 (선호)**: bot 이 `gh api .../pulls/N/reviews` POST 로 file/line 단위 댓글 N건 + 일반 요약 1건. `gh api repos/.../pulls/N/comments` 응답에 `in_reply_to_id: null` 인 claude[bot] top-level 댓글 존재. 1:1 reply 가능.
+**A. 인라인 review 형식 (선호)**: bot 이 `gh api .../pulls/N/reviews` POST 로 file/line 단위 댓글 N건 + 일반 요약 1건.
+- `gh api repos/.../pulls/N/comments` 응답에 `in_reply_to_id: null` 인 claude[bot] top-level 댓글 존재
+- 1:1 reply 가능
 
-**B. 통합 댓글 형식 (fallback)**: bot 이 인라인 등록 실패 (예: GENERAL 발견사항만 / line 매핑 실패 / API 422) → 일반 PR 댓글 1건에 모든 발견사항 통합. body 끝에 *"💬 인라인 코멘트는 API 접근 제약으로 인해 Files changed 탭 대신 이 댓글에 통합되었습니다"* 명시. 인라인 reply 대상 없음.
+**B. 통합 댓글 형식 (fallback)**: bot 이 인라인 등록 실패 시 일반 PR 댓글 1건에 모든 발견사항 통합
+- 실패 사유 예: GENERAL 발견사항만 / line 매핑 실패 / API 422
+- body 끝에 *"💬 인라인 코멘트는 API 접근 제약으로 인해 Files changed 탭 대신 이 댓글에 통합되었습니다"* 명시
+- 인라인 reply 대상 없음
 
 판별:
 
@@ -465,11 +475,14 @@ ${ISSUE_URL}"
 
 ## 6.5단계: 리뷰 학습 누적 (재발 방지 — 필수)
 
-reply 까지 완료되면 이번 PR 의 리뷰에서 **재발 가능 패턴**을 추출해 `_shared/common-pitfalls.md` 의 `### dooray-cli` 섹션에 누적한다. 같은 지적이 다음 PR 에서 반복되지 않도록 critic / 사전 self-check 양쪽에 학습.
+reply 까지 완료되면 이번 PR 의 리뷰에서 **재발 가능 패턴**을 추출해 `_shared/common-pitfalls.md` 의 `### dooray-cli` 섹션에 누적한다.
+같은 지적이 다음 PR 에서 반복되지 않도록 critic / 사전 self-check 양쪽에 학습.
 
 ### 추출 기준 (✅ 누적 / ❌ 누적 금지)
 
-- ✅ 누적: **재현 가능한 패턴** — 같은 실수가 다른 코드에서도 발생할 가능성. 구체적 명령으로 검출 가능. 예: "ky retry 옵션 누락 — `retry: { limit: 0 }` 명시 권장 (ADR-002)"
+- ✅ 누적: **재현 가능한 패턴** — 같은 실수가 다른 코드에서도 발생할 가능성
+  - 구체적 명령으로 검출 가능
+  - 예: "ky retry 옵션 누락 — `retry: { limit: 0 }` 명시 권장 (ADR-002)"
 - ❌ 누적 금지: 1회성 오타 / 특정 plan 컨텍스트에서만 의미 있는 코멘트 / 칭찬 / 단순 확인 요청
 
 ### 누적 위치 결정
@@ -559,7 +572,13 @@ git push origin main
 - **리뷰가 이미 반영된 경우**: 파일을 읽고 실제로 수정이 필요한지 먼저 확인한다. 이미 반영됐다면 해당 항목을 스킵하고 이유를 보고한다.
 - **리뷰 댓글이 구체적이지 않은 경우**: 추측으로 수정하지 말고 사용자에게 확인을 요청한다.
 - **다른 브랜치의 PR인 경우**: 현재 브랜치가 해당 PR 브랜치와 다르면 경고 후 사용자 확인을 받는다.
-- **🟡만 있을 때**: 권장 사항은 선택 사항이므로 적용 여부를 먼저 물어본다. 사용자가 "다 해줘" 같은 표현으로 이미 승인한 경우엔 바로 처리해도 된다.
-- **구조화 리뷰가 없을 때**: 🔴/🟡 마커 댓글이 없다면, PR diff를 직접 검토하여 타입 안전성, 컨벤션 위반, 논리적 불일치 등 잠재적 이슈를 찾아 사용자에게 보고한다. 수정 여부는 사용자가 결정한다.
-- **다양한 리뷰 형식**: 🔴/🟡 마커 외에도 GitHub formal review (Request Changes/Comment), 인라인 코드 댓글, 일반 텍스트 코멘트도 파싱하여 수정이 필요한 항목을 추출한다.
-- **ADR 갱신 필요한 결정**: 라이브러리 옵션 변경 / 캐시 정책 변경 / resolver 룰 변경 등 CLAUDE.md 표에 명시된 영역이면 코드 수정과 함께 `docs/adr.md` 도 갱신.
+- **🟡만 있을 때**: 권장 사항은 선택 사항이므로 적용 여부를 먼저 물어본다
+  - 사용자가 "다 해줘" 같은 표현으로 이미 승인한 경우엔 바로 처리해도 된다
+- **구조화 리뷰가 없을 때**: 🔴/🟡 마커 댓글이 없다면 PR diff 직접 검토
+  - 타입 안전성·컨벤션 위반·논리적 불일치 등 잠재적 이슈 발견 시 사용자에게 보고
+  - 수정 여부는 사용자가 결정
+- **다양한 리뷰 형식**: 🔴/🟡 마커 외에도 파싱 대상
+  - GitHub formal review (Request Changes / Comment)
+  - 인라인 코드 댓글, 일반 텍스트 코멘트
+- **ADR 갱신 필요한 결정**: CLAUDE.md 표에 명시된 영역이면 코드 수정과 함께 `docs/adr.md` 도 갱신
+  - 라이브러리 옵션 변경, 캐시 정책 변경, resolver 룰 변경 등
