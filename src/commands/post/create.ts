@@ -18,7 +18,8 @@ import { prependMentions } from "../../utils/mention.js";
 import { appendTaskLinks } from "../../utils/task-link.js";
 import { resolveTaskLinks } from "../../resolvers/task-link.js";
 import { resolveUserAdditions } from "../../resolvers/post-users.js";
-import type { CreatePostUser } from "../../api/types.js";
+import { resolveTemplate } from "../../resolvers/template.js";
+import type { CreatePostUser, PostUser, TemplateDetail } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
 
@@ -33,6 +34,17 @@ async function resolveUsers(
     users.push({ type: "member", member: { organizationMemberId: memberId } });
   }
   return users;
+}
+
+// 템플릿 fetch 결과 (PostUser) → createPost payload (CreatePostUser) 변환.
+// workflow 필드는 CreatePostRequest 에 없어 제외 (api/types.ts:127/223 차이).
+function postUserToCreate(u: PostUser): CreatePostUser {
+  return {
+    type: u.type,
+    member: u.member,
+    emailUser: u.emailUser,
+    group: u.group,
+  };
 }
 
 export const postCreateCommand = new Command("create")
@@ -53,6 +65,7 @@ export const postCreateCommand = new Command("create")
   .option("--mention-group <code>", "그룹 멘션 (반복 가능, code 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--link-task <ref>", "다른 업무 링크 추가 (<project>/<number> 또는 postId, 반복 가능)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--parent <ref>", "부모 업무 (project/number 또는 postId)")
+  .option("--template <ref>", "템플릿 이름 또는 ID — body/users/tags 자동 채움 (사용자 옵션 우선 override, ADR-027)")
   .option("--workflow <name>", "초기 워크플로우 이름 또는 class")
   .option("--milestone <name>", "마일스톤 이름")
   .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
@@ -61,13 +74,6 @@ export const postCreateCommand = new Command("create")
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
-    const subject = opts.title ?? opts.subject;
-    if (!subject) {
-      throw new DoorayCliError(
-        "--title이 필요합니다.",
-        EXIT_PARAM_ERROR,
-      );
-    }
     if (opts.subject && !opts.title) {
       process.stderr.write(
         "⚠  --subject는 deprecated입니다. 대신 --title을 사용해주세요.\n",
@@ -78,10 +84,45 @@ export const postCreateCommand = new Command("create")
     const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);
     const linkInputs: string[] = (opts.linkTask ?? []).filter((s: string) => s.length > 0);
 
-    let bodyContent = await readBodyInput(opts);
-
     startSpinner("업무 생성 중...");
     const projectId = await resolveProject(client, project);
+
+    // 템플릿 조회 + 사용자 옵션 override (ADR-027)
+    let templateDetail: TemplateDetail | null = null;
+    if (opts.template) {
+      try {
+        const templateId = await resolveTemplate(client, projectId, opts.template);
+        const res = await client.getProjectTemplateDetail(projectId, templateId, true);
+        templateDetail = res.result;
+      } catch (e) {
+        stopSpinner(false);
+        throw e;
+      }
+    }
+
+    // subject: 사용자 --title/--subject 우선, 없으면 템플릿
+    const subject = opts.title ?? opts.subject ?? templateDetail?.subject;
+    if (!subject) {
+      stopSpinner(false);
+      const msg = opts.template
+        ? `--template "${opts.template}" 에 제목이 없습니다. --title 로 지정하세요.`
+        : "--title 또는 --template 둘 중 하나 필요합니다.";
+      throw new DoorayCliError(msg, EXIT_PARAM_ERROR);
+    }
+
+    // body: 사용자 --body/--body-file 우선, 없으면 템플릿
+    let bodyContent: string;
+    try {
+      bodyContent = await readBodyInput(opts);
+    } catch (e) {
+      // readBodyInput 은 --body / --body-file 충돌, 파일 부재, TTY stdin 등에서 throw
+      // — spinner leak 방지 위해 catch 후 stop + re-throw (code-review-pitfalls 1-2)
+      stopSpinner(false);
+      throw e;
+    }
+    if (!bodyContent && templateDetail?.body) {
+      bodyContent = templateDetail.body.content;
+    }
 
     let projectCode: string | undefined;
     if (groupInputs.length > 0) {
@@ -123,7 +164,12 @@ export const postCreateCommand = new Command("create")
     if (opts.dryRun) {
       stopSpinner(false);
       if (globalOpts.json) {
-        process.stdout.write(JSON.stringify({ body: bodyContent }) + "\n");
+        process.stdout.write(
+          JSON.stringify({
+            body: bodyContent,
+            ...(opts.template && { templateUsed: opts.template }),
+          }) + "\n",
+        );
       } else {
         process.stdout.write(bodyContent + "\n");
       }
@@ -133,8 +179,13 @@ export const postCreateCommand = new Command("create")
     const ccGroupCodes: string[] = (opts.ccGroup ?? []).filter((s: string) => s.length > 0);
     const toGroupCodes: string[] = (opts.toGroup ?? []).filter((s: string) => s.length > 0);
 
-    const toUsersMembers = opts.to ? await resolveUsers(client, projectId, opts.to) : [];
-    const ccUsersMembers = opts.cc ? await resolveUsers(client, projectId, opts.cc) : [];
+    // to/cc: 사용자 옵션 우선. 미지정 시 템플릿 users 폴백 (PostUser → CreatePostUser 변환)
+    const toUsersMembers = opts.to
+      ? await resolveUsers(client, projectId, opts.to)
+      : (templateDetail?.users?.to ?? []).map(postUserToCreate);
+    const ccUsersMembers = opts.cc
+      ? await resolveUsers(client, projectId, opts.cc)
+      : (templateDetail?.users?.cc ?? []).map(postUserToCreate);
     const toUsersGroups = toGroupCodes.length > 0
       ? await resolveUserAdditions(client, projectId, [], toGroupCodes)
       : [];
@@ -145,11 +196,16 @@ export const postCreateCommand = new Command("create")
     const toUsers = [...toUsersMembers, ...toUsersGroups];
     const ccUsers = [...ccUsersMembers, ...ccUsersGroups];
 
+    // tags: 사용자 --tag 우선. 미지정 시 템플릿 tags 폴백
     const tagInputs = (opts.tag ?? []).filter((s: string) => s.length > 0);
+    const templateTagNames = (templateDetail?.tags ?? [])
+      .map((t) => t.name)
+      .filter((n): n is string => !!n);
+    const effectiveTagInputs = tagInputs.length > 0 ? tagInputs : templateTagNames;
 
     const [tagIds, parentPostId, milestoneId] = await Promise.all([
-      tagInputs.length > 0
-        ? resolveTags(client, projectId, tagInputs)
+      effectiveTagInputs.length > 0
+        ? resolveTags(client, projectId, effectiveTagInputs)
         : validateMandatoryTags(client, projectId).then(() => undefined),
       opts.parent
         ? resolvePostRef(client, opts.parent)

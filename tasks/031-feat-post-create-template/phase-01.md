@@ -57,17 +57,21 @@ export interface TemplateMeta {
 
 // 단건용 (body/users/tags 포함)
 export interface TemplateDetail extends TemplateMeta {
+  subject: string;              // phase-02 의 fallback (`opts.title ?? templateDetail.subject`)
   body: PostBody;
-  users?: PostUsers;
+  users?: PostUsers;            // PostUsers shape (to: PostUser[] / cc: PostUser[]) — phase-02 가 그대로 createPost payload 로 사용
   tags?: Tag[];
-  // 실측 spike 결과에 따라 추가 필드 보강 (mileStone / priority 등 — executor 가 1회 호출로 확인)
+  priority?: string;            // 본 task scope 외 — type 만 두고 phase-02 에서 사용하지 않음
+  milestoneId?: string;         // 동일
 }
 
 export type TemplateListResponse = DoorayApiResponse<TemplateMeta[]>;
 export type TemplateDetailResponse = DoorayApiResponse<TemplateDetail>;
 ```
 
-**중요**: 응답 schema 의 정확한 필드명 (`milestoneId` 형태인지, nested `milestone.id` 인지) 은 executor 가 실증 GET 호출 응답으로 확정. 위 type 은 base 형태 — phase-02 의 사용자 옵션 override 흐름에서 필요한 필드 (subject/body/users/tags/priority/milestone) 만 우선 type 정의.
+**중요 — spike 1회 필수 (phase 시작 시)**: 위 type 의 정확한 필드명 (`milestoneId` 직접 vs nested `milestone.id` / `users` 가 PostUsers 와 호환되는지) 은 executor 가 phase-01 시작 시 `curl GET .../templates/{id}?interpolation=true` 1회 응답 캡처로 확정. 응답이 PostUsers 와 비호환이면 phase-01 에 변환 헬퍼 type 추가 + phase-02 의 `templateDetail.users` 사용 경로에 헬퍼 끼움. 본 task scope 는 `subject/body/users/tags` 4개만 — `priority/milestoneId` 는 type 만 두고 phase-02 의 createPost payload 에 매핑하지 않음 (ADR-027 명시 5개 = subject/body/tags/to/cc).
+
+**Why subject 필수**: phase-02 의 `subject = opts.title ?? opts.subject ?? templateDetail?.subject` 호출이 `subject` 를 require 하므로 type 에 명시. Dooray API 응답에 항상 존재하는 필드 (template 의 이름과 subject 는 별개).
 
 ### 2. `src/cache/types.ts` — TTL + Cached 인터페이스
 

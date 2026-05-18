@@ -112,6 +112,8 @@ if (opts.template) {
 
 #### 3.3 사용자 옵션 override 정책 (ADR-027)
 
+**기존 subject 검증 제거 (line 64-70 부근)**: 현행 코드는 action 진입 직후 `if (!subject) throw ...` 로 검증. 본 task 는 template 도 subject 제공원이라 검증 시점을 template fetch 이후로 이동. **기존 검증 블록은 삭제** 하고 아래 override 블록 안의 검증으로 일원화.
+
 각 필드별로 `사용자 옵션 ?? 템플릿 값` 우선순위:
 
 ```ts
@@ -124,28 +126,50 @@ let bodyContent = await readBodyInputOrNull(opts);  // 기존 helper
 if (bodyContent == null && templateDetail?.body) bodyContent = templateDetail.body.content;
 if (bodyContent == null) bodyContent = "";  // 빈 본문 허용
 
-// tags: 사용자 --tag 우선 (override). 사용자 명시 입력 0건 + 템플릿 tags 있으면 템플릿 tags 사용
+// tags: 사용자 --tag 우선 (완전 교체 — append 아님). 사용자 명시 0건 + 템플릿 tags 있으면 템플릿 tags 사용
 const tagInputs = (opts.tag ?? []).filter((s: string) => s.length > 0);
 const effectiveTags = tagInputs.length > 0 ? tagInputs : (templateDetail?.tags?.map(t => t.name) ?? []);
 
-// users (to/cc): 사용자 --to/--cc 우선
-const toUsers = opts.to ? await resolveUsers(client, projectId, opts.to) : (templateDetail?.users?.to.map(u => ({...})) ?? []);
-const ccUsers = opts.cc ? await resolveUsers(client, projectId, opts.cc) : (templateDetail?.users?.cc.map(u => ({...})) ?? []);
+// users (to/cc): 사용자 --to/--cc 우선 (완전 교체)
+const toUsers = opts.to ? await resolveUsers(client, projectId, opts.to) : (templateDetail?.users?.to ?? []);
+const ccUsers = opts.cc ? await resolveUsers(client, projectId, opts.cc) : (templateDetail?.users?.cc ?? []);
 ```
 
-**중요**: 템플릿의 `users` 응답이 PostUsers (member/emailUser/group 분기) 형식 그대로면 CreatePostUser 로 type-cast 후 그대로 payload 에 사용 가능. executor 가 실증 1회로 형식 확인 후 처리. 형식 다르면 변환 헬퍼 추가.
+**override = 완전 교체 (ADR-027)**: 사용자 옵션 1건만 있어도 템플릿 값 전체 무시. append/merge 아님 — 동작 명시.
 
-#### 3.4 dry-run JSON 출력 확장
+**mandatory-tag 사전 검증 보존 (ADR-019 정책)**:
+
+기존 흐름 (`src/commands/post/create.ts:150-153`): `tagInputs.length === 0` 일 때만 `validateMandatoryTags` 호출. 본 task 는 `effectiveTags` 가 (a) 사용자 입력 또는 (b) 템플릿 tags 둘 다 일 수 있으므로, **`effectiveTags` 가 결정된 직후 항상 `validateMandatoryTags(client, projectId, effectiveTags)` 1회 호출** — 그래야 템플릿이 mandatory-tag 그룹을 누락한 경우 client-side 에서 차단 가능 (서버 400 회귀 방지).
 
 ```ts
+// effectiveTags 결정 직후, mandatory-tag 사전 검증 (ADR-019)
+await validateMandatoryTags(client, projectId, effectiveTags);
+```
+
+**본 task scope 의 override 범위 (ADR-027 5개 + scope 외 3개)**:
+- ✅ override 적용: `subject` / `body` / `tags` / `to` / `cc` (5개)
+- ❌ scope 외: `priority` / `milestoneId` / `workflow` — 사용자 명시 입력만 사용 (템플릿 값이 있어도 무시). TemplateDetail 에는 type 만 두고 createPost payload 에 매핑하지 않음. 향후 확장 시 ADR-027 보강.
+
+**중요**: 템플릿의 `users` 응답이 PostUsers (member/emailUser/group 분기) 형식 그대로면 별도 변환 없이 createPost payload 로 사용. executor 가 phase-01 spike 결과로 호환성 이미 확정 (phase-01 의 type 정의 + spike 1회 안내 참조). 비호환 시 phase-01 에서 변환 헬퍼 type 정의 완료 후 phase-02 에서 호출.
+
+#### 3.4 dry-run 위치 결정 + JSON 출력 확장
+
+**위치 결정**: 현행 dry-run 블록 (line 123-131) 은 tag/parent/milestone resolve **이전**. 본 task 에서 `effectiveTags / toUsers / ccUsers / subject` 가 dry-run 출력에 포함되어야 의미 있음 → **dry-run 블록을 override + mandatory-tag 검증 직후로 이동** (즉 resolve 흐름 이후). 이동 후에도 `parent / milestone / workflow` resolve 는 dry-run 일 때 skip (API 미호출 원칙).
+
+```ts
+// override + mandatory-tag 검증 직후, parent/milestone/workflow resolve 이전:
 if (opts.dryRun) {
-  // ... 기존 dryRun 출력에 templateUsed 표시
+  const previewBody = bodyContent;
   if (globalOpts.json) {
     process.stdout.write(JSON.stringify({
-      body: bodyContent,
+      subject,
+      body: previewBody,
+      tags: effectiveTags,
       users: { to: toUsers, cc: ccUsers },
       ...(opts.template && { templateUsed: opts.template }),
     }) + "\n");
+  } else {
+    process.stdout.write(previewBody + "\n");
   }
   return;
 }

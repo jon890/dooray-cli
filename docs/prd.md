@@ -29,7 +29,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray config` — API key·base URL·IMAP/SMTP 설정 (개별 수동 관리)
 - `dooray doctor` — 설정·연결 검증
 - `dooray cache` — 캐시 관리
-- `dooray project` — 목록·멤버·워크플로우 조회
+- `dooray project` — 목록·멤버·워크플로우·템플릿 조회
 - `dooray member` — 표시명/이메일 조회 (`get`/`list`, ADR-021)
 - `dooray post` — 목록·검색·조회·생성·수정($EDITOR)·완료·상태변경 + `--tag`/`--parent`/`--workflow`/`--milestone` 메타데이터 (ADR-019) + `--mention`/`--mention-group`/`--link-task`/`--dry-run` (post comment 도 동일) + `--cc`/`--cc-group`/`--cc-clear`/`--to`/`--to-group`/`--to-clear` 참조자·담당자 추가/수정 (post edit, post create 는 `--*-group` 만 — ADR-025) + `post edit --parent <ref>` 상위 업무 변경 (dedicated `set-parent-post` endpoint — top-level 해제는 웹 UI) + `post create --template <name|id>` 정형 task (ADR-027, `project templates` 명령으로 목록 조회)
 - `dooray post comment` — 목록·추가·수정($EDITOR)·삭제

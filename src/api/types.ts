@@ -501,3 +501,25 @@ export interface CreateWikiPageResult {
 }
 
 export type CreateWikiPageResponse = DoorayApiResponse<CreateWikiPageResult>;
+
+// ─── Template ────────────────────────────────────────────
+
+// 목록용 (body 미포함)
+export interface TemplateMeta {
+  id: string;
+  templateName: string;
+  project: { id: string; code: string };
+}
+
+// 단건용 (body/users/tags 포함, interpolation=true 시 매크로 치환됨)
+export interface TemplateDetail extends TemplateMeta {
+  subject?: string;
+  body?: PostBody;
+  users?: PostUsers;
+  tags?: Tag[];
+  priority?: string;
+  milestone?: Milestone;
+}
+
+export type TemplateListResponse = DoorayApiResponse<TemplateMeta[]> & { totalCount: number };
+export type TemplateDetailResponse = DoorayApiResponse<TemplateDetail>;

@@ -66,3 +66,10 @@ export interface CachedWiki {
   name: string;
   homePageId: string;
 }
+
+export const TEMPLATES_TTL_MS = 86_400_000; // 24h — tag/workflow 답습
+
+export interface CachedTemplate {
+  id: string;
+  templateName: string;
+}
