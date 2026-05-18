@@ -43,7 +43,8 @@
 - npm 생태계로 `npx @bifos/dooray-cli` 즉시 배포 가능
 - CLI 툴 생태계(Commander, chalk, ora 등)가 Node.js에서 가장 성숙
 
-**대안 기각**: Kotlin MCP 서버 코드 재사용 포기 → 다른 ADR과 형식 일관성 확보. types.ts 포팅 비용은 1일 내라 상쇄 가능.
+**대안 기각**: Kotlin MCP 서버 코드 재사용 포기 → 다른 ADR과 형식 일관성 확보.
+types.ts 포팅 비용은 1일 내라 상쇄 가능.
 
 ---
 
@@ -103,7 +104,7 @@
 **이유**:
 
 - `--body "..."` flag로 긴 마크다운 입력은 현실적으로 불가능
-- `--body-file` + 별도 수정은 "기존 내용 조회 → 파일 저장 → 수정 → CLI 재실행" 4단계 필요
+- `--body-file` + 별도 수정은 4단계 필요: 기존 내용 조회, 파일 저장, 수정, CLI 재실행
 - $EDITOR 방식(`kubectl edit`, `git commit` 동일 패턴)은 1커맨드로 완결
 - YAML frontmatter로 메타데이터(subject, priority, due_date, to, cc) + 본문 통합 편집
 
@@ -171,7 +172,8 @@
 - `SORT` 미지원 → UID 역순(최신순)으로 대체
 - `SUBJECT`, `FROM`, `TO`, `UNSEEN`, `SEEN` 검색은 지원
 
-**기본값 전략**: imap-host, imap-port, smtp-host, smtp-port는 기본값 제공 (Dooray 사용자 대다수 동일). 사용자는 imap-username, imap-password만 설정하면 됨.
+**기본값 전략**: imap-host, imap-port, smtp-host, smtp-port는 기본값 제공 (Dooray 사용자 대다수 동일).
+사용자는 imap-username, imap-password만 설정하면 됨.
 
 **트레이드오프**: imapflow + mailparser 의존성 추가 → tsup에서 external 처리 필요 (번들 미포함, node_modules에서 로드)
 
@@ -225,7 +227,7 @@
 
 **구현**:
 
-- 다운로드: `?media=raw` 쿼리 파라미터로 307 유도 → Location 헤더 캡처 → fetch로 2차 요청
+- 다운로드: `?media=raw` 쿼리 파라미터로 307 유도 후 Location 헤더 캡처, fetch로 2차 요청
 - 업로드: `fetch` 직접 사용 (`ky`는 307 + `redirect: "manual"` 조합에서 정상 동작하지 않음)
 - 2차 요청 시 동일한 Authorization 헤더 첨부
 - 업로드: FormData + Blob, 다운로드: ArrayBuffer로 수신 후 파일 저장
@@ -236,7 +238,8 @@
 
 ## ADR-016: `dooray setup` 대화형 초기 설정 마법사
 
-**결정**: `dooray setup` 커맨드로 대화형 초기 설정 마법사 제공. `postinstall` 훅 대신 명시적 커맨드 방식 채택.
+**결정**: `dooray setup` 커맨드로 대화형 초기 설정 마법사 제공.
+`postinstall` 훅 대신 명시적 커맨드 방식 채택.
 
 **이유**:
 
@@ -248,7 +251,8 @@
 
 **라이브러리**: `@inquirer/prompts` — 선택(select), 입력(input), 비밀번호(password), 확인(confirm) 프롬프트 지원. tsup CJS 번들 호환성 확인 필요.
 
-**안전성**: Ctrl+C 시 config 파일 미저장 (부분 저장 방지). 모든 입력을 메모리에 수집한 뒤 마지막에 한 번만 writeFile.
+**안전성**: Ctrl+C 시 config 파일 미저장 (부분 저장 방지).
+모든 입력을 메모리에 수집한 뒤 마지막에 한 번만 writeFile.
 
 **config 미설정 시 안내**: 기존 에러 메시지를 `dooray setup` 실행 유도로 변경.
 
@@ -263,7 +267,7 @@
 **이유**:
 
 - 현재 ~440줄으로 분리 임계점(~800줄+)에 미달
-- 섹션 주석으로 Common / Project / Post / Comment / Member / Workflow / Wiki / File 구분이 충분
+- 섹션 주석으로 Common, Project, Post, Comment, Member, Workflow, Wiki, File 구분이 충분
 - `DoorayApiHeader`, `DoorayApiResponse<T>` 등 Common 타입을 거의 모든 도메인이 참조 → barrel export 관리 오버헤드 대비 실익 부족
 - `client.ts`에서 한 파일로 모든 타입을 import하는 현재 구조가 간결
 
@@ -275,9 +279,14 @@
 
 ## ADR-018: `dooray setup` 에서 Claude Code 스킬 설치
 
-**결정**: setup 마지막 단계에서 스킬 설치 여부를 물어보고 심볼릭 링크로 설치 (`~/.claude/skills/dooray-cli` → 패키지 내부 `skills/dooray-cli/`). idempotent 재실행 가능. npx 임시 경로 감지 시 경고 + skip (global install 전용).
+**결정**: setup 마지막 단계에서 스킬 설치 여부를 물어보고 심볼릭 링크로 설치 (`~/.claude/skills/dooray-cli` → 패키지 내부 `skills/dooray-cli/`).
+idempotent 재실행 가능.
+npx 임시 경로 감지 시 경고 + skip (global install 전용).
 
-**맥락**: 별도 `dooray install skills` 커맨드보다 setup 일원화가 UX 간결. 심볼릭 링크는 `npm update -g` 시 스킬도 자동 최신화 (유지보수 비용 0). `~/.claude/skills/` 의 다른 스킬 (gstack 등) 도 동일 패턴이라 일관성. 스킬 포맷은 Claude Code SKILL.md frontmatter 규격 — 타 에이전트 지원은 요청 시 확장.
+**맥락**: 별도 `dooray install skills` 커맨드보다 setup 일원화가 UX 간결.
+심볼릭 링크는 `npm update -g` 시 스킬도 자동 최신화 (유지보수 비용 0).
+`~/.claude/skills/` 의 다른 스킬 (gstack 등) 도 동일 패턴이라 일관성.
+스킬 포맷은 Claude Code SKILL.md frontmatter 규격 — 타 에이전트 지원은 요청 시 확장.
 
 **대안 기각**:
 - `postinstall` 훅 — npm 정책상 interactive postinstall 비권장, CI/Docker 비-TTY 실패 (ADR-016 과 동일 사유)
@@ -291,18 +300,28 @@
 
 ## ADR-019: `post create` 메타데이터 옵션 (`--tag`/`--parent`/`--workflow`/`--milestone`)
 
-**결정**: 4개 옵션 모두 이름 lookup. 클라이언트가 `tagGroup.mandatory` / `selectOne` 사전 검증. `--workflow` 만 create 후 `setPostWorkflow` 후속 호출 — 실패 시 `stderr` warn + `exit 0` (post 는 이미 생성됨).
+**결정**: 4개 옵션 모두 이름 lookup.
+클라이언트가 `tagGroup.mandatory` / `selectOne` 사전 검증.
+`--workflow` 만 create 후 `setPostWorkflow` 후속 호출 — 실패 시 `stderr` warn + `exit 0` (post 는 이미 생성됨).
 
-**맥락**: mandatory-tag 정책 프로젝트는 CLI 로 단 한 건도 생성 불가 (Issue #18). API 의 `USER_INVALID_TAG_MANDATORY_PREFIX` 에러는 어느 그룹이 누락인지 안내 안 함 → 친절한 메시지 직접 생성 필요. 멤버만 부분일치였던 resolver 비대칭도 해소 (전체 정확→부분→모호+후보).
+**맥락**: mandatory-tag 정책 프로젝트는 CLI 로 단 한 건도 생성 불가 (Issue #18).
+API 의 `USER_INVALID_TAG_MANDATORY_PREFIX` 에러는 어느 그룹이 누락인지 안내 안 함 → 친절한 메시지 직접 생성 필요.
+멤버만 부분일치였던 resolver 비대칭도 해소 — 아래 순서로 통일:
+- 정확 일치
+- 부분 일치
+- 모호 + 후보 출력
 
 **대안 기각**:
 - `--workflow` 실패 시 exit non-zero — post 가 이미 발급된 상태에서 전체 실패는 사용자가 두 번 만드는 혼란
 - ID 직접 입력 허용 — `--workflow xxx-uuid` 같은 폴백은 거의 사용 안 되는 흐름, 복잡도만 ↑
 - `--tag` 에 자릿수 휴리스틱 — ID 형식 변경 시 깨짐. `--parent` 만 `code/number` ↔ raw postId 분기
 
-세부 시그니처·동작은 `src/commands/post/create.ts` + `src/resolvers/{tag,milestone,postRef}.ts` 참조. 캐시 디렉터리는 `data-schema.md`.
+세부 시그니처·동작은 `src/commands/post/create.ts` + `src/resolvers/{tag,milestone,postRef}.ts` 참조.
+캐시 디렉터리는 `data-schema.md`.
 
-**확장 (2026-05-18, Issue #66)**: `post edit` 도 동일 정책 적용 — `--tag` / `--tag-clear` / `--tag-remove` 옵션 + mandatory 검증 동일 호출. `--title`/`--body` 없이 단독 호출 허용 (body 자동 재전송). 머지 로직은 `src/resolvers/post-tags.ts` 의 `mergeTagIds` pure helper (`post-users.ts` 패턴 답습).
+**확장 (2026-05-18, Issue #66)**: `post edit` 도 동일 정책 적용 — `--tag` / `--tag-clear` / `--tag-remove` 옵션 + mandatory 검증 동일 호출.
+`--title`/`--body` 없이 단독 호출 허용 (body 자동 재전송).
+머지 로직은 `src/resolvers/post-tags.ts` 의 `mergeTagIds` pure helper — `post-users.ts` 패턴 답습.
 
 ---
 
@@ -310,9 +329,16 @@
 
 ## ADR-020: post 명령 input 통합 (`--id`/URL/positional) + 첫 테스트 인프라 (vitest)
 
-**결정**: post 하위 명령에 3 가지 입력 모드 (기존 `<project> <post-number>` + `--id <postId>` + `--url <url>` + 첫 positional 이 Dooray URL 이면 자동) 도입. sub-id (`<comment-id>`, `<file-id>`) 는 옵션화 (positional 호환). 분기는 `resolvePostInput` 단일 헬퍼. 동시 사용은 명시적 에러. 첫 테스트 인프라로 vitest 도입.
+**결정**: post 하위 명령에 3 가지 입력 모드 (기존 `<project> <post-number>` + `--id <postId>` + `--url <url>` + 첫 positional 이 Dooray URL 이면 자동) 도입.
+sub-id (`<comment-id>`, `<file-id>`) 는 옵션화 (positional 호환).
+분기는 `resolvePostInput` 단일 헬퍼.
+동시 사용은 명시적 에러.
+첫 테스트 인프라로 vitest 도입.
 
-**맥락**: Dooray URL 은 postId 만 포함 (`/task/to/{postId}`) — 동료가 URL 만 공유하면 project 코드 모르는 사용자가 CLI 사용 불가 (Issue #16). AI 에이전트도 사용자 메시지에서 URL 을 그대로 첫 인자로 전달하면 라우팅 부담 0. standalone API `GET /project/v1/posts/{postId}` 응답에 `project.{id,code}` 포함 → 한 lookup 으로 기존 코드 경로 재사용. 분기 규칙이 7 가지라 단위 테스트로 회귀 방지 필수.
+**맥락**: Dooray URL 은 postId 만 포함 (`/task/to/{postId}`) — 동료가 URL 만 공유하면 project 코드 모르는 사용자가 CLI 사용 불가 (Issue #16).
+AI 에이전트도 사용자 메시지에서 URL 을 그대로 첫 인자로 전달하면 라우팅 부담 0.
+standalone API `GET /project/v1/posts/{postId}` 응답에 `project.{id,code}` 포함 → 한 lookup 으로 기존 코드 경로 재사용.
+분기 규칙이 7 가지라 단위 테스트로 회귀 방지 필수.
 
 **대안 기각**:
 - positional 단일 `<ref>` 통합 (`<project>/337` | postId | URL) — 기존 두 인자 breaking, 영향 범위 ↑
@@ -320,7 +346,8 @@
 - sub-id 를 인자 개수로 분기 — `comment edit <project> cmt-abc` 같은 사용자 실수에 모호한 에러
 - `node:test` 빌트인 — mocking·watch·확장성에서 vitest 우위
 
-분기 규칙·URL 정규식·테스트 케이스는 `src/resolvers/post-input.ts` + `src/utils/dooray-url.ts` 참조. 후속 (wiki input 통합, CI 통합) 은 별도 task.
+분기 규칙·URL 정규식·테스트 케이스는 `src/resolvers/post-input.ts` + `src/utils/dooray-url.ts` 참조.
+후속 (wiki input 통합, CI 통합) 은 별도 task.
 
 ---
 
@@ -328,9 +355,13 @@
 
 ## ADR-021: `member` 명령 + comment list Creator 이름 자동 채우기
 
-**결정**: `dooray member get/list` 서브커맨드 신설. `post comment list` 의 table 출력만 Creator 컬럼을 project 멤버 캐시로 enrich, `--json` 은 raw 유지. 기존 project 단위 캐시 (`members/{projectId}.json`) 만 사용 — organization-wide reverse lookup 미도입.
+**결정**: `dooray member get/list` 서브커맨드 신설.
+`post comment list` 의 table 출력만 Creator 컬럼을 project 멤버 캐시로 enrich — `--json` 은 raw 유지.
+기존 project 단위 캐시 (`members/{projectId}.json`) 만 사용 — organization-wide reverse lookup 미도입.
 
-**맥락**: 댓글 응답에 `organizationMemberId` 만 있고 표시명 없어 자동화 흐름이 끊김 (Issue #17). table 만 enrich 한 이유는 `--json` 의 외부 도구 호환성 (스키마 변경 = breaking). project 단위 캐시 유지는 enrich 사용 시점에 항상 projectId 가 동반됨.
+**맥락**: 댓글 응답에 `organizationMemberId` 만 있고 표시명 없어 자동화 흐름이 끊김 (Issue #17).
+`--json` 을 raw 로 유지한 이유는 외부 도구 호환성 — 스키마 변경은 breaking change.
+project 단위 캐시 유지는 enrich 사용 시점에 항상 projectId 가 동반됨.
 
 **대안 기각**:
 - organization 단위 캐시 — 사용 패턴 (comment list enrich + member get 단건) 에서 이득 부족 + invalidation 부담
@@ -343,9 +374,15 @@
 
 ## ADR-022: `dooray feedback` 명령 — GitHub 호출은 `gh` CLI 에 위임
 
-**결정**: GitHub issue 생성은 `gh` CLI 위임 (`execFile('gh', ['issue', 'create', ...])`). 본문 자동 메타는 환경 정보만 (`process.version` / `platform` / `arch` / `package.json` 버전) — config 객체에 접근 자체 안 함 (`apiKey` / IMAP 비밀번호 / `baseUrl` 모두 노출 0). 대상 repo 하드코딩 (`jon890/dooray-cli`).
+**결정**: GitHub issue 생성은 `gh` CLI 위임 (`execFile('gh', ['issue', 'create', ...])`).
+본문 자동 메타는 환경 정보만 (`process.version`, `platform`, `arch`, `package.json` 버전) — config 객체에 접근 안 함.
+`apiKey`, IMAP 비밀번호, `baseUrl` 모두 노출 0.
+대상 repo 하드코딩 (`jon890/dooray-cli`).
 
-**맥락**: 피드백 루프 마찰 제거 (Issue #19) — "에러 만남 → 한 줄로 issue 등록 → 작업 복귀". gh CLI 위임은 토큰 관리·OAuth 앱 등록 부담을 0 으로. dooray-cli 의 보안 표면도 늘지 않음. baseUrl 노출 시 사내 endpoint 사용자가 OSS public repo 로 보낼 때 회사 정보 누출 위험.
+**맥락**: 피드백 루프 마찰 제거 (Issue #19) — "에러 만남 → 한 줄로 issue 등록 → 작업 복귀".
+gh CLI 위임은 토큰 관리·OAuth 앱 등록 부담을 0 으로.
+dooray-cli 의 보안 표면도 늘지 않음.
+baseUrl 노출 시 사내 endpoint 사용자가 OSS public repo 로 보낼 때 회사 정보 누출 위험.
 
 **대안 기각**:
 - PAT 를 config.json 에 저장 — 토큰 만료/회수/스코프 관리 부담, UX 약함
@@ -367,9 +404,13 @@
 3. **최소 세트**: argv (sanitized) + exitCode + errorMessage + timestamp. `cwd`/`env` 제외
 4. **argv 패턴 마스킹**: `--api-key=*` / `--token=*` / `--password=*` / `Authorization: Bearer *`
 
-`feedback` 자체는 기록 안 함 (재귀 방지). 단일 파일 덮어쓰기 (use case = 직전 1건).
+`feedback` 자체는 기록 안 함 (재귀 방지).
+단일 파일 덮어쓰기 — use case 는 직전 1건만.
 
-**맥락**: 모든 명령 종료 시점 디스크 I/O 는 전역 부수 효과 — dooray-cli 는 자동화 스크립트에서 자주 호출되어 의도 없는 매번 파일 쓰기는 부담. 성공 명령 기록은 효용 ↓ 부수효과 ↑. cwd 가 사내 경로일 가능성 (`/Users/.../<project>/...`) — CLAUDE.md PII gate 와 일관. 사용자가 `--header "Authorization: ..."` 추가 가능성으로 마스킹은 안전망.
+**맥락**: 모든 명령 종료 시점 디스크 I/O 는 전역 부수 효과 — dooray-cli 는 자동화 스크립트에서 자주 호출되어 의도 없는 매번 파일 쓰기는 부담.
+성공 명령 기록은 효용 ↓ 부수효과 ↑.
+cwd 가 사내 경로일 가능성 (`/Users/.../<project>/...`) — CLAUDE.md PII 점검과 일관.
+사용자가 `--header "Authorization: ..."` 추가 가능성으로 마스킹은 안전망.
 
 **대안 기각**:
 - 기본 on + opt-out — 부수 효과가 사용자 인지 없이 작동 (privacy 우려)
@@ -385,9 +426,12 @@
 
 ## ADR-024: `dooray post comment file *` — post-level files API + 댓글 PUT 합성
 
-**결정**: `comment file {list,upload,download,delete}` 4 명령을 post-level files API (`/posts/{postId}/files`) + 댓글 본문 PUT (`/logs/{logId}`) 합성으로 구현. 사용자 멘탈 모델 = "댓글 첨부", 실제 데이터 모델 = post-level files + 댓글 본문 markdown reference (`![filename](/files/<fileId>)`). `delete` 는 항상 markdown 제거 + 파일 삭제 단일 동작 (옵션 분기 없음).
+**결정**: `comment file {list,upload,download,delete}` 4 명령을 post-level files API (`/posts/{postId}/files`) + 댓글 본문 PUT (`/logs/{logId}`) 합성으로 구현.
+사용자 멘탈 모델은 "댓글 첨부"이지만 실제 데이터 모델은 post-level files + 댓글 본문 markdown reference (`![filename](/files/<fileId>)`) 구조다.
+`delete` 는 항상 markdown 제거 + 파일 삭제 단일 동작 (옵션 분기 없음).
 
-**맥락**: Dooray 공식 API + 실 호출 검증 결과 댓글 전용 attachment endpoint **부재** (Issue #34) — 댓글 단건 GET 응답에 `files: PostFileDetail[]` embedded 만 존재. 인라인 이미지 자동화 (스킬이 댓글에 이미지 삽입) 가 빈번해 댓글 전용 UX 가 필요.
+**맥락**: Dooray 공식 API + 실 호출 검증 결과 댓글 전용 attachment endpoint **부재** (Issue #34) — 댓글 단건 GET 응답에 `files: PostFileDetail[]` embedded 만 존재.
+인라인 이미지 자동화가 빈번해 댓글 전용 UX 가 필요 — 스킬이 댓글에 이미지를 삽입하는 패턴이 대표적.
 
 **트레이드오프 (수용)**:
 - **Atomic 부재**: 2-step (`upload`, `delete`) 중 1 step 만 성공 가능 — 부분 성공 시 stderr 안내 + non-zero exit
@@ -407,13 +451,23 @@
 
 ## ADR-025: `post edit/create` cc/to 에 member-group 추가 (full payload PUT + `type: "group"`)
 
-**결정**: `post edit` 에 `--cc <name>` / `--cc-group <code>` / `--cc-clear` (+ `--to` / `--to-group` / `--to-clear`) 6 옵션 추가. `post create` 에 `--cc-group` / `--to-group` 2 옵션 추가. 모두 기존 `updatePost` / `createPost` 의 **full payload PUT** 흐름 (`users: { to, cc }`) 으로 처리. 그룹은 `{ type: "group", group: { projectMemberGroupId } }` 객체로 전송.
+**결정**: `post edit` 에 `--cc <name>`, `--cc-group <code>`, `--cc-clear`, `--to <name>`, `--to-group <code>`, `--to-clear` 6 옵션 추가.
+`post create` 에 `--cc-group`, `--to-group` 2 옵션 추가.
+모두 기존 `updatePost` / `createPost` 의 **full payload PUT** 흐름 (`users: { to, cc }`) 으로 처리.
+그룹은 `{ type: "group", group: { projectMemberGroupId } }` 객체로 전송.
 
-**맥락**: Issue #54 — 자동화 스크립트가 신규 업무 생성 후 후속으로 특정 그룹을 참조에 추가하려는 워크플로우 (audit 리포트 → 신규 업무 → 그룹 cc 첨부). Dooray API 는 cc-only patch 단독 엔드포인트 미제공. PUT post 의 full payload 만 cc/to 갱신 가능. 또한 PostUser type 의 그룹 분기는 `type: "memberGroup"` 이 아니라 `type: "group"` + `Group.projectMemberGroupId` (이슈 본문의 시도가 실패한 원인).
+**맥락**: Issue #54 — 자동화 스크립트의 워크플로우:
+- audit 리포트 생성
+- 신규 업무 생성
+- 그룹 cc 첨부
+Dooray API 는 cc-only patch 단독 엔드포인트 미제공.
+PUT post 의 full payload 만 cc/to 갱신 가능.
+PostUser type 의 그룹 분기는 `type: "memberGroup"` 이 아니라 `type: "group"` + `Group.projectMemberGroupId` — 이슈 본문 시도가 실패한 원인.
 
 **대안 기각**:
 - cc-only patch endpoint 역공학 — 부재 확인 (`POST .../set-cc`, `.../cc`, `.../to-and-cc` 모두 null 응답)
-- `{ "type": "memberGroup", "memberGroup": { "memberGroupId": "..." } }` 형식 (이슈 본문 시도) — `Failed to read HTTP message`. 실제 API contract 는 `type: "group"` + `Group.projectMemberGroupId` (api/types.ts:122-125)
+- `{ "type": "memberGroup", "memberGroup": { "memberGroupId": "..." } }` 형식 (이슈 본문 시도) — `Failed to read HTTP message`.
+  실제 API contract 는 `type: "group"` + `Group.projectMemberGroupId` (api/types.ts:122-125)
 - subcommand 분리 (`post participants {add,set,remove}`) — `post edit` 의 다른 옵션 (title/body/mention/link-task) 과 조합 불가, 한 번 PUT 으로 끝낼 수 없어 race 위험
 - replace 기본 정책 — 사용자가 매번 전체 멤버/그룹 알아야 함, 자동화 친화성 떨어짐. append + `--cc-clear` / `--to-clear` 채택
 
@@ -425,13 +479,18 @@
 
 ## ADR-026: Wiki API 호출 패턴 함정 (parentPageId 필수 + subject/title 네이밍 + 페이지 수정 3종 endpoint)
 
-**결정**: Wiki API 호출 시 다음 3개 함정을 클라이언트 레이어에서 흡수 — `parentPageId` 자동 폴백 (`resolveWikiHomePageId`) / `--title` → `subject` 매핑 / 수정 동작별 endpoint 분기 (`/pages/{id}` / `/title` / `/content`).
+**결정**: Wiki API 호출 시 다음 3개 함정을 클라이언트 레이어에서 흡수:
+- `parentPageId` 자동 폴백 (`resolveWikiHomePageId`)
+- `--title` → `subject` 매핑
+- 수정 동작별 endpoint 분기 (`/pages/{id}`, `/title`, `/content`)
 
 **맥락**: Dooray Wiki API 의 다음 동작은 공식 문서에 없거나 직관에 반함:
 
-- **`parentPageId` 사실상 필수** — `POST /wiki/v1/wikis/{wikiId}/pages` 의 `parentPageId` 가 공식적으로는 optional 처럼 보이나 미지정/빈 문자열 시 400. 사용자 UX 보존 위해 CLI 가 `home.pageId` 로 자동 폴백 (Issue #5)
+- **`parentPageId` 사실상 필수** — `POST /wiki/v1/wikis/{wikiId}/pages` 의 `parentPageId` 가 공식적으로는 optional 처럼 보이나 미지정/빈 문자열 시 400.
+  사용자 UX 보존 위해 CLI 가 `home.pageId` 로 자동 폴백 (Issue #5)
 - **`subject` vs `title` 네이밍 불일치** — API body 필드는 `subject` (업무·위키 공통). 사용자 친화 위해 CLI 는 `--title` 플래그로 노출 + 매핑
-- **페이지 수정 endpoint 3종 분리** — Dooray 가 제목+본문 동시 (`/pages/{id}`) / 제목만 (`/title`) / 본문만 (`/content`) 을 별도 endpoint 로 제공. CLI `wiki page edit` 가 플래그 조합으로 라우팅 분기 (Issue #4)
+- **페이지 수정 endpoint 3종 분리** — Dooray 가 제목+본문 동시, 제목만, 본문만을 별도 endpoint 로 제공.
+  CLI `wiki page edit` 가 플래그 조합으로 라우팅 분기 (Issue #4)
 
 **대안 기각**:
 - `parentPageId` 미지정 허용 (서버 에러 그대로 노출) — UX 회귀, 사용자가 wiki home 개념 몰라도 동작해야 함
@@ -446,20 +505,35 @@
 | `PUT .../pages/{pageId}/title` | 제목만 | `--title X` 단독 |
 | `PUT .../pages/{pageId}/content` | 본문만 | `--body` 또는 `--body-file` 단독 |
 
-**추가 함정 (2026-05-18, Issue #65)**: `GET /project/v1/projects/{id}/member-groups` 응답 스키마는 `code: string` (required) 이지만 실제로 일부 그룹에서 `code` 가 누락된 채 반환됨 — `match.ts` 의 `i.name.includes()` 가 undefined 추락. 같은 부류의 스키마 ↔ 실제 응답 mismatch. 흡수 위치: `resolveMemberGroup` adapter 에서 `code` 가 falsy 인 그룹 사전 필터 + `MemberGroup.code` 타입을 optional 로 완화 + `match.ts` 에 `i.name?.includes` 가드.
+**추가 함정 (2026-05-18, Issue #65)**: `GET /project/v1/projects/{id}/member-groups` 응답의 `code: string` 필드가 required 로 정의됐지만
+실제로 일부 그룹에서 `code` 가 누락된 채 반환됨 — 같은 부류의 스키마 ↔ 실제 응답 mismatch.
+`match.ts` 의 `i.name.includes()` 가 undefined 추락.
+흡수 위치:
+- `resolveMemberGroup` adapter 에서 `code` 가 falsy 인 그룹 사전 필터
+- `MemberGroup.code` 타입을 optional 로 완화
+- `match.ts` 에 `i.name?.includes` 가드
+
+---
 
 <a id="adr-027"></a>
 
 ## ADR-027: `post create --template` 정책 — interpolation 기본 true + 사용자 옵션 우선 + `--field` 제외
 
-**결정**: `dooray post create --template <name|id>` 사용 시 ① `GET .../templates/{id}?interpolation=true` 로 시스템 매크로 (`${year}` 등) 치환된 본문/users/tags 를 받음, ② 사용자가 `--title`/`--body`/`--tag`/`--to`/`--cc` 명시 입력하면 그 값이 템플릿 값을 override, ③ 사용자 정의 변수 (`--field key=value`) 는 본 task scope 제외 (별도 후속).
+**결정**: `dooray post create --template <name|id>` 사용 정책:
+- `GET .../templates/{id}?interpolation=true` 로 시스템 매크로 (`${year}` 등) 치환된 본문/users/tags 를 받음
+- 사용자가 `--title`/`--body`/`--tag`/`--to`/`--cc` 명시 입력하면 그 값이 템플릿 값을 override
+- 사용자 정의 변수 (`--field key=value`) 는 본 task scope 제외 (별도 후속)
 
-**맥락**: Issue #59 — 자동화 스크립트가 정형 task (릴리스 플랜, 요청서 등) 를 매번 기존 본문 fetch + 변수 치환 수동 우회. Dooray API 가 `GET /templates` 와 `interpolation` 파라미터를 노출 (cmux-browser spike 2026-05-11 확인).
+**맥락**: Issue #59 — 자동화 스크립트가 정형 task (릴리스 플랜, 요청서 등) 를 매번 기존 본문 fetch + 변수 치환 수동 우회.
+Dooray API 가 `GET /templates` 와 `interpolation` 파라미터를 노출 (cmux-browser 사전 조사 2026-05-11 확인).
 
 **대안 기각**:
 - `interpolation=false` 기본 — 자동화 파이프라인이 `${year}` 같은 매크로를 매번 수동 치환해야 해서 가치 반감. UX 우선
 - 템플릿 우선 (override 불가) — 사용자가 `--title` 까지 강제 변경 못 하면 "대부분 템플릿, 일부만 다르게" 자동화 패턴 불가
 - 필드별 union (tags/users append, title/body override) — 정책 복잡. MVP 단순화 — 일관되게 사용자 옵션 우선
-- `--field key=value` client-side string replace 포함 — 미정의 변수 / escape / type 처리 복잡. 본 task 는 API 가 직접 제공하는 시스템 매크로만 사용, 사용자 정의 변수는 별도 task 로 분리
+- `--field key=value` client-side string replace 포함 — 미정의 변수 / escape / type 처리 복잡.
+  본 task 는 API 가 직접 제공하는 시스템 매크로만 사용, 사용자 정의 변수는 별도 task 로 분리
 
-**적용 범위**: `post create --template` 만. `post edit --template` 은 별도 (의도 불명확 — 기존 본문 덮어쓰기? merge?). templates 캐시는 ADR-004/010 패턴 답습 (TTL 24h, `~/.dooray/cache/templates/{projectId}.json`).
+**적용 범위**: `post create --template` 만.
+`post edit --template` 은 별도 — 기존 본문 덮어쓰기인지 merge 인지 의도 불명확.
+templates 캐시는 ADR-004/010 패턴 답습 (TTL 24h, `~/.dooray/cache/templates/{projectId}.json`).

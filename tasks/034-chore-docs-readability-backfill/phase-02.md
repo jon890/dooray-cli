@@ -10,6 +10,9 @@ phase-01 의 6가지 패턴을 planning docs 4개에 적용한다. ADR.md 와 �
 - `docs/flow.md` — 사용자 흐름 시나리오
 - `docs/data-schema.md` — 캐시 디렉터리 + 스키마
 
+**범위 외 (명시적 제외)**:
+- `docs/guide-mvp-with-ai-agent.md` — v1 구현 공유용 가이드 문서. 본 task scope 외 (사용자 결정, plan034 REVISE 사이클).
+
 ## 변경 파일
 
 기대 결과 (총 4 파일):

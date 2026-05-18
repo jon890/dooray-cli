@@ -104,7 +104,9 @@ cc: []
 ```
 
 3. `$EDITOR` 실행 → 저장·종료
-4. frontmatter 파싱 → member resolver → API PUT 호출
+4. frontmatter 파싱 후:
+   - member resolver 실행
+   - API PUT 호출
 
 `$EDITOR` 미설정 시:
 
@@ -151,7 +153,8 @@ post `--id`/`--url` 모드도 동일 지원 — `dooray post comment list --id <
 
 ## 댓글 첨부파일 흐름 (ADR-024)
 
-`post comment file *` 4 명령은 사용자 멘탈 모델은 "댓글 첨부" 지만 내부적으론 post-level files API + 댓글 본문 PUT 으로 합성 (Dooray 가 댓글 전용 endpoint 미지원).
+`post comment file *` 4 명령의 사용자 멘탈 모델은 "댓글 첨부"다.
+내부적으론 post-level files API + 댓글 본문 PUT 합성으로 구현 (Dooray 가 댓글 전용 endpoint 미지원).
 
 ```
 dooray post comment file list my-project 42 <comment-id>            # 댓글 첨부 목록
@@ -164,7 +167,8 @@ dooray post comment file delete my-project 42 <comment-id> <file-id>    # 삭제
 
 ## 참조자(cc) / 담당자(to) 변경 흐름 (ADR-025)
 
-기존 업무의 참조자·담당자에 멤버 또는 그룹 추가/제거. 자동화 시나리오: 신규 업무 생성 후 후속으로 특정 그룹을 참조에 첨부.
+기존 업무의 참조자·담당자에 멤버 또는 그룹 추가/제거.
+자동화 시나리오: 신규 업무 생성 후 후속으로 특정 그룹을 참조에 첨부.
 
 ```
 # 멤버/그룹 추가 (append + dedupe)
@@ -204,7 +208,9 @@ dooray post create my-project --template "릴리스 플랜" \
   --tag "p0"                       # 템플릿 tags 를 덮음
 ```
 
-`interpolation=true` 가 기본 — Dooray 가 `${year}`, `${month}` 같은 시스템 매크로를 응답에서 자동 치환. 사용자 정의 변수 (`--field key=value`) 는 본 release scope 외 (별도 후속). 사용자 옵션이 명시 입력되면 템플릿 값을 override.
+`interpolation=true` 가 기본 — Dooray 가 `${year}`, `${month}` 같은 시스템 매크로를 응답에서 자동 치환.
+사용자 정의 변수 (`--field key=value`) 는 본 release scope 외 (별도 후속).
+사용자 옵션이 명시 입력되면 템플릿 값을 override.
 
 ## 상위 업무 변경 흐름 (Issue #60)
 
@@ -216,7 +222,8 @@ dooray post edit my-project 42 --parent my-project/40    # project/number
 dooray post edit --id <postId> --parent <parentPostId>   # 직접 postId
 ```
 
-내부적으로 `client.updatePost` (subject/body/users) → `client.setPostParent` (별도 `POST .../set-parent-post` endpoint) 순차 호출. 둘 다 무관 endpoint 라 atomic 보장 없음 — partial 실패 시 stderr 안내 + non-zero exit.
+내부적으로 `client.updatePost` (subject/body/users) → `client.setPostParent` (별도 `POST .../set-parent-post` endpoint) 순차 호출.
+둘 다 무관 endpoint 라 atomic 보장 없음 — partial 실패 시 stderr 안내 + non-zero exit.
 
 **한계**: Dooray API 가 `unset-parent-post` 미제공 → CLI 로 parent 해제 (top-level 화) 불가. 웹 UI 에서 수동 처리.
 
@@ -277,7 +284,8 @@ dooray feedback --title "버그" --body-file bug.md --label bug
 dooray feedback --last                           # 직전 명령 sanitized argv + 에러 자동 첨부 (opt-in)
 ```
 
-`--last` 사전 활성화: `dooray config set track-last-run true`. 시크릿 패턴 (`--api-key=*`, `Authorization: Bearer *` 등) 자동 마스킹.
+`--last` 사전 활성화: `dooray config set track-last-run true`.
+시크릿 패턴 (`--api-key=*`, `Authorization: Bearer *` 등) 자동 마스킹.
 
 ## 파이프라인 활용
 
@@ -299,7 +307,8 @@ dooray post file upload my-project 42 ./report.pdf     # 업로드
 dooray post file delete my-project 42 <file-id>        # 삭제
 ```
 
-업로드·다운로드 시 Dooray API는 307 리다이렉트로 파일 서버 URL을 반환한다. CLI가 자동 처리하므로 사용자는 신경 쓸 필요 없다.
+업로드·다운로드 시 Dooray API는 307 리다이렉트로 파일 서버 URL을 반환한다.
+CLI가 자동 처리하므로 사용자는 신경 쓸 필요 없다.
 
 ## 메일 흐름
 
