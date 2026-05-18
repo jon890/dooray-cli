@@ -189,7 +189,7 @@ critic 평가 관점:
 4. Phase 크기가 5개 이하인가?
 5. 성공 기준이 충분한가?
 6. **실제 코드와 일치하는가?** (파일 존재, 함수명, 줄 수 검증)
-7. **`common-pitfalls.md`의 모든 패턴이 사전 소진되었는가?**
+7. **`common-pitfalls.md`의 모든 패턴이 사전 해소되었는가?**
 
 판정:
 - **APPROVE** → 6단계로
@@ -243,7 +243,7 @@ executor 완료 후 team-lead가 **code-reviewer 팀원에게 SendMessage로 검
 
 **code-reviewer 스폰 시점**: executor와 동시에 `run_in_background: true`로 스폰하되, executor 완료 후 SendMessage로 검사 시작 지시.
 
-**사전 소진 게이트 (필수)**: code-reviewer 검사 시작 전에 `.claude/skills/_shared/code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인. 적용 안 됐으면 그 자리에서 FIX_NEEDED 회신 (executor 재투입). 본 docs 가 회피 패턴의 단일 소스 — 13 항목과 별도로 grep 게이트.
+**사전 해소 게이트 (필수)**: code-reviewer 검사 시작 전에 `.claude/skills/_shared/code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인. 적용 안 됐으면 그 자리에서 FIX_NEEDED 회신 (executor 재투입). 본 docs 가 회피 패턴의 단일 소스 — 13 항목과 별도로 grep 게이트.
 
 **code-reviewer에게 전달할 검사 항목:**
 

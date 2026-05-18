@@ -26,7 +26,7 @@ disallowedTools: Write, Edit
 
 ## 1. dooray-cli 5 핵심 docs
 
-| 문서 | 단일 진실원 |
+| 문서 | 단일 소스 |
 |---|---|
 | `docs/prd.md` | 제품 목적·MVP 범위·우선순위 |
 | `docs/flow.md` | 사용자 흐름·명령 사용 패턴 |
@@ -112,7 +112,7 @@ grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u
 
 ## B. 과대화 (Bloat) — ADR 이 기능 명세서로 변질
 
-ADR 본문 줄 수 30 줄 이상이면 변질 의심. 검증:
+ADR 본문 줄 수 30 줄 이상이면 변질 우려. 검증:
 
 ```bash
 # 사전: 구분선 누락 검증 (awk 끝 매칭이 다음 ADR 까지 흘러가지 않도록)
@@ -122,7 +122,7 @@ ADR=$(grep -cE "^<a id=\"adr-" docs/adr.md)
 
 for n in $(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE '[0-9]+'); do
   size=$(awk "/<a id=\"adr-$n\"/,/^---$/" docs/adr.md | wc -l | tr -d ' ')
-  [ "$size" -gt 30 ] && echo "ADR-$n: $size lines (변질 의심)"
+  [ "$size" -gt 30 ] && echo "ADR-$n: $size lines (변질 우려)"
 done
 ```
 

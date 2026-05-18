@@ -123,9 +123,9 @@ ADR이 "왜"를 담고 있는가. "결정 / 맥락 / 대안 기각" 구조가 �
 
 ## 실행 절차
 
-### 0. 검증 위임 (필수 — 단일 진실원)
+### 0. 검증 위임 (필수 — 단일 소스)
 
-docs-check 의 6축 검증은 **반드시** custom agent `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`) 에 위임한다. agent 본문이 검증 항목·자동 grep 명령·도메인 지식의 단일 진실원 — main session 이 직접 6축 grep 을 따라 적는 순간 정의 두 곳 동기화 부담 발생 (거울 구조 원칙 위반).
+docs-check 의 6축 검증은 **반드시** custom agent `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`) 에 위임한다. agent 본문이 검증 항목·자동 grep 명령·도메인 지식의 단일 소스 — main session 이 직접 6축 grep 을 따라 적는 순간 정의 두 곳 동기화 부담 발생 (거울 구조 원칙 위반).
 
 ```
 Agent({

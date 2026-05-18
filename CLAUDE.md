@@ -8,7 +8,7 @@ NHN Dooray REST API CLI 도구. TypeScript + Commander.js 기반.
 
 Dooray 공식 API 문서: <https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419>
 
-위 URL 은 인증 필요한 share 페이지 — `WebFetch` 로 직접 접근 안 됨. **`cmux-browser` skill** 로 열어서 본문 / endpoint / request·response 스키마 / 동작 특이점 확인 후 코드 작성. 본 repo 는 공식 문서 사본을 두지 않는다 (stale 위험 회피) — 공식이 단일 진실원.
+위 URL 은 인증 필요한 share 페이지 — `WebFetch` 로 직접 접근 안 됨. **`cmux-browser` skill** 로 열어서 본문 / endpoint / request·response 스키마 / 동작 특이점 확인 후 코드 작성. 본 repo 는 공식 문서 사본을 두지 않는다 (stale 위험 회피) — 공식이 단일 소스.
 
 문서에 명시되지 않거나 직관에 반하는 동작은 ADR 로 보존 (예: ADR-015 파일 307, ADR-025 post cc/to full PUT, ADR-026 wiki 함정 묶음). `CLAUDE.md` "상황별 ADR 필수 참조" 표에서 영역별로 빠르게 찾는다.
 
@@ -148,6 +148,9 @@ docs / skill / task 파일을 한국어로 작성할 때 **한국인이 자연�
 | 트리아지 (triage)     | **분류** / **우선순위 분류**                                                  |
 | 베이스라인 (baseline) | **기준선** / **기준값**                                                       |
 | 스파이크 (spike)      | **사전 조사** / **API 검증**                                                  |
+| 사전 소진             | **사전 해소** ("소진" 은 자원 고갈 비유 — 직관 어려움)                        |
+| 단일 진실원           | **단일 소스** ("진실원" 은 truth-source 직역, 한국어 자연어 아님)             |
+| 변질 의심             | **변질 우려** ("의심" 보다 "우려" 가 더 자연)                                 |
 
 이 정책은 **새 작성물에 우선 적용**한다. 기존 문서에서 위 표현이 발견되면:
 

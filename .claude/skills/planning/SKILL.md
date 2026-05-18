@@ -12,7 +12,7 @@ description: 새 기능/변경사항 구현 전 8단계 설계 워크플로우. 
 - **속도와 안정성의 트레이드오프**: 빠르게 MVP 를 출시하되 안정적인 서비스를 만든다
 - **모호함 제로**: 각 단계에서 조금이라도 모호하면 반드시 사용자와 논의.
   넘어가지 않는다
-- **review 반복 지적 사전 소진**: task 파일 작성 시 두 docs 의 패턴을 모두 self-check
+- **review 반복 지적 사전 해소**: task 파일 작성 시 두 docs 의 패턴을 모두 self-check
   - `common-pitfalls.md` (critic 회피)
   - `code-review-pitfalls.md` (코드 작성 회피)
   - 매번 같은 지적이 반복되지 않도록 plan 단계에서 미리 해결
@@ -25,7 +25,7 @@ description: 새 기능/변경사항 구현 전 8단계 설계 워크플로우. 
 docs 작성 형식 원칙 (간결성·단일 소스·의사결정 의도 보존·6가지 패턴) 은
 하단 **8단계 B. 문서 작성 원칙** 단일 소스 참조.
 
-## Review 패턴 사전 소진 (필수)
+## Review 패턴 사전 해소 (필수)
 
 task 파일을 **사용자에게 제출하기 전**에 두 docs 를 모두 self-check 한다. 이 체크리스트를 거치지 않으면 `/build-with-teams` 실행 시 critic 이 REVISE / code-reviewer 가 FIX_NEEDED 를 내놓고 재평가 / 재검사 사이클이 돈다.
 
@@ -37,7 +37,7 @@ task 파일을 **사용자에게 제출하기 전**에 두 docs 를 모두 self-
 **축적 규칙**: critic / code-reviewer 가 **새로운 타입** 의 지적을 하면 build-with-teams 9단계 회고에서 해당 docs 에 패턴을 추가한다 (build-with-teams SKILL 9-7항 참조).
 두 파일은 시간이 지날수록 두꺼워지고, review 사이클에서 할 말은 줄어든다.
 
-**docs-verifier 사전 소진은 별도 회고 docs 를 두지 않는다** — 아래 "거울 구조 원칙" 섹션 참조. docs-verifier 의 반복 지적은 본 SKILL 8단계 A항 docs 영향 표에 행 추가 / 보강 형태로 흡수된다.
+**docs-verifier 사전 해소은 별도 회고 docs 를 두지 않는다** — 아래 "거울 구조 원칙" 섹션 참조. docs-verifier 의 반복 지적은 본 SKILL 8단계 A항 docs 영향 표에 행 추가 / 보강 형태로 흡수된다.
 
 ## 거울 구조 원칙 (단일 소스 + docs-verifier 흡수)
 
@@ -60,7 +60,7 @@ build-with-teams 의 docs-verifier 검증 항목과 본 SKILL 의 docs 영향 �
 
 **Why**: 이전엔 docs-verifier 가 매번 같은 항목 (`code-architecture.md` 디렉터리 트리, README 사용법, "N개 명령" 카운트) 을 반복 지적했고, 그때마다 별도 docs-sync-checklist 를 만드는 유혹이 있었다. 한 번 두 곳에 둔 정의는 항상 한쪽만 갱신되어 다른 쪽이 낡는다 (실제 사고 사례). 거울 구조로 단일 소스를 강제하면 갱신 누락 자체가 불가능해진다.
 
-도입 출처: 2026-05-07 ~ 05-08 plan024/025 회고 (사용자 제안). 자세한 도입 맥락은 사용자 로컬 project memory `feedback_planning_docs_impact_table.md` 에 동일 내용 기록 (skill 본문이 단일 진실원, memory 는 출처 기록용).
+도입 출처: 2026-05-07 ~ 05-08 plan024/025 회고 (사용자 제안). 자세한 도입 맥락은 사용자 로컬 project memory `feedback_planning_docs_impact_table.md` 에 동일 내용 기록 (skill 본문이 단일 소스, memory 는 출처 기록용).
 
 ## 실행 절차
 
