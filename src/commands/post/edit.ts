@@ -233,11 +233,9 @@ export const postEditCommand = new Command("edit")
           "⚠  --parent 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
         );
       }
-      if (hasTagChange) {
-        process.stderr.write(
-          "⚠  --tag / --tag-clear / --tag-remove 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
-        );
-      }
+      // tag 관련 옵션은 nonInteractive 분기에서만 처리됨 (hasTagChange 가
+      // nonInteractive 조건에 포함). 여기 도달은 hasTagChange=false 이므로
+      // 경고 불요 — cc/parent 처럼 nonInteractive 조건에 미포함 옵션과 다름.
       const original = serializePostFrontmatter(post, members);
       const edited = await openInEditor(original);
 
