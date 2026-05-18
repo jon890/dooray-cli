@@ -302,6 +302,8 @@
 
 세부 시그니처·동작은 `src/commands/post/create.ts` + `src/resolvers/{tag,milestone,postRef}.ts` 참조. 캐시 디렉터리는 `data-schema.md`.
 
+**확장 (2026-05-18, Issue #66)**: `post edit` 도 동일 정책 적용 — `--tag` / `--tag-clear` / `--tag-remove` 옵션 + mandatory 검증 동일 호출. `--title`/`--body` 없이 단독 호출 허용 (body 자동 재전송). 머지 로직은 `src/resolvers/post-tags.ts` 의 `mergeTagIds` pure helper (`post-users.ts` 패턴 답습).
+
 ---
 
 <a id="adr-020"></a>

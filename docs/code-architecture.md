@@ -45,6 +45,7 @@ src/
     member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선)
     post-users.ts           # parseUserSpec + mergeUsers + resolveUserAdditions — post edit/create 의 cc/to 멤버·그룹 입력 분기 + 기존 users 와 append/clear/dedupe (ADR-025)
     template.ts             # ensureTemplates + resolveTemplate — `post create --template` / `project templates` 에서 사용. 19자리 → 직접 / 그 외 → matchByName 부분일치 (ADR-027, TTL 24h)
+    post-tags.ts            # mergeTagIds pure helper — post edit 의 --tag/--tag-clear/--tag-remove 머지 (clear → remove → add → dedupe, Issue #66, ADR-019 확장)
 
   cache/
     store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크
