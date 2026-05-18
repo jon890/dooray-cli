@@ -17,7 +17,8 @@
     templates/{projectId}.json      # 프로젝트별 템플릿 목록 캐시 (ADR-027, TTL 24h)
 ```
 
-`templates/{projectId}.json` — `GET /project/v1/projects/{projectId}/templates` 응답의 id/templateName/메타만 보존 (body 는 미포함 — list 응답 자체가 body 제외). `--template <name|id>` 시 캐시에서 templateName 부분일치 후 단건 GET 으로 본문/interpolation 받음.
+`templates/{projectId}.json` — `GET /project/v1/projects/{projectId}/templates` 응답의 id/templateName/메타만 보존 (body 는 미포함 — list 응답 자체가 body 제외).
+`--template <name|id>` 시 캐시에서 templateName 부분일치 후 단건 GET 으로 본문/interpolation 받음.
 
 ---
 
@@ -129,7 +130,8 @@ interface CachedTag {
 }
 ```
 
-`post create/edit --tag <name>` 시 사전 검증 (mandatory-tag 그룹 누락 시 클라이언트 에러). `post edit --tag-remove`/`--tag-clear` 도 동일 캐시 사용 (Issue #66, ADR-019 확장).
+`post create/edit --tag <name>` 시 사전 검증 (mandatory-tag 그룹 누락 시 클라이언트 에러).
+`post edit --tag-remove`/`--tag-clear` 도 동일 캐시 사용 (Issue #66, ADR-019 확장).
 
 ### milestones/{projectId}.json (ADR-019)
 
@@ -151,7 +153,9 @@ interface CachedMemberGroup {
 }
 ```
 
-`post create/edit --mention-group <code>` 시 code lookup. members/ 와 분리된 별도 캐시 (Dooray 의 그룹 멘션 endpoint 가 별도). resolver 는 code 누락 그룹을 사전 필터링 + 후보 5개 안내 출력.
+`post create/edit --mention-group <code>` 시 code lookup.
+members/ 와 분리된 별도 캐시 — Dooray 의 그룹 멘션 endpoint 가 별도.
+resolver 는 code 누락 그룹을 사전 필터링 + 후보 5개 안내 출력.
 
 ### TTL 설계 근거
 

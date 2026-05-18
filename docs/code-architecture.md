@@ -202,13 +202,17 @@ class DoorayApiClient {
 - `--quiet`: ID만 출력 (스크립팅용)
 - `--no-color`: 컬러 제거 (CI 환경, `NO_COLOR` env 자동 감지)
 - 스피너·에러: stderr / 데이터: stdout (파이프 시 stderr 오염 방지)
-- `--json` / `--quiet` 모드: spinner 완전 억제 (`setQuiet(true)` → `startSpinner` 가 no-op `Proxy<Ora>` 반환). jq 같은 파이프에서 stdout 청결 보장 (Issue #35 item 1)
+- `--json` / `--quiet` 모드: spinner 완전 억제 (`setQuiet(true)` → `startSpinner` 가 no-op `Proxy<Ora>` 반환).
+  jq 같은 파이프에서 stdout 청결 보장 (Issue #35 item 1)
 
 ## 테스트
 
 - vitest (코로케이션 `*.test.ts` 패턴 — 소스 옆에 테스트 배치)
 - `pnpm test` (단발) / `pnpm test:watch` (개발 중)
-- 현재 커버: `src/utils/dooray-url.ts` (URL parser), `src/resolvers/post-input.ts` (7-branch 분기, ADR-020), `src/resolvers/comment-file-input.ts` (option-mode/positional-mode 분기 + secondaryLabel 메시지 customization, plan025)
+- 현재 커버:
+  - `src/utils/dooray-url.ts` (URL parser)
+  - `src/resolvers/post-input.ts` (7-branch 분기, ADR-020)
+  - `src/resolvers/comment-file-input.ts` (option-mode/positional-mode 분기 + secondaryLabel 메시지 customization, plan025)
 - 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 (ADR-020 도입 근거)
 
 ## 빌드·배포
