@@ -76,7 +76,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - 제목 옵션 이름은 post·wiki 모두 `--title`로 통일 (Issue #8)
 - resolver(멤버·워크플로우·태그·마일스톤)는 정확일치 → 이름 부분일치, 모호하면 에러 + 후보 목록 출력
 - 멤버 resolver (`resolveMember`) 는 입력 형식 자동 분기: 15자리 이상 숫자 → `getMemberDetail` 로 organizationMemberId 검증 / 이메일 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) → `searchMembers({externalEmailAddresses})` exact / 그 외 → matchByName. `--to`/`--cc`/`--mention` 모두 동일
-- 그룹 resolver (`resolveMemberGroup`) 는 Dooray API 응답에서 `code` 가 누락된 그룹을 사전 필터링 후 매칭 (스키마 ↔ 실제 응답 mismatch — ADR-026 추가 함정, Issue #65). `match.ts` 는 `i.name?.includes` 가드 + `options.helpHint` 로 not-found 시 "전체 목록은 dooray X" 안내 출력
+- 그룹 resolver (`resolveMemberGroup`) 는 Dooray API 응답에서 `code` 가 누락된 그룹을 사전 필터링 후 매칭 (스키마 ↔ 실제 응답 mismatch — ADR-028, Issue #65). `match.ts` 는 `!!i.name && i.name.includes` 가드 + `options.helpHint` 로 not-found 시 "전체 목록은 dooray X" 안내 출력
 - post 목록은 최신순 정렬 (`-createdAt`)
 - `post edit` / `post comment edit` 는 본문 full-replace. 새 본문에 기존 attachment markdown(`![](/files/<id>)`) 누락 시 (y/N) confirm. non-TTY 는 abort, `--no-confirm` 으로 우회.
 - `post create` / `post edit` / `post comment add/edit` 4 명령 모두 `--mention` / `--mention-group` / `--link-task` / `--dry-run` 동일 옵션 지원. mention 은 prepend, link-task 는 append, 적용 순서는 mention → link-task. interactive ($EDITOR) 모드의 `post edit` 는 mention/link-task 무시 + 경고
@@ -103,6 +103,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | `comment file *` 명령 (list/upload/download/delete)        | **ADR-024** (post-level files API + 댓글 PUT 합성 — Dooray 댓글 전용 endpoint 부재)            |
 | `post edit/create` 의 cc/to 변경 (멤버/그룹)               | **ADR-025** (full payload PUT + `type: "group"` + `projectMemberGroupId`)                      |
 | Wiki 명령 (`wiki page create/edit`) 추가/수정              | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기)       |
+| member-group resolver (스키마↔실제 응답 mismatch 가드)     | **ADR-028** (`code` 누락 사전 필터 + `match.ts` undefined/빈 문자열 가드 + 타입 optional 완화) |
 | `post create --template` + `project templates` 명령        | **ADR-027** (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외) |
 | 파일 업로드/다운로드 (307 처리)                            | **ADR-015** (수동 redirect + Auth 헤더 재첨부)                                                 |
 | `dooray setup` 마법사 변경                                 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치)                                                  |

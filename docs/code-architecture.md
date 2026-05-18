@@ -31,20 +31,20 @@ src/
   resolvers/
     me.ts                   # /common/v1/members/me → CachedMe (id·name·orgId; orgId 없으면 캐시 갱신)
     project.ts              # code·id → projectId
-    member.ts               # 입력 자동 분기 → organizationMemberId: 15자리 이상 숫자(getMemberDetail 검증) / 이메일(searchMembers exact) / 그 외(matchByName 부분일치). lookupMemberName / buildMemberNameMap (ADR-021)
+    member.ts               # 입력 자동 분기: 15자리 숫자 / 이메일 / 이름. lookupMemberName + buildMemberNameMap (ADR-021)
     workflow.ts             # name·class → workflowId
     post.ts                 # postNumber → postId (API 호출)
     wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시)
     postRef.ts              # "code/number" 또는 raw postId → postId (post create / post edit --parent 공용)
     tag.ts                  # name[] → tagIds + mandatory/selectOne 검증
     milestone.ts            # name → milestoneId
-    match.ts                # 공용: 정확일치 → 부분일치 → 모호 시 에러. options.helpHint 로 not-found 시 "전체 목록은 dooray X" 안내 추가 + i.name undefined 가드 (ADR-026 추가 함정)
+    match.ts                # 공용 매칭: 정확일치 → 부분일치 → 모호 시 에러. helpHint 옵션 + name 가드 (ADR-028)
     post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020)
     comment-file-input.ts   # comment file 4개 명령 입력 분기 헬퍼 (parseCommentFilePositional pure + resolveCommentFileInput orchestrator, ADR-020 확장)
     task-link.ts            # --link-task ref[] → TaskLinkInput[] (resolvePostInput + getPost detail 합성, post create/edit 인라인 변환)
-    member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선). code 누락 그룹 사전 필터 + helpHint 전달 (ADR-026 함정 묶음, Issue #65)
+    member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선). code 누락 그룹 사전 필터 + helpHint 전달 (ADR-028)
     post-users.ts           # parseUserSpec + mergeUsers + resolveUserAdditions — post edit/create 의 cc/to 멤버·그룹 입력 분기 + 기존 users 와 append/clear/dedupe (ADR-025)
-    template.ts             # ensureTemplates + resolveTemplate — `post create --template` / `project templates` 에서 사용. 19자리 → 직접 / 그 외 → matchByName 부분일치 (ADR-027, TTL 24h)
+    template.ts             # ensureTemplates + resolveTemplate (ADR-027, TTL 24h)
     post-tags.ts            # mergeTagIds pure helper — post edit 의 --tag/--tag-clear/--tag-remove 머지 (clear → remove → add → dedupe, Issue #66, ADR-019 확장)
 
   cache/
@@ -79,6 +79,8 @@ src/
     feedback-meta.ts        # CLI 버전·환경 수집 + GitHub issue body 빌더 + buildLastRunBlock (ADR-022, ADR-023)
     argv-sanitize.ts        # argv 시크릿 패턴 마스킹 (--api-key/--token/--password/Authorization, ADR-023)
     comment-files.ts        # appendFileReference / removeFileReference — 댓글 본문 markdown reference 조작 (ADR-024)
+    dooray-message.ts       # resultMessage URL-encoding 디코드 정규화 (API 에러 메시지 표시용)
+    attachment-check.ts     # 본문 markdown 의 attachment fileId 추출 (post edit body full-replace 시 누락 confirm)
 
   commands/
     setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)

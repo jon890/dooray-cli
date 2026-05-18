@@ -28,6 +28,7 @@
 - [ADR-025](#adr-025) — `post edit/create` cc/to 에 member-group 추가 (full payload PUT + `type: "group"`)
 - [ADR-026](#adr-026) — Wiki API 호출 패턴 함정 (`parentPageId` 필수 + `subject`/`title` 네이밍 + 페이지 수정 3종 endpoint)
 - [ADR-027](#adr-027) — `post create --template` 정책 (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외)
+- [ADR-028](#adr-028) — member-group `code` 누락 가드 (API 스키마 ↔ 실제 응답 mismatch, Issue #65)
 
 ---
 
@@ -505,13 +506,7 @@ PostUser type 의 그룹 분기는 `type: "memberGroup"` 이 아니라 `type: "g
 | `PUT .../pages/{pageId}/title` | 제목만 | `--title X` 단독 |
 | `PUT .../pages/{pageId}/content` | 본문만 | `--body` 또는 `--body-file` 단독 |
 
-**추가 함정 (2026-05-18, Issue #65)**: `GET /project/v1/projects/{id}/member-groups` 응답의 `code: string` 필드가 required 로 정의됐지만
-실제로 일부 그룹에서 `code` 가 누락된 채 반환됨 — 같은 부류의 스키마 ↔ 실제 응답 mismatch.
-`match.ts` 의 `i.name.includes()` 가 undefined 추락.
-흡수 위치:
-- `resolveMemberGroup` adapter 에서 `code` 가 falsy 인 그룹 사전 필터
-- `MemberGroup.code` 타입을 optional 로 완화
-- `match.ts` 에 `i.name?.includes` 가드
+> member-group `code` 누락은 ADR-028 로 분리 (wiki 도메인과 무관한 별 함정).
 
 ---
 
@@ -537,3 +532,28 @@ Dooray API 가 `GET /templates` 와 `interpolation` 파라미터를 노출 (cmux
 **적용 범위**: `post create --template` 만.
 `post edit --template` 은 별도 — 기존 본문 덮어쓰기인지 merge 인지 의도 불명확.
 templates 캐시는 ADR-004/010 패턴 답습 (TTL 24h, `~/.dooray/cache/templates/{projectId}.json`).
+
+---
+
+<a id="adr-028"></a>
+
+## ADR-028: member-group code 누락 가드 (API 스키마 ↔ 실제 응답 mismatch)
+
+**결정**: `resolveMemberGroup` 에서 Dooray API 응답의 `code` 가 누락된 그룹을 사전 필터로 제외.
+`MemberGroup.code` / `CachedMemberGroup.code` 타입을 optional 로 완화.
+`match.ts` 에 undefined / 빈 문자열 가드 (`!!i.name && i.name.includes(input)`).
+
+**맥락**: 공식 API 스키마는 `code: string` (required) 이지만 실제 응답에서 일부 그룹의 `code` 가 누락된 채 반환됨 (cmux-browser 사전 조사 2026-05-18, Issue #65).
+스키마 ↔ 실제 응답 mismatch — wiki 함정 (ADR-026) 과는 도메인 다른 별 함정.
+`match.ts:35` 의 `i.name.includes(input)` 가 undefined 추락 → `Cannot read properties of undefined (reading 'includes')`.
+
+**대안 기각**:
+- 타입 그대로 + 가드만 추가 — 타입 ↔ 런타임 어긋남 누적, 다른 호출자가 또 추락 위험
+- `code` 누락 그룹을 에러로 처리 — 사용자 입장에서 다른 정상 그룹 매칭까지 막힘. silent skip + stderr 경고가 자동화 친화
+- API 응답 정규화 layer 신설 — 한 곳의 mismatch 위해 인프라 도입, 비용 과대
+
+**적용 범위**:
+- `src/resolvers/member-group.ts` adapter 사전 필터 + `hasValidCode` type predicate
+- `src/api/types.ts` `MemberGroup.code?: string` + `src/cache/types.ts` `CachedMemberGroup.code?: string`
+- `src/resolvers/match.ts` undefined / 빈 문자열 가드
+- not-found 시 `dooray project groups <project>` 안내 (`helpHint` 옵션)
