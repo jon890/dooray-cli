@@ -1,0 +1,20 @@
+{
+  "name": "032-fix-member-group-resolver-guard",
+  "description": "GitHub Issue #65 — resolveMemberGroup 가 code 누락 그룹에서 'Cannot read properties of undefined (reading includes)' 추락. 원인: src/resolvers/match.ts line 33 `i.name.includes(input)` 가드 부재 + member-group.ts adapter 가 `g.code` 를 name 으로 사용 (cmux-browser spike 2026-05-18 결과: 공식 스키마는 code required 지만 실제 응답이 누락하는 케이스 존재 — ADR-026 wiki 함정과 동일 mismatch). fix: match.ts undefined 가드 + helpHint 옵션 + not-found 시 후보 5개 + 안내, member-group.ts adapter 사전 필터, MemberGroup.code optional 완화. 신규 ADR 불요 (ADR-026 한 줄 확장).",
+  "created_at": "2026-05-18T01:10:34Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 1,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "match.ts 가드 + helpHint + member-group.ts adapter + 타입 완화 + 테스트 + docs",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-05-18T01:10:34Z"
+}

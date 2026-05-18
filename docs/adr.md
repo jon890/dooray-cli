@@ -444,6 +444,8 @@
 | `PUT .../pages/{pageId}/title` | 제목만 | `--title X` 단독 |
 | `PUT .../pages/{pageId}/content` | 본문만 | `--body` 또는 `--body-file` 단독 |
 
+**추가 함정 (2026-05-18, Issue #65)**: `GET /project/v1/projects/{id}/member-groups` 응답 스키마는 `code: string` (required) 이지만 실제로 일부 그룹에서 `code` 가 누락된 채 반환됨 — `match.ts` 의 `i.name.includes()` 가 undefined 추락. 같은 부류의 스키마 ↔ 실제 응답 mismatch. 흡수 위치: `resolveMemberGroup` adapter 에서 `code` 가 falsy 인 그룹 사전 필터 + `MemberGroup.code` 타입을 optional 로 완화 + `match.ts` 에 `i.name?.includes` 가드.
+
 <a id="adr-027"></a>
 
 ## ADR-027: `post create --template` 정책 — interpolation 기본 true + 사용자 옵션 우선 + `--field` 제외

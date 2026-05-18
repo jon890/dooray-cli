@@ -38,7 +38,7 @@ src/
     postRef.ts              # "code/number" 또는 raw postId → postId (post create / post edit --parent 공용)
     tag.ts                  # name[] → tagIds + mandatory/selectOne 검증
     milestone.ts            # name → milestoneId
-    match.ts                # 공용: 정확일치 → 부분일치 → 모호 시 에러
+    match.ts                # 공용: 정확일치 → 부분일치 → 모호 시 에러. options.helpHint 로 not-found 시 "전체 목록은 dooray X" 안내 추가 + i.name undefined 가드 (ADR-026 추가 함정)
     post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020)
     comment-file-input.ts   # comment file 4개 명령 입력 분기 헬퍼 (parseCommentFilePositional pure + resolveCommentFileInput orchestrator, ADR-020 확장)
     task-link.ts            # --link-task ref[] → TaskLinkInput[] (resolvePostInput + getPost detail 합성, post create/edit 인라인 변환)
