@@ -147,11 +147,11 @@ interface CachedMilestone {
 ```typescript
 interface CachedMemberGroup {
   id: string;
-  name: string;
+  code?: string;  // optional — 실제 API 응답에서 누락 케이스 존재 (ADR-026 함정 묶음, Issue #65)
 }
 ```
 
-`post create/edit --mention-group <name>` 시 이름 lookup. members/ 와 분리된 별도 캐시 (Dooray 의 그룹 멘션 endpoint 가 별도).
+`post create/edit --mention-group <code>` 시 code lookup. members/ 와 분리된 별도 캐시 (Dooray 의 그룹 멘션 endpoint 가 별도). resolver 는 code 누락 그룹을 사전 필터링 + 후보 5개 안내 출력.
 
 ### TTL 설계 근거
 
@@ -161,9 +161,11 @@ interface CachedMemberGroup {
 | projects      | 1h  | 자주 안 바뀌나 새 프로젝트 생성 가능 |
 | members       | 1h  | 팀원 추가·변경 반영 필요             |
 | workflows     | 24h | 프로젝트 생성 후 거의 고정           |
-| tags          | 1h  | 태그는 추가/변경 빈도 보통           |
-| milestones    | 1h  | 분기/스프린트 단위로 추가됨          |
-| member-groups | 1h  | 그룹 구성 변경 반영 필요             |
+| tags          | 24h | 태그 추가/변경 빈도 낮음 (mandatory 그룹 정책 변경 빈도 기준) |
+| milestones    | 24h | 분기/스프린트 단위로 추가됨          |
+| member-groups | 24h | 그룹 구성 변경 빈도 낮음             |
+| templates     | 24h | 정형 task 템플릿 변경 빈도 낮음 (ADR-027) |
+| wikis         | 24h | 위키 home page 거의 불변             |
 
 ### Lazy Loading 전략
 

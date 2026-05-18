@@ -42,7 +42,7 @@ src/
     post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020)
     comment-file-input.ts   # comment file 4개 명령 입력 분기 헬퍼 (parseCommentFilePositional pure + resolveCommentFileInput orchestrator, ADR-020 확장)
     task-link.ts            # --link-task ref[] → TaskLinkInput[] (resolvePostInput + getPost detail 합성, post create/edit 인라인 변환)
-    member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선)
+    member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선). code 누락 그룹 사전 필터 + helpHint 전달 (ADR-026 함정 묶음, Issue #65)
     post-users.ts           # parseUserSpec + mergeUsers + resolveUserAdditions — post edit/create 의 cc/to 멤버·그룹 입력 분기 + 기존 users 와 append/clear/dedupe (ADR-025)
     template.ts             # ensureTemplates + resolveTemplate — `post create --template` / `project templates` 에서 사용. 19자리 → 직접 / 그 외 → matchByName 부분일치 (ADR-027, TTL 24h)
     post-tags.ts            # mergeTagIds pure helper — post edit 의 --tag/--tag-clear/--tag-remove 머지 (clear → remove → add → dedupe, Issue #66, ADR-019 확장)
