@@ -31,6 +31,12 @@ export async function ensureMemberGroups(
   return items;
 }
 
+// code 가 string 이며 비어있지 않음을 좁히는 type predicate
+// → filter 결과 항목에서 `as string` 단언 없이 code 를 사용 가능
+function hasValidCode(g: CachedMemberGroup): g is CachedMemberGroup & { code: string } {
+  return typeof g.code === "string" && g.code.length > 0;
+}
+
 export async function resolveMemberGroup(
   client: DoorayApiClient,
   projectId: string,
@@ -38,7 +44,7 @@ export async function resolveMemberGroup(
 ): Promise<{ id: string; code: string }> {
   const groups = await ensureMemberGroups(client, projectId);
   // code 가 없는 그룹은 매칭 불가 — 사전 필터 (Dooray API 응답 mismatch, ADR-026)
-  const valid = groups.filter((g) => typeof g.code === "string" && g.code.length > 0);
+  const valid = groups.filter(hasValidCode);
   const skipped = groups.length - valid.length;
   if (skipped > 0) {
     process.stderr.write(
@@ -46,9 +52,8 @@ export async function resolveMemberGroup(
     );
   }
   // CachedMemberGroup은 { id, code } — name 필드 없음. matchByName은 name 필드 사용
-  // → 어댑터: code를 name처럼 사용
-  // code 가 string 임을 필터로 보장했으므로 단언 안전
-  const adapter = valid.map((g) => ({ name: g.code as string, id: g.id, code: g.code as string }));
+  // → 어댑터: code를 name처럼 사용 (predicate 로 code 가 string 임이 좁혀짐)
+  const adapter = valid.map((g) => ({ name: g.code, id: g.id, code: g.code }));
   const match = matchByName(adapter, input, "그룹", (g) => `${g.code} (${g.id})`, {
     helpHint: "dooray project groups <project>",
   });

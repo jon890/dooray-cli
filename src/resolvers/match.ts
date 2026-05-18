@@ -32,7 +32,8 @@ export function matchByName<T extends NameRecord>(
     );
   }
 
-  const partial = items.filter((i) => i.name?.includes(input) ?? false);
+  // 빈 문자열 / undefined name 은 매칭 후보에서 제외 (Issue #65, PR #67 review)
+  const partial = items.filter((i) => !!i.name && i.name.includes(input));
   if (partial.length === 1) return partial[0];
   if (partial.length > 1) {
     throw new DoorayCliError(

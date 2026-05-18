@@ -42,6 +42,15 @@ describe("matchByName", () => {
     }
   });
 
+  it("name 이 빈 문자열인 항목도 매칭에서 제외 (PR #67 review)", () => {
+    const items: TestItem[] = [
+      { name: "", id: "1" },
+      { name: "foo", id: "2" },
+    ];
+    // 빈 문자열은 정확일치(input="")가 아닌 한 후보 아님 — input="foo" 일 때 id:2 만 매치
+    expect(matchByName(items, "foo", "그룹", render).id).toBe("2");
+  });
+
   it("items 빈 배열은 후보/hint 없이 기본 not-found", () => {
     try {
       matchByName([], "x", "그룹", render, { helpHint: "..." });
