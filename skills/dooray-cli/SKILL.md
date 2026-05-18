@@ -45,7 +45,10 @@ dooray doctor                                 # 설정 검증
 
 자연어 요청을 커맨드로 변환할 때 아래 표를 참고한다.
 
-> **공통 (post 하위 16개 명령)**: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`는 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL(`https://*.dooray.com/task/to/<postId>` 또는 브라우저 주소창 복사본 `https://*.dooray.com/task/<projectId>/<postId>`)을 직접 받는다. **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축, ADR-020).
+> **공통 (post 하위 16개 명령)**: 아래 명령은 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL 을 직접 받는다.
+> `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`.
+> URL 형식: `https://*.dooray.com/task/to/<postId>` 또는 브라우저 주소창 복사본 `https://*.dooray.com/task/<projectId>/<postId>`.
+> **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축, ADR-020).
 
 | 의도 | 커맨드 |
 |------|--------|
@@ -61,14 +64,14 @@ dooray doctor                                 # 설정 검증
 | 업무 목록 조회 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` |
 | 업무 상세 보기 | `dooray post get <project> <number>` |
-| 업무 생성 | `dooray post create <project> --title "..." --body "..."` 또는 `--body-file <path>` (`--body`와 `--body-file`은 동시 사용 불가, `--tag`/`--parent`/`--workflow`/`--milestone` 지원) |
+| 업무 생성 | `dooray post create <project> --title "..." [--body "..." \| --body-file <path>]` (`--tag`/`--parent`/`--workflow`/`--milestone` 지원) |
 | 템플릿 기반 업무 생성 | `dooray post create <project> --template <name\|id>` — body/users/tags 자동 채움 (사용자 옵션 우선 override, ADR-027) |
 | 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` 또는 `--body-file <path>` |
 | 업무 완료 처리 | `dooray post done <project> <number>` |
 | 업무 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
-| 댓글 조회 | `dooray post comment list <project> <number>` — `--sort asc\|desc`, `--reverse`, `--latest <n>`, `--since <iso>`, `--from-author <name>` 필터 지원. table 출력은 Creator 이름 자동 채움, `--json`은 raw 유지 (ADR-021) |
+| 댓글 조회 | `dooray post comment list <project> <number>` (`--sort`, `--reverse`, `--latest`, `--since`, `--from-author` 필터. table: Creator 자동 채움, `--json`: raw, ADR-021) |
 | 최신 댓글 조회 | `dooray post comment latest <project> <number>` — 최신 댓글 1개 빠른 조회. `-n <N>`으로 N개 지정 |
-| 단일 댓글 조회 | `dooray post comment get <project> <number> <comment-id> --json` — 단일 댓글 본문·메타·attachments 직접 fetch. `comment list` 후 jq 필터 우회 불필요. `--id <postId> --comment-id <id>` / `--url <url> --comment-id <id>` 모드 지원 |
+| 단일 댓글 조회 | `dooray post comment get <project> <number> <comment-id>` — 본문·메타·attachments 직접 fetch. `--id`/`--url` + `--comment-id` 모드 지원 |
 | 댓글 추가 | `dooray post comment add <project> <number> --body "..."` 또는 `--body-file <path>` |
 | 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` 또는 `--body-file <path>` |
 | 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` |
@@ -97,7 +100,7 @@ dooray doctor                                 # 설정 검증
 | 참조자(cc) 멤버/그룹 추가 | `dooray post edit <project> <number> --cc-group <code>` — 기존 참조자 유지 + 그룹 추가 (dedupe, ADR-025) |
 | 참조자 전체 교체 | `dooray post edit <project> <number> --cc-clear --cc <name>` — 기존 참조자 비우고 신규 멤버만 |
 | 신규 업무 + 그룹 cc | `dooray post create <project> --title "..." --cc-group <code>` — 생성 시 그룹 참조자 포함 |
-| 상위 업무 설정/변경 | `dooray post edit <project> <number> --title "<원제목>" --parent <ref>` — `<ref>` 는 `<project>/<number>` 또는 raw postId. `--title` 미동반 시 interactive 모드로 진입해 무시. unset 미지원 (Issue #60) |
+| 상위 업무 설정/변경 | `dooray post edit <project> <number> --title "<원제목>" --parent <ref>` (`<ref>`: `<project>/<number>` 또는 raw postId. `--title` 필수, unset 미지원) |
 | `dooray post edit --id <postId> --tag <name>` | 태그 추가 (반복, dedupe) |
 | `dooray post edit --id <postId> --tag-clear --tag <name>` | 태그 전체 교체 |
 | `dooray post edit --id <postId> --tag-remove <name>` | 특정 태그 제거 |
@@ -112,7 +115,7 @@ CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI �
 
 | 작업 | 대체 경로 | 근거 |
 |---|---|---|
-| 위키 페이지 **삭제** | 웹 UI (`https://{tenant}.dooray.com/wiki/...`) | Dooray REST API에 해당 엔드포인트 없음 (위키 댓글·첨부파일 삭제는 있지만 페이지 자체는 없음 — ADR 또는 Dooray 공식 API 문서 미제공) |
+| 위키 페이지 **삭제** | 웹 UI (`https://{tenant}.dooray.com/wiki/...`) | Dooray REST API 미제공 (댓글·첨부파일 삭제는 있지만 페이지 삭제 endpoint 없음) |
 | 프로젝트 삭제 | 웹 UI (admin 페이지) | API 미지원 |
 
 위키 페이지를 잘못 만든 경우(테스트/중복) **soft delete(빈 제목·본문) 우회 금지** — 페이지가 트리에 남아 사용자 혼란 유발.
@@ -170,7 +173,8 @@ dooray post comment add <project> 42 --body "진행 상황 업데이트: 80% 완
 
 ### 시나리오 — 댓글에 스크린샷 자동 첨부
 
-스크립트가 스크린샷을 댓글에 삽입하거나, 에이전트가 결과 파일을 첨부 댓글로 보고할 때 사용. Dooray REST API 가 댓글 전용 attachment endpoint 를 미지원하므로 내부적으로 post-level files API + 댓글 본문 PUT 합성으로 동작 (ADR-024).
+스크립트가 스크린샷을 댓글에 삽입하거나, 에이전트가 결과 파일을 첨부 댓글로 보고할 때 사용.
+Dooray REST API 가 댓글 전용 attachment endpoint 를 미지원하므로 내부적으로 post-level files API + 댓글 본문 PUT 합성으로 동작 (ADR-024).
 
 ```bash
 # 1. 댓글을 먼저 만든다 (텍스트만, --json 으로 commentId 획득)
@@ -218,7 +222,8 @@ dooray wiki page get <project> <pageId> --json
 
 ### 업무 식별 방식 (post 하위 16개 명령 공통, ADR-020)
 
-`post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`는 4가지 입력을 모두 받는다:
+아래 16개 명령은 4가지 입력을 모두 받는다:
+`post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`.
 
 ```bash
 # (1) 기존 positional — 가장 익숙한 형태
@@ -234,7 +239,9 @@ dooray post get --id <postId>
 dooray post get --url https://x.dooray.com/task/to/<postId>
 ```
 
-**우선순위 / 충돌 규칙**: `--id`+`--url` 동시 지정 → 에러. `--id`/`--url`+positional 동시 지정 → 에러. URL/`--id`/`--url` 모드는 standalone API(`getPost(postId)`)로 resolve 단계를 단축.
+**우선순위 / 충돌 규칙**: `--id`+`--url` 동시 지정 → 에러.
+`--id`/`--url`+positional 동시 지정 → 에러.
+URL/`--id`/`--url` 모드는 standalone API(`getPost(postId)`)로 resolve 단계를 단축.
 
 **sub-id 옵션화** (URL/`--id`/`--url` 모드에서 필수):
 ```bash
@@ -273,7 +280,9 @@ dooray post create <project> \
 dooray post create <project> --title "제목" --body-file ./content.md
 ```
 
-> **`--workflow` 동작 주의**: 워크플로우 설정은 post 생성 *후속* 호출이므로, 워크플로우 resolve/설정에 실패해도 stderr 경고만 출력되고 **exit code는 0** (post는 이미 생성됨). 자동화 스크립트에서 워크플로우 적용 여부를 보장해야 하면 stderr를 별도 점검할 것.
+> **`--workflow` 동작 주의**: 워크플로우 설정은 post 생성 *후속* 호출.
+> resolve/설정에 실패해도 stderr 경고만 출력되고 **exit code는 0** (post는 이미 생성됨).
+> 자동화 스크립트에서 워크플로우 적용 여부를 보장해야 하면 stderr를 별도 점검할 것.
 
 ### 업무 수정 (non-interactive)
 
@@ -415,7 +424,8 @@ dooray post comment add P 1 --mention 홍길동 --mention-group 개발 --body ".
 
 ## Dooray 마크다운 링크 형식 (멤버·그룹·업무 멘션)
 
-댓글/본문 작성 시 다음 형식으로 마크업하면 Dooray 앱이 인식해 inline 멘션·navigation으로 렌더링한다. ID는 본인 환경 값으로 채워 사용 — `dooray member get` / `project groups` / `post get` 등으로 조회.
+댓글/본문 작성 시 다음 형식으로 마크업하면 Dooray 앱이 인식해 inline 멘션·navigation으로 렌더링한다.
+ID는 본인 환경 값으로 채워 사용 — `dooray member get` / `project groups` / `post get` 등으로 조회.
 
 ### 멤버 멘션
 ```markdown
@@ -467,7 +477,8 @@ dooray feedback --last --title "에러 제목" --body "추가 설명" --dry-run 
 dooray feedback --last --title "에러 제목" --body "추가 설명"            # 실제 등록
 ```
 
-> **참고**: `--last` 모드는 `trackLastRun: true` (ADR-023 opt-in)가 설정된 경우에만 직전 실패 명령이 자동 기록됨. argv는 시크릿 패턴(`--api-key`/`--token`/`Authorization`) 마스킹 후 저장.
+> **참고**: `--last` 모드는 `trackLastRun: true` (ADR-023 opt-in)가 설정된 경우에만 직전 실패 명령이 자동 기록됨.
+> argv는 시크릿 패턴(`--api-key`/`--token`/`Authorization`) 마스킹 후 저장.
 
 ## 에러 핸들링
 
@@ -496,7 +507,8 @@ POST_ID=$(dooray post create <project> \
   --json | jq -r '.id')
 ```
 
-템플릿 본문의 `${year}` / `${month}` 등 매크로는 Dooray 가 자동 치환 (`interpolation=true` 기본). 사용자 정의 변수는 미지원 — 필요 시 client 측 string replace 로 처리.
+템플릿 본문의 `${year}` / `${month}` 등 매크로는 Dooray 가 자동 치환 (`interpolation=true` 기본).
+사용자 정의 변수는 미지원 — 필요 시 client 측 string replace 로 처리.
 
 ## 캐시
 

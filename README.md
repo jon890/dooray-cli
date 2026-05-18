@@ -84,7 +84,8 @@ dooray post get <project> 42 --json           # JSON 출력
 | `--id <postId>` | `dooray post get --id <postId>` |
 | `--url <url>` | `dooray post get --url https://x.dooray.com/task/to/...` |
 
-대상: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`. AI 에이전트는 사용자 메시지의 Dooray URL을 그대로 첫 인자로 전달하면 가장 빠르다 (ADR-020).
+대상: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`.
+AI 에이전트는 사용자 메시지의 Dooray URL을 그대로 첫 인자로 전달하면 가장 빠르다 (ADR-020).
 
 ### 업무 생성
 
@@ -107,7 +108,8 @@ dooray post create <project> \
   --milestone "Sprint 12"
 ```
 
-> mandatory-tag 정책 프로젝트(예: `<project>`)에서는 mandatory 그룹마다 1개 이상 `--tag`로 지정해야 한다. 누락 시 클라이언트가 사전 검증으로 후보 목록과 함께 에러 출력.
+> mandatory-tag 정책 프로젝트(예: `<project>`)에서는 mandatory 그룹마다 1개 이상 `--tag`로 지정해야 한다.
+> 누락 시 클라이언트가 사전 검증으로 후보 목록과 함께 에러 출력.
 
 #### 템플릿 기반 정형 task (ADR-027)
 
@@ -125,7 +127,8 @@ dooray post create <project> --template "릴리스 플랜" --title "v0.9 릴리�
 dooray post create <project> --template 1234567890123456789 --title "by id"
 ```
 
-`interpolation=true` 가 기본 — Dooray 가 `${year}`, `${month}` 같은 시스템 매크로를 응답에서 자동 치환. 사용자 정의 변수 (`--field key=value`) 는 본 release scope 외.
+`interpolation=true` 가 기본 — Dooray 가 `${year}`, `${month}` 같은 시스템 매크로를 응답에서 자동 치환.
+사용자 정의 변수 (`--field key=value`) 는 본 release scope 외.
 
 ### 업무 수정
 
@@ -142,7 +145,8 @@ dooray post edit <project> 42 --body-file ./updated.md
 
 #### 본문 변경 시 attachment 보호
 
-`post edit` 와 `post comment edit` 는 본문을 통째로 replace 합니다. 새 본문에 기존 inline attachment markdown(`![](/files/<id>)`)이 빠져 있으면 stderr 에 경고를 띄우고 (y/N) 로 물어봅니다.
+`post edit` 와 `post comment edit` 는 본문을 통째로 replace 합니다.
+새 본문에 기존 inline attachment markdown(`![](/files/<id>)`)이 빠져 있으면 stderr 에 경고를 띄우고 (y/N) 로 물어봅니다.
 
 자동화 환경 (pipe / non-TTY) 에서는 그대로 abort 됩니다. 의도한 변경이면 `--no-confirm` 으로 다시 실행하세요.
 
@@ -198,7 +202,8 @@ dooray post create <project> --title "주간 audit" --cc-group dev-team
 ```
 
 interactive ($EDITOR) 모드에서는 위 6개 옵션이 무시되고 stderr 경고가 출력됩니다.
-`post edit --dry-run --json` 사용 시 출력에 `users: { to, cc }` 가 포함되어 API 호출 없이 변경 결과 미리보기 가능. (`post create --dry-run` 은 본문만 출력하며 `users` 는 포함하지 않음.)
+`post edit --dry-run --json` 사용 시 출력에 `users: { to, cc }` 가 포함되어 API 호출 없이 변경 결과 미리보기 가능.
+`post create --dry-run` 은 본문만 출력하며 `users` 는 포함하지 않음.
 
 ```bash
 dooray post edit <project> <post-number> --cc-group dev-team --dry-run --json | jq '.users.cc'
@@ -231,11 +236,16 @@ dooray post edit <project> <child-number> --title "<원제목>" --parent <projec
 dooray post edit --id <postId> --title "<원제목>" --parent <other-parent-postId>
 ```
 
-내부적으로 `client.updatePost` 호출 후 별도 `POST .../set-parent-post` endpoint 추가 호출. **parent 해제 (top-level 화)** 는 Dooray API 가 미지원이라 웹 UI 에서 수동 처리.
+내부적으로 `client.updatePost` 호출 후 별도 `POST .../set-parent-post` endpoint 추가 호출.
+**parent 해제 (top-level 화)** 는 Dooray API 가 미지원이라 웹 UI 에서 수동 처리.
 
-interactive ($EDITOR) 모드에서 `--parent` 사용 시 무시 + stderr 경고. **parent 만 단독 변경하려면 `--title "<원제목>"` 동반 필요** — `post edit` 가 본문 변경(`--title`/`--body`) 동반 시에만 non-interactive 분기로 들어가며, parent 변경은 그 분기 안에서만 수행됨. (Issue #60)
+interactive ($EDITOR) 모드에서 `--parent` 사용 시 무시 + stderr 경고.
+**parent 만 단독 변경하려면 `--title "<원제목>"` 동반 필요** — `post edit` 는 본문 변경(`--title`/`--body`) 동반 시에만 non-interactive 분기로 들어감.
+parent 변경은 그 분기 안에서만 수행됨. (Issue #60)
 
-`--dry-run --json` 출력의 `parentChange` 필드는 **사용자 입력 원문 그대로** (`<project>/<number>` 또는 raw postId) — resolver 처리 전 미리보기 값이며 실제 호출 대상 `postId` 가 아님. dry-run 은 API 미호출 원칙을 유지해 `resolvePostRef` 도 건너뜀.
+`--dry-run --json` 출력의 `parentChange` 필드는 **사용자 입력 원문 그대로** (`<project>/<number>` 또는 raw postId).
+resolver 처리 전 미리보기 값이며 실제 호출 대상 `postId` 가 아님.
+dry-run 은 API 미호출 원칙을 유지해 `resolvePostRef` 도 건너뜀.
 
 #### `--to` / `--cc` / `--mention` 입력 형식 (자동 분기)
 
@@ -377,7 +387,8 @@ dooray post comment delete --url <url> --comment-id <commentId>
 
 ### 댓글 첨부 파일 (`post comment file *`)
 
-자동화로 댓글에 인라인 이미지 / 파일을 삽입할 때 사용. 4 명령 (list/upload/download/delete) 모두 `<project> <post-number> <comment-id>` 또는 `--id <postId> --comment-id <logId>` / `--url <url> --comment-id <logId>` 패턴 지원 (ADR-020).
+자동화로 댓글에 인라인 이미지 / 파일을 삽입할 때 사용.
+4 명령 (list/upload/download/delete) 모두 `<project> <post-number> <comment-id>` 또는 `--id <postId> --comment-id <logId>` / `--url <url> --comment-id <logId>` 패턴 지원 (ADR-020).
 
 ```bash
 # 첨부 목록
@@ -413,7 +424,8 @@ dooray post list <project> --quiet | xargs -I{} dooray post done <project> {}
 
 ## AI 에이전트 연동
 
-`skills/dooray-cli/SKILL.md`에 AI 에이전트를 위한 스킬 파일이 포함되어 있습니다. Claude Code 등의 AI 에이전트에서 dooray-cli를 자동으로 활용할 수 있도록 의도→커맨드 매핑, 체이닝 예시, 에러 핸들링 가이드가 포함되어 있습니다.
+`skills/dooray-cli/SKILL.md`에 AI 에이전트를 위한 스킬 파일이 포함되어 있습니다.
+Claude Code 등의 AI 에이전트에서 dooray-cli를 자동으로 활용할 수 있도록 의도→커맨드 매핑, 체이닝 예시, 에러 핸들링 가이드가 포함되어 있습니다.
 
 ```bash
 # 스킬 파일 복사 (Claude Code 예시)
@@ -493,11 +505,13 @@ dooray --help
 
 #### 비용 / 토큰
 
-각 PR 당 4 specialist 가 모두 `haiku` 모델로 동작 — 평균 PR 1건 당 수십 센트 수준. PR 자동 트리거 비활성화하려면 `claude-code-review.yml` 의 `if:` 조건에서 `github.event_name == 'pull_request'` 분기를 제거하고 `/review` 댓글 트리거만 남길 수 있음.
+각 PR 당 4 specialist 가 모두 `haiku` 모델로 동작 — 평균 PR 1건 당 수십 센트 수준.
+PR 자동 트리거 비활성화하려면 `claude-code-review.yml` 의 `if:` 조건에서 `github.event_name == 'pull_request'` 분기를 제거하고 `/review` 댓글 트리거만 남길 수 있음.
 
 #### Fork PR 제한
 
-GitHub Actions 정책상 fork 에서 열린 PR 은 `secrets.CLAUDE_CODE_OAUTH_TOKEN` 에 접근 못 해 **자동 리뷰가 silent 하게 skip** 된다. fork 기여자가 리뷰를 받으려면 maintainer 가 PR 댓글에 `/review` 를 작성하여 base repo 컨텍스트로 워크플로를 트리거해야 한다.
+GitHub Actions 정책상 fork 에서 열린 PR 은 `secrets.CLAUDE_CODE_OAUTH_TOKEN` 에 접근 못 해 **자동 리뷰가 silent 하게 skip** 된다.
+fork 기여자가 리뷰를 받으려면 maintainer 가 PR 댓글에 `/review` 를 작성하여 base repo 컨텍스트로 워크플로를 트리거해야 한다.
 
 ## 라이센스
 
