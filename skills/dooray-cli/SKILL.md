@@ -98,6 +98,9 @@ dooray doctor                                 # 설정 검증
 | 참조자 전체 교체 | `dooray post edit <project> <number> --cc-clear --cc <name>` — 기존 참조자 비우고 신규 멤버만 |
 | 신규 업무 + 그룹 cc | `dooray post create <project> --title "..." --cc-group <code>` — 생성 시 그룹 참조자 포함 |
 | 상위 업무 설정/변경 | `dooray post edit <project> <number> --title "<원제목>" --parent <ref>` — `<ref>` 는 `<project>/<number>` 또는 raw postId. `--title` 미동반 시 interactive 모드로 진입해 무시. unset 미지원 (Issue #60) |
+| `dooray post edit --id <postId> --tag <name>` | 태그 추가 (반복, dedupe) |
+| `dooray post edit --id <postId> --tag-clear --tag <name>` | 태그 전체 교체 |
+| `dooray post edit --id <postId> --tag-remove <name>` | 특정 태그 제거 |
 
 > **제목 옵션 네이밍**: `post` 와 `wiki page` 모두 `--title` 표준. `post`의 `--subject`는 deprecated alias로 당분간 동작하되, 새 코드에서는 `--title` 사용을 권장.
 
@@ -351,6 +354,22 @@ dooray post edit --id "$CHILD_ID" --title "subtask A" --parent <project>/<parent
 ```
 
 **한계** (cmux-browser spike 결과): Dooray API 가 `unset-parent-post` 미제공 → CLI 로 parent 해제 불가. 필요 시 웹 UI 에서 처리.
+
+---
+
+## 태그 사후 분류 자동화 (Issue #66)
+
+분류 분석 결과를 받아 태그를 재분류하는 자동화는 단독 호출 패턴이 효율적:
+
+```bash
+# 분석 스크립트가 분류한 태그 이름을 cli 로 적용 — body fetch 불요
+POST_ID=$(...)
+CATEGORY=$(...)
+dooray post edit --id "$POST_ID" --tag "분류: $CATEGORY"
+```
+
+태그만 변경하는 시나리오에서 `--title` / `--body` 강제 없음.
+mandatory 그룹은 친절한 에러 메시지로 안내 (ADR-019).
 
 ---
 

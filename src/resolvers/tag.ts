@@ -139,3 +139,82 @@ export async function resolveTags(
 
   return selected.map((t) => t.id);
 }
+
+/**
+ * 입력된 이름들을 tagIds 로 변환만 (mandatory 검증 skip).
+ * `--tag-remove` / `--tag` 같이 머지 전 단계의 name lookup 에 사용.
+ * `resolveTags` 와 달리 mandatory 그룹 충족 검사 안 함.
+ */
+export async function lookupTagIds(
+  client: DoorayApiClient,
+  projectId: string,
+  names: string[],
+): Promise<string[]> {
+  if (names.length === 0) return [];
+  const tags = await ensureTags(client, projectId);
+  return names.map((n) =>
+    matchByName(
+      tags,
+      n,
+      "태그",
+      (t) => (t.groupName ? `${t.groupName} / ${t.name} (${t.id})` : `${t.name} (${t.id})`),
+    ).id
+  );
+}
+
+/**
+ * 머지된 최종 tagIds 가 프로젝트의 mandatory 그룹을 모두 커버하는지 검증.
+ * `--tag` 류 옵션 적용 후 최종 결과 검사용.
+ * `validateMandatoryTags` 가 "tag 입력 없이 mandatory 그룹 있으면 throw" 인 반면,
+ * 이 함수는 selectedTagIds 가 모든 mandatory 그룹의 ID 중 하나씩을 포함하는지 검사.
+ */
+export async function validateMandatoryCoverage(
+  client: DoorayApiClient,
+  projectId: string,
+  selectedTagIds: string[],
+): Promise<void> {
+  const tags = await ensureTags(client, projectId);
+  const selectedSet = new Set(selectedTagIds);
+  const mandatoryGroups = new Map<string, { groupName: string; tagsInGroup: CachedTag[] }>();
+  for (const t of tags) {
+    if (!t.groupMandatory || !t.groupId) continue;
+    let group = mandatoryGroups.get(t.groupId);
+    if (!group) {
+      group = { groupName: t.groupName ?? `그룹 ${t.groupId}`, tagsInGroup: [] };
+      mandatoryGroups.set(t.groupId, group);
+    }
+    group.tagsInGroup.push(t);
+  }
+  for (const [, info] of mandatoryGroups) {
+    const covered = info.tagsInGroup.some((t) => selectedSet.has(t.id));
+    if (!covered) {
+      const candidates = info.tagsInGroup.map((t) => `${t.name} (${t.id})`).join(", ");
+      throw new DoorayCliError(
+        `필수 태그 그룹 "${info.groupName}" 에서 최소 1개 선택 필요\n후보: ${candidates}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+  }
+
+  // selectOne 그룹 검증 (resolveTags 와 동등 정책 — post create/edit 일관성, Issue #66)
+  const selectOneGroups = new Map<string, { name: string; tags: string[] }>();
+  for (const t of tags) {
+    if (!t.groupSelectOne || !t.groupId || !selectedSet.has(t.id)) continue;
+    const entry = selectOneGroups.get(t.groupId) ?? { name: t.groupName ?? `그룹 ${t.groupId}`, tags: [] };
+    entry.tags.push(t.name);
+    selectOneGroups.set(t.groupId, entry);
+  }
+  const violators: string[] = [];
+  for (const [, info] of selectOneGroups) {
+    if (info.tags.length > 1) {
+      violators.push(`${info.name} (선택: ${info.tags.join(", ")})`);
+    }
+  }
+  if (violators.length > 0) {
+    throw new DoorayCliError(
+      `다음 태그 그룹은 1개만 선택 가능합니다:\n` +
+        violators.map((v) => `  - ${v}`).join("\n"),
+      EXIT_PARAM_ERROR,
+    );
+  }
+}

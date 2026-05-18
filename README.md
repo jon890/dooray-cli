@@ -205,6 +205,22 @@ dooray post edit <project> <post-number> --cc-group dev-team --dry-run --json | 
 # 출력 예: [{ "type": "group", "group": { "projectMemberGroupId": "...", "members": [] } }, ...]
 ```
 
+#### 생성 후 태그 변경 (Issue #66)
+
+```bash
+# 기존 태그 유지 + 신규 추가 (dedupe)
+dooray post edit --id <postId> --tag "<group>: <name>"
+
+# 기존 태그 전부 제거 + 신규만 적용
+dooray post edit --id <postId> --tag-clear --tag "<group>: <name>"
+
+# 특정 태그만 제거 (기존 유지)
+dooray post edit --id <postId> --tag-remove "<group>: <name>"
+```
+
+`--title` / `--body` 없이 단독 호출 가능 — 기존 본문은 자동 재전송.
+mandatory tag 그룹은 `post create` 와 동일하게 사전 검증 (ADR-019).
+
 #### 상위 업무 변경 (`--parent`)
 
 ```bash

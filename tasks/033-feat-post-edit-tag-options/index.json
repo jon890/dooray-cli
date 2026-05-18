@@ -2,8 +2,8 @@
   "name": "033-feat-post-edit-tag-options",
   "description": "GitHub Issue #66 — `dooray post edit --tag <name>` / `--tag-clear` / `--tag-remove <name>` 옵션 추가. post create --tag 패턴 + ADR-025 cc/to merge 패턴 답습. 결정점: --tag 는 --title/--body 없이도 단독 호출 허용 (사용자 결정 옵션 B, 2026-05-18). body 는 post.body.content 자동 재전송, mandatory tag 검증 동일 적용. cc-group 단독 호출 허용은 별도 follow-up issue. 신규 ADR 불요 — ADR-019 한 줄 확장.",
   "created_at": "2026-05-18T01:56:20Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "completed",
+  "current_phase": 2,
   "total_phases": 2,
   "error_message": null,
   "blocked_reason": null,
@@ -12,14 +12,14 @@
       "number": 1,
       "title": "post-tags.ts (mergeTagIds) + edit.ts 옵션 3개 + mandatory 검증 + interactive 경고 + 단위 테스트",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "README + skills/dooray-cli/SKILL.md + 완료 마킹",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],

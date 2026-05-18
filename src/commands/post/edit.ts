@@ -9,6 +9,8 @@ import { prependMentions } from "../../utils/mention.js";
 import { appendTaskLinks } from "../../utils/task-link.js";
 import { resolveTaskLinks } from "../../resolvers/task-link.js";
 import { resolveUserAdditions, mergeUsers } from "../../resolvers/post-users.js";
+import { lookupTagIds, validateMandatoryCoverage } from "../../resolvers/tag.js";
+import { mergeTagIds } from "../../resolvers/post-tags.js";
 import { resolvePostRef } from "../../resolvers/postRef.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import {
@@ -54,6 +56,9 @@ export const postEditCommand = new Command("edit")
   .option("--to-group <code>", "담당자(to) 그룹 추가 (반복 가능, 그룹 코드 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--to-clear", "기존 담당자 전부 제거 후 신규만 적용")
   .option("--parent <ref>", "상위 업무 변경 — project/number 또는 raw postId (post create 와 동일 — unset 은 미지원, 웹 UI 에서 처리)")
+  .option("--tag <name>", "태그 추가 (반복 가능, 기존 태그 유지 + 신규 추가 + dedupe)", (v, prev: string[]) => [...prev, v], [] as string[])
+  .option("--tag-clear", "기존 태그 전부 제거 후 --tag 만 적용")
+  .option("--tag-remove <name>", "특정 태그 제거 (반복 가능, 이름 부분일치)", (v, prev: string[]) => [...prev, v], [] as string[])
   .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
   .option("--no-confirm", "누락 attachment 경고 시 confirm 없이 진행 (자동화용)")
   .action(async (project, postNumberStr, opts) => {
@@ -67,6 +72,9 @@ export const postEditCommand = new Command("edit")
     const ccGroups: string[] = (opts.ccGroup ?? []).filter((s: string) => s.length > 0);
     const toNames: string[] = (opts.to ?? []).filter((s: string) => s.length > 0);
     const toGroups: string[] = (opts.toGroup ?? []).filter((s: string) => s.length > 0);
+    const tagAdditions: string[] = (opts.tag ?? []).filter((s: string) => s.length > 0);
+    const tagRemovals: string[] = (opts.tagRemove ?? []).filter((s: string) => s.length > 0);
+    const hasTagChange = tagAdditions.length > 0 || tagRemovals.length > 0 || !!opts.tagClear;
 
     startSpinner("업무 조회 중...");
     const { projectId, postId, postNumber, projectCode } = await resolvePostInput(client, {
@@ -87,7 +95,7 @@ export const postEditCommand = new Command("edit")
       );
     }
 
-    const nonInteractive = title || opts.body || opts.bodyFile;
+    const nonInteractive = title || opts.body || opts.bodyFile || hasTagChange;
 
     if (nonInteractive) {
       // Non-interactive mode: apply only specified changes
@@ -147,6 +155,15 @@ export const postEditCommand = new Command("edit")
         ccUsers = mergeUsers(ccUsers, additions, !!opts.ccClear);
       }
 
+      let finalTagIds: string[] | undefined;
+      if (hasTagChange) {
+        const existingTagIds = post.tags.map((t) => t.id);
+        const additionIds = await lookupTagIds(client, projectId, tagAdditions);
+        const removalIds = await lookupTagIds(client, projectId, tagRemovals);
+        finalTagIds = mergeTagIds(existingTagIds, additionIds, removalIds, !!opts.tagClear);
+        await validateMandatoryCoverage(client, projectId, finalTagIds);
+      }
+
       if (opts.dryRun) {
         stopSpinner(false);
         const globalOpts = postEditCommand.optsWithGlobals() as OutputOptions;
@@ -155,6 +172,7 @@ export const postEditCommand = new Command("edit")
           process.stdout.write(JSON.stringify({
             body: previewBody,
             users: { to: toUsers, cc: ccUsers },
+            ...(finalTagIds !== undefined && { tagIds: finalTagIds }),
             ...(opts.parent && { parentChange: opts.parent }),
           }) + "\n");
         } else {
@@ -174,6 +192,7 @@ export const postEditCommand = new Command("edit")
         dueDate: post.dueDate,
         dueDateFlag: post.dueDateFlag,
         users: { to: toUsers, cc: ccUsers },
+        ...(finalTagIds !== undefined && { tagIds: finalTagIds }),
       });
       stopSpinner(true, "업무 수정 완료");
 
@@ -214,6 +233,9 @@ export const postEditCommand = new Command("edit")
           "⚠  --parent 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
         );
       }
+      // tag 관련 옵션은 nonInteractive 분기에서만 처리됨 (hasTagChange 가
+      // nonInteractive 조건에 포함). 여기 도달은 hasTagChange=false 이므로
+      // 경고 불요 — cc/parent 처럼 nonInteractive 조건에 미포함 옵션과 다름.
       const original = serializePostFrontmatter(post, members);
       const edited = await openInEditor(original);
 
