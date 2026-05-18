@@ -211,6 +211,42 @@ const adapter = valid.map((g) => ({ name: g.code as string }));   // filter 로 
 
 **Why**: PR #67 (plan032) critic Major #3 — `member-group.ts` 의 `valid.map((g) => ({ name: g.code }))` 에서 TS2345/TS2339. executor 가 `as string` 추가로 회피. type predicate 가 더 안전하나 본 케이스는 단언 + 주석으로 처리. 다른 resolver 의 optional 필드 filter 패턴에서 반복 가능.
 
+## 1-14. nonInteractive trigger 확장 시 interactive 분기의 옵션 경고 정리 누락
+
+**증상**: `nonInteractive` 진입 조건에 새 옵션을 추가 (`|| hasTagChange` 등). 그러나 interactive `else` 블록에 기존에 있던 `if (hasOption) { stderr "...단독 사용 안 됨..." }` 경고를 그대로 둠. 새 옵션이 trigger 에 포함됐으므로 else 분기에서는 절대 true 가 안 됨 → **dead code + 메시지가 사실과 반대** (단독 호출이 이번 기능의 핵심인데 "단독 호출 안 됨" 안내 출력 가능성 0이지만 의도 충돌).
+
+**Good**: nonInteractive trigger 에 새 옵션 추가하는 phase 면 같은 phase 본문에 "interactive else 블록 안의 동일 옵션 경고 (`if (hasX)`) 제거" 를 명시. 또는 의도 주석으로 대체 ("trigger 에 포함되므로 도달 불가").
+
+```bash
+# 검출: nonInteractive 조건에 추가한 옵션이 interactive else 안에 if 로도 등장하면 dead code
+grep -nE "if \(hasTagChange\)|if \(opts\.parent\)|if \(.*\.cc.*\)" src/commands/post/edit.ts
+# 같은 옵션이 nonInteractive 조건 + interactive 분기 if 양쪽에 동시에 있으면 한쪽이 dead
+```
+
+**Why**: PR #68 (plan033) docs-verifier VIOLATION — `nonInteractive = ... || hasTagChange` 확장 후 interactive else 안에 `if (hasTagChange) stderr "단독 호출 안 됨"` 그대로 둠. 도달 불가 + 메시지 정반대. cc/parent 같이 trigger 미포함 옵션 경고와 패턴 답습 시 발생.
+
+## 1-15. resolver 의 검증 정책 일관성 — 신규 검증 helper 가 기존 정책 일부만 포함
+
+**증상**: 기존 `resolveTags` 가 mandatory + selectOne 둘 다 검증. 새 helper `validateMandatoryCoverage` 추가 시 이름이 "Mandatory" 라 mandatory 만 검증하고 selectOne 누락. post create 는 정책 모두 검사하는데 post edit (신규 helper) 는 mandatory 만 → 정책 비대칭.
+
+**Good**: 같은 도메인의 신규 검증 helper 추가 시 reference function (resolveTags, resolveUsers 등) 의 검증 블록을 grep 으로 모두 인용 + 새 helper 가 어떤 정책을 포함/제외하는지 plan 본문에 명시. 이름이 한 정책만 가리켜도 실제 검증은 reference 와 일치해야 일관성 유지.
+
+```bash
+# resolver 의 검증 블록 grep — phase 본문 작성 시 reference function 참조
+grep -nE "selectOne|mandatory|MandatoryGroups|SelectOneGroups" src/resolvers/tag.ts
+# 신규 helper 가 위 정책 중 어느 것을 포함하는지 plan 본문에 명시
+```
+
+**Why**: PR #68 (plan033) code-reviewer MEDIUM — `validateMandatoryCoverage` 가 mandatory 만 검증, selectOne 누락. `resolveTags` 는 둘 다 검증이라 post create 와 post edit 의 정책 비대칭. 다른 helper 분리 시 (예: `validateUsersCoverage`, `validateWorkflowChange` 등) 동일 패턴 재발 가능.
+
+## 1-16. executor 가 critic 평가 결과 대기 안 하고 자체 구현 진행
+
+**증상**: build-with-teams 5단계 critic 평가 (APPROVE/REVISE) → 6단계 executor 실행. 그런데 executor 가 5단계 critic 회신을 받기 전에 plan 본문만 보고 자체 구현 시작. critic REVISE 가 도착해도 이미 옛 plan 본문 기준으로 코드 작성 + 사용자 결정 반영 안 됨 (이름·시그니처 임의). team-lead 가 reset 후 재투입 필요 → 1 cycle 낭비.
+
+**Good**: executor 프롬프트에 "team-lead 의 phase 시작 SendMessage 받기 전에는 자체 진행 금지 — critic REVISE 가능성 있음" 명시. team-lead 도 executor 스폰 시점에 "대기 상태로 시작, SendMessage 까지 작업 시작 금지" 강조. 또 plan 본문 v1 → v2 차이가 있을 때 SendMessage 메시지에 "이전 자체 진행 결과는 reset 됨, plan 본문 v2 강제" 명시.
+
+**Why**: PR #64 (plan031) / PR #67 (plan032) / PR #68 (plan033) 3회 연속 발생. plan031 때는 executor 가 알아서 critic 발견 패턴 회피했지만, plan032/033 에서는 사용자 결정 옵션 a 와 다른 옵션 b 변형으로 진행 → reset 후 재투입. 매 plan 마다 1 cycle 낭비. critic 평가가 비동기로 도착하는 점이 근본 원인. executor 가 "대기" 명시받지 않으면 자체 진행 본능적 경향.
+
 ## 섹션 1 소진 체크리스트
 
 plan 제출 전 10개 패턴 모두 self-check:
