@@ -153,7 +153,12 @@ export async function lookupTagIds(
   if (names.length === 0) return [];
   const tags = await ensureTags(client, projectId);
   return names.map((n) =>
-    matchByName(tags, n, "태그", (t) => `${t.name} (${t.id})`).id
+    matchByName(
+      tags,
+      n,
+      "태그",
+      (t) => (t.groupName ? `${t.groupName} / ${t.name} (${t.id})` : `${t.name} (${t.id})`),
+    ).id
   );
 }
 
@@ -188,5 +193,27 @@ export async function validateMandatoryCoverage(
         EXIT_PARAM_ERROR,
       );
     }
+  }
+
+  // selectOne 그룹 검증 (resolveTags 와 동등 정책 — post create/edit 일관성, Issue #66)
+  const selectOneGroups = new Map<string, { name: string; tags: string[] }>();
+  for (const t of tags) {
+    if (!t.groupSelectOne || !t.groupId || !selectedSet.has(t.id)) continue;
+    const entry = selectOneGroups.get(t.groupId) ?? { name: t.groupName ?? t.groupId, tags: [] };
+    entry.tags.push(t.name);
+    selectOneGroups.set(t.groupId, entry);
+  }
+  const violators: string[] = [];
+  for (const [, info] of selectOneGroups) {
+    if (info.tags.length > 1) {
+      violators.push(`${info.name} (선택: ${info.tags.join(", ")})`);
+    }
+  }
+  if (violators.length > 0) {
+    throw new DoorayCliError(
+      `다음 태그 그룹은 1개만 선택 가능합니다:\n` +
+        violators.map((v) => `  - ${v}`).join("\n"),
+      EXIT_PARAM_ERROR,
+    );
   }
 }
