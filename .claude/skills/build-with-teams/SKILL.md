@@ -33,7 +33,8 @@ plan 인자를 받으면 **가장 먼저** 3중 검증. 하나라도 걸리면 �
 
 ### task 단독 PR 이 이미 열려있는 경우 — 옵션 A (이어서 작업) 권장 흐름
 
-위 2번 (FOUND) + 3번 (OPEN PR) 이 동시에 걸리고, 해당 PR 이 task 파일만 (코드 변경 0개) 머지 대기 중이라면 **옵션 A (이어서 작업)** 로 전환한다. 이는 차단이 아니라 **그 PR 을 그대로 결과물 통합 PR 로 사용**하는 흐름이다 (사후 정리 사고 회피).
+위 2번 (FOUND) + 3번 (OPEN PR) 이 동시에 걸리고, 해당 PR 이 task 파일만 (코드 변경 0개) 머지 대기 중이라면 **옵션 A (이어서 작업)** 로 전환한다.
+이는 차단이 아니라 **그 PR 을 그대로 결과물 통합 PR 로 사용**하는 흐름이다 (사후 정리 사고 회피).
 
 **판정 기준** — `gh pr view <N> --json files,additions,deletions` 결과:
 - `files` 가 `tasks/{plan}/...` 만 포함 + 코드 (`src/...`) 변경 0
@@ -89,7 +90,8 @@ Agent({
 
 **스폰 직후 검증 (필수, 매 Agent 호출마다)**:
 
-`name` 파라미터를 빠뜨려도 Agent 호출은 silent 하게 성공한다 (응답 메시지가 정식 멤버 케이스와 거의 동일해 시각 구분 불가). 정식 멤버 등록 여부는 반드시 `team config.json` 으로 직접 확인한다.
+`name` 파라미터를 빠뜨려도 Agent 호출은 silent 하게 성공한다 — 응답 메시지가 정식 멤버 케이스와 거의 동일해 시각 구분 불가.
+정식 멤버 등록 여부는 반드시 `team config.json` 으로 직접 확인한다.
 
 응답 형식 차이로도 1차 식별 가능:
 - ✅ 정식 멤버: `agent_id: critic@plan{N}` + `name: critic` + `team_name: plan{N}` 노출
@@ -108,7 +110,8 @@ team-lead 외 멤버가 0명이면 직전 Agent 호출에서 `name` 누락. `age
 
 **팀원 프롬프트/메시지는 worktree 절대경로로 전달한다 (필수).**
 
-sub-agent는 main 워킹 디렉터리에서 실행될 수 있다. 상대경로나 `tasks/{plan}/...` 형태로 지시하면 worktree 브랜치에 커밋된 최신 파일이 아니라 main의 구버전 또는 미존재 파일을 읽어 오판 사고가 발생한다.
+sub-agent는 main 워킹 디렉터리에서 실행될 수 있다.
+상대경로나 `tasks/{plan}/...` 형태로 지시하면 worktree 브랜치에 커밋된 최신 파일이 아니라 main 의 구버전 또는 미존재 파일을 읽어 오판 사고가 발생한다.
 
 - 파일 참조는 반드시 `/Users/.../.claude/worktrees/{plan이름}/tasks/{plan}/phase-XX.md` 형식의 절대경로
 - 팀원이 구버전을 본다고 의심되면 `grep`한 실제 파일 내용을 메시지에 붙여 넣고 절대경로 재확인 요청
@@ -173,7 +176,10 @@ phase 프롬프트 규칙은 기존 `plan-and-build`와 동일:
 - 원자적 단일 책임, 작업 항목 5개 이하
 - 자기완결적 (이전 대화 없이 독립 실행 가능)
 - 성공 기준에 모든 작업 검증 포함
-- **마지막 phase는 "task 완료 처리" 단계를 포함**: `index.json`의 `status`를 `"completed"`로, 모든 phase `status`도 `"completed"`로 업데이트 (executor가 같은 phase에서 수행하고 team-lead가 최종 커밋에 포함)
+- **마지막 phase는 "task 완료 처리" 단계를 포함**
+  - `index.json`의 `status` 를 `"completed"` 로
+  - 모든 phase `status` 도 `"completed"` 로 업데이트
+  - executor 가 같은 phase 에서 수행하고 team-lead 가 최종 커밋에 포함
 
 task 파일 생성 후 커밋.
 
@@ -209,14 +215,17 @@ executor 규칙:
 - phase-{N}.md를 순서대로 읽고 실행
 - 각 phase 완료 후 성공 기준 검증
 - **커밋은 하지 않음** — phase 별 commit 은 team-lead 가 수행 (아래 6.1 참조)
-- **마지막 phase에서 `tasks/{NNN}-{task-name}/index.json`의 `status`/`current_phase`/각 phase `status`를 `completed`로 업데이트** (별도 phase 아닌 마지막 phase 작업 내 스텝으로)
+- **마지막 phase 에서 `tasks/{NNN}-{task-name}/index.json` 의 다음 필드를 `completed` 로 업데이트**
+  - `status` / `current_phase` / 각 phase `status`
+  - 별도 phase 아닌 마지막 phase 작업 내 스텝으로 처리
 - phase 완료/실패 시 즉시 team-lead 에게 SendMessage 보고 → team-lead 가 그 phase 를 commit 한 후 다음 phase 진행 지시
 
 ### 6.1 phase 별 atomic commit (필수)
 
 executor 가 phase-{N} 완료 보고하면 team-lead 가 즉시 그 phase 의 변경사항만 commit. 다음 phase 시작 전에 commit 이 끝나야 한다.
 
-**commit 메시지 출처**: 각 phase 파일의 `## 커밋` 섹션에 명시된 `git commit -m "..."` 그대로 사용. team-lead 가 자체 작성 금지 — phase 작성자가 의도한 단일 책임 메시지를 보존한다.
+**commit 메시지 출처**: 각 phase 파일의 `## 커밋` 섹션에 명시된 `git commit -m "..."` 그대로 사용.
+team-lead 가 자체 작성 금지 — phase 작성자가 의도한 단일 책임 메시지를 보존한다.
 
 **commit 단위**:
 - 각 phase 의 `변경 파일 (정확)` 섹션이 정의한 파일 목록만 staging
@@ -233,9 +242,13 @@ git commit -m "<phase-NN.md 의 ## 커밋 섹션 메시지>"
 
 **마지막 phase commit**: phase 작업 + `index.json` completed 마킹이 같은 commit 에 포함됨 (task 파일 설계 시 마지막 phase 의 작업 항목으로 명시).
 
-**FIX_NEEDED 발생 시**: code-reviewer 의 PASS/FIX_NEEDED 판정은 task 종료 시 1회 (8단계 참조). FIX_NEEDED 면 이미 commit 된 phase 들을 amend 하지 않고, 별도 `fix(<scope>): <지적 사항>` commit 추가. amend 금지 — 이미 push 됐을 수 있고, history 연속성 보존이 디버깅 가치가 더 큼.
+**FIX_NEEDED 발생 시**: code-reviewer 의 PASS/FIX_NEEDED 판정은 task 종료 시 1회 (8단계 참조).
+- FIX_NEEDED 면 이미 commit 된 phase 들을 amend 하지 않고, 별도 `fix(<scope>): <지적 사항>` commit 추가
+- amend 금지 — 이미 push 됐을 수 있고, history 연속성 보존이 디버깅 가치가 더 큼
 
-**push 주기**: 매 phase commit 후 즉시 push 하지 않고 task 종료 시 일괄 push (9단계). PR 생성 직전이라 commit 누적이 자연스러움. 단 worktree 가 길어지면 (1시간 이상) 중간 push 1회 허용.
+**push 주기**: 매 phase commit 후 즉시 push 하지 않고 task 종료 시 일괄 push (9단계).
+PR 생성 직전이라 commit 누적이 자연스러움.
+단 worktree 가 길어지면 (1시간 이상) 중간 push 1회 허용.
 
 ### 7. 코드 품질 검사 (code-reviewer)
 
@@ -243,7 +256,9 @@ executor 완료 후 team-lead가 **code-reviewer 팀원에게 SendMessage로 검
 
 **code-reviewer 스폰 시점**: executor와 동시에 `run_in_background: true`로 스폰하되, executor 완료 후 SendMessage로 검사 시작 지시.
 
-**사전 해소 게이트 (필수)**: code-reviewer 검사 시작 전에 `.claude/skills/_shared/code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인. 적용 안 됐으면 그 자리에서 FIX_NEEDED 회신 (executor 재투입). 본 docs 가 회피 패턴의 단일 소스 — 13 항목과 별도로 grep 게이트.
+**사전 해소 점검 (필수)**: code-reviewer 검사 시작 전에 `.claude/skills/_shared/code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인.
+적용 안 됐으면 그 자리에서 FIX_NEEDED 회신 (executor 재투입).
+본 docs 가 회피 패턴의 단일 소스 — 13 항목과 별도로 grep 점검.
 
 **code-reviewer에게 전달할 검사 항목:**
 
