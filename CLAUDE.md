@@ -195,6 +195,7 @@ grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "123456789
 
 - 각 phase는 **원자적 단일 책임** — 다른 관심사면 별도 phase로 분리. **작업 항목 5개 이하** 엄수
 - **task 파일 생성 즉시 git commit** — index.json + phase 파일을 실행 전에 커밋
+- **task 파일 + planning docs 는 main 브랜치 직접 commit** — 별도 branch 분기 금지. 실제 코드 구현 시점에 새 `feat/`/`fix/` branch 잘라서 PR 워크플로우 시작
 - task 완료 즉시 git commit (index.json 상태 갱신 포함)
 - 각 phase 프롬프트는 **자기완결적** (이전 대화 없이 독립 실행 가능)
 - **docs 최신화는 task 생성 전 필수** — task phase 내에서 docs 변경 금지
