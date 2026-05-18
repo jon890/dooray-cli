@@ -208,21 +208,32 @@ markdown bullet list 로 변환한다.
 
 ### 6. 한 bullet 에 다중 속성 압축 금지 — sub-bullet 으로 분리
 
-한 bullet 안에 **무엇 / 어떻게 / 예외 / 조건 / 근거** 중 2개 이상의 독립 속성을 콤마나
-마침표로 이어 압축하지 않는다. 각 속성은 sub-bullet 으로 분리.
+한 bullet 안에 **무엇 / 어떻게 / 예외 / 조건 / 근거** 중 2개 이상의 독립 속성을 다음 연결로
+이어 압축하지 않는다.
+각 속성은 sub-bullet 으로 분리.
 
-특히 release 노트 / ADR / task 설명처럼 "옵션 — 동작 + 정책 + 출처" 같은 다층 정보가
-한 줄에 모이기 쉬운 곳에서 주의.
+- 마침표 (`. ... .`) — 여러 문장
+- 콤마 (`A, B, C`) — 병렬 항목
+- 더하기 (`A + B + C`) — 변경 사항·구성 요소 나열
+- 슬래시 (`A / B / C` 3개 이상) — 패턴 2 와 중첩
+
+특히 release 노트 / ADR / task 설명에서 "옵션 — 동작 + 정책 + 출처" 같은 다층 정보가
+한 줄에 모이기 쉬움.
 
 ```markdown
 나쁨:
 - `--template <name|id>` — 템플릿 기반 task 생성. `interpolation=true` 기본으로 매크로
-  치환, 사용자 옵션 (`--title`/`--body`) 명시 시 override (Issue #59, ADR-027)
+  치환, 사용자 옵션 명시 시 override (Issue #59, ADR-027)
+- fix: `match.ts` undefined 가드 + adapter 사전 필터 + `Type.code` optional 완화
 
 좋음:
 - `--template <name|id>` — 템플릿 기반 task 생성 (Issue #59, ADR-027)
   - 기본 동작: `interpolation=true` — 시스템 매크로 (`${year}` 등) 치환
-  - override: 사용자 옵션 (`--title`/`--body`) 명시 입력 시 우선
+  - override: 사용자 옵션 명시 입력 시 우선
+- fix
+  - `match.ts` 에 undefined / 빈 문자열 가드
+  - adapter 단에서 사전 필터
+  - `Type.code` 를 optional 로 완화
 ```
 
 ### 적용 시점
