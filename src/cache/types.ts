@@ -55,7 +55,7 @@ export const MEMBER_GROUPS_TTL_MS = 86_400_000; // 24h
 
 export interface CachedMemberGroup {
   id: string;
-  code: string;
+  code?: string;  // optional — 실제 API 응답에서 누락 케이스 존재 (ADR-026)
 }
 
 export const WIKIS_TTL_MS = 86_400_000; // 24h — wiki home은 거의 불변
