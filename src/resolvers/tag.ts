@@ -177,12 +177,13 @@ export async function validateMandatoryCoverage(
   const selectedSet = new Set(selectedTagIds);
   const mandatoryGroups = new Map<string, { groupName: string; tagsInGroup: CachedTag[] }>();
   for (const t of tags) {
-    if (t.groupMandatory && t.groupId) {
-      if (!mandatoryGroups.has(t.groupId)) {
-        mandatoryGroups.set(t.groupId, { groupName: t.groupName ?? t.groupId, tagsInGroup: [] });
-      }
-      mandatoryGroups.get(t.groupId)!.tagsInGroup.push(t);
+    if (!t.groupMandatory || !t.groupId) continue;
+    let group = mandatoryGroups.get(t.groupId);
+    if (!group) {
+      group = { groupName: t.groupName ?? `그룹 ${t.groupId}`, tagsInGroup: [] };
+      mandatoryGroups.set(t.groupId, group);
     }
+    group.tagsInGroup.push(t);
   }
   for (const [, info] of mandatoryGroups) {
     const covered = info.tagsInGroup.some((t) => selectedSet.has(t.id));
@@ -199,7 +200,7 @@ export async function validateMandatoryCoverage(
   const selectOneGroups = new Map<string, { name: string; tags: string[] }>();
   for (const t of tags) {
     if (!t.groupSelectOne || !t.groupId || !selectedSet.has(t.id)) continue;
-    const entry = selectOneGroups.get(t.groupId) ?? { name: t.groupName ?? t.groupId, tags: [] };
+    const entry = selectOneGroups.get(t.groupId) ?? { name: t.groupName ?? `그룹 ${t.groupId}`, tags: [] };
     entry.tags.push(t.name);
     selectOneGroups.set(t.groupId, entry);
   }
