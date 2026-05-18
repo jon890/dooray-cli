@@ -88,27 +88,27 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 
 아래 작업을 할 때는 해당 ADR을 반드시 먼저 읽는다 — 라이브러리 고유 함정·실험 결과·정책 근거가 담겨 있어 모르고 진행하면 버그 재발 위험.
 
-| 상황 | 필수 확인 ADR |
-|---|---|
-| 새 HTTP 요청 (retry·timeout·error 분기) | **ADR-002** (ky) |
-| `~/.dooray/cache/` 구조 변경 | **ADR-004**, **ADR-010** (TTL + 파일 분리) |
-| IMAP 메일 조회 기능 | **ADR-012** (imapflow + 서버 특이점) |
-| SMTP 메일 발송 기능 | **ADR-013** (nodemailer) |
-| 멤버·프로젝트 이름 부분일치 | **ADR-008** (모호 → 에러 + 후보) |
-| post 메타데이터 (태그/부모/워크플로우/마일스톤) 옵션 | **ADR-019** (이름 lookup + mandatory 사전 검증 + workflow 후속 호출 정책) |
-| post 명령 input 통합 (`--id`/URL/positional) + 단위 테스트 | **ADR-020** (분기 규칙 + vitest 도입 근거) |
-| `member` 명령 + 표시명 enrich | **ADR-021** (캐시 전략 + table-only enrich + list/get 시그니처) |
-| `feedback` 명령 (GitHub issue 등록) | **ADR-022** (gh CLI 위임 + sanitization 정책) |
-| `feedback --last` (last-run 추적) | **ADR-023** (opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹) |
-| `comment file *` 명령 (list/upload/download/delete) | **ADR-024** (post-level files API + 댓글 PUT 합성 — Dooray 댓글 전용 endpoint 부재) |
-| `post edit/create` 의 cc/to 변경 (멤버/그룹) | **ADR-025** (full payload PUT + `type: "group"` + `projectMemberGroupId`) |
-| Wiki 명령 (`wiki page create/edit`) 추가/수정 | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기) |
-| `post create --template` + `project templates` 명령 | **ADR-027** (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외) |
-| 파일 업로드/다운로드 (307 처리) | **ADR-015** (수동 redirect + Auth 헤더 재첨부) |
-| `dooray setup` 마법사 변경 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치) |
-| 새 Commander.js 서브커맨드 추가 | (ADR 없음 — 기존 `commands/*.ts` 패턴 참조) |
-| 새 출력 포맷 (table/json/quiet) | (ADR 없음 — 기존 `formatters/*.ts` 패턴 참조) |
-| 에러 처리·exitCode 정책 | (ADR 없음 — `src/utils/errors.ts` + `src/utils/exit-codes.ts` 직접 확인) |
+| 상황                                                       | 필수 확인 ADR                                                                                  |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 새 HTTP 요청 (retry·timeout·error 분기)                    | **ADR-002** (ky)                                                                               |
+| `~/.dooray/cache/` 구조 변경                               | **ADR-004**, **ADR-010** (TTL + 파일 분리)                                                     |
+| IMAP 메일 조회 기능                                        | **ADR-012** (imapflow + 서버 특이점)                                                           |
+| SMTP 메일 발송 기능                                        | **ADR-013** (nodemailer)                                                                       |
+| 멤버·프로젝트 이름 부분일치                                | **ADR-008** (모호 → 에러 + 후보)                                                               |
+| post 메타데이터 (태그/부모/워크플로우/마일스톤) 옵션       | **ADR-019** (이름 lookup + mandatory 사전 검증 + workflow 후속 호출 정책)                      |
+| post 명령 input 통합 (`--id`/URL/positional) + 단위 테스트 | **ADR-020** (분기 규칙 + vitest 도입 근거)                                                     |
+| `member` 명령 + 표시명 enrich                              | **ADR-021** (캐시 전략 + table-only enrich + list/get 시그니처)                                |
+| `feedback` 명령 (GitHub issue 등록)                        | **ADR-022** (gh CLI 위임 + sanitization 정책)                                                  |
+| `feedback --last` (last-run 추적)                          | **ADR-023** (opt-in + 에러시만 + 최소 세트 + argv 패턴 마스킹)                                 |
+| `comment file *` 명령 (list/upload/download/delete)        | **ADR-024** (post-level files API + 댓글 PUT 합성 — Dooray 댓글 전용 endpoint 부재)            |
+| `post edit/create` 의 cc/to 변경 (멤버/그룹)               | **ADR-025** (full payload PUT + `type: "group"` + `projectMemberGroupId`)                      |
+| Wiki 명령 (`wiki page create/edit`) 추가/수정              | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기)       |
+| `post create --template` + `project templates` 명령        | **ADR-027** (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외) |
+| 파일 업로드/다운로드 (307 처리)                            | **ADR-015** (수동 redirect + Auth 헤더 재첨부)                                                 |
+| `dooray setup` 마법사 변경                                 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치)                                                  |
+| 새 Commander.js 서브커맨드 추가                            | (ADR 없음 — 기존 `commands/*.ts` 패턴 참조)                                                    |
+| 새 출력 포맷 (table/json/quiet)                            | (ADR 없음 — 기존 `formatters/*.ts` 패턴 참조)                                                  |
+| 에러 처리·exitCode 정책                                    | (ADR 없음 — `src/utils/errors.ts` + `src/utils/exit-codes.ts` 직접 확인)                       |
 
 신규 ADR 추가 시 본 표에 행 추가. **"(등록 필요)" 플레이스홀더 사용 금지** — ADR이 정말 없으면 위처럼 "(ADR 없음 — 코드 위치)" 형식으로 직접 가리키거나 표에서 행 자체를 빼는 쪽이 낫다.
 
@@ -141,19 +141,75 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 
 docs / skill / task 파일을 한국어로 작성할 때 **한국인이 자연스럽게 읽히는 표현을 우선** 한다. 영어 단어를 한자/한글 음차한 표현 (특히 "X 게이트", "X 트리아지", "X 매트릭스" 같은 외래어 합성) 은 사용 금지.
 
-| 금지 | 권장 대체 |
-|---|---|
-| 자명성 게이트 | **ADR 작성 전 점검** (자명성 자체는 한자어 OK — 동사화 "자명한지 확인" 도 OK) |
-| 매트릭스 (matrix) | **표** / **영향 표** / **분류 표** / **변경-docs 매핑 표** |
-| 트리아지 (triage) | **분류** / **우선순위 분류** |
-| 베이스라인 (baseline) | **기준선** / **기준값** |
-| 스파이크 (spike) | **사전 조사** / **API 검증** |
+| 금지                  | 권장 대체                                                                     |
+| --------------------- | ----------------------------------------------------------------------------- |
+| 자명성 게이트         | **ADR 작성 전 점검** (자명성 자체는 한자어 OK — 동사화 "자명한지 확인" 도 OK) |
+| 매트릭스 (matrix)     | **표** / **영향 표** / **분류 표** / **변경-docs 매핑 표**                    |
+| 트리아지 (triage)     | **분류** / **우선순위 분류**                                                  |
+| 베이스라인 (baseline) | **기준선** / **기준값**                                                       |
+| 스파이크 (spike)      | **사전 조사** / **API 검증**                                                  |
 
 이 정책은 **새 작성물에 우선 적용**한다. 기존 문서에서 위 표현이 발견되면:
+
 - 현재 편집 중인 파일이면 함께 정리
 - 작업 외 파일이면 사용자에게 알려 별도 정리 여부를 물어본다 (일괄 교체 PR 등)
 
 표에 없는 외래어라도 같은 원칙 (한국인 독해 자연스러움) 으로 자체 판단. 단 **기술 용어 그대로 쓰는 게 표준인 경우** (예: `rebase`, `merge`, `commit`, `endpoint`, `payload`) 는 그대로 유지 — 한국어 대체가 오히려 어색.
+
+## docs / ADR 작성 형식 (가독성 + 토큰 효율)
+
+대상: `docs/*.md` / `CLAUDE.md` / `tasks/**/*.md` / `README.md` / `skills/dooray-cli/SKILL.md`.
+
+목표는 두 가지 — 작성자가 읽기 쉬울 것 (가독성), LLM 컨텍스트 비용을 늘리지 않을 것.
+두 목표가 충돌할 때는 가독성을 우선한다.
+
+### 1. semantic line break (문장당 1줄)
+
+한 단락 안의 문장은 줄바꿈으로 분리.
+markdown 렌더링 결과는 동일하지만 소스 가독성 ↑ + git diff 정밀 + 토큰 동일.
+
+**금지**: 한 단락에 2 문장 이상 같은 줄에 이어쓰기.
+
+```markdown
+나쁨: A 채택. B 가 더 빠르지만 C 위험. D 보류.
+좋음:
+A 채택.
+B 가 더 빠르지만 C 위험.
+D 보류.
+```
+
+### 2. enumerated inline 금지
+
+`① ... ② ... ③ ...` / `1) ... 2) ... 3) ...` / 슬래시 나열 (`A / B / C` 3개 이상) 형식은
+markdown bullet list 로 변환한다.
+
+```markdown
+나쁨: 정책 ① X 적용, ② Y 검증, ③ Z 제외.
+좋음:
+- X 적용
+- Y 검증
+- Z 제외
+```
+
+### 3. 괄호 중첩 2겹 이상 금지
+
+`(... (...) ...)` 같은 중첩이 발생하면 단락 분리 또는 bullet 분리로 평탄화한다.
+
+### 4. `=` / `→` 동치·인과 압축은 한 단락 1회만
+
+여러 동치 / 인과 관계를 한 문장에 압축하지 않는다.
+각 관계마다 별 문장 + 줄바꿈으로 분리.
+
+### 5. 한 문장이 길면 의미 단위 분할
+
+한 문장이 약 80자 초과 + 백틱 3개 이상 또는 괄호 다수면 의미 단위로 나눈다.
+"한국어 문장 + 영어 약어 + 코드 inline" 혼재는 가독성 손실의 주범.
+
+### 적용 시점
+
+- **신규 작성**: 위 5 패턴 자체 점검 후 commit
+- **기존 docs**: 편집 중인 파일은 함께 정리. 일괄 정리는 별도 task
+- **review**: code-reviewer / critic / docs-verifier 가 5 패턴 위반을 지적할 수 있음
 
 ## 사용자에게 선택지 제시
 
@@ -167,14 +223,14 @@ docs / skill / task 파일을 한국어로 작성할 때 **한국인이 자연�
 
 이 repo는 GitHub public이므로 다음 식별자는 **README/skills/docs/CLAUDE.md/이슈 본문 어디에도 노출 금지**. 코드 예시·시나리오·issue body 작성 시 항상 placeholder 사용.
 
-| 노출 금지 | 대체 |
-|---|---|
-| 사내 Dooray 프로젝트 코드 (예: `tc-ocr`) | `<project>` |
-| NHN 도메인 (`nhnent`, `nhn.com`, `nhnent.com`, `nhn-comico` 등) | `<tenant>` / `example.com` |
-| 사내 이메일 (`*@nhn*.com`, `*@example.com` 사용 사외) | `user@example.com` |
-| 실제 19자리 numeric ID (postId/pageId/memberId/projectId/groupId) | `<postId>` / `<pageId>` / `<memberId>` 등 |
-| 실명 (사용자 본인 + 동료 한국어 이름) | `<사용자A>` 또는 가상 이름(`홍길동`/`김철수`) — 가상은 OK |
-| Dooray orgId (실제 19자리) | `<orgId>` |
+| 노출 금지                                                         | 대체                                                      |
+| ----------------------------------------------------------------- | --------------------------------------------------------- |
+| 사내 Dooray 프로젝트 코드 (예: `tc-ocr`)                          | `<project>`                                               |
+| NHN 도메인 (`nhnent`, `nhn.com`, `nhnent.com`, `nhn-comico` 등)   | `<tenant>` / `example.com`                                |
+| 사내 이메일 (`*@nhn*.com`, `*@example.com` 사용 사외)             | `user@example.com`                                        |
+| 실제 19자리 numeric ID (postId/pageId/memberId/projectId/groupId) | `<postId>` / `<pageId>` / `<memberId>` 등                 |
+| 실명 (사용자 본인 + 동료 한국어 이름)                             | `<사용자A>` 또는 가상 이름(`홍길동`/`김철수`) — 가상은 OK |
+| Dooray orgId (실제 19자리)                                        | `<orgId>`                                                 |
 
 **검증 grep** (commit/이슈 작성/release 전 실행):
 
@@ -212,6 +268,7 @@ type(scope): description
 ```
 
 예시:
+
 - `feat(commands): add wiki search subcommand`
 - `fix(cache): resolve atomic write race in member store`
 - `docs(adr): add ky retry policy ADR`
