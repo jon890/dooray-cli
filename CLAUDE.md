@@ -68,7 +68,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - `post edit`, `comment edit`은 `--title`/`--body` 옵션으로 non-interactive 사용 가능 (`--subject`는 deprecated alias, stderr 경고 후 동작)
 - `post create`는 `--title` 필수 (또는 `--subject` alias)
 - `post create`는 `--tag` (반복) / `--parent` (`code/number` 또는 raw postId) / `--workflow` / `--milestone` 지원. mandatory-tag 그룹은 클라이언트가 사전 검증
-- `post edit` 도 `--tag` (반복) / `--tag-clear` / `--tag-remove` (반복) 지원 — mandatory 검증 동일 적용 (Issue #66, ADR-019 확장). `--title`/`--body` 없이 단독 호출 가능 — 기존 본문은 자동 재전송. 머지 로직은 `src/resolvers/post-tags.ts` `mergeTagIds` (clear → remove → add → dedupe). interactive 모드는 옵션 무시 + 경고
+- `post edit` 도 `--tag` (반복) / `--tag-clear` / `--tag-remove` (반복) 지원 — mandatory 검증 동일 적용 (Issue #66, ADR-019 확장). `--title`/`--body` 없이 단독 호출 가능 — 기존 본문은 자동 재전송. 머지 로직은 `src/resolvers/post-tags.ts` `mergeTagIds` (clear → remove → add → dedupe). tag 옵션은 `nonInteractive` 조건에 포함되어 $EDITOR 미진입 (cc/parent 와 달리 interactive 분기 자체가 발생 안 함)
 - post 하위 17개 명령(get/edit/done/workflow + comment 5개 + file 5개 + comment file 4개)은 `<project> <post-number>` 외에도 `--id <postId>` / `--url <url>` / 첫 positional에 Dooray URL 직접 입력 지원. post / comment / file 13개는 `resolvePostInput`, comment file 4개는 `resolveCommentFileInput` (내부에서 `resolvePostInput` 위임 + comment-id·secondary 분기 추가) 헬퍼에서 분기
 - `dooray post comment file *` 4 명령(list/upload/download/delete) — 댓글에 첨부된 파일 관리. Dooray 가 댓글 전용 endpoint 미지원이라 내부적으로 post-level files API + 댓글 본문 PUT(`![filename](/files/<id>)` markdown) 합성으로 동작 (ADR-024). `delete` 는 markdown 제거 + 파일 삭제 둘 다 수행 (atomic 보장 없음 — 부분 성공 시 stderr 안내 + non-zero exit)
 - `dooray member get/list` 명령으로 표시명 조회. `post comment list` table 출력은 Creator 컬럼을 project 멤버 캐시로 enrich (단 `--json`은 raw 유지)
