@@ -227,7 +227,7 @@ dooray post edit --id <postId> --parent <parentPostId>   # 직접 postId
 
 **한계**: Dooray API 가 `unset-parent-post` 미제공 → CLI 로 parent 해제 (top-level 화) 불가. 웹 UI 에서 수동 처리.
 
-interactive ($EDITOR) 모드에서는 이 옵션들 무시 + stderr 경고 (mention/link-task 패턴 답습).
+interactive ($EDITOR) 모드에서는 이 옵션들 무시 + stderr 경고 (mention/link-task 와 동일 패턴).
 
 ## 업무 메타데이터 흐름 (ADR-019)
 

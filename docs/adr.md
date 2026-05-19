@@ -322,7 +322,7 @@ API 의 `USER_INVALID_TAG_MANDATORY_PREFIX` 에러는 어느 그룹이 누락인
 
 **확장 (2026-05-18, Issue #66)**: `post edit` 도 동일 정책 적용 — `--tag` / `--tag-clear` / `--tag-remove` 옵션 + mandatory 검증 동일 호출.
 `--title`/`--body` 없이 단독 호출 허용 (body 자동 재전송).
-머지 로직은 `src/resolvers/post-tags.ts` 의 `mergeTagIds` pure helper — `post-users.ts` 패턴 답습.
+머지 로직은 `src/resolvers/post-tags.ts` 의 `mergeTagIds` pure helper — `post-users.ts` 동일 패턴 적용.
 
 ---
 
@@ -472,7 +472,7 @@ PostUser type 의 그룹 분기는 `type: "memberGroup"` 이 아니라 `type: "g
 - subcommand 분리 (`post participants {add,set,remove}`) — `post edit` 의 다른 옵션 (title/body/mention/link-task) 과 조합 불가, 한 번 PUT 으로 끝낼 수 없어 race 위험
 - replace 기본 정책 — 사용자가 매번 전체 멤버/그룹 알아야 함, 자동화 친화성 떨어짐. append + `--cc-clear` / `--to-clear` 채택
 
-**적용 범위**: `post edit` + `post create`. interactive ($EDITOR) 모드는 frontmatter 와 충돌 → 옵션 사용 시 stderr 경고 후 무시 (mention/link-task 패턴 답습).
+**적용 범위**: `post edit` + `post create`. interactive ($EDITOR) 모드는 frontmatter 와 충돌 → 옵션 사용 시 stderr 경고 후 무시 (mention/link-task 동일 패턴 적용).
 
 ---
 
@@ -531,7 +531,7 @@ Dooray API 가 `GET /templates` 와 `interpolation` 파라미터를 노출 (cmux
 
 **적용 범위**: `post create --template` 만.
 `post edit --template` 은 별도 — 기존 본문 덮어쓰기인지 merge 인지 의도 불명확.
-templates 캐시는 ADR-004/010 패턴 답습 (TTL 24h, `~/.dooray/cache/templates/{projectId}.json`).
+templates 캐시는 ADR-004/010 동일 패턴 적용 (TTL 24h, `~/.dooray/cache/templates/{projectId}.json`).
 
 ---
 

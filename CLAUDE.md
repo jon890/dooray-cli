@@ -82,7 +82,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - `post create` / `post edit` / `post comment add/edit` 4 명령 모두 `--mention` / `--mention-group` / `--link-task` / `--dry-run` 동일 옵션 지원. mention 은 prepend, link-task 는 append, 적용 순서는 mention → link-task. interactive ($EDITOR) 모드의 `post edit` 는 mention/link-task 무시 + 경고
 - `post edit` 는 참조자/담당자 변경 옵션 6개 지원: `--cc <name>` / `--cc-group <code>` (반복) + `--cc-clear` + 동일 `--to` 3개. 기본 append (기존 cc/to 유지 + dedupe), `--*-clear` 는 기존 비우고 신규만. `post create` 는 `--cc-group` / `--to-group` 2개 추가. group 은 `type: "group"` + `projectMemberGroupId` 로 전송 (ADR-025). interactive 모드는 이 6+2 옵션 무시 + 경고
 - `post edit --parent <ref>` 는 상위 업무 설정/변경 — `client.setPostParent` (별도 `POST .../set-parent-post` endpoint) 호출. `updatePost` 의 full payload 가 아닌 dedicated endpoint 사용 (Dooray API contract). Dooray 가 `unset-parent-post` 미제공 → **parent 해제 (top-level 화) 는 웹 UI 에서 처리**. interactive 모드 무시 + 경고
-- `post create --template <name|id>` 는 템플릿으로 정형 task 생성. `GET .../templates` 목록 (resolver matchByName 부분일치) + `GET .../templates/{id}?interpolation=true` 로 시스템 매크로 (`${year}` 등) 치환된 본문/users/tags 자동 채움. 사용자 옵션 (`--title`/`--body`/`--tag`/`--to`/`--cc`) 명시 입력 시 override (ADR-027). `--field key=value` 사용자 정의 변수는 본 task scope 외 (별도 후속). 신규 명령 `dooray project templates <project>` 로 목록 조회. 캐시 TTL 24h (tag/workflow 답습)
+- `post create --template <name|id>` 는 템플릿으로 정형 task 생성. `GET .../templates` 목록 (resolver matchByName 부분일치) + `GET .../templates/{id}?interpolation=true` 로 시스템 매크로 (`${year}` 등) 치환된 본문/users/tags 자동 채움. 사용자 옵션 (`--title`/`--body`/`--tag`/`--to`/`--cc`) 명시 입력 시 override (ADR-027). `--field key=value` 사용자 정의 변수는 본 task scope 외 (별도 후속). 신규 명령 `dooray project templates <project>` 로 목록 조회. 캐시 TTL 24h (tag/workflow 와 동일 패턴)
 
 ## 상황별 ADR 필수 참조
 
@@ -152,6 +152,7 @@ docs / skill / task 파일을 한국어로 작성할 때 **한국인이 자연�
 | 사전 소진             | **사전 해소** ("소진" 은 자원 고갈 비유 — 직관 어려움)                        |
 | 단일 진실원           | **단일 소스** ("진실원" 은 truth-source 직역, 한국어 자연어 아님)             |
 | 변질 의심             | **변질 우려** ("의심" 보다 "우려" 가 더 자연)                                 |
+| 패턴 답습             | **동일 패턴 적용** / **그대로 적용** ("답습" 은 "낡은 것 베끼기" 부정 뉘앙스) |
 
 이 정책은 **새 작성물에 우선 적용**한다. 기존 문서에서 위 표현이 발견되면:
 
@@ -252,7 +253,7 @@ markdown bullet list 로 변환한다.
 - 옵션 2~4개, 추천안은 첫 번째 + label 끝에 `(추천)` 표기. 추천 이유는 `description` 한 줄로 설명
 - 모호함 해소가 필요한 시점이면 자리 미루지 말고 즉시 묻는다 — 가정으로 진행했다가 수정 요청 받는 비용이 더 큼
 - 복잡한 비교가 필요한 질문은 옵션마다 `preview` (ASCII 다이어그램·코드 스니펫)로 시각화하여 답변 부담 최소화
-- "당연히 그렇게 가는" 결정(예: 기존 패턴 답습, 변경 없음)은 굳이 묻지 말고 본문에 "권장: 그대로" 한 줄로 처리. 진짜 분기가 있는 사항만 `AskUserQuestion`
+- "당연히 그렇게 가는" 결정(예: 기존 패턴 그대로 적용, 변경 없음)은 굳이 묻지 말고 본문에 "권장: 그대로" 한 줄로 처리. 진짜 분기가 있는 사항만 `AskUserQuestion`
 
 ## PII / 사내 식별자 노출 금지 (public OSS)
 
