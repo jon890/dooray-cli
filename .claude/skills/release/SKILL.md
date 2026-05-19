@@ -100,22 +100,14 @@ grep -nE "<신규 옵션|신규 명령>" skills/dooray-cli/SKILL.md
 
 #### 3.5. PII / 사내 식별자 노출 검증 (필수, 실패 시 중단)
 
-CLAUDE.md "PII / 사내 식별자 노출 금지" 섹션과 동일 grep:
-
-```bash
-# cwd: <repo root>
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com|kim@example\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
-# 0건이어야 release 진행
-
-grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|<postId>|<pageId>"
-# 0건이어야 release 진행
-```
+`CLAUDE.md` "PII / 사내 식별자 노출 금지 (public OSS)" 섹션의 검증 grep 두 명령을 모두 실행한다.
+grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실행 시점과 후속 처리만 정의.
 
 **히트가 있으면**:
 - 사용자에게 즉시 보고 + 위치 노출
-- placeholder(`<project>`/`<tenant>`/`<postId>` 등) 또는 dummy 패턴(1234567890123456789)으로 교체 후 보완 commit
+- CLAUDE.md PII 섹션의 placeholder 가이드 (`<project>` / `<tenant>` / `<postId>` 등) 또는 dummy 패턴으로 교체 후 보완 commit
 - 보완 commit 후 grep 재실행 → 0건 확인 후 다음 단계 진행
-- **사용자가 "내부 사용 OK"로 명시 동의하지 않는 한 release 차단**
+- **사용자가 "내부 사용 OK" 로 명시 동의하지 않는 한 release 차단**
 
 ### 4. 버전 범프
 
