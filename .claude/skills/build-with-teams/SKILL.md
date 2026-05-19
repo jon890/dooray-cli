@@ -11,11 +11,14 @@ task phase를 Claude Agent Teams 파이프라인으로 실행하는 시스템. `
 
 plan 인자를 받으면 **가장 먼저** 3중 검증. 하나라도 걸리면 사용자에게 알리고 **실행 차단** (사용자 확인 없이 강행 금지):
 
-1. **main의 index.json status**: `tasks/{plan}/index.json`의 `status`가 `"completed"`면 이미 완료
+1. **main 의 index.json status**: `tasks/{plan}/index.json` 의 `status` 확인
    ```bash
-   python3 -c "import json; d=json.load(open('tasks/{plan}/index.json')); print(d['status'])"
+   test -f tasks/{plan}/index.json || echo "TASK_MISSING"
+   jq -r .status tasks/{plan}/index.json 2>/dev/null
    ```
-   `completed` → 차단. `pending`/`in_progress` → 다음 검증.
+   - `TASK_MISSING` → task 파일 부재. `/planning` 으로 먼저 설계할지 사용자에게 확인
+   - `completed` → 추가 검증 필요 (PR 미머지 상태에서 `completed` 가 main 에 들어간 사고 가능성. 2·3번 결과로 판정)
+   - `pending` / `in_progress` → 다음 검증으로
 
 2. **원격 `feat/{plan}` 브랜치 존재**: 이미 작업 중이거나 PR 미머지 상태
    ```bash

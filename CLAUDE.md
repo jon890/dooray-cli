@@ -310,3 +310,21 @@ type(scope): description
 - `docs(adr): add ky retry policy ADR`
 
 이 형식에서 절대 벗어나지 않는다.
+
+### 브랜치 명명 (5 prefix)
+
+| 카테고리 | branch prefix | 사용 | 예시 |
+|---|---|---|---|
+| 신규 기능 task | `feat/{NNN}-{slug}` | task 디렉터리 카테고리가 `feat-` 일 때 | `feat/033-feat-post-edit-tag-options` |
+| 버그 수정 task | `fix/{NNN}-{slug}` | task 디렉터리 카테고리가 `fix-` 일 때 | `fix/032-fix-member-group-resolver-guard` |
+| 리팩토링 task | `refactor/{NNN}-{slug}` | task 디렉터리 카테고리가 `refactor-` 일 때 | `refactor/028-refactor-client-throw-await` |
+| 메타 작업 | `chore/{topic}` | 의존성·도구·docs 일괄 정리 등 task 외 | `chore/replace-foreign-terms` |
+| docs 단독 | `docs/{topic}` | docs 단독 변경 (코드 영향 0) | `docs/readability-6-patterns` |
+
+**규칙**:
+
+- task 폴더명 prefix (`feat-` / `fix-` / `refactor-`) 와 branch prefix 가 **반드시 일치** 한다
+  - 잘못된 예: task `032-fix-...` 를 `feat/032-fix-...` branch 로 분기 → branch prefix 가 task 카테고리 오인
+  - 옳은 예: task `032-fix-...` → `fix/032-fix-...` branch
+- 기존 머지된 branch 는 소급 rename 금지. 향후 신규 task 부터 적용
+- `chore/` 와 `docs/` 는 task 폴더 없이 단독 — slug 만 (`chore/cleanup-dist` / `docs/readability-6-patterns`)
