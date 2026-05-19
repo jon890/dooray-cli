@@ -442,7 +442,25 @@ UPDATE_NEEDED 가 3곳 같이 잡혔는데 그중 1곳을 잘못 갱신했어도
 
 **전제**: `.gitignore`에 `.claude/worktrees/`가 등록되어 있어야 한다.
 
-**필수 선행 체크 — 로컬 main이 origin에 푸시되었는가?**
+### 오타 worktree 잔재 자동 정리 (pre-flight + post-flight 모두 필수)
+
+worktree 생성 직전과 정리 직후 두 시점에 모두 아래 명령으로 `.claude` 외 `.cla*` 디렉터리를 탐지.
+명백한 오타 변형 (`.claire-worktrees`, `.calude-*`, `.claud-*`) 은 사용자 동의 없이 즉시 `rm -rf` + 1줄 보고.
+단 `.claude-` 로 시작하는 (의도된 다른 디렉터리) 가 있다면 사용자에게 먼저 확인.
+
+```bash
+# cwd: <repo root>
+STRAY=$(find . -maxdepth 1 -type d -name '.cla*' ! -name '.claude' 2>/dev/null)
+if [ -n "$STRAY" ]; then
+  echo "⚠️ 오타 worktree 디렉터리 잔재 발견 — 자동 제거:"
+  echo "$STRAY"
+  echo "$STRAY" | xargs -I{} rm -rf {}
+fi
+```
+
+**Why**: 오타 디렉터리 (예: `.claire-worktrees/plan011-...`) 가 빌드 / 테스트 / 타입 검사 도구 (eslint / tsc / vitest) 의 file scan 에 잡혀 사고 유발. 다음 plan 시작 시점에 자동 정리되도록 점검화.
+
+### 필수 선행 체크 — 로컬 main이 origin에 푸시되었는가?
 
 worktree 는 `origin/main` 에서 분기되므로 **로컬 main 에만 있고 푸시 안 된 커밋은 worktree 에 반영되지 않는다**.
 critic 이 "task 파일 없음" 으로 오판하거나 executor 가 구버전 환경에서 실행하는 사고 방지.
