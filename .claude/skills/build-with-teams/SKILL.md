@@ -34,6 +34,23 @@ plan 인자를 받으면 **가장 먼저** 3중 검증. 하나라도 걸리면 �
 
 세 검증 모두 통과해야 신규 실행. 특히 PR 머지 전 단계에서 main의 index.json은 여전히 `pending`이므로 1번만 보면 재실행 사고를 놓친다. 2·3번이 커버.
 
+### `completed` 마킹 ↔ 머지 commit 정합 검증 (역방향)
+
+1번 검증에서 `status` 가 `completed` 인데 실제 머지 commit 이 `origin/main` 에 없으면 **마킹 사고** (commit 만 됐고 PR 머지 전인데 status 가 잘못 갱신된 케이스).
+신규 실행 차단 전 한 번 더 확인:
+
+```bash
+git fetch origin
+# task 번호 또는 task name 으로 머지 commit 검색
+git log origin/main --oneline --grep "{NNN}\|{task-name}" | head -3
+```
+
+부재면 사용자에게 알리고 두 선택:
+- status 를 `pending` 으로 되돌리고 신규 실행 (마킹 사고 정정)
+- 머지 대기 중이면 옵션 A (이어서 작업) 흐름으로 전환
+
+**Why**: completed 가 main 에 들어갔어도 PR 머지 전이면 작업 실제 결과물은 origin/main 에 없다. 1번만 보면 *"완료된 task"* 로 오인해서 재실행 시도 — fos-blog plan006/007 사고 패턴.
+
 ### task 단독 PR 이 이미 열려있는 경우 — 옵션 A (이어서 작업) 권장 흐름
 
 위 2번 (FOUND) + 3번 (OPEN PR) 이 동시에 걸리고, 해당 PR 이 task 파일만 (코드 변경 0개) 머지 대기 중이라면 **옵션 A (이어서 작업)** 로 전환한다.
