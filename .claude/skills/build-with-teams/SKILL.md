@@ -108,6 +108,21 @@ Agent({
 - `run_in_background: true`로 idle 대기 가능
 - 이후 통신은 **모두 `SendMessage({to: "critic", message: "..."})`로만** 진행
 
+**SendMessage 회신 강제 (필수 — 텍스트 출력 누락 사고 방지)**:
+
+스폰된 sub-agent 가 평가 / 검사 결론을 자기 화면에 텍스트로만 출력하고 종료하는 사고가 관측됨.
+결과적으로 main session 까지 라우팅 안 됨 — idle 알림만 도착하고 team-lead 는 평가 결과 미수신 상태에서 다음 단계 진행 불가.
+
+**스폰 프롬프트 + 작업 지시 메시지 양쪽**에 다음 문구를 **반드시 포함**:
+
+```
+회신은 반드시 SendMessage tool 호출로 team-lead 에게 전송할 것.
+자기 화면에 텍스트만 출력하고 종료하면 main session 까지 라우팅 안 됨.
+판정/결론 + 핵심 사유 1-2 문단을 SendMessage 의 message 필드로 보낼 것.
+```
+
+team-lead 는 sub-agent 의 idle 알림만 **2회 이상 연속 수신** 하고 평가 결과 메시지가 없으면 통신 누락 의심 — 즉시 SendMessage 로 재요청 + "SendMessage 로 회신 부탁" 명시.
+
 **스폰 직후 검증 (필수, 매 Agent 호출마다)**:
 
 `name` 파라미터를 빠뜨려도 Agent 호출은 silent 하게 성공한다 — 응답 메시지가 정식 멤버 케이스와 거의 동일해 시각 구분 불가.
