@@ -143,6 +143,21 @@ python3 -c "import json; m=json.load(open('$HOME/.claude/teams/plan{N}/config.js
 
 team-lead 외 멤버가 0명이면 직전 Agent 호출에서 `name` 누락. `agentId: <UUID>` 백그라운드 agent 는 결과 와도 무시하고 **새로 정식 멤버로 스폰**.
 
+**팀원 self-shutdown 패턴 대응 (관측)**:
+
+`oh-my-claudecode:code-reviewer` / `dooray-cli-docs-verifier` 같은 검증 에이전트는 `run_in_background: true` + idle prompt 로 스폰해도 **idle 알림 직후 자체 shutdown 하는 경향** 이 있다.
+critic 은 응답 후 idle 유지에 성공하지만 검증 에이전트는 일관되지 않음.
+
+**우회**:
+
+- 검사 대상 결과물이 준비된 시점에 **즉시 새로 spawn** (idle 대기 의존 금지)
+- team-lead 가 code-reviewer / docs-verifier 의 종료 알림 수신 시 침묵 말고 **새로 스폰 + 즉시 검사 지시 메시지** 묶음으로 처리
+
+**적용 시점**:
+
+- code-reviewer: executor 완료 직후 (executor 와 동시 스폰 X — executor 완료 후 새로 스폰이 안전)
+- docs-verifier: 8단계 검증 직전 새로 스폰
+
 **팀원 프롬프트/메시지는 worktree 절대경로로 전달한다 (필수).**
 
 sub-agent는 main 워킹 디렉터리에서 실행될 수 있다.
