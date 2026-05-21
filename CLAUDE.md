@@ -35,7 +35,7 @@ src/
   cache/store.ts        # ~/.dooray/cache/ 디렉토리 기반 캐시 CRUD
   cache/types.ts        # CacheEntry, Cached* 타입
   resolvers/            # me, project, member, workflow, post, wiki resolver
-  commands/             # Commander.js 커맨드 (project, post, post/file, wiki, mail, config, cache, doctor)
+  commands/             # Commander.js 커맨드 (project, post, post/file, wiki, wiki/page-file, mail, config, cache, doctor)
   editor/index.ts       # $EDITOR 연동 + YAML frontmatter 파싱
   formatters/           # 테이블/JSON/quiet 출력
   utils/                # errors, spinner, exit-codes
@@ -71,6 +71,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - `post edit` 도 `--tag` (반복) / `--tag-clear` / `--tag-remove` (반복) 지원 — mandatory 검증 동일 적용 (Issue #66, ADR-019 확장). `--title`/`--body` 없이 단독 호출 가능 — 기존 본문은 자동 재전송. 머지 로직은 `src/resolvers/post-tags.ts` `mergeTagIds` (clear → remove → add → dedupe). tag 옵션은 `nonInteractive` 조건에 포함되어 $EDITOR 미진입 (cc/parent 와 달리 interactive 분기 자체가 발생 안 함)
 - post 하위 17개 명령(get/edit/done/workflow + comment 5개 + file 5개 + comment file 4개)은 `<project> <post-number>` 외에도 `--id <postId>` / `--url <url>` / 첫 positional에 Dooray URL 직접 입력 지원. post / comment / file 13개는 `resolvePostInput`, comment file 4개는 `resolveCommentFileInput` (내부에서 `resolvePostInput` 위임 + comment-id·secondary 분기 추가) 헬퍼에서 분기
 - `dooray post comment file *` 4 명령(list/upload/download/delete) — 댓글에 첨부된 파일 관리. Dooray 가 댓글 전용 endpoint 미지원이라 내부적으로 post-level files API + 댓글 본문 PUT(`![filename](/files/<id>)` markdown) 합성으로 동작 (ADR-024). `delete` 는 markdown 제거 + 파일 삭제 둘 다 수행 (atomic 보장 없음 — 부분 성공 시 stderr 안내 + non-zero exit)
+- `dooray wiki page file *` 5 명령(list/upload/download/download-all/delete) — wiki 페이지 첨부 파일 관리 (Issue #70). post file 명령군 mirror — `<project> <page-id>` + `--id` + `--url` + positional URL 지원 (`resolveWikiPageInput`). upload 는 `--type general|inline_image` flag (기본 `general`). **multipart 필드 순서 의존**: `type` 필드를 `file` 보다 먼저 append 해야 정상 동작 (ADR-029). list 는 `getWikiPage` 의 `result.files[]` (general) + `result.images[]` (inline) 합성. inline_image upload 시 본문 markdown 자동 삽입 안 함 — upload stdout 에 attachFileId + 사용자 직접 박을 snippet 안내
 - `dooray member get/list` 명령으로 표시명 조회. `post comment list` table 출력은 Creator 컬럼을 project 멤버 캐시로 enrich (단 `--json`은 raw 유지)
 - `dooray feedback`은 GitHub issue를 `gh` CLI에 위임해서 생성. baseUrl/시크릿은 자동 메타에 미포함. `--last`로 직전 명령의 sanitized argv + 에러를 본문 상단에 자동 첨부 (opt-in: `dooray config set track-last-run true`, ADR-023)
 - 제목 옵션 이름은 post·wiki 모두 `--title`로 통일 (Issue #8)
@@ -103,6 +104,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | `comment file *` 명령 (list/upload/download/delete)        | **ADR-024** (post-level files API + 댓글 PUT 합성 — Dooray 댓글 전용 endpoint 부재)            |
 | `post edit/create` 의 cc/to 변경 (멤버/그룹)               | **ADR-025** (full payload PUT + `type: "group"` + `projectMemberGroupId`)                      |
 | Wiki 명령 (`wiki page create/edit`) 추가/수정              | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기)       |
+| Wiki page file 명령 (`wiki page file *`) 추가/수정         | **ADR-029** (multipart `type` 필드 순서 의존 + 307 redirect — ADR-015 재사용)                  |
 | member-group resolver (스키마↔실제 응답 mismatch 가드)     | **ADR-028** (`code` 누락 사전 필터 + `match.ts` undefined/빈 문자열 가드 + 타입 optional 완화) |
 | `post create --template` + `project templates` 명령        | **ADR-027** (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외) |
 | 파일 업로드/다운로드 (307 처리)                            | **ADR-015** (수동 redirect + Auth 헤더 재첨부)                                                 |

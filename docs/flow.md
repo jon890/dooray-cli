@@ -274,6 +274,34 @@ dooray wiki create my-project --title "설계" --body-file design.md
 dooray wiki edit my-project <page-id>            # $EDITOR 수정
 ```
 
+## 위키 페이지 첨부파일 흐름 (Issue #70, ADR-029)
+
+페이지 첨부파일을 CLI 로 관리.
+post file 명령군과 mirror — UX 동일 (`<project> <page-id>` + `--id` + `--url` + positional URL 지원).
+
+```
+# 목록 (general 첨부 + inline image 둘 다 표시)
+dooray wiki page file list my-project <page-id>
+
+# 업로드 (기본 general — 페이지 하단 첨부 영역)
+dooray wiki page file upload my-project <page-id> --file ./SKILL.md
+# stdout: attachFileId + 본문 삽입용 markdown snippet 안내
+
+# 인라인 이미지 업로드 (본문 markdown 은 사용자가 직접 박음 — 자동 합성 안 함)
+dooray wiki page file upload my-project <page-id> --file ./diagram.png --type inline_image
+
+# 다운로드
+dooray wiki page file download my-project <page-id> --file-id <id> -o ./
+
+# 페이지 모든 첨부 일괄 다운로드
+dooray wiki page file download-all my-project <page-id> -o ./attachments/
+
+# 삭제 (post file delete 와 동일 — confirm 없이 즉시)
+dooray wiki page file delete my-project <page-id> --file-id <id>
+```
+
+활용 사례 — 팀 위키에 스킬 파일 첨부 → 팀원이 `wiki page file download-all` 로 일괄 받아 `~/.claude/skills/` 에 그대로 설치.
+
 ## 피드백 흐름 (ADR-022/023)
 
 `dooray feedback` 은 GitHub issue 를 `gh` CLI 위임으로 자동 등록.

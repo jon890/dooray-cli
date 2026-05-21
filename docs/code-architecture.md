@@ -46,6 +46,7 @@ src/
     post-users.ts           # parseUserSpec + mergeUsers + resolveUserAdditions — post edit/create 의 cc/to 멤버·그룹 입력 분기 + 기존 users 와 append/clear/dedupe (ADR-025)
     template.ts             # ensureTemplates + resolveTemplate (ADR-027, TTL 24h)
     post-tags.ts            # mergeTagIds pure helper — post edit 의 --tag/--tag-clear/--tag-remove 머지 (clear → remove → add → dedupe, Issue #66, ADR-019 확장)
+    wiki-page-input.ts      # wiki page file 5 명령 입력 분기 (--id/--url/positional URL → {wikiId, pageId}, post-input.ts 패턴 mirror, ADR-020 확장)
 
   cache/
     store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크
@@ -72,7 +73,7 @@ src/
     spinner.ts              # ora 래퍼 + setQuiet (--json/--quiet 시 noop proxy 반환, Issue #35 item 1)
     exit-codes.ts           # 0 성공 / 1 API오류 / 2 인증실패 / 3 파라미터오류 / 4 설정오류
     body-input.ts           # --body / --body-file → string (stdin "-" + 충돌 가드)
-    dooray-url.ts           # /task/to/<postId> 및 /task/<projectId>/<postId> URL parser (ADR-020)
+    dooray-url.ts           # task URL (/task/to/<postId> + /task/<projectId>/<postId>) + wiki URL (/wiki/<wikiId>/<pageId>) parser (ADR-020)
     comment-enrich.ts       # PostComment[] Creator 이름 채우기 (ADR-021, immutable)
     mention.ts              # 멤버·그룹 멘션 마크업 빌더 + prependMentions (Issue #25)
     task-link.ts            # 업무 링크 빌더 (escapeLinkText / buildTaskLink / appendTaskLinks / parseLinkRef, Issue #33)
@@ -135,6 +136,13 @@ src/
       page-get.ts
       page-create.ts
       page-edit.ts          # $EDITOR + 비대화형 플래그(--title/--body/--body-file)
+      page-file/
+        index.ts            # wikiPageFileCommand 조립
+        list.ts             # 페이지 첨부 목록 (getWikiPage 응답의 files[] + images[] 합성)
+        upload.ts           # 파일 업로드 (multipart type 먼저 → file, ADR-029) + --type general|inline_image
+        download.ts         # 단일 파일 다운로드 (307 redirect, ADR-015 패턴)
+        download-all.ts     # 페이지 모든 첨부 + inline image 일괄 다운로드
+        delete.ts           # 파일 삭제 (post file delete 와 동일 — confirm 없이 즉시)
 
     mail/
       list.ts               # 메일 목록 (--unread, --search)
