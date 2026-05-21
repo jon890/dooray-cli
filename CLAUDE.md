@@ -65,26 +65,125 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 
 ## 주의사항
 
-- `post edit`, `comment edit`은 `--title`/`--body` 옵션으로 non-interactive 사용 가능 (`--subject`는 deprecated alias, stderr 경고 후 동작)
-- `post create`는 `--title` 필수 (또는 `--subject` alias)
-- `post create`는 `--tag` (반복) / `--parent` (`code/number` 또는 raw postId) / `--workflow` / `--milestone` 지원. mandatory-tag 그룹은 클라이언트가 사전 검증
-- `post edit` 도 `--tag` (반복) / `--tag-clear` / `--tag-remove` (반복) 지원 — mandatory 검증 동일 적용 (Issue #66, ADR-019 확장). `--title`/`--body` 없이 단독 호출 가능 — 기존 본문은 자동 재전송. 머지 로직은 `src/resolvers/post-tags.ts` `mergeTagIds` (clear → remove → add → dedupe). tag 옵션은 `nonInteractive` 조건에 포함되어 $EDITOR 미진입 (cc/parent 와 달리 interactive 분기 자체가 발생 안 함)
-- post 하위 17개 명령(get/edit/done/workflow + comment 5개 + file 5개 + comment file 4개)은 `<project> <post-number>` 외에도 `--id <postId>` / `--url <url>` / 첫 positional에 Dooray URL 직접 입력 지원. post / comment / file 13개는 `resolvePostInput`, comment file 4개는 `resolveCommentFileInput` (내부에서 `resolvePostInput` 위임 + comment-id·secondary 분기 추가) 헬퍼에서 분기
-- `dooray post comment file *` 4 명령(list/upload/download/delete) — 댓글에 첨부된 파일 관리. Dooray 가 댓글 전용 endpoint 미지원이라 내부적으로 post-level files API + 댓글 본문 PUT(`![filename](/files/<id>)` markdown) 합성으로 동작 (ADR-024). `delete` 는 markdown 제거 + 파일 삭제 둘 다 수행 (atomic 보장 없음 — 부분 성공 시 stderr 안내 + non-zero exit)
-- `dooray wiki page file *` 5 명령(list/upload/download/download-all/delete) — wiki 페이지 첨부 파일 관리 (Issue #70). post file 명령군 mirror — `<project> <page-id>` + `--id` + `--url` + positional URL 지원 (`resolveWikiPageInput`). upload 는 `--type general|inline_image` flag (기본 `general`). **multipart 필드 순서 의존**: `type` 필드를 `file` 보다 먼저 append 해야 정상 동작 (ADR-029). list 는 `getWikiPage` 의 `result.files[]` (general) + `result.images[]` (inline) 합성. inline_image upload 시 본문 markdown 자동 삽입 안 함 — upload stdout 에 attachFileId + 사용자 직접 박을 snippet 안내
-- `dooray wiki page comment *` 6 명령(list/latest/get/add/edit/delete) — wiki 페이지 댓글 관리. post comment 패턴 mirror — `resolveWikiPageInput` 재사용. 단 wiki comment API 는 **mention / cc / 첨부 파일 미지원** (post comment 대비 시그니처 축소). `add`/`edit` 는 `--body` / `--body-file` 또는 `$EDITOR` fallback. `WikiComment` 타입 신설 (`page.id` + `creator.member` 시그니처) + `formatters/wiki-comment.ts` 전용 포맷. delete 는 confirm 없이 즉시
-- `dooray member get/list` 명령으로 표시명 조회. `post comment list` table 출력은 Creator 컬럼을 project 멤버 캐시로 enrich (단 `--json`은 raw 유지)
-- `dooray feedback`은 GitHub issue를 `gh` CLI에 위임해서 생성. baseUrl/시크릿은 자동 메타에 미포함. `--last`로 직전 명령의 sanitized argv + 에러를 본문 상단에 자동 첨부 (opt-in: `dooray config set track-last-run true`, ADR-023)
-- 제목 옵션 이름은 post·wiki 모두 `--title`로 통일 (Issue #8)
-- resolver(멤버·워크플로우·태그·마일스톤)는 정확일치 → 이름 부분일치, 모호하면 에러 + 후보 목록 출력
-- 멤버 resolver (`resolveMember`) 는 입력 형식 자동 분기: 15자리 이상 숫자 → `getMemberDetail` 로 organizationMemberId 검증 / 이메일 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) → `searchMembers({externalEmailAddresses})` exact / 그 외 → matchByName. `--to`/`--cc`/`--mention` 모두 동일
-- 그룹 resolver (`resolveMemberGroup`) 는 Dooray API 응답에서 `code` 가 누락된 그룹을 사전 필터링 후 매칭 (스키마 ↔ 실제 응답 mismatch — ADR-028, Issue #65). `match.ts` 는 `!!i.name && i.name.includes` 가드 + `options.helpHint` 로 not-found 시 "전체 목록은 dooray X" 안내 출력
-- post 목록은 최신순 정렬 (`-createdAt`)
-- `post edit` / `post comment edit` 는 본문 full-replace. 새 본문에 기존 attachment markdown(`![](/files/<id>)`) 누락 시 (y/N) confirm. non-TTY 는 abort, `--no-confirm` 으로 우회.
-- `post create` / `post edit` / `post comment add/edit` 4 명령 모두 `--mention` / `--mention-group` / `--link-task` / `--dry-run` 동일 옵션 지원. mention 은 prepend, link-task 는 append, 적용 순서는 mention → link-task. interactive ($EDITOR) 모드의 `post edit` 는 mention/link-task 무시 + 경고
-- `post edit` 는 참조자/담당자 변경 옵션 6개 지원: `--cc <name>` / `--cc-group <code>` (반복) + `--cc-clear` + 동일 `--to` 3개. 기본 append (기존 cc/to 유지 + dedupe), `--*-clear` 는 기존 비우고 신규만. `post create` 는 `--cc-group` / `--to-group` 2개 추가. group 은 `type: "group"` + `projectMemberGroupId` 로 전송 (ADR-025). interactive 모드는 이 6+2 옵션 무시 + 경고
-- `post edit --parent <ref>` 는 상위 업무 설정/변경 — `client.setPostParent` (별도 `POST .../set-parent-post` endpoint) 호출. `updatePost` 의 full payload 가 아닌 dedicated endpoint 사용 (Dooray API contract). Dooray 가 `unset-parent-post` 미제공 → **parent 해제 (top-level 화) 는 웹 UI 에서 처리**. interactive 모드 무시 + 경고
-- `post create --template <name|id>` 는 템플릿으로 정형 task 생성. `GET .../templates` 목록 (resolver matchByName 부분일치) + `GET .../templates/{id}?interpolation=true` 로 시스템 매크로 (`${year}` 등) 치환된 본문/users/tags 자동 채움. 사용자 옵션 (`--title`/`--body`/`--tag`/`--to`/`--cc`) 명시 입력 시 override (ADR-027). `--field key=value` 사용자 정의 변수는 본 task scope 외 (별도 후속). 신규 명령 `dooray project templates <project>` 로 목록 조회. 캐시 TTL 24h (tag/workflow 와 동일 패턴)
+자기 규약 (CLAUDE.md "docs / ADR 작성 형식" 6가지 패턴) 자체 적용 — 한 bullet 다중 속성 압축 금지, sub-bullet 분리.
+
+### 공통 — 명령 입력 통합
+
+- post 17 명령 input 통합 (ADR-020)
+  - 대상: `get` / `edit` / `done` / `workflow` + comment 5 + file 5 + comment file 4
+  - 입력 형식: `<project> <post-number>` / `--id <postId>` / `--url <url>` / 첫 positional 에 Dooray URL 직접 입력
+  - 분기 헬퍼: post / comment / file 13 = `resolvePostInput` / comment file 4 = `resolveCommentFileInput` (`resolvePostInput` 위임 + comment-id 분기)
+- wiki page file 5 + comment 6 명령 input 통합
+  - 분기 헬퍼: `resolveWikiPageInput` (`resolveProject` + URL `/wiki/<wikiId>/<pageId>` parser)
+  - `--id <pageId>` 모드는 `--project <code>` 동반 필수 (wiki API 가 page-only fetch 미지원)
+
+### 공통 — 옵션 / 출력 표준
+
+- 제목 옵션 이름 통일: post · wiki 모두 `--title` (Issue #8)
+- 본문 옵션 통일: `--body` / `--body-file` (`-` = stdin)
+- post 목록 정렬: 최신순 (`-createdAt`)
+- `--subject` 는 deprecated alias — stderr 경고 후 동작
+
+### post create
+
+- 필수: `--title` (또는 `--subject` alias)
+- 메타데이터 옵션 (ADR-019): `--tag` (반복) / `--parent` (`code/number` 또는 raw postId) / `--workflow` / `--milestone`
+- mandatory-tag 그룹: 클라이언트가 사전 검증
+- 참조자 / 담당자 그룹 (ADR-025): `--cc-group` / `--to-group` (멤버는 본문에서 명시)
+- mention / link-task / dry-run: 4 명령 (create + edit + comment add/edit) 공통
+- 템플릿 (`--template <name|id>`, ADR-027)
+  - lookup: `GET .../templates` (resolver matchByName 부분일치)
+  - 본문 채움: `GET .../templates/{id}?interpolation=true` → 시스템 매크로 (`${year}` 등) 치환된 본문/users/tags
+  - override: 사용자 옵션 (`--title`/`--body`/`--tag`/`--to`/`--cc`) 명시 입력 시 템플릿 값 덮어씀
+  - `--field key=value` 사용자 정의 변수: 본 scope 외 (별도 후속)
+  - 목록 조회 명령: `dooray project templates <project>`
+  - 캐시 TTL: 24h (tag/workflow 와 동일 패턴)
+
+### post edit
+
+- non-interactive 트리거: `--title` / `--body` / `--body-file` 중 하나라도 있으면 $EDITOR 미진입. tag 옵션도 트리거에 포함 (`--tag` / `--tag-clear` / `--tag-remove`)
+- 본문 full-replace 시 attachment 보호
+  - 새 본문에 기존 attachment markdown (`![](/files/<id>)`) 누락 시 (y/N) confirm
+  - non-TTY: abort. `--no-confirm` 으로 우회
+- tag 옵션 (Issue #66, ADR-019 확장)
+  - 지원: `--tag` (반복) / `--tag-clear` / `--tag-remove` (반복)
+  - mandatory 검증 동일 적용
+  - `--title`/`--body` 없이 단독 호출 가능 — 기존 본문은 자동 재전송
+  - 머지 로직: `src/resolvers/post-tags.ts` `mergeTagIds` (clear → remove → add → dedupe)
+  - interactive 분기 자체 발생 안 함 (cc/parent 와 달리 nonInteractive 조건에 포함)
+- 참조자 / 담당자 변경 옵션 6개 (ADR-025)
+  - 멤버: `--cc <name>` (반복) + `--cc-clear` / 동일 `--to` 3개
+  - 그룹: `--cc-group <code>` (반복) — `type: "group"` + `projectMemberGroupId` 로 전송
+  - 기본: append (기존 유지 + dedupe). `--*-clear` 는 기존 비우고 신규만
+  - interactive 모드: 6 옵션 무시 + 경고
+- `--parent <ref>` 옵션
+  - endpoint: `client.setPostParent` (`POST .../set-parent-post` dedicated, `updatePost` full payload 아님)
+  - parent 해제 (top-level 화): Dooray 가 `unset-parent-post` 미제공 → **웹 UI 에서 처리**
+  - interactive 모드 무시 + 경고
+- mention / link-task / dry-run: post create 와 동일 4 명령 공통. interactive 모드는 무시 + 경고
+
+### post comment
+
+- `comment edit` 본문 full-replace + attachment confirm 동작 — `post edit` 와 동일
+- `comment add` / `comment edit`: `--title`/`--body` 또는 $EDITOR fallback
+- mention / link-task / dry-run: post create/edit 와 동일 4 명령 공통
+- `comment list` table 출력 — Creator 컬럼을 project 멤버 캐시로 enrich (`--json` 은 raw 유지)
+- `post comment file *` 4 명령 (list/upload/download/delete, ADR-024)
+  - Dooray 가 댓글 전용 file endpoint 미지원 → 내부적으로 post-level files API + 댓글 본문 PUT 합성
+  - 본문 마크업: `![filename](/files/<id>)` markdown reference
+  - `delete`: markdown 제거 + 파일 삭제 둘 다 수행 (atomic 보장 없음)
+  - 부분 성공: stderr 안내 + non-zero exit
+
+### wiki page file (Issue #70, ADR-029)
+
+- 5 명령: `list` / `upload` / `download` / `download-all` / `delete`
+- post file 명령군 mirror — `<project> <page-id>` + `--id` + `--url` + positional URL
+- upload
+  - `--type general|inline_image` flag (기본 `general`)
+  - **multipart 필드 순서 의존**: `type` 필드를 `file` 보다 먼저 append 해야 정상 동작 (ADR-029, Dooray 서버 검증)
+  - inline_image 일 때: 본문 markdown 자동 삽입 안 함 — stdout 에 `attachFileId` + 사용자 직접 박을 snippet 안내
+- list: 별도 endpoint 부재 → `getWikiPage` 의 `result.files[]` (general) + `result.images[]` (inline) 합성
+- delete: confirm 없이 즉시 (post file delete mirror)
+
+### wiki page comment (task 036)
+
+- 6 명령: `list` / `latest` / `get` / `add` / `edit` / `delete`
+- post comment 패턴 mirror — `resolveWikiPageInput` 재사용
+- post comment 대비 시그니처 축소 — wiki API 미지원
+  - mention / mention-group 없음
+  - cc / 받는 사람 없음
+  - 첨부 파일 없음 (댓글 전용 endpoint 부재)
+- `add` / `edit`: `--body` / `--body-file` 또는 `$EDITOR` fallback
+- 타입 / 포맷터
+  - `WikiComment` 타입 신설 — `page.id` + `creator.member` 시그니처 (PostComment 와 분리)
+  - `formatters/wiki-comment.ts` 전용 포맷
+- request body: `{ body: { content } }` 만 (mimeType 미전송 — wiki API 스펙)
+- delete: confirm 없이 즉시
+
+### resolver
+
+- 일반 정책: 정확일치 → 이름 부분일치 → 모호 시 에러 + 후보 목록 출력 (멤버 · 워크플로우 · 태그 · 마일스톤 공통)
+- member resolver (`resolveMember`) 입력 형식 자동 분기
+  - 15자리 이상 숫자: `getMemberDetail` 로 organizationMemberId 검증
+  - 이메일 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`): `searchMembers({externalEmailAddresses})` exact
+  - 그 외: matchByName
+  - 적용 옵션: `--to` / `--cc` / `--mention` 모두 동일
+- group resolver (`resolveMemberGroup`) — `code` 누락 가드 (ADR-028, Issue #65)
+  - 사전 필터링: Dooray API 응답의 `code` 누락 그룹 제외 (스키마 ↔ 실제 응답 mismatch)
+  - `match.ts` 가드: `!!i.name && i.name.includes`
+  - not-found 안내: `options.helpHint` 로 "전체 목록은 dooray X" 출력
+
+### member 명령
+
+- `dooray member get/list` 로 표시명 조회
+- `post comment list` table 의 Creator 컬럼: project 멤버 캐시로 enrich (ADR-021)
+- `--json` 출력: raw 유지 (enrich 미적용)
+
+### feedback (ADR-022/023)
+
+- GitHub issue 생성: `gh` CLI 에 위임. baseUrl / 시크릿은 자동 메타에 미포함
+- `--last`: 직전 명령의 sanitized argv + 에러를 본문 상단에 자동 첨부 (opt-in)
+- 사전 활성화: `dooray config set track-last-run true`
 
 ## 상황별 ADR 필수 참조
 
