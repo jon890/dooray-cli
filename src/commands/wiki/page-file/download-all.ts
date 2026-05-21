@@ -5,6 +5,8 @@ import { getConfigOrThrow } from "../../../config/store.js";
 import { DoorayApiClient } from "../../../api/client.js";
 import { resolveWikiPageInput } from "../../../resolvers/wiki-page-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
+import { DoorayCliError } from "../../../utils/errors.js";
+import { EXIT_API_ERROR } from "../../../utils/exit-codes.js";
 import type { WikiPageFile } from "../../../api/types.js";
 
 export const wikiPageFileDownloadAllCommand = new Command("download-all")
@@ -65,6 +67,9 @@ export const wikiPageFileDownloadAllCommand = new Command("download-all")
 
     process.stdout.write(`\n완료: ${successCount}/${allFiles.length}\n`);
     if (failures.length > 0) {
-      process.exit(1);
+      throw new DoorayCliError(
+        `${failures.length}개 파일 다운로드 실패 (성공: ${successCount}/${allFiles.length})`,
+        EXIT_API_ERROR,
+      );
     }
   });

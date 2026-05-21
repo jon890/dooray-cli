@@ -739,6 +739,15 @@ export class DoorayApiClient {
           throwHttpErrors: false,
         });
 
+      // ADR-015: 파일 다운로드 endpoint 는 항상 307 redirect 응답.
+      // 307 외 status 는 에러 (200 직접 응답 케이스는 Dooray 가 보장하지 않음).
+      if (res.status !== 307) {
+        throw new DoorayCliError(
+          `위키 파일 다운로드 실패 (예상 status 307, 실제 ${res.status})`,
+          EXIT_API_ERROR,
+        );
+      }
+
       const location = res.headers.get("location");
       if (!location) {
         throw new DoorayCliError("위키 파일 다운로드 리다이렉트 URL을 받지 못했습니다.", EXIT_API_ERROR);
@@ -755,7 +764,8 @@ export class DoorayApiClient {
       let fileName = `file-${fileId}`;
       if (disposition) {
         const match = disposition.match(/filename\*?=(?:UTF-8''|"?)([^";]+)/i);
-        if (match) fileName = decodeURIComponent(match[1].replace(/"/g, ""));
+        // basename 으로 path traversal 방지 (서버 응답 헤더의 ../ 등 제거)
+        if (match) fileName = basename(decodeURIComponent(match[1].replace(/"/g, "")));
       }
 
       const buffer = await fileRes.arrayBuffer();

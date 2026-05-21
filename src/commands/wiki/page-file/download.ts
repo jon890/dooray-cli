@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { getConfigOrThrow } from "../../../config/store.js";
 import { DoorayApiClient } from "../../../api/client.js";
 import { resolveWikiPageInput } from "../../../resolvers/wiki-page-input.js";
@@ -73,7 +73,8 @@ export const wikiPageFileDownloadCommand = new Command("download")
     startSpinner("파일 다운로드 중...");
     try {
       const { buffer, fileName } = await client.downloadWikiPageFile(wikiId, pageId, fileId);
-      const outputPath = join(opts.output, fileName);
+      // 방어적 basename — client 가 이미 sanitize 하지만 출력 경로 조합 전 한 번 더
+      const outputPath = join(opts.output, basename(fileName));
       await writeFile(outputPath, Buffer.from(buffer));
       stopSpinner(true, `다운로드 완료: ${outputPath}`);
 
