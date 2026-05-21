@@ -258,7 +258,7 @@ redirect 응답과 직접 응답을 status code 로 구분.
 **검출**:
 ```bash
 grep -nE "redirect.*manual|throwHttpErrors.*false" src/api/client.ts
-# 그 위치에서 status === 30 분기 존재 확인
+# 그 위치에서 status === 307 분기 존재 확인
 ```
 
 **Why**: PR #72 (plan035) ADR-029 / ADR-015 연관.

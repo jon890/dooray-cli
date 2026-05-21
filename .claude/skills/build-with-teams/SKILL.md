@@ -323,7 +323,7 @@ executor 완료 후 team-lead가 **code-reviewer 팀원에게 SendMessage로 검
 **사전 해소 점검 (필수)**: code-reviewer 검사 시작 전에 `.claude/skills/_shared/code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인.
 적용 안 됐으면 그 자리에서 FIX_NEEDED 회신 (executor 재투입).
 본 docs 가 회피 패턴의 단일 소스 — 13 항목과 별도로 grep 점검.
-executor (`dooray-cli-executor`) 는 phase 시작 직전 TOP 패턴 self-check grep 을 자체 수행한다 — code-reviewer 게이트와 이중 방어.
+executor (`dooray-cli-executor`) 는 phase 시작 직전 TOP 패턴 self-check grep 을 자체 수행한다 — code-reviewer 점검과 이중 방어.
 
 **code-reviewer에게 전달할 검사 항목:**
 
