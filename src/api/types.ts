@@ -337,6 +337,56 @@ export type UpdateCommentResponse = DoorayApiUnitResponse;
 
 export type DeleteCommentResponse = DoorayApiUnitResponse;
 
+// ─── Wiki Comment ────────────────────────────────────────
+
+export interface WikiCommentPage {
+  id: string;
+}
+
+export interface WikiCommentCreator {
+  type: string;
+  member: {
+    organizationMemberId: string;
+    name: string;
+  };
+}
+
+export interface WikiCommentBody {
+  mimeType: string;
+  content: string;
+}
+
+export interface WikiComment {
+  id: string;
+  page: WikiCommentPage;
+  createdAt: string;
+  modifiedAt?: string;
+  creator: WikiCommentCreator;
+  body: WikiCommentBody;
+}
+
+export interface CreateWikiCommentRequest {
+  body: { content: string };
+}
+
+export interface UpdateWikiCommentRequest {
+  body: { content: string };
+}
+
+export interface WikiCommentListResponse {
+  header: DoorayApiHeader;
+  result: WikiComment[];
+  totalCount: number;
+}
+
+export type WikiCommentDetailResponse = DoorayApiResponse<WikiComment>;
+
+export interface CreateWikiCommentResult {
+  id: string;
+}
+
+export type CreateWikiCommentApiResponse = DoorayApiResponse<CreateWikiCommentResult>;
+
 // ─── Project Member ─────────────────────────────────────
 
 export interface ProjectMember {

@@ -40,6 +40,11 @@ import type {
   UpdateWikiPageContentRequest,
   WikiPageFileType,
   UploadWikiPageFileResponse,
+  WikiCommentListResponse,
+  WikiCommentDetailResponse,
+  CreateWikiCommentRequest,
+  UpdateWikiCommentRequest,
+  CreateWikiCommentApiResponse,
   DoorayApiUnitResponse,
   DoorayErrorResponse,
   PostFileListResponse,
@@ -784,6 +789,84 @@ export class DoorayApiClient {
     try {
       return await this.api
         .delete(`wiki/v1/wikis/${wikiId}/pages/${pageId}/files/${fileId}`)
+        .json<DoorayApiUnitResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  // ─── Wiki Page Comments ─────────────────────────────
+
+  async getWikiPageComments(
+    wikiId: string,
+    pageId: string,
+    params?: { page?: number; size?: number },
+  ): Promise<WikiCommentListResponse> {
+    try {
+      return await this.api
+        .get(`wiki/v1/wikis/${wikiId}/pages/${pageId}/comments`, {
+          searchParams: {
+            ...(params?.page !== undefined && { page: params.page }),
+            ...(params?.size !== undefined && { size: params.size }),
+          },
+        })
+        .json<WikiCommentListResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async getWikiPageComment(
+    wikiId: string,
+    pageId: string,
+    commentId: string,
+  ): Promise<WikiCommentDetailResponse> {
+    try {
+      return await this.api
+        .get(`wiki/v1/wikis/${wikiId}/pages/${pageId}/comments/${commentId}`)
+        .json<WikiCommentDetailResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async addWikiPageComment(
+    wikiId: string,
+    pageId: string,
+    body: CreateWikiCommentRequest,
+  ): Promise<CreateWikiCommentApiResponse> {
+    try {
+      return await this.api
+        .post(`wiki/v1/wikis/${wikiId}/pages/${pageId}/comments`, { json: body })
+        .json<CreateWikiCommentApiResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async updateWikiPageComment(
+    wikiId: string,
+    pageId: string,
+    commentId: string,
+    body: UpdateWikiCommentRequest,
+  ): Promise<DoorayApiUnitResponse> {
+    try {
+      return await this.api
+        .put(`wiki/v1/wikis/${wikiId}/pages/${pageId}/comments/${commentId}`, { json: body })
+        .json<DoorayApiUnitResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async deleteWikiPageComment(
+    wikiId: string,
+    pageId: string,
+    commentId: string,
+  ): Promise<DoorayApiUnitResponse> {
+    try {
+      return await this.api
+        .delete(`wiki/v1/wikis/${wikiId}/pages/${pageId}/comments/${commentId}`)
         .json<DoorayApiUnitResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);
