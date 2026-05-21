@@ -1,0 +1,35 @@
+{
+  "name": "037-chore-custom-executor-agent",
+  "description": "dooray-cli 전용 custom executor 에이전트 신설 (.claude/agents/dooray-cli-executor.md). docs-verifier 패턴 답습. build-with-teams skill 의 executor spawn 이 새 에이전트 사용하도록 교체. PR #36~#74 의 코드 리뷰 코멘트 15개 분석에서 추출한 신규 5 패턴 (resolver-before-editor / path-traversal 재발 강조 / interactive 경고 mismatch / Map.get()! / as unknown as T 이중 단언 / redirect manual status 분기) 을 _shared/code-review-pitfalls.md 에 시드 추가 후 agent 가 하이브리드 임베드 (TOP self-check + 참조). ADR 불요.",
+  "depends_on": null,
+  "created_at": "2026-05-21T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 3,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "_shared/code-review-pitfalls.md + common-pitfalls.md 신규 5 패턴 시드 보강",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": ".claude/agents/dooray-cli-executor.md 신설 (하이브리드 임베드: TOP self-check + _shared 참조)",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 3,
+      "title": "build-with-teams/SKILL.md 의 executor spawn 부분 교체 + 팀 구성 표 + 완료 마킹",
+      "file": "phase-03.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-05-21T00:00:00Z"
+}
