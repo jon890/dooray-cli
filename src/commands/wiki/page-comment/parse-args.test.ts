@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { parseGetArgs } from "./get.js";
+import { parseWikiCommentArgs } from "./parse-args.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
 
-describe("parseGetArgs (wiki page comment)", () => {
+describe("parseWikiCommentArgs (wiki page comment)", () => {
   it("positional 3개 → projectArg / pageIdArg / commentId", () => {
-    const result = parseGetArgs("myproject", "4071828729722696495", "comment-123", {});
+    const result = parseWikiCommentArgs("myproject", "4071828729722696495", "comment-123", {});
     expect(result.projectArg).toBe("myproject");
     expect(result.pageIdArg).toBe("4071828729722696495");
     expect(result.commentId).toBe("comment-123");
@@ -14,7 +14,7 @@ describe("parseGetArgs (wiki page comment)", () => {
   });
 
   it("--url + --comment-id → urlOpt + commentId (projectArg 없음)", () => {
-    const result = parseGetArgs(undefined, undefined, undefined, {
+    const result = parseWikiCommentArgs(undefined, undefined, undefined, {
       url: "https://example.dooray.com/wiki/123/456",
       commentId: "comment-789",
     });
@@ -25,7 +25,7 @@ describe("parseGetArgs (wiki page comment)", () => {
   });
 
   it("--id + --project + --comment-id → idOpt + projectOpt + commentId", () => {
-    const result = parseGetArgs(undefined, undefined, undefined, {
+    const result = parseWikiCommentArgs(undefined, undefined, undefined, {
       id: "4071828729722696495",
       project: "myproject",
       commentId: "comment-123",
@@ -39,7 +39,7 @@ describe("parseGetArgs (wiki page comment)", () => {
   it("positional + --url 동시 → DoorayCliError (EXIT_PARAM_ERROR)", () => {
     const err = (() => {
       try {
-        parseGetArgs("myproject", "4071828729722696495", "comment-123", {
+        parseWikiCommentArgs("myproject", "4071828729722696495", "comment-123", {
           url: "https://example.dooray.com/wiki/123/456",
         });
       } catch (e) {
@@ -53,7 +53,7 @@ describe("parseGetArgs (wiki page comment)", () => {
   it("--url 만 있고 --comment-id 누락 → DoorayCliError (EXIT_PARAM_ERROR)", () => {
     const err = (() => {
       try {
-        parseGetArgs(undefined, undefined, undefined, {
+        parseWikiCommentArgs(undefined, undefined, undefined, {
           url: "https://example.dooray.com/wiki/123/456",
         });
       } catch (e) {
@@ -67,7 +67,7 @@ describe("parseGetArgs (wiki page comment)", () => {
   it("positional 3개 + --comment-id 동시 → DoorayCliError (EXIT_PARAM_ERROR)", () => {
     const err = (() => {
       try {
-        parseGetArgs("myproject", "4071828729722696495", "comment-A", {
+        parseWikiCommentArgs("myproject", "4071828729722696495", "comment-A", {
           commentId: "comment-B",
         });
       } catch (e) {
