@@ -1,6 +1,6 @@
 {
   "name": "023-feat-github-ci-claude-review",
-  "description": "fos-blog 의 GitHub Actions 워크플로 2종을 dooray-cli 컨텍스트로 이식. (1) CI: pnpm install --frozen-lockfile + pnpm build + pnpm test on push/PR to main, Node 18, (2) Claude code review: PR opened + /review 댓글 트리거, 4 병렬 specialist (TypeScript / Conventions / Security / Architecture) — dooray-cli 컨벤션(ky/exitCode/PII/atomic cache/Commander/resolver-cache 레이어)으로 specialist 프롬프트 재작성. 인라인 review + 일반 요약 댓글 1개 + dummy 자동 정리 + concurrency 그룹 + 이전 봇 댓글 자동 삭제까지 동일 패턴.",
+  "description": "fos-blog 의 GitHub Actions 워크플로 2종을 dooray-cli 컨텍스트로 이식. (1) CI: pnpm install --frozen-lockfile + pnpm build + pnpm test on push/PR to main, Node 18, (2) Claude code review: PR opened + /review 댓글 트리거, 4 병렬 specialist (TypeScript / Conventions / Security / Architecture) — dooray-cli 컨벤션(ky/exitCode/개인 식별 정보/atomic cache/Commander/resolver-cache 레이어)으로 specialist 프롬프트 재작성. 인라인 review + 일반 요약 댓글 1개 + dummy 자동 정리 + concurrency 그룹 + 이전 봇 댓글 자동 삭제까지 동일 패턴.",
   "created_at": "2026-05-07T00:00:00Z",
   "status": "completed",
   "current_phase": 3,

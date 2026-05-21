@@ -79,7 +79,7 @@ base 구조는 fos-blog 의 `claude-code-review.yml` (1~82행 + 273~447행) 그�
 - `console.log` (프로덕션 코드. `console.error` 도 spinner 사용처에서는 stderr 직접 write 가 컨벤션)
 - 에러 분기에서 `process.exit(N)` / `throw new DoorayCliError(...)` 누락 → 0 으로 종료 사고
 - `~/.dooray/cache/` write 시 atomic 패턴 (writeFile to temp + rename) 미준수
-- PII 노출 금지 항목: `tc-ocr`, `nhnent`, `nhn-comico`, `@nhn*.com`, `kim@example.com` 같은 사내 식별자가 source / docs / commit 본문에 등장 (CLAUDE.md "PII / 사내 식별자 노출 금지" 표 참조)
+- 개인 식별 정보 노출 금지 항목: `tc-ocr`, `nhnent`, `nhn-comico`, `@nhn*.com`, `kim@example.com` 같은 사내 식별자가 source / docs / commit 본문에 등장 (CLAUDE.md "개인 식별 정보 / 사내 식별자 노출 금지" 표 참조)
 
 🟡 권장 수정:
 - 새 commands/ 추가 시 `--id` / `--url` / positional URL 분기 패턴이 `resolvePostInput` 헬퍼와 일치 안 함
@@ -143,7 +143,7 @@ python3 -c "import yaml; yaml.safe_load(open('.github/workflows/claude-code-revi
 grep -cE "ky|DoorayCliError|resolvePostInput|atomic|307|ADR-002|ADR-015|ADR-020" .github/workflows/claude-code-review.yml
 # 기대: 5 이상
 
-# 4. fos-blog 잔재 없음 (PII / 웹 스택)
+# 4. fos-blog 잔재 없음 (개인 식별 정보 / 웹 스택)
 grep -ncE "tc-ocr|nhnent|Drizzle|Next\.js|tailwind|fos-blog" .github/workflows/claude-code-review.yml
 # 기대: 0
 
@@ -177,7 +177,7 @@ git add .github/workflows/claude-code-review.yml
 git commit -m "ci: add Claude code review workflow with 4 dooray-cli specialists
 
 Ported from fos-blog. Specialists rewritten for dooray-cli conventions:
-TypeScript / Conventions (ky-only, exitCode, atomic cache, PII gate) /
+TypeScript / Conventions (ky-only, exitCode, atomic cache, 개인 식별 정보 사전 점검) /
 Security (API key, IMAP creds, 307 Auth re-attach) / Architecture
 (commands/api/resolvers/cache layering, ADR-002/008/015/020 conformance).
 Triggers on PR open + /review comment. claude-code-action pinned to v1.0.111."

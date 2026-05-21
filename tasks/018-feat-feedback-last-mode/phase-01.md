@@ -169,7 +169,7 @@ phase 1의 핵심 검증은 sanitize 단위 테스트. 시크릿 단어가 출�
 
 - **명령/hook 통합은 phase 2** — 본 phase는 헬퍼만
 - **`writeLastRun` 실패는 swallow** — catch 블록에서 호출되므로 부수 effect로 다른 에러 마스킹 금지
-- **CLAUDE.md PII gate 호환**: cwd/env 미저장. argv는 sanitized 후만 저장
+- **CLAUDE.md 개인 식별 정보 사전 점검 호환**: cwd/env 미저장. argv는 sanitized 후만 저장
 - **재귀 방지는 phase 2의 catch hook에서** — `feedback` 자체는 last-run에 안 남김
 - **last-run.json 위치**: `~/.dooray/last-run.json` (config 옆). cache 디렉토리 안에 두지 말 것 — `cache clear`로 의도와 다르게 지워짐
 

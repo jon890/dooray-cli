@@ -92,7 +92,7 @@ grep -nE "ADR-019" README.md skills/dooray-cli/SKILL.md
 grep -c '"status": "completed"' tasks/033-feat-post-edit-tag-options/index.json
 # 기대: 3
 
-# 5. PII 0건
+# 5. 개인 식별 정보 0건
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ tasks/033-feat-post-edit-tag-options/ 2>/dev/null | grep -vE "사내 Dooray|NHN 도메인"
 # 기대: 0건 (exit 1)
 ```

@@ -129,7 +129,7 @@ grep -cE "link-task|--mention" README.md skills/dooray-cli/SKILL.md CLAUDE.md
 grep -c '"status": "completed"' tasks/022-feat-mention-link-first-class/index.json
 # 기대: 4
 
-# 5. PII grep 0건
+# 5. 개인 식별 정보 grep 0건
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ CLAUDE.md tasks/022-feat-mention-link-first-class/ 2>/dev/null
 # 기대: 0건
 ```

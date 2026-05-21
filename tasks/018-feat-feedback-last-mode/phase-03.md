@@ -29,7 +29,7 @@ dooray config set track-last-run true   # 1회만, opt-in
 dooray feedback --last                  # 직전 명령 + 에러 자동 첨부 + $EDITOR로 의견 추가
 ```
 
-CLAUDE.md "PII 노출 금지"와의 관계 한 줄 안내: "argv는 패턴 마스킹(--api-key/--token/Authorization 등) 후 저장. cwd/env는 미저장 (ADR-023)."
+CLAUDE.md "개인 식별 정보 노출 금지"와의 관계 한 줄 안내: "argv는 패턴 마스킹(--api-key/--token/Authorization 등) 후 저장. cwd/env는 미저장 (ADR-023)."
 
 **skills/dooray-cli/SKILL.md** — feedback 항목에 `--last` 명시. agent가 자동화 시 활용 가능.
 
@@ -126,7 +126,7 @@ node dist/index.js feedback --last
 
 - **시나리오 B/D가 회귀 가드 핵심** — opt-in 정책 + sanitization은 보안 정책. 깨지면 프라이버시 사고
 - **이슈 #27 close**: 본 task 머지 후 release 시점에 close (release 스킬 Step 9)
-- **README PII gate 호환**: README/SKILL.md에 추가하는 예시도 `<project>`/`example.com` placeholder 유지
+- **README 개인 식별 정보 사전 점검 호환**: README/SKILL.md에 추가하는 예시도 `<project>`/`example.com` placeholder 유지
 - **setup 마법사 통합 (작업 1)**: 옵트인 신규 기능을 사용자가 인지할 surface. confirm prompt + default false. `dooray config set track-last-run true`도 병행 가능
 
 ## Blocked 조건

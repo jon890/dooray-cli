@@ -128,10 +128,10 @@ node dist/index.js wiki page comment delete <project> <page-id> <comment-id>
 node dist/index.js wiki page comment list "https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>"
 ```
 
-### 5. PII gate + index.json 완료 마킹 + 최종 커밋
+### 5. 개인 식별 정보 사전 점검 + index.json 완료 마킹 + 최종 커밋
 
 ```bash
-# PII gate
+# 개인 식별 정보 사전 점검
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
 # 기대: 0건
 
@@ -146,7 +146,7 @@ index.json 수정 (모든 phase status: completed, current_phase: 3).
 
 본 phase 는 docs + 마킹. 코드 변경 없음.
 
-- **외과적 변경**: README / SKILL.md 의 다른 섹션 무변경. wiki 섹션과 PII gate 외 손대지 않음
+- **외과적 변경**: README / SKILL.md 의 다른 섹션 무변경. wiki 섹션과 개인 식별 정보 사전 점검 외 손대지 않음
 - **6 가독성 패턴 (CLAUDE.md docs/ADR 작성 형식)**: 새 표·코드 블록은 sub-bullet 분리, semantic line break
 
 ## 성공 기준

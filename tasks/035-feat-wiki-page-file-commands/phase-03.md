@@ -139,11 +139,11 @@ node dist/index.js wiki page file list "https://<tenant>.dooray.com/wiki/<wikiId
 
 executor 메모: 실증은 dry-run 옵션이 없으므로 (post file 도 없음) 실 wiki 에 부담이 없도록 본인 스크래치 wiki 사용 권장.
 
-### 5. PII gate + index.json 완료 마킹 + 최종 커밋
+### 5. 개인 식별 정보 사전 점검 + index.json 완료 마킹 + 최종 커밋
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
-# PII gate (CLAUDE.md "PII / 사내 식별자 노출 금지" 섹션)
+# 개인 식별 정보 사전 점검 (CLAUDE.md "개인 식별 정보 / 사내 식별자 노출 금지" 섹션)
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
 # 기대: 0건
 
@@ -171,7 +171,7 @@ index.json 수정 (status: "completed" + current_phase: 3 + 모든 phase status 
 
 본 phase 는 docs 작성 + 빌드 검증 + 마킹. 코드 변경 없음 — review pitfall 의 대부분 카테고리 무관.
 
-- **외과적 변경**: README/SKILL.md 의 다른 섹션 (post / mail / member) 손대지 않음. wiki 섹션과 PII gate 외에는 무변경
+- **외과적 변경**: README/SKILL.md 의 다른 섹션 (post / mail / member) 손대지 않음. wiki 섹션과 개인 식별 정보 사전 점검 외에는 무변경
 - **6 가지 가독성 패턴 (CLAUDE.md docs/ADR 작성 형식)**: 새로 추가하는 표·코드 블록은 sub-bullet 분리, semantic line break 적용. 한 bullet 에 다중 속성 압축 금지
 
 ## 성공 기준
@@ -194,7 +194,7 @@ grep -c "wiki page file" skills/dooray-cli/SKILL.md
 node dist/index.js wiki page file --help 2>&1 | grep -cE "^  (list|upload|download|download-all|delete)"
 # 기대: 5
 
-# 4. PII gate 0건
+# 4. 개인 식별 정보 사전 점검 0건
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null | wc -l
 # 기대: 0
 

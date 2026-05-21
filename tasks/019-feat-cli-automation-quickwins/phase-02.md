@@ -58,7 +58,7 @@ export function parseDoorayTaskUrl(input: string): string | null {
 
 ```ts
 it("/task/<projectId>/<postId> 형 URL 에서 postId 추출", () => {
-  // PII 게이트 — 사내 도메인 / 실제 19자리 ID 사용 금지. 승인된 dummy 만 사용.
+  // 개인 식별 정보 사전 점검 — 사내 도메인 / 실제 19자리 ID 사용 금지. 승인된 dummy 만 사용.
   expect(parseDoorayTaskUrl("https://example.dooray.com/task/1234567890123456789/9876543210987654321"))
     .toBe("9876543210987654321");
 });

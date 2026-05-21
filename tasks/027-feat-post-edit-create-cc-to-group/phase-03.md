@@ -109,7 +109,7 @@ grep -nE "ADR-025" README.md skills/dooray-cli/SKILL.md
 grep -c '"status": "completed"' tasks/027-feat-post-edit-create-cc-to-group/index.json
 # 기대: 4
 
-# 5. PII grep 0건
+# 5. 개인 식별 정보 grep 0건
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ tasks/027-feat-post-edit-create-cc-to-group/ 2>/dev/null | grep -v "사내 Dooray\|NHN 도메인"
 # 기대: 0건 (exit 1)
 ```

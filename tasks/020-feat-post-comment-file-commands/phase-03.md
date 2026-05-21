@@ -65,7 +65,7 @@ for sub in list upload download delete; do
   node dist/index.js post comment file $sub --help | head -3
 done
 
-# 3. PII 검증 (README + SKILL.md)
+# 3. 개인 식별 정보 검증 (README + SKILL.md)
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/dooray-cli/SKILL.md docs/adr.md tasks/020-feat-post-comment-file-commands/ 2>/dev/null
 # 기대: 0건
 ```
@@ -99,7 +99,7 @@ grep -cE "post comment file upload" skills/dooray-cli/SKILL.md
 grep -cE "ADR-024" README.md skills/dooray-cli/SKILL.md
 # 기대: 1 이상
 
-# 4. PII 0 건 (README + SKILL.md + docs + tasks/020)
+# 4. 개인 식별 정보 0 건 (README + SKILL.md + docs + tasks/020)
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/dooray-cli/SKILL.md docs/adr.md tasks/020-feat-post-comment-file-commands/ 2>/dev/null
 
 # 5. index.json completed
@@ -116,4 +116,4 @@ grep -c '"status": "completed"' tasks/020-feat-post-comment-file-commands/index.
 ## Blocked 조건
 
 - 빌드 / 테스트 실패 → phase-01 / phase-02 결함, 해당 phase 재시작
-- PII grep 1 건 이상 → 해당 위치를 placeholder 또는 승인 dummy 로 교체
+- 개인 식별 정보 grep 1 건 이상 → 해당 위치를 placeholder 또는 승인 dummy 로 교체

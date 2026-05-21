@@ -72,7 +72,7 @@ grep -c '"status": "completed"' tasks/023-feat-github-ci-claude-review/index.jso
 # 기대: 4 (root + phases[0..2])
 ```
 
-### 4. PII 검증 (CLAUDE.md release 게이트 준수)
+### 4. 개인 식별 정보 검증 (CLAUDE.md release 게이트 준수)
 
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
@@ -101,7 +101,7 @@ ls .github/workflows/{ci,claude-code-review}.yml | wc -l | tr -d ' '
 grep -c '"status": "completed"' tasks/023-feat-github-ci-claude-review/index.json
 # 기대: 4
 
-# 5. PII grep 0건
+# 5. 개인 식별 정보 grep 0건
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md .github/ tasks/023-feat-github-ci-claude-review/ 2>/dev/null
 # 기대: 0건
 ```

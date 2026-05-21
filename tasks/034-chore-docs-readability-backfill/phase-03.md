@@ -81,10 +81,10 @@ EOF
 ## code-review-pitfalls 회피 항목
 
 - **1-11 (sed)**: manual Edit (단 index.json 마킹은 sed OK — 자기참조 무관)
-- **PII gate**: README / SKILL.md 는 외부 노출. CLAUDE.md 의 PII gate grep 통과 필수
+- **개인 식별 정보 사전 점검**: README / SKILL.md 는 외부 노출. CLAUDE.md 의 개인 식별 정보 사전 점검 grep 통과 필수
 - **외과적 변경**: 사용 예 코드 블록 그대로, prose 만 손
 
-### PII 자체 점검 (release skill 룰 답습)
+### 개인 식별 정보 자체 점검 (release skill 룰 답습)
 
 ```bash
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ 2>/dev/null

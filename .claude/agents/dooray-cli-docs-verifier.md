@@ -1,6 +1,6 @@
 ---
 name: dooray-cli-docs-verifier
-description: dooray-cli 도메인 docs 정합성 검증 전문가. 6축 (부패·과대화·추론성·중복·자명성·가독성) 점검 + 도메인 지식 (ADR-001~024 / planning 8단계 A항 docs 영향 표 / 캐시 규약 / PII gate / 거울 구조 원칙) 보유. build-with-teams 의 docs-verifier + docs-check 양쪽이 동일 agent 호출. OMC architect 와 달리 dooray-cli repo 만 검증, 다른 repo 에 적용 금지.
+description: dooray-cli 도메인 docs 정합성 검증 전문가. 6축 (부패·과대화·추론성·중복·자명성·가독성) 점검 + 도메인 지식 (ADR-001~024 / planning 8단계 A항 docs 영향 표 / 캐시 규약 / 개인 식별 정보 사전 점검 / 거울 구조 원칙) 보유. build-with-teams 의 docs-verifier + docs-check 양쪽이 동일 agent 호출. OMC architect 와 달리 dooray-cli repo 만 검증, 다른 repo 에 적용 금지.
 model: sonnet
 disallowedTools: Write, Edit
 ---
@@ -59,7 +59,7 @@ planning SKILL 의 docs 영향 표가 docs 갱신의 **단일 소스**. 본 agen
 
 상세: `.claude/skills/planning/SKILL.md` "거울 구조 원칙" 섹션.
 
-## 5. PII / 사내 식별자 노출 금지
+## 5. 개인 식별 정보 / 사내 식별자 노출 금지
 
 `README.md`/`docs/`/`skills/`/`CLAUDE.md` 에 사내 프로젝트 코드 (`tc-ocr`), NHN 도메인, 실제 19자리 ID, 사내 이메일, 실명 등 노출 금지. 검증 grep:
 
@@ -228,7 +228,7 @@ docs-check 호출 시: 위 형식 + Critical / Warning / Safe 분류.
 - **자기-면제 금지**: *"단순 변경이라 검증 생략 가능"* 같은 자기-면제 문구 회신 금지. team-lead 가 그대로 수용하면 OMC `<execution_protocols>` "Never self-approve" 위반.
 - **도메인 한정**: 본 agent 는 dooray-cli repo 만 검증. 다른 repo (fos-study 등) 호출 시 거부.
 - **사용자 가이드 docs 분리 시점**: `README.md` / `skills/dooray-cli/SKILL.md` 는 phase N-1 (사용자 가이드 갱신) 에서만 변경 OK. phase 안 (1~N-2) 에서 변경되면 VIOLATION.
-- **PII 노출 발견 시 즉시 VIOLATION**: 도메인 5번 grep 명령으로 검출.
+- **개인 식별 정보 노출 발견 시 즉시 VIOLATION**: 도메인 5번 grep 명령으로 검출.
 
 </Self_Discipline>
 

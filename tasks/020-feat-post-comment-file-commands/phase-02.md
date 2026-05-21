@@ -180,7 +180,7 @@ grep -nE "removeFileReference\(" src/commands/post/comment/file/delete.ts
 - **CLI5 (`as Type`)**: `getPostComment` 응답에서 `res.result.body.content` 추출 — 타입 generic 으로 안전. `as` 단언 0
 - **CLI6 (markdown body)**: `appendFileReference` 가 phase-01 에서 `[]` 이스케이프 처리 완료
 - **stdout vs stderr**: 데이터 (json / table) 는 stdout, spinner / "업로드 중..." / "댓글 갱신 중..." 진행 메시지는 stderr (spinner 모듈 사용 — `--json`/`--quiet` 시 자동 억제)
-- **PII**: 코드/명령 예시 모두 `<project>` / `<postId>` / `<logId>` placeholder 또는 dummy `1234567890123456789` 만
+- **개인 식별 정보**: 코드/명령 예시 모두 `<project>` / `<postId>` / `<logId>` placeholder 또는 dummy `1234567890123456789` 만
 
 ## Blocked 조건
 

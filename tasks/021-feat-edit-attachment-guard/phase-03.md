@@ -93,7 +93,7 @@ grep -nE "no-confirm|attachment markdown" CLAUDE.md
 grep -c '"status": "completed"' tasks/021-feat-edit-attachment-guard/index.json
 # 기대: 4
 
-# 6. PII grep 0건
+# 6. 개인 식별 정보 grep 0건
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ CLAUDE.md tasks/021-feat-edit-attachment-guard/ 2>/dev/null
 # 기대: 0건
 ```

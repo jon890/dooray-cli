@@ -141,7 +141,7 @@ agent 가 수행하는 자동 grep 검증 (도메인 지식 박힌 단일 소스
 - data-schema.md 캐시 디렉터리 ↔ `src/cache/store.ts` 의 `*_DIR` 상수
 - flow.md 명령 ↔ 실제 명령 (변경 시 반영 누락 자동 감지)
 - code-architecture.md resolvers/ 트리 ↔ `src/resolvers/`
-- PII gate (사내 식별자 / 19자리 ID 노출 검출)
+- 개인 식별 정보 사전 점검 (사내 식별자 / 19자리 ID 노출 검출)
 
 team-lead 는 agent 회신을 받아 Critical 항목부터 사용자 승인 후 수정 (agent 자체는 read-only — `disallowedTools: Write, Edit`).
 

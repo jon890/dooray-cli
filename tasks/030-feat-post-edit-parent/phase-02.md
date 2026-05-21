@@ -97,7 +97,7 @@ grep -c '"status": "completed"' tasks/030-feat-post-edit-parent/index.json
 grep -cE "\"current_phase\": 2" tasks/030-feat-post-edit-parent/index.json
 # 기대: 1
 
-# 5. PII grep 0건
+# 5. 개인 식별 정보 grep 0건
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ tasks/030-feat-post-edit-parent/ 2>/dev/null | grep -vE "사내 Dooray|NHN 도메인"
 # 기대: 0건 (exit 1)
 ```

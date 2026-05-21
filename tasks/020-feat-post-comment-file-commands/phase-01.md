@@ -169,7 +169,7 @@ sed -n '/async getPostComment\b/,/^  }/p' src/api/client.ts | grep -c "toDoorayC
 - **CLI3/CLI4 (atomic write / mode 0o600)**: `~/.dooray/cache/` 쓰기 없음 — 해당 없음
 - **CLI5 (`as Type` 단언)**: `.json<T>()` generic 사용. `as` 단언 0 건
 - **CLI6 (markdown body 안전)**: `appendFileReference` 가 filename 의 `[]` 이스케이프. 단위 테스트로 가드
-- **PII 게이트**: 테스트 fileId 는 dummy `1234567890123456789` / `9876543210987654321` 또는 짧은 더미 (`123`, `222`) 만
+- **개인 식별 정보 사전 점검**: 테스트 fileId 는 dummy `1234567890123456789` / `9876543210987654321` 또는 짧은 더미 (`123`, `222`) 만
 
 ## Blocked 조건
 

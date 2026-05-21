@@ -105,7 +105,7 @@ grep -c '"status": "completed"' tasks/031-feat-post-create-template/index.json
 grep -cE "\"current_phase\": 3" tasks/031-feat-post-create-template/index.json
 # 기대: 1
 
-# 5. PII 0건 (CLAUDE.md full pattern 동기화)
+# 5. 개인 식별 정보 0건 (CLAUDE.md full pattern 동기화)
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com|kim@example\.com" README.md skills/ tasks/031-feat-post-create-template/ 2>/dev/null | grep -vE "사내 Dooray|NHN 도메인|grep -rnE"
 # 기대: 0건 (exit 1)
 ```

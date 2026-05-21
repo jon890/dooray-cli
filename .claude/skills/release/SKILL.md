@@ -98,14 +98,14 @@ grep -nE "<신규 옵션|신규 명령>" skills/dooray-cli/SKILL.md
 
 **버그 수정/리팩토링만 있는 릴리스**라면 본 단계는 통과 가능 — 사용자에게 그 사실을 명시하고 진행.
 
-#### 3.5. PII / 사내 식별자 노출 검증 (필수, 실패 시 중단)
+#### 3.5. 개인 식별 정보 / 사내 식별자 노출 검증 (필수, 실패 시 중단)
 
-`CLAUDE.md` "PII / 사내 식별자 노출 금지 (public OSS)" 섹션의 검증 grep 두 명령을 모두 실행한다.
+`CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지 (public OSS)" 섹션의 검증 grep 두 명령을 모두 실행한다.
 grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실행 시점과 후속 처리만 정의.
 
 **히트가 있으면**:
 - 사용자에게 즉시 보고 + 위치 노출
-- CLAUDE.md PII 섹션의 placeholder 가이드 (`<project>` / `<tenant>` / `<postId>` 등) 또는 dummy 패턴으로 교체 후 보완 commit
+- CLAUDE.md 개인 식별 정보 섹션의 placeholder 가이드 (`<project>` / `<tenant>` / `<postId>` 등) 또는 dummy 패턴으로 교체 후 보완 commit
 - 보완 commit 후 grep 재실행 → 0건 확인 후 다음 단계 진행
 - **사용자가 "내부 사용 OK" 로 명시 동의하지 않는 한 release 차단**
 
