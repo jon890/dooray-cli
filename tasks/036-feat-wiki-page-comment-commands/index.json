@@ -1,0 +1,35 @@
+{
+  "name": "036-feat-wiki-page-comment-commands",
+  "description": "wiki 페이지 댓글 CLI 6 명령 추가 (list/latest/get/add/edit/delete). post comment 패턴 mirror. 단 wiki comment API 는 mention / cc / 첨부 파일 미지원이므로 시그니처 축소. WikiComment 타입 신설 (page.id + creator.member) + formatters/wiki-comment.ts 전용 포맷. resolveWikiPageInput 재사용 — task 035 phase-01 산출물 의존. 신규 ADR 불요 (API 단순, 함정 없음). cmux-browser 로 공식 API 스펙 재확인 완료 (2026-05-21).",
+  "depends_on": "035-feat-wiki-page-file-commands (phase-01 의 resolveWikiPageInput 필요)",
+  "created_at": "2026-05-21T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 3,
+  "error_message": null,
+  "blocked_reason": "task 035 머지 후 시작",
+  "phases": [
+    {
+      "number": 1,
+      "title": "api/client (5 method) + types (WikiComment + WikiCommentBody 등) + formatters/wiki-comment.ts + 단위 테스트",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "commands/wiki/page-comment/ 6 명령 (list/latest/get/add/edit/delete) + index.ts 등록",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 3,
+      "title": "README + skills/dooray-cli/SKILL.md + 빌드/실증 검증 + 완료 마킹",
+      "file": "phase-03.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-05-21T00:00:00Z"
+}

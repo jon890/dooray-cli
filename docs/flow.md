@@ -302,6 +302,36 @@ dooray wiki page file delete my-project <page-id> --file-id <id>
 
 활용 사례 — 팀 위키에 스킬 파일 첨부 → 팀원이 `wiki page file download-all` 로 일괄 받아 `~/.claude/skills/` 에 그대로 설치.
 
+## 위키 페이지 댓글 흐름 (task 036)
+
+post comment 명령군과 동일 UX. 단 wiki comment 는 mention / cc / 첨부 파일 미지원 (Dooray API 부재).
+
+```
+# 목록 (최신순)
+dooray wiki page comment list <project> <page-id>
+dooray wiki page comment list <project> <page-id> --size 50
+
+# 최신 1건 shortcut
+dooray wiki page comment latest <project> <page-id>
+
+# 단일 조회
+dooray wiki page comment get <project> <page-id> <comment-id>
+
+# 추가 — interactive ($EDITOR) 또는 옵션
+dooray wiki page comment add <project> <page-id>                       # $EDITOR
+dooray wiki page comment add <project> <page-id> --body "..." 
+dooray wiki page comment add <project> <page-id> --body-file ./note.md
+echo "댓글 본문" | dooray wiki page comment add <project> <page-id> --body -
+
+# 수정 — interactive ($EDITOR) 또는 옵션
+dooray wiki page comment edit <project> <page-id> <comment-id> --body "..."
+
+# 삭제 (confirm 없이 즉시)
+dooray wiki page comment delete <project> <page-id> <comment-id>
+```
+
+활용 사례 — 회의록 위키 페이지에 자동화 봇이 결정사항 댓글로 누적, 토론 흐름 추적.
+
 ## 피드백 흐름 (ADR-022/023)
 
 `dooray feedback` 은 GitHub issue 를 `gh` CLI 위임으로 자동 등록.

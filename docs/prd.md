@@ -42,6 +42,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray post comment file` — 댓글 첨부 파일 목록·업로드·다운로드·삭제 (post-level files API + 댓글 PUT 합성, ADR-024)
 - `dooray wiki` — 목록·페이지 조회·생성·수정($EDITOR)
 - `dooray wiki page file` — 페이지 첨부 파일 목록·업로드·다운로드·전체다운로드·삭제 (multipart `type` 순서 의존 ADR-029, Issue #70)
+- `dooray wiki page comment` — 페이지 댓글 목록·최신·조회·추가·수정·삭제 (post comment 패턴 mirror, mention/cc/file 부재 — WikiComment 시그니처 차이)
 - `dooray mail` — 목록·조회·검색·발송·답장 (v0.2.0)
 - `dooray feedback` — `gh` CLI 위임으로 GitHub 이슈 자동 생성 (`--last` 옵션으로 직전 명령 sanitized argv + 에러 자동 첨부, ADR-022/023)
 

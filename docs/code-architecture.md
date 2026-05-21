@@ -67,6 +67,7 @@ src/
     wiki.ts                 # Wiki 전용 포맷
     member.ts               # Member 상세/목록 포맷 (ADR-021)
     comment.ts              # PostComment 상세 포맷 (table/JSON/quiet, Issue #45)
+    wiki-comment.ts         # WikiComment 전용 포맷 — page.id + creator.member 시그니처 차이 (post comment 와 mailUsers/files/mention 부재)
 
   utils/
     errors.ts               # DoorayCliError (message + exitCode)
@@ -143,6 +144,14 @@ src/
         download.ts         # 단일 파일 다운로드 (307 redirect, ADR-015 패턴)
         download-all.ts     # 페이지 모든 첨부 + inline image 일괄 다운로드
         delete.ts           # 파일 삭제 (post file delete 와 동일 — confirm 없이 즉시)
+      page-comment/
+        index.ts            # wikiPageCommentCommand 조립
+        list.ts             # 댓글 목록 (size/page/--latest 지원, 최신순)
+        latest.ts           # 최신 댓글 1건 shortcut (= list --latest 1)
+        get.ts              # 단일 댓글 본문 + creator + 메타
+        add.ts              # 댓글 추가 — --body / --body-file / $EDITOR fallback (post comment add mirror, mention 없음)
+        edit.ts             # 댓글 수정 — --body / --body-file / $EDITOR fallback
+        delete.ts           # 댓글 삭제 (confirm 없이 즉시)
 
     mail/
       list.ts               # 메일 목록 (--unread, --search)
