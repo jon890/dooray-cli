@@ -38,6 +38,8 @@ import type {
   UpdateWikiPageRequest,
   UpdateWikiPageTitleRequest,
   UpdateWikiPageContentRequest,
+  WikiPageFileType,
+  UploadWikiPageFileResponse,
   DoorayApiUnitResponse,
   DoorayErrorResponse,
   PostFileListResponse,
@@ -664,6 +666,114 @@ export class DoorayApiClient {
     try {
       return await this.api
         .delete(`project/v1/projects/${projectId}/posts/${postId}/files/${fileId}`)
+        .json<DoorayApiUnitResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  // ─── Wiki Page Files (ADR-029) ──────────────────────
+
+  async uploadWikiPageFile(
+    wikiId: string,
+    pageId: string,
+    filePath: string,
+    type: WikiPageFileType,
+  ): Promise<UploadWikiPageFileResponse> {
+    try {
+      const fileName = basename(filePath);
+      const fileBuffer = await readFile(filePath);
+
+      // ADR-029: type 필드를 file 필드보다 먼저 append (Dooray 서버 순서 의존)
+      const buildFormData = (): FormData => {
+        const fd = new FormData();
+        fd.append("type", type);
+        fd.append("file", new Blob([fileBuffer]), fileName);
+        return fd;
+      };
+
+      const url = `${this.baseUrl}wiki/v1/wikis/${wikiId}/pages/${pageId}/files`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: this.authHeader },
+        body: buildFormData(),
+        redirect: "manual",
+      });
+
+      if (res.status === 307) {
+        const location = res.headers.get("location");
+        if (!location) {
+          throw new DoorayCliError("위키 파일 업로드 리다이렉트 URL을 받지 못했습니다.", EXIT_API_ERROR);
+        }
+        // 재시도 시에도 FormData 새로 빌드 (type → file 순서 보장)
+        const uploadRes = await fetch(location, {
+          method: "POST",
+          headers: { Authorization: this.authHeader },
+          body: buildFormData(),
+        });
+        if (!uploadRes.ok) {
+          throw new DoorayCliError(`위키 파일 업로드 실패 (${uploadRes.status})`, EXIT_API_ERROR);
+        }
+        return await uploadRes.json() as UploadWikiPageFileResponse;
+      }
+
+      if (!res.ok) {
+        throw new DoorayCliError(`위키 파일 업로드 실패 (${res.status})`, EXIT_API_ERROR);
+      }
+      return await res.json() as UploadWikiPageFileResponse;
+    } catch (e) {
+      if (e instanceof DoorayCliError) throw e;
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async downloadWikiPageFile(
+    wikiId: string,
+    pageId: string,
+    fileId: string,
+  ): Promise<{ buffer: ArrayBuffer; fileName: string }> {
+    try {
+      const res = await this.api
+        .get(`wiki/v1/wikis/${wikiId}/pages/${pageId}/files/${fileId}`, {
+          redirect: "manual",
+          throwHttpErrors: false,
+        });
+
+      const location = res.headers.get("location");
+      if (!location) {
+        throw new DoorayCliError("위키 파일 다운로드 리다이렉트 URL을 받지 못했습니다.", EXIT_API_ERROR);
+      }
+
+      const fileRes = await fetch(location, {
+        headers: { Authorization: this.authHeader },
+      });
+      if (!fileRes.ok) {
+        throw new DoorayCliError(`위키 파일 다운로드 실패 (${fileRes.status})`, EXIT_API_ERROR);
+      }
+
+      const disposition = fileRes.headers.get("content-disposition");
+      let fileName = `file-${fileId}`;
+      if (disposition) {
+        const match = disposition.match(/filename\*?=(?:UTF-8''|"?)([^";]+)/i);
+        if (match) fileName = decodeURIComponent(match[1].replace(/"/g, ""));
+      }
+
+      const buffer = await fileRes.arrayBuffer();
+      return { buffer, fileName };
+    } catch (e) {
+      if (e instanceof DoorayCliError) throw e;
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async deleteWikiPageFile(
+    wikiId: string,
+    pageId: string,
+    fileId: string,
+  ): Promise<DoorayApiUnitResponse> {
+    try {
+      return await this.api
+        .delete(`wiki/v1/wikis/${wikiId}/pages/${pageId}/files/${fileId}`)
         .json<DoorayApiUnitResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseDoorayTaskUrl, isLikelyDoorayUrl } from "./dooray-url.js";
+import { parseDoorayTaskUrl, parseDoorayWikiUrl, isLikelyDoorayUrl } from "./dooray-url.js";
 
 describe("parseDoorayTaskUrl", () => {
   it("정상 URL에서 postId 추출", () => {
@@ -40,6 +40,20 @@ describe("parseDoorayTaskUrl", () => {
   });
   it("/task/<projectId>/<postId> 형도 dooray.com 도메인 외 reject", () => {
     expect(parseDoorayTaskUrl("https://other.com/task/123/456")).toBeNull();
+  });
+});
+
+describe("parseDoorayWikiUrl", () => {
+  it("표준 wiki URL → {wikiId, pageId}", () => {
+    expect(parseDoorayWikiUrl("https://x.dooray.com/wiki/123/456"))
+      .toEqual({ wikiId: "123", pageId: "456" });
+  });
+  it("쿼리 파라미터 무시", () => {
+    expect(parseDoorayWikiUrl("https://my-org.dooray.com/wiki/123/456?foo=bar"))
+      .toEqual({ wikiId: "123", pageId: "456" });
+  });
+  it("task URL 은 wiki parser 에서 null", () => {
+    expect(parseDoorayWikiUrl("https://x.dooray.com/task/123/456")).toBeNull();
   });
 });
 
