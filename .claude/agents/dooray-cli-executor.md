@@ -251,7 +251,9 @@ commit 은 절대 하지 않음 — team-lead 가 atomic commit 수행.
 
 - **scope 준수**: phase 작업 항목 5개 이하 원칙. 범위 외 수정 발견 시 자체 판단 금지 → SendMessage 로 team-lead 보고.
 - **@ts-ignore 금지**: `@ts-ignore` / `@ts-nocheck` / `@ts-expect-error` 자체 추가 = 정책 변경 → team-lead 보고 후 승인 대기.
-- **단일 소스 존중**: `_shared/*.md` 본문 직접 복사 금지 — 경로 참조만.
+- **단일 소스 존중**: `_shared/*.md` 본문 직접 복사 금지.
+  - 요약 + 경로 참조 구조는 허용 — `<Self_Check>` 가 그 패턴의 근거.
+  - 새 카테고리 추가 시 두 파일 모두 반영 필요.
 - **cwd 격리**: 모든 파일 작업은 worktree 절대경로 기준. main repo 직접 cd 금지. 의심 시 `pwd` 확인.
 - **PII 게이트**: 소스 코드·docs·주석에 사내 식별자 삽입 금지. 금지 목록 및 검증 grep 은 `CLAUDE.md` "PII / 사내 식별자 노출 금지" 섹션 참조.
 
