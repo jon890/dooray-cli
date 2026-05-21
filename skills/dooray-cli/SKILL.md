@@ -87,6 +87,12 @@ dooray doctor                                 # 설정 검증
 | 위키 페이지 첨부 다운로드 | `dooray wiki page file download <project> <page-id> --file-id <id> -o <dir>` |
 | 위키 페이지 첨부 일괄 다운로드 | `dooray wiki page file download-all <project> <page-id> -o <dir>` (files + images 전부) |
 | 위키 페이지 첨부 삭제 | `dooray wiki page file delete <project> <page-id> --file-id <id>` (confirm 없음) |
+| 위키 페이지 댓글 목록 | `dooray wiki page comment list <project> <page-id> [--latest N]` (최신순) |
+| 위키 페이지 최신 댓글 | `dooray wiki page comment latest <project> <page-id>` |
+| 위키 페이지 댓글 조회 | `dooray wiki page comment get <project> <page-id> <comment-id>` |
+| 위키 페이지 댓글 추가 | `dooray wiki page comment add <project> <page-id> --body "..."` ($EDITOR fallback) |
+| 위키 페이지 댓글 수정 | `dooray wiki page comment edit <project> <page-id> <comment-id> --body "..."` |
+| 위키 페이지 댓글 삭제 | `dooray wiki page comment delete <project> <page-id> <comment-id>` (confirm 없음) |
 | 메일 목록 조회 | `dooray mail list` |
 | 안읽은 메일 | `dooray mail list --unread` |
 | 메일 제목 검색 | `dooray mail list --search "<keyword>"` |
@@ -213,6 +219,21 @@ dooray wiki page file download-all <project> <page-id> -o ~/.claude/skills/my-sk
 
 # 첨부 목록 확인 (type 컬럼: general / inline_image)
 dooray wiki page file list <project> <page-id>
+```
+
+### 위키 페이지 댓글 — 회의록 결정사항 자동 누적
+
+**회의록 결정사항 자동 누적**: 회의록 위키 페이지에 자동화 봇이 `wiki page comment add` 로 결정사항을 댓글로 누적, `wiki page comment list --latest 20` 으로 최근 토론 흐름 추적.
+
+```bash
+# 결정사항 댓글 추가
+dooray wiki page comment add <project> <page-id> --body "결정: 배포일 2026-06-01 확정"
+
+# 최근 20개 토론 흐름 조회
+dooray wiki page comment list <project> <page-id> --latest 20
+
+# 최신 댓글 1건 shortcut
+dooray wiki page comment latest <project> <page-id>
 ```
 
 ## 단일 댓글 본문 fetch

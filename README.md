@@ -374,6 +374,42 @@ dooray wiki page file upload --id <pageId> --project <project> --file ./README.m
   upload stdout 의 snippet 을 복사해서 `dooray wiki page edit` 으로 본문에 직접 추가
 - `delete` 는 confirm 없이 즉시 삭제 (실수 방지 책임은 호출자)
 
+#### 위키 페이지 댓글
+
+post 의 `post comment` 명령군과 동일 패턴 — `<project> <page-id>` 외에도 `--id`/`--url`/positional URL 지원.
+
+```bash
+# 목록 (최신순)
+dooray wiki page comment list <project> <page-id>
+dooray wiki page comment list <project> <page-id> --latest 5
+
+# 최신 1건 shortcut
+dooray wiki page comment latest <project> <page-id>
+
+# 단일 조회
+dooray wiki page comment get <project> <page-id> <comment-id>
+
+# 추가 — interactive ($EDITOR) 또는 옵션
+dooray wiki page comment add <project> <page-id>                          # $EDITOR
+dooray wiki page comment add <project> <page-id> --body "회의 결정 사항"
+dooray wiki page comment add <project> <page-id> --body-file ./note.md
+echo "댓글" | dooray wiki page comment add <project> <page-id> --body -
+
+# 수정 — interactive ($EDITOR, 기존 본문 prefill) 또는 옵션
+dooray wiki page comment edit <project> <page-id> <comment-id> --body "..."
+
+# 삭제 (confirm 없이 즉시)
+dooray wiki page comment delete <project> <page-id> <comment-id>
+
+# URL 모드
+dooray wiki page comment list "https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>"
+```
+
+**post comment 와의 차이**:
+- mention / cc / 받는 사람 미지원 — wiki API 부재
+- 첨부 파일 미지원 — wiki comment 전용 endpoint 부재 (페이지 본문 파일은 `wiki page file` 사용)
+- 본문은 markdown 그대로 전송 (mimeType 자동)
+
 ### 메일
 
 IMAP을 통해 Dooray 메일을 조회할 수 있습니다. 메일 설정은 `dooray setup`에서 한 번에 진행하거나, 수동으로 설정할 수 있습니다.
