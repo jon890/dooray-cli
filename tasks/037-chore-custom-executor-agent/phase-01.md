@@ -23,7 +23,8 @@ agent 신설 (phase-02) 전에 단일 소스를 먼저 보강 — 거울 구조 
    - 검출: `grep -B 5 "openInEditor\|readBodyInputOrNull" src/commands/ | grep -B 5 -A 1 "resolve[A-Z][A-Za-z]*Input"` 에서 resolver 호출이 뒤에 있으면 의심
    - Why: PR #74 (plan036) 와 PR #64 (plan031) 2회 반복. add 명령군에서 특히 발생
 
-2. **`code-review-pitfalls.md` 카테고리 4 에 4-1 신설 — interactive 경고 vs 실제 동작 mismatch**
+2. **`code-review-pitfalls.md` 카테고리 4 의 예약 placeholder 해제 + 4-1 본문 작성 — interactive 경고 vs 실제 동작 mismatch**
+   - 현재 상태: `# 4. CLI 도메인 규칙 회귀 (예약 — exitCode / stdout vs stderr / ky 강제)` placeholder. 헤더의 `(예약 — ...)` 부기는 제거하여 `# 4. CLI 도메인 규칙 회귀` 로 정리 + 4-1 본문 채움
    - 증상: interactive 분기에서 "옵션 X 는 무시됩니다" 경고 추가했으나 실제로 옵션 resolve 로직이 interactive 경로에도 적용 — 경고 텍스트와 코드 경로가 정반대
    - Good: 경고 텍스트 추가 시 해당 옵션의 resolve/merge 로직이 `nonInteractive` 조건 안에만 있는지 grep 으로 확인
    - 검출: `grep -B 3 -A 10 "무시됩니다\|ignored" src/commands/` 후 같은 옵션 grep 으로 nonInteractive 조건 외에서 사용되는지 확인
@@ -53,9 +54,13 @@ agent 신설 (phase-02) 전에 단일 소스를 먼저 보강 — 거울 구조 
 grep -c "## 1-3\|## 4-1\|## 5-1\|## 5-2\|## 6-1" .claude/skills/_shared/code-review-pitfalls.md
 # 기대: 5
 
-# 2. 카테고리 5/6 헤더 신설 확인
+# 2. 카테고리 5/6 헤더 신설 확인 + 카테고리 4 placeholder 해제 확인
 grep -cE "^# 5\. 타입 안전성|^# 6\. API/HTTP" .claude/skills/_shared/code-review-pitfalls.md
 # 기대: 2
+grep -c "^# 4\. CLI 도메인 규칙 회귀 (예약" .claude/skills/_shared/code-review-pitfalls.md
+# 기대: 0 (예약 부기 제거됨)
+grep -c "^# 4\. CLI 도메인 규칙 회귀$" .claude/skills/_shared/code-review-pitfalls.md
+# 기대: 1 (헤더는 유지)
 
 # 3. common-pitfalls.md CLI7 재발 강조
 grep -c "재발 빈도 높음.*PR #40.*PR #72" .claude/skills/_shared/common-pitfalls.md

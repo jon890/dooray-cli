@@ -24,9 +24,22 @@
    - 변경 전: `| **executor** | \`oh-my-claudecode:executor\` | sonnet | phase 순차 실행, 코드 수정 (커밋 제외), \`bypassPermissions\` |`
    - 변경 후: `| **executor** | \`dooray-cli-executor\` (custom, project-local at \`.claude/agents/\`) | sonnet | phase 순차 실행, 코드 수정 (커밋 제외), \`bypassPermissions\`. dooray-cli 도메인 self-check 임베드 (spinner 순서 / resolver 검증 / 타입 안전성 등 TOP 패턴) |`
 
-2. **spawn 코드 예시의 `subagent_type` 교체**
-   - 위치: `grep -n "oh-my-claudecode:executor\|subagent_type.*executor" .claude/skills/build-with-teams/SKILL.md`
-   - 모든 매칭 위치에서 `subagent_type: "oh-my-claudecode:executor"` → `subagent_type: "dooray-cli-executor"`
+2. **executor spawn 코드 예시 블록 신규 추가** (critic R1 — 실측 결과 기존 SKILL.md 에 executor spawn 예시 블록이 없음)
+   - 위치: critic spawn 예시 코드 블록 (line 95~105 근처, ` ```\n` 로 끝나는 블록) 직후, 같은 패턴으로 executor spawn 예시 코드 블록 1개 신규 추가
+   - 내용 (참고 — executor 답습 가능한 패턴):
+     ```
+     Agent({
+       subagent_type: "dooray-cli-executor",
+       team_name: "plan{N}",
+       name: "executor",
+       model: "sonnet",
+       mode: "bypassPermissions",
+       run_in_background: true,
+       prompt: "..."
+     })
+     ```
+   - 목적: 새 agent 이름 (`dooray-cli-executor`) 이 코드 예시로 SKILL.md 에 기록되어 추후 답습성 확보
+   - 추가 grep — 기존 SKILL.md 안에 `oh-my-claudecode:executor` 가 line 83 표 행 외 더 있는지 `grep -n "oh-my-claudecode:executor" .claude/skills/build-with-teams/SKILL.md` 로 확인. 추가 매칭 있으면 전부 `dooray-cli-executor` 로 교체 (false negative 회피)
 
 3. **사전 해소 점검 섹션 (7단계) 의 executor 관련 문장 갱신 (필요 시)**
    - "code-reviewer 검사 시작 전에 `code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인" 문장에 executor 가 사전 self-check 한다는 1줄 추가 가능 (선택)
@@ -37,14 +50,13 @@
    - `grep -n "oh-my-claudecode" .claude/skills/build-with-teams/SKILL.md` → critic 행은 유지 (`oh-my-claudecode:critic` / `oh-my-claudecode:code-reviewer`)
 
 5. **`index.json` completed 마킹 + phase status 갱신**
-   ```bash
-   # cwd: /Users/nhn/personal/dooray-cli
-   # JSON 편집 — jq 보다 명시적 sed 권장 (필드 순서 보존)
-   ```
-   - `status`: `"pending"` → `"completed"`
-   - `current_phase`: `1` → `3`
-   - phase 1/2/3 의 `status`: `"pending"` → `"completed"`
-   - `updated_at`: 현재 시각 (`2026-05-21T...Z`)
+   - 권장 도구: **Edit** (string match) — 정확한 따옴표 보존, sed 따옴표 깨짐 회피
+   - 대안: `jq '.status = "completed" | ...' input.json > tmp && mv tmp input.json` (임시 파일 후 atomic mv)
+   - 변경 필드:
+     - `status`: `"pending"` → `"completed"`
+     - `current_phase`: `1` → `3`
+     - phase 1/2/3 의 `status`: `"pending"` → `"completed"`
+     - `updated_at`: 현재 시각 (`2026-05-21T...Z`)
 
 ## 작업 외 금지
 
