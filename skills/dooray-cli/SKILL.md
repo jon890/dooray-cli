@@ -82,6 +82,11 @@ dooray doctor                                 # 설정 검증
 | 위키 페이지 수정 (제목) | `dooray wiki page edit <project> <page-id> --title "..."` |
 | 위키 페이지 수정 (본문) | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` |
 | 위키 페이지 수정 (에디터) | `dooray wiki page edit <project> <page-id>` (플래그 없으면 $EDITOR 열림) |
+| 위키 페이지 첨부 목록 | `dooray wiki page file list <project> <page-id>` (general + inline 합산, type 컬럼) |
+| 위키 페이지 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` (multipart type 순서 ADR-029) |
+| 위키 페이지 첨부 다운로드 | `dooray wiki page file download <project> <page-id> --file-id <id> -o <dir>` |
+| 위키 페이지 첨부 일괄 다운로드 | `dooray wiki page file download-all <project> <page-id> -o <dir>` (files + images 전부) |
+| 위키 페이지 첨부 삭제 | `dooray wiki page file delete <project> <page-id> --file-id <id>` (confirm 없음) |
 | 메일 목록 조회 | `dooray mail list` |
 | 안읽은 메일 | `dooray mail list --unread` |
 | 메일 제목 검색 | `dooray mail list --search "<keyword>"` |
@@ -193,6 +198,21 @@ dooray wiki pages <project> --json
 
 # 2. 페이지 내용 조회
 dooray wiki page get <project> <pageId> --json
+```
+
+### 위키 페이지 첨부파일 — 스킬 파일 팀 공유 (Issue #70)
+
+**스킬 파일 팀 공유**: 팀 위키에 스킬 파일 (예: `SKILL.md`) 을 `wiki page file upload` 로 첨부 → 팀원이 `wiki page file download-all` 로 일괄 받아 `~/.claude/skills/` 에 그대로 설치.
+
+```bash
+# 업로드 (일반 첨부)
+dooray wiki page file upload <project> <page-id> --file ~/.claude/skills/my-skill/SKILL.md
+
+# 팀원 쪽에서 일괄 다운로드
+dooray wiki page file download-all <project> <page-id> -o ~/.claude/skills/my-skill/
+
+# 첨부 목록 확인 (type 컬럼: general / inline_image)
+dooray wiki page file list <project> <page-id>
 ```
 
 ## 단일 댓글 본문 fetch

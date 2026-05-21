@@ -34,6 +34,7 @@ import { wikiPagesCommand } from "./commands/wiki/pages.js";
 import { wikiPageGetCommand } from "./commands/wiki/page-get.js";
 import { wikiPageCreateCommand } from "./commands/wiki/page-create.js";
 import { wikiPageEditCommand } from "./commands/wiki/page-edit.js";
+import { wikiPageFileCommand } from "./commands/wiki/page-file/index.js";
 import { memberCommand } from "./commands/member/index.js";
 import { mailListCommand } from "./commands/mail/list.js";
 import { mailGetCommand } from "./commands/mail/get.js";
@@ -116,6 +117,7 @@ const wikiPageCommand = new Command("page").description("위키 페이지 관련
 wikiPageCommand.addCommand(wikiPageGetCommand);
 wikiPageCommand.addCommand(wikiPageCreateCommand);
 wikiPageCommand.addCommand(wikiPageEditCommand);
+wikiPageCommand.addCommand(wikiPageFileCommand);
 wikiCommand.addCommand(wikiPageCommand);
 
 // mail 커맨드 그룹

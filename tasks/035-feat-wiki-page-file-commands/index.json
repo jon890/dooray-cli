@@ -2,8 +2,8 @@
   "name": "035-feat-wiki-page-file-commands",
   "description": "GitHub Issue #70 — `dooray wiki page file <list|upload|download|download-all|delete>` 5 명령 추가. post file 명령군 mirror. Page 입력 분기 (`<project> <page-id>` + `--id` + `--url` + positional URL) 신규 resolver `resolveWikiPageInput` + wiki URL parser. upload 는 `--type general|inline_image` flag + multipart 필드 순서 (type → file) 강제 (신규 ADR-029). 307 redirect 는 ADR-015 패턴 재사용. list 는 `getWikiPage` 의 files[] + images[] 합성 (별도 endpoint 부재). inline_image upload 시 본문 markdown 자동 삽입 안 함 — stdout 에 attachFileId + snippet 안내. delete 는 confirm 없이 즉시 (post file delete mirror).",
   "created_at": "2026-05-21T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "completed",
+  "current_phase": 3,
   "total_phases": 3,
   "error_message": null,
   "blocked_reason": null,
@@ -12,23 +12,23 @@
       "number": 1,
       "title": "api/client (3 method) + types + utils/dooray-url (wiki URL parser) + resolvers/wiki-page-input + 단위 테스트",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 2,
       "title": "commands/wiki/page-file/ 5 명령 (list/upload/download/download-all/delete) + index.ts 등록",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
       "number": 3,
       "title": "README + skills/dooray-cli/SKILL.md + 빌드/실증 검증 + 완료 마킹",
       "file": "phase-03.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-05-21T00:00:00Z"
+  "updated_at": "2026-05-21T11:16:00Z"
 }

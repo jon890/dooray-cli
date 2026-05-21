@@ -337,6 +337,43 @@ dooray wiki page edit <project> <page-id> --body "..." | --body-file <path>  # �
 dooray wiki page edit <project> <page-id>                                     # $EDITOR (플래그 없을 때)
 ```
 
+#### 위키 페이지 첨부파일 (Issue #70)
+
+post 의 `post file` 명령군과 동일 패턴 — `<project> <page-id>` 외에도 `--id`/`--url`/positional URL 지원.
+
+```bash
+# 목록 (general 첨부 + inline image 둘 다 표시, type 컬럼)
+dooray wiki page file list <project> <page-id>
+
+# 업로드 (기본 general — 페이지 하단 첨부 영역)
+dooray wiki page file upload <project> <page-id> --file ./SKILL.md
+# stdout: attachFileId + 파일 메타 출력
+
+# 인라인 이미지 업로드 (본문 markdown 은 사용자가 직접 박음)
+dooray wiki page file upload <project> <page-id> --file ./diagram.png --type inline_image
+# stdout 에 본문 삽입용 markdown snippet 안내
+
+# 다운로드
+dooray wiki page file download <project> <page-id> --file-id <id> -o ./
+
+# 페이지 모든 첨부 (files + images) 일괄 다운로드
+dooray wiki page file download-all <project> <page-id> -o ./attachments/
+
+# 삭제 (confirm 없이 즉시)
+dooray wiki page file delete <project> <page-id> --file-id <id>
+
+# URL 모드 (--id 모드는 --project 동반 필요)
+dooray wiki page file list "https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>"
+dooray wiki page file upload --id <pageId> --project <project> --file ./README.md
+```
+
+**주의**:
+- `upload` 시 multipart 필드 순서 (`type` → `file`) 가 중요.
+  클라이언트가 자동으로 강제 (ADR-029 참조)
+- `inline_image` 로 올린 파일은 본문에 markdown 으로 박혀야 위키에서 보임.
+  upload stdout 의 snippet 을 복사해서 `dooray wiki page edit` 으로 본문에 직접 추가
+- `delete` 는 confirm 없이 즉시 삭제 (실수 방지 책임은 호출자)
+
 ### 메일
 
 IMAP을 통해 Dooray 메일을 조회할 수 있습니다. 메일 설정은 `dooray setup`에서 한 번에 진행하거나, 수동으로 설정할 수 있습니다.

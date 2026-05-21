@@ -4,12 +4,25 @@ const TASK_URL_RE = /^https?:\/\/[\w.-]+\.dooray\.com\/task\/to\/(\d+)(?:[/?#].*
 // postId 가 캡처 1 이 되어 short form (`m1[1]`) 과 인덱스 일관.
 const TASK_URL_ALT_RE = /^https?:\/\/[\w.-]+\.dooray\.com\/task\/(?:\d+)\/(\d+)(?:[/?#].*)?$/;
 
+const WIKI_URL_RE = /^https?:\/\/[\w.-]+\.dooray\.com\/wiki\/(\d+)\/(\d+)(?:[/?#].*)?$/;
+
 export function parseDoorayTaskUrl(input: string): string | null {
   const m1 = TASK_URL_RE.exec(input);
   if (m1) return m1[1];
   const m2 = TASK_URL_ALT_RE.exec(input);
   if (m2) return m2[1];
   return null;
+}
+
+export interface ParsedWikiPageUrl {
+  wikiId: string;
+  pageId: string;
+}
+
+export function parseDoorayWikiUrl(input: string): ParsedWikiPageUrl | null {
+  const m = WIKI_URL_RE.exec(input);
+  if (!m) return null;
+  return { wikiId: m[1], pageId: m[2] };
 }
 
 export function isLikelyDoorayUrl(input: string): boolean {

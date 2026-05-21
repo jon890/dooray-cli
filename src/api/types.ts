@@ -451,6 +451,12 @@ export interface WikiPageBody {
   content?: string;
 }
 
+export interface WikiPageFile {
+  id: string;
+  name: string;
+  size: number;
+}
+
 export interface WikiPageDetail {
   id: string;
   wikiId: string;
@@ -462,6 +468,8 @@ export interface WikiPageDetail {
   createdAt?: string;
   updatedAt?: string;
   parentPageId?: string;
+  files?: WikiPageFile[];
+  images?: WikiPageFile[];
 }
 
 export type WikiPageResponse = DoorayApiResponse<WikiPageDetail>;
@@ -492,6 +500,20 @@ export interface UpdateWikiPageTitleRequest {
 export interface UpdateWikiPageContentRequest {
   body: WikiPageBody;
 }
+
+export type WikiPageFileType = "general" | "inline_image";
+
+export interface UploadWikiPageFileResult {
+  id: string;
+  attachFileId: string;
+  name: string;
+  mimeType: string;
+  type: WikiPageFileType;
+  size: number;
+  createdAt: string;
+}
+
+export type UploadWikiPageFileResponse = DoorayApiResponse<UploadWikiPageFileResult>;
 
 export interface CreateWikiPageResult {
   id: string;
