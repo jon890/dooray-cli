@@ -7,6 +7,8 @@ import { readBodyInputOrNull } from "../../../utils/body-input.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { printJson, printQuiet } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
+import { DoorayCliError } from "../../../utils/errors.js";
+import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
 
 export const wikiPageCommentAddCommand = new Command("add")
   .description("위키 페이지 댓글 추가 (--body 없으면 $EDITOR)")
@@ -18,9 +20,24 @@ export const wikiPageCommentAddCommand = new Command("add")
   .option("--body <text>", "댓글 본문 (- 입력 시 stdin에서 읽기)")
   .option("--body-file <path>", "본문 파일 경로 (- 입력 시 stdin에서 읽기)")
   .action(async (project, pageIdArg, opts) => {
+    if ((opts.id || opts.url) && (project || pageIdArg)) {
+      throw new DoorayCliError(
+        "positional 인자와 --id/--url 옵션은 동시에 사용할 수 없습니다.",
+        EXIT_PARAM_ERROR,
+      );
+    }
+
     const globalOpts = wikiPageCommentAddCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+
+    const { wikiId, pageId } = await resolveWikiPageInput(client, {
+      projectArg: project,
+      pageIdArg,
+      idOpt: opts.id,
+      urlOpt: opts.url,
+      project: opts.project,
+    });
 
     let bodyContent = await readBodyInputOrNull(opts);
     if (bodyContent == null) {
@@ -30,14 +47,6 @@ export const wikiPageCommentAddCommand = new Command("add")
         return;
       }
     }
-
-    const { wikiId, pageId } = await resolveWikiPageInput(client, {
-      projectArg: project,
-      pageIdArg,
-      idOpt: opts.id,
-      urlOpt: opts.url,
-      project: opts.project,
-    });
 
     startSpinner("댓글 추가 중...");
     try {
