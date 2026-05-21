@@ -453,6 +453,8 @@ git -C /Users/.../dooray-cli/.claude/worktrees/{plan} status --short
 **Good**: 외부에서 받은 fileName 은 항상 `basename(fileName)` 으로 directory component 제거 후 join. 다운로드 / 첨부 / 사용자가 통제하지 않는 모든 경로 입력에 적용.
 **검출**: `grep -rnE 'join\([^)]*\bfileName\b' src/commands/` 중 `basename` 미적용 라인.
 **Why**: PR #40 review — `post comment file download` 가 Dooray 응답의 fileName 을 그대로 join. 보안 측면에서 1줄로 막을 수 있는 취약점.
+**재발 빈도 높음**: PR #40 (🔴) → PR #72 (🔴) 두 PR 에서 동일 버그가 반복됨.
+download 명령 신설 시 `basename(decodeURIComponent(fileName))` grep 강제.
 
 ## CLI8. "정상 빈 결과" 메시지를 stderr 로 출력
 

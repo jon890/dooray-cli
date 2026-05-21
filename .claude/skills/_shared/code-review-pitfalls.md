@@ -79,6 +79,25 @@ try {
 
 **Self-check (plan / code review)**: 기존 spinner 블록 내부에 새 호출을 추가하거나 spinner 외부 호출을 내부로 이동하는 diff 가 있으면, 그 호출의 throw 경로를 따로 grep 으로 확인 (`grep -nE "throw new (DoorayCliError|Error)" {호출 파일}`). 1건이라도 throw 가능하면 try/catch 보호 필요.
 
+## 1-3. resolver 를 body 수집·editor open 보다 뒤에 호출 (resolver-before-editor)
+
+**증상**: `resolveWikiPageInput` / `resolvePostInput` 같은 resolver 호출이 `readBodyInputOrNull` / `openInEditor` 보다 뒤에 있음.
+resolver 실패 시 사용자가 이미 에디터에 입력한 내용이 유실됨.
+
+**Good**: resolver 를 항상 `readBodyInputOrNull` / `openInEditor` 보다 먼저 호출.
+`delete.ts` / `edit.ts` 패턴이 reference.
+
+**검출**:
+```bash
+grep -B 5 "openInEditor\|readBodyInputOrNull" src/commands/ | grep -B 5 -A 1 "resolve[A-Z][A-Za-z]*Input"
+# resolver 호출이 뒤에 있으면 의심
+```
+
+**Why**: PR #74 (plan036) 와 PR #64 (plan031) 2회 반복.
+add 명령군에서 특히 발생.
+
+**Self-check**: add / edit 명령 작성 시 resolver 호출 순서가 body 수집보다 앞인지 grep 으로 확인했는가?
+
 ---
 
 # 2. 에러 처리 일관성
@@ -170,7 +189,81 @@ grep -rnE "mockRejectedValue\(new DoorayCliError" src/ test/
 
 # 3. 매직 넘버·문자열 (예약)
 
-# 4. CLI 도메인 규칙 회귀 (예약 — exitCode / stdout vs stderr / ky 강제)
+# 4. CLI 도메인 규칙 회귀
+
+## 4-1. interactive 경고 vs 실제 동작 mismatch
+
+**증상**: interactive 분기에서 "옵션 X 는 무시됩니다" 경고를 추가했으나 실제로 옵션 resolve 로직이 interactive 경로에도 적용됨.
+경고 텍스트와 코드 경로가 정반대.
+
+**Good**: 경고 텍스트 추가 시 해당 옵션의 resolve/merge 로직이 `nonInteractive` 조건 안에만 있는지 grep 으로 확인.
+
+**검출**:
+```bash
+grep -B 3 -A 10 "무시됩니다\|ignored" src/commands/
+# 같은 옵션 grep 으로 nonInteractive 조건 외에서 사용되는지 확인
+```
+
+**Why**: PR #55 (plan028) 🔴 — cc/to 옵션 경고와 실제 동작 불일치.
+
+**Self-check**: 경고 문구와 실제 코드 경로가 일치하는가?
+경고 옵션 이름이 `nonInteractive` 조건 안에만 있는지 grep 으로 확인했는가?
+
+# 5. 타입 안전성
+
+## 5-1. Map.has → get()! non-null assertion
+
+**증상**: `map.has(k) ? map.get(k)!.use() : map.set(k, init)` 패턴에서 `!` 사용.
+TypeScript 는 `has` 후 `get` 을 narrowing 안 함 → 런타임 undefined 가능성 잔존.
+
+**Good**: `let v = map.get(k); if (!v) { v = init; map.set(k, v); } v.use()` 로 변환.
+
+**검출**:
+```bash
+grep -nE "\.get\([^)]+\)!" src/
+```
+
+**Why**: PR #68 (plan033) — Map.has 후 get()! 단언.
+
+**Self-check**: Map.get() 결과에 `!` 단언이 있는가?
+있으면 위 패턴으로 교체.
+
+## 5-2. `as unknown as T` 이중 단언
+
+**증상**: `expr as unknown as T` 이중 단언이 등장.
+두 타입 사이의 구조적 관계가 불명확하다는 신호 — 타입 설계 재검토 필요.
+
+**Good**: `src/api/types.ts` 에 `extends` / 타입 별칭으로 두 타입의 관계를 명시.
+이중 단언은 타입 설계 재검토 신호로 처리.
+
+**검출**:
+```bash
+grep -nE "as unknown as " src/
+```
+
+**Why**: PR #64 (plan031) — 두 타입 관계를 이중 단언으로 우회.
+
+**Self-check**: `as unknown as T` 가 등장하면 타입 구조적 관계를 types.ts 에 명시했는가?
+
+# 6. API/HTTP 패턴
+
+## 6-1. redirect manual + status code 분기 누락
+
+**증상**: `redirect: "manual"` + `throwHttpErrors: false` 패턴에서 `location` 헤더만 체크하고 `if (response.status === 307)` 분기가 없음.
+200 OK 직접 응답 시 에러 경로로 진입.
+
+**Good**: `if (response.status === 307)` 분기 명시.
+redirect 응답과 직접 응답을 status code 로 구분.
+
+**검출**:
+```bash
+grep -nE "redirect.*manual|throwHttpErrors.*false" src/api/client.ts
+# 그 위치에서 status === 307 분기 존재 확인
+```
+
+**Why**: PR #72 (plan035) ADR-029 / ADR-015 연관.
+
+**Self-check**: `redirect: "manual"` 패턴이 있으면 status 분기도 함께 있는가?
 
 ---
 

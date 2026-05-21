@@ -80,7 +80,7 @@ git log origin/main --oneline --grep "{NNN}\|{task-name}" | head -3
 |---|---|---|---|
 | **team-lead** | main session | opus | 계획 수립, task 생성, 팀 조율, **phase 별 atomic commit (6.1)**, 최종 push/PR |
 | **critic** | `oh-my-claudecode:critic` | opus | 계획 평가 (APPROVE/REVISE), 실제 코드 대조 |
-| **executor** | `oh-my-claudecode:executor` | sonnet | phase 순차 실행, 코드 수정 (커밋 제외), `bypassPermissions` |
+| **executor** | `dooray-cli-executor` (custom, project-local at `.claude/agents/`) | sonnet | phase 순차 실행, 코드 수정 (커밋 제외), `bypassPermissions`. dooray-cli 도메인 self-check 임베드 (spinner 순서 / resolver 검증 / 타입 안전성 등 TOP 패턴) |
 | **code-reviewer** | `oh-my-claudecode:code-reviewer` | sonnet | 코드 품질 검사 (PASS/FIX_NEEDED), AI slop/금지사항 탐지 |
 | **docs-verifier** | `dooray-cli-docs-verifier` (custom, project-local at `.claude/agents/`) | sonnet | 코드↔docs 정합성 검증 (PASS/UPDATE_NEEDED/VIOLATION). dooray-cli 도메인 지식 (ADR-001~024 / docs 영향 표 / 캐시 규약 / PII gate) 자동 적용 — 매번 검사 항목 길게 전달 불요 |
 
@@ -99,6 +99,20 @@ Agent({
   team_name: "plan{N}",
   name: "critic",
   model: "opus",
+  run_in_background: true,
+  prompt: "..."
+})
+```
+
+executor 스폰 시 `dooray-cli-executor` custom agent 사용 (dooray-cli 도메인 self-check 자동 적용):
+
+```
+Agent({
+  subagent_type: "dooray-cli-executor",
+  team_name: "plan{N}",
+  name: "executor",
+  model: "sonnet",
+  mode: "bypassPermissions",
   run_in_background: true,
   prompt: "..."
 })
@@ -309,6 +323,7 @@ executor 완료 후 team-lead가 **code-reviewer 팀원에게 SendMessage로 검
 **사전 해소 점검 (필수)**: code-reviewer 검사 시작 전에 `.claude/skills/_shared/code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인.
 적용 안 됐으면 그 자리에서 FIX_NEEDED 회신 (executor 재투입).
 본 docs 가 회피 패턴의 단일 소스 — 13 항목과 별도로 grep 점검.
+executor (`dooray-cli-executor`) 는 phase 시작 직전 TOP 패턴 self-check grep 을 자체 수행한다 — code-reviewer 점검과 이중 방어.
 
 **code-reviewer에게 전달할 검사 항목:**
 
