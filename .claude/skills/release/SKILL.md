@@ -130,11 +130,32 @@ git tag -a v<version> -m "v<version>"
 git push origin v<version>
 ```
 
-릴리스 노트는 **2단계 분석 결과를 그대로 활용**해 작성한다 (Highlights / 신규 명령 / 신규 옵션 / 버그 수정 / **Closes** / Full Changelog 링크):
+릴리스 노트는 **2단계 분석 결과를 그대로 활용**해 작성한다 (Highlights / 신규 명령 / 신규 옵션 / 버그 수정 / **Closes** / Full Changelog 링크).
+
+**전달 방식: `--notes-file <path>` 필수** — 인라인 `--notes "..."` 또는 quoted heredoc 금지.
 
 ```bash
-gh release create v<version> --title "v<version> — <요약>" --notes "<2단계 결과 기반 노트>"
+# 1. 임시 파일에 본문 작성 (Write 도구 / cat / EDITOR 어느 쪽이든 OK)
+#    → /tmp/release-v<version>-notes.md
+
+# 2. 파일 경로로 전달
+gh release create v<version> --title "v<version> — <요약>" --notes-file /tmp/release-v<version>-notes.md
 ```
+
+**Why** (CLAUDE.md "Markdown 작성 함정" 표):
+
+- quoted heredoc (`<<'EOF'`) 안에서는 `` ` ``·`$`·`\` 모두 이미 비활성화 → escape 불요
+- 그런데 "안전하게" `` \` `` / `\$` 박으면 backslash 가 리터럴로 본문에 남아 markdown 깨짐 (v0.10.0 release 사고 — backtick 66개가 `\``로 출력)
+- `--notes-file` 은 파일 경로 전달이라 shell quoting / escape 함정 자체 회피
+
+**자가 점검** — release create / edit 직후:
+
+```bash
+gh release view v<version> --json body -q .body | tr -cd '\\' | wc -c
+# 기대: 0 (backslash 잔재 없음)
+```
+
+0 이 아니면 `--notes-file` 로 즉시 `gh release edit v<version> --notes-file <path>` 재발행.
 
 릴리스 노트 본문 마지막에 다음 섹션을 포함:
 
