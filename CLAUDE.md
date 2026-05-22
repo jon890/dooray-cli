@@ -168,10 +168,12 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
   - 이메일 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`): `searchMembers({externalEmailAddresses})` exact
   - 그 외: matchByName
   - 적용 옵션: `--to` / `--cc` / `--mention` 모두 동일
-- group resolver (`resolveMemberGroup`) — `code` 누락 가드 (ADR-028, Issue #65)
-  - 사전 필터링: Dooray API 응답의 `code` 누락 그룹 제외 (스키마 ↔ 실제 응답 mismatch)
+- group resolver (`resolveMemberGroup`) — `code` 누락 가드 + id 직접 입력 fallback (ADR-028, Issue #65, #76)
+  - 입력 형식 자동 분기: numeric 15+자리 → id 직접 매칭 (`code` 누락 그룹도 매칭 후보) / 그 외 → code matchByName
+  - 사전 필터링: Dooray API 응답의 `code` 누락 그룹은 code 매칭 흐름에서만 제외 (id 매칭 흐름은 포함)
   - `match.ts` 가드: `!!i.name && i.name.includes`
-  - not-found 안내: `options.helpHint` 로 "전체 목록은 dooray X" 출력
+  - not-found 안내: `options.helpHint` 로 "전체 목록은 dooray X" + "id 직접 입력 가능" 출력
+  - 적용 옵션: `--cc-group` / `--to-group` / `--mention-group` 모두 동일 (5 호출자 통합)
 
 ### member 명령
 
@@ -205,7 +207,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | `post edit/create` 의 cc/to 변경 (멤버/그룹)               | **ADR-025** (full payload PUT + `type: "group"` + `projectMemberGroupId`)                      |
 | Wiki 명령 (`wiki page create/edit`) 추가/수정              | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기)       |
 | Wiki page file 명령 (`wiki page file *`) 추가/수정         | **ADR-029** (multipart `type` 필드 순서 의존 + 307 redirect — ADR-015 재사용)                  |
-| member-group resolver (스키마↔실제 응답 mismatch 가드)     | **ADR-028** (`code` 누락 사전 필터 + `match.ts` undefined/빈 문자열 가드 + 타입 optional 완화) |
+| member-group resolver (스키마↔실제 응답 mismatch 가드)     | **ADR-028** (`code` 누락 사전 필터 + `match.ts` 가드 + id 직접 입력 fallback Issue #76)        |
 | `post create --template` + `project templates` 명령        | **ADR-027** (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외) |
 | 파일 업로드/다운로드 (307 처리)                            | **ADR-015** (수동 redirect + Auth 헤더 재첨부)                                                 |
 | `dooray setup` 마법사 변경                                 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치)                                                  |
