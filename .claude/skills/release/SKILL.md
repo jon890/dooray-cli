@@ -111,6 +111,18 @@ grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실
 
 ### 4. 버전 범프
 
+**사전 가드 (필수)**: 현재 branch 가 `main` 인지 확인. PR branch 에서 bump 하면 commit 이 다른 branch 에 박혀 main 미반영 + tag 가 엉뚱한 commit 가리킴.
+
+```bash
+CURRENT=$(git branch --show-current)
+if [ "$CURRENT" != "main" ]; then
+  echo "⚠  현재 branch: $CURRENT — main 으로 switch 필요"
+  git switch main && git pull --ff-only
+fi
+```
+
+버전 변경:
+
 - `package.json`의 `version` 필드를 `<version>`으로 변경
 - `src/index.ts`의 `.version("x.y.z")`를 `<version>`으로 변경
 - 변경 후 다시 `pnpm run build`로 빌드 검증
@@ -118,10 +130,17 @@ grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실
 ### 5. 커밋 & 푸시
 
 ```bash
+# 커밋 직전 branch 재확인 (위 가드와 중복이지만 자기 방어)
+[ "$(git branch --show-current)" = "main" ] || { echo "STOP: not on main"; exit 1; }
+
 git add package.json src/index.ts
 git commit -m "chore: bump version to v<version>"
 git push origin main
 ```
+
+**복구 — 실수로 PR branch 에 bump commit 박았을 때**:
+- 해당 commit 이 main 의 linear 자식이면 (대부분의 경우): `git switch main && git merge <bump-sha> --ff-only && git push origin main`. force-push 불요
+- linear 아니면 `cherry-pick` 후 PR branch 의 commit 정리
 
 ### 6. Git Tag & GitHub Release
 
