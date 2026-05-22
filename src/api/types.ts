@@ -433,7 +433,7 @@ export interface ProjectMemberListResponse {
 
 export interface MemberGroup {
   id: string;
-  code?: string;  // optional — 실제 API 응답에서 누락 케이스 존재 (ADR-026)
+  code?: string;  // optional — 실제 API 응답에서 누락 케이스 존재 (ADR-028)
   project: ProjectInfo;
   createdAt: string;
   updatedAt: string;
@@ -441,7 +441,10 @@ export interface MemberGroup {
 
 export interface MemberGroupListResponse {
   header: DoorayApiHeader;
-  result: MemberGroup[];
+  // Dooray API 가 nested array (`[[g1, g2]]`) 로 반환 — 평면 / 중첩 둘 다 허용 (ADR-028).
+  // 호출자 (`fetchAllMemberGroups`) 가 `.flat()` 로 정규화 — `.flat()` 시그니처가 union 의
+  // 양쪽 case 를 흡수하므로 추가 단언 불필요.
+  result: MemberGroup[] | MemberGroup[][];
   totalCount: number;
 }
 

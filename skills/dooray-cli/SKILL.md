@@ -111,6 +111,7 @@ dooray doctor                                 # 설정 검증
 | 참조자(cc) 멤버/그룹 추가 | `dooray post edit <project> <number> --cc-group <code>` — 기존 참조자 유지 + 그룹 추가 (dedupe, ADR-025) |
 | 참조자 전체 교체 | `dooray post edit <project> <number> --cc-clear --cc <name>` — 기존 참조자 비우고 신규 멤버만 |
 | 신규 업무 + 그룹 cc | `dooray post create <project> --title "..." --cc-group <code>` — 생성 시 그룹 참조자 포함 |
+| `--cc-group <code\|id>` / `--mention-group <code\|id>` | 그룹 매칭 — 15+자리 numeric → id 직접 / 그 외 → code matchByName (부분일치, ADR-028) |
 | 상위 업무 설정/변경 | `dooray post edit <project> <number> --title "<원제목>" --parent <ref>` (`<ref>`: `<project>/<number>` 또는 raw postId. `--title` 필수, unset 미지원) |
 | `dooray post edit --id <postId> --tag <name>` | 태그 추가 (반복, dedupe) |
 | `dooray post edit --id <postId> --tag-clear --tag <name>` | 태그 전체 교체 |
@@ -450,6 +451,35 @@ dooray post comment latest <project> <number>
 ```
 
 ---
+
+## 그룹 멘션 / cc 시 AI agent 동선 (Issue #76, ADR-028)
+
+자연어 그룹명을 사용자가 지칭했을 때 AI agent 의 의사결정 순서:
+
+1. **사용자가 명확한 code 를 줬으면 바로 시도**
+   ```bash
+   dooray post create <project> --mention-group "<code>"
+   ```
+   부분일치 가능 (예: "AI-Data" → "AI-Data파트" 매칭).
+
+2. **부분일치 모호 / 매칭 실패 시 후보 탐색**
+   ```bash
+   dooray project groups <project>
+   ```
+   ID + Code 표 출력.
+   AI agent 가 자연어 의도와 가장 가까운 code 선택 후 재시도.
+
+3. **모든 컬럼이 빈값일 때 (response shape 이상) 회피**
+   - ADR-028 fix 이후 거의 발생 안 함 (`fetchAllMemberGroups` 가 nested array 정규화)
+   - 만약 발생 시: 사용자에게 그룹 id (UI 의 그룹 URL 에서 19자리 numeric) 확인 요청
+   - `--cc-group <id>` / `--mention-group <id>` 직접 입력
+   - 또는 그룹 멤버를 개별 `--cc <member>` / `--mention <member>` 로 지정
+
+4. **모호한 자연어 매핑은 사용자에게 확인**
+   - 후보가 여러 개일 때 임의 선택 금지 — 사용자에게 선택지 제시
+   - 예: "AI-Data파트 / AI-Data실험팀 — 어느 그룹인가요?"
+
+순서 고정 — 멤버 먼저, 그룹 다음 (기존 정책 유지).
 
 ## 멘션·링크 자동 삽입 (first-class)
 
