@@ -17,8 +17,10 @@ export async function fetchAllMemberGroups(client: DoorayApiClient, projectId: s
   while (true) {
     const res = await client.getProjectMemberGroups(projectId, { page, size });
     // ADR-028: Dooray API 가 nested array (`result: [[g1, g2]]`) 로 반환 — flatten 필수
-    // 1 레벨만 평면화. 평면 응답에도 안전 (이미 평면이면 flat() 무동작 — 멱등)
-    const groups = (res.result as unknown as MemberGroup[][] | MemberGroup[]).flat() as MemberGroup[];
+    // 1 레벨만 평면화. 평면 응답에도 안전 (이미 평면이면 flat() 무동작 — 멱등).
+    // `MemberGroupListResponse.result` 가 union (`MemberGroup[] | MemberGroup[][]`) 이라
+    // `.flat()` 시그니처가 양쪽 case 자동 흡수 — 단언 불요.
+    const groups: MemberGroup[] = res.result.flat();
     for (const g of groups) {
       all.push({ id: g.id, code: g.code });
     }
