@@ -2,7 +2,7 @@
   "name": "038-fix-member-group-response-shape",
   "description": "GitHub Issue #76 — member-group 응답 shape mismatch root cause fix. 실측 결과 (2026-05-22) Dooray API `GET /project/v1/projects/{id}/member-groups` 응답이 nested array (`result: [[g1, g2]]`) 로 반환되는데 dooray-cli `fetchAllMemberGroups` 가 평면 배열 가정으로 처리해 모든 그룹이 빈 객체로 cache 되는 사고. ADR-028 의 'code 누락 사전 필터' 가정은 root cause 가 아닌 증상만 본 진단으로 무효화 — 본 task 에서 ADR-028 전면 개정. 3종 fix 동시 적용: (C) fetchAllMemberGroups 에 `res.result.flat()` 정규화, (A) stderr 메시지의 ADR 번호 오기 정정 (ADR-026 → ADR-028) + AI 친화 helpHint, (B2) resolveMemberGroup 의 numeric 15+자리 입력 시 id 직접 매칭 fallback (response shape robustness). 5 호출자 (post create/edit cc-group + mention-group + comment add/edit + post-users) 시그니처 불변 → 자동 혜택.",
   "created_at": "2026-05-22T00:00:00Z",
-  "status": "pending",
+  "status": "completed",
   "current_phase": 1,
   "total_phases": 1,
   "error_message": null,
@@ -12,9 +12,9 @@
       "number": 1,
       "title": "fetchAllMemberGroups flatten + resolveMemberGroup id 분기 + 메시지 정정 + AI agent 동선 docs + 단위 테스트",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-05-22T00:00:00Z"
+  "updated_at": "2026-05-22T15:38:00Z"
 }

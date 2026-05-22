@@ -209,6 +209,22 @@ interactive ($EDITOR) 모드에서는 위 6개 옵션이 무시되고 stderr 경
 `post edit --dry-run --json` 사용 시 출력에 `users: { to, cc }` 가 포함되어 API 호출 없이 변경 결과 미리보기 가능.
 `post create --dry-run` 은 본문만 출력하며 `users` 는 포함하지 않음.
 
+**그룹 cc / mention 사용 예 (Issue #76 fix)**:
+
+```bash
+# code 부분일치
+dooray post create <project> ... --cc-group "개발"
+
+# code 정확 일치
+dooray post create <project> ... --mention-group "all"
+
+# 19자리 id 직접 입력 (response shape robustness 또는 code 누락 그룹 회피)
+dooray post create <project> ... --cc-group "<19자리 group id>"
+
+# 후보 탐색
+dooray project groups <project>
+```
+
 ```bash
 dooray post edit <project> <post-number> --cc-group dev-team --dry-run --json | jq '.users.cc'
 # 출력 예: [{ "type": "group", "group": { "projectMemberGroupId": "...", "members": [] } }, ...]
