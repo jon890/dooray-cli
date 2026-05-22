@@ -267,7 +267,7 @@ docs / skill / task 파일을 한국어로 작성할 때 **한국인이 자연�
 
 ## docs / ADR 작성 형식 (가독성 + 토큰 효율)
 
-대상: `docs/*.md` / `CLAUDE.md` / `tasks/**/*.md` / `README.md` / `skills/dooray-cli/SKILL.md`.
+대상: `docs/*.md` / `CLAUDE.md` / `tasks/**/*.md` / `README.md` / `skills/dooray-cli/SKILL.md` / `.claude/skills/**/*.md`.
 
 목표는 두 가지 — 작성자가 읽기 쉬울 것 (가독성), LLM 컨텍스트 비용을 늘리지 않을 것.
 두 목표가 충돌할 때는 가독성을 우선한다.
