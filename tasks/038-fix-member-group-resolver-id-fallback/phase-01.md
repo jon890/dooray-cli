@@ -74,11 +74,17 @@ export async function resolveMemberGroup(
   }
   const adapter = valid.map((g) => ({ name: g.code, id: g.id, code: g.code }));
   const match = matchByName(adapter, input, "그룹", (g) => `${g.code} (${g.id})`, {
-    helpHint: "dooray project groups <project> — id 직접 입력 (15+자리 numeric) 가능",
+    helpHint:
+      "전체 목록: `dooray project groups <project>` / " +
+      "id 직접 입력도 가능 (15+자리 numeric — code 누락 그룹도 매칭, ADR-028)",
   });
   return { id: match.id, code: match.code };
 }
 ```
+
+**AI agent 친화 메시지 원칙**:
+- helpHint 는 "후보 탐색 명령 + 대안 입력 형식" 둘 다 포함 — AI 가 한 번에 다음 행동 결정 가능
+- silent skip 경고 (ADR-028 케이스) 도 회피책 (id 입력 / `--cc <member>`) 명시 — AI 가 막혔을 때 자율 우회
 
 **주의 사항**:
 - import 추가: `DoorayCliError`, `EXIT_PARAM_ERROR` (이미 없으면)
@@ -147,7 +153,7 @@ grep -nE "resolveMemberGroup\(" src/ | grep -v "\.test\.ts\|member-group.ts"
 
 `code` 가 빈 문자열이라도 payload 에 영향 없음을 코드로 확인 + 단위 테스트로 보장. 만약 code 를 어딘가 사용한다면 그 호출자가 `code === ""` 케이스를 graceful 하게 다루는지 추가 검증.
 
-### 4. README + skills/dooray-cli/SKILL.md — id 입력 한 줄
+### 4. README + skills/dooray-cli/SKILL.md — id 입력 + AI agent 그룹 발견 동선
 
 #### README.md — `### 참조자(cc) / 담당자(to) 변경` 섹션 내 group 옵션 설명 직후
 
@@ -155,20 +161,54 @@ grep -nE "resolveMemberGroup\(" src/ | grep -v "\.test\.ts\|member-group.ts"
 **그룹 cc / mention — code 누락 시 id 직접 입력** (Issue #76):
 
 ```bash
-# 일반 (code 매칭)
+# 일반 (code 매칭, 부분일치 가능)
 dooray post create <project> ... --cc-group "<code>"
 
-# code 누락 그룹은 19자리 id 직접 입력
+# code 가 누락된 그룹은 19자리 id 직접 입력
 dooray post create <project> ... --cc-group "<19자리 group id>"
 
 # id 는 `dooray project groups <project>` 로 확인
 ```
 ```
 
-#### skills/dooray-cli/SKILL.md — group resolver 빠른 참조 표 행 갱신
+#### skills/dooray-cli/SKILL.md — group resolver 빠른 참조 표 행 갱신 + AI agent 동선 섹션 신설
+
+**빠른 참조 표 갱신 (line 111-113 근처)**:
 
 ```markdown
 | `--cc-group <code\|id>` / `--mention-group <code\|id>` | 그룹 매칭 — 15+자리 numeric → id 직접 / 그 외 → code matchByName (ADR-028) |
+```
+
+**신규 섹션 — `## 멘션·링크 자동 삽입 (first-class)` 섹션 직후 (line 471 근처)**:
+
+```markdown
+## 그룹 멘션 / cc 시 AI agent 동선 (Issue #76)
+
+자연어 그룹명을 사용자가 지칭했을 때 AI agent 의 의사결정 순서:
+
+1. **사용자가 명확한 code 를 줬으면 바로 시도**
+   ```bash
+   dooray post create <project> --mention-group "<code>"
+   ```
+   부분일치 가능 (예: "AI-Data" → "AI-Data파트" 매칭).
+
+2. **부분일치 모호 / 매칭 실패 시 후보 탐색**
+   ```bash
+   dooray project groups <project>
+   ```
+   ID + Code 표 출력. AI agent 가 자연어 의도와 가장 가까운 code 선택 후 재시도.
+
+3. **code 가 누락된 그룹 (서버 데이터 이슈) 회피**
+   - 증상: `dooray project groups` 결과에서 Code 컬럼이 빈값
+   - 회피 1: 사용자에게 그룹 id (19자리 numeric) 확인 요청
+   - 회피 2: `--cc-group <id>` / `--mention-group <id>` 직접 입력 (ADR-028 확장)
+   - 회피 3: 그룹 멤버를 개별 `--cc <member>` / `--mention <member>` 로 지정
+
+4. **모호한 자연어 매핑은 사용자에게 확인**
+   - 후보가 여러 개일 때 임의 선택 금지 — 사용자에게 선택지 제시
+   - 예: "AI-Data파트 / AI-Data실험팀 / AI-Data운영 — 어느 그룹인가요?"
+
+순서 고정 — 멤버 먼저, 그룹 다음 (기존 정책 유지).
 ```
 
 ### 5. 빌드 + 동작 실증
@@ -224,11 +264,16 @@ grep -cE "ADR-026" src/resolvers/member-group.ts
 grep -cE "ADR-028" src/resolvers/member-group.ts
 # 기대: 1 이상
 
+
 # 4. README + SKILL 갱신
 grep -cE "id 직접 입력|--cc-group.*id" README.md
 # 기대: 1 이상
 grep -cE "id 직접|code\\\\\\|id" skills/dooray-cli/SKILL.md
 # 기대: 1 이상
+
+# 5. SKILL.md AI agent 동선 섹션 신설 확인
+grep -c "그룹 멘션 / cc 시 AI agent 동선" skills/dooray-cli/SKILL.md
+# 기대: 1
 
 # 5. 5 호출자 시그니처 무변경
 grep -cE "resolveMemberGroup\(client, projectId, " src/
