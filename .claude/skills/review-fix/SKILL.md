@@ -130,6 +130,8 @@ grep -nE "^(<<<<<<<|=======|>>>>>>>)" $(git diff --name-only --diff-filter=U)
 | **수치/카운트 갱신** | `CLAUDE.md` "16개 → 17개" (다른 PR 머지로 수 증가) | ✅ 더 큰 수치 + 본 PR 변경 의미 합성 |
 | **same-line different-content** | 같은 함수 시그니처 양쪽 수정 | ⚠️ claude 가 의도 추론 → **사용자 confirm 필수** |
 | **delete vs modify** | 한쪽이 파일/함수 제거, 한쪽은 수정 | 🛑 사용자 confirm 필수 (제거가 의도된 변경인지 확인) |
+| **회고 번호 충돌** | `common-pitfalls.md` 1-21 양쪽 다른 항목 추가 (다른 PR 머지로 번호 선점) | ✅ 본 PR 항목을 다음 번호 (1-22) 로 재할당 + 카테고리 카운트 동기화. 사고 사례: docu-parser plan011/012 |
+| **import 누락** | 한쪽이 모듈 import 제거 (refactor) + 다른 쪽이 그 모듈 사용 (신규) | ⚠️ import 재추가 — silent 회피. rebase 시 auto-merge 통과해도 NameError 잠재. 사고 사례: docu-parser plan011 `os.getenv → settings` 마이그레이션 + plan012 `os.environ` 사용 |
 
 처리 후 검증:
 ```bash
@@ -520,6 +522,15 @@ reply 까지 완료되면 이번 PR 의 리뷰에서 **재발 가능 패턴**을
 ### 누적 commit
 
 학습 누적은 **PR 브랜치 commit 에 포함하지 않는다** (PR scope 외). PR 머지 후 main 직접 commit:
+
+> **⚠️ 메인 디렉터리 사전 점검 (필수)** — main 디렉터리에 진행 중인 다른 작업 (다른 브랜치의 미푸시 commit, unstaged / untracked 변경) 이 있으면 학습 commit 이 그 작업과 의도치 않게 섞일 위험.
+> docu-parser plan012 회고 사고 사례 — `chore/canary-validation-skill` 작업 중인 메인 디렉터리에 plan012 회고 Edit 가 잘못 적용. patch 로 분리·이전 필요.
+>
+> ```bash
+> # 사전 점검 — 클린이어야 main 직접 commit 안전
+> [ "$(git status --short | wc -l | tr -d ' ')" = "0" ] && [ "$(git branch --show-current)" = "main" ] \
+>   || { echo "🚫 main 직접 commit 차단 — 메인 디렉터리에 다른 변경 또는 다른 브랜치 체크아웃 상태. PR 브랜치 commit 으로 전환하거나 stash."; exit 1; }
+> ```
 
 ```bash
 # cwd: <repo root>, branch: main
