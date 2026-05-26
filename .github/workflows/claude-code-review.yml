@@ -117,7 +117,7 @@ jobs:
             ## 2단계: 4 개 병렬 specialist 에이전트 spawn
 
             Agent tool 을 사용해 4 개 에이전트를 **동시에** 실행한다.
-            **Hybrid 모델 매트릭스** (Issue 검토 2026-05-26):
+            **모델 분담 표** (검토 2026-05-26 — Sonnet/Haiku 혼합 운용):
             - Agent 1 (Type Safety) / Agent 3 (Security): `model: "sonnet"` — 추론 정확도 critical
             - Agent 2 (Conventions) / Agent 4 (Architecture): `model: "haiku"` — grep 패턴 매칭 위주, 토큰 절약
             각 에이전트의 prompt 에 필터링된 전체 diff 를 전달한다.
