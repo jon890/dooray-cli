@@ -11,14 +11,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/jon890/dooray-cli.git"
+    "url": "git+https://github.com/jon890/dooray-cli.git"
   },
   "homepage": "https://github.com/jon890/dooray-cli#readme",
   "bugs": {
     "url": "https://github.com/jon890/dooray-cli/issues"
   },
   "bin": {
-    "dooray": "./dist/index.js"
+    "dooray": "dist/index.js"
   },
   "files": [
     "dist",
