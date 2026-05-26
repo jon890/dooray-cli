@@ -145,6 +145,16 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - list: 별도 endpoint 부재 → `getWikiPage` 의 `result.files[]` (general) + `result.images[]` (inline) 합성
 - delete: confirm 없이 즉시 (post file delete mirror)
 
+### file 명령군 `--json` / `--quiet` 출력 (Issue #73, ADR-031)
+
+`post file` + `wiki page file` 동의 4 명령 (`upload` / `download` / `download-all` / `delete`) 의 출력 스키마 통일 — 두 명령군이 mirror.
+
+- `upload`: `--json` = `res.result` raw / `--quiet` = `id` 만
+- `download`: `--json` = `{ outputPath, fileName, size }` / `--quiet` = `outputPath` 만
+- `download-all`: `--json` = `{ count, succeeded: [{path, fileName}], failed: [{fileId, error}] }` / 부분 실패 시 exit 1
+- `delete`: `--json` = `{ fileId, status: "deleted" }` / `--quiet` = `fileId` 만
+- 자동화 스크립트가 두 명령군을 동일 parse 코드로 처리 가능
+
 ### wiki page comment (task 036)
 
 - 6 명령: `list` / `latest` / `get` / `add` / `edit` / `delete`
@@ -214,6 +224,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | Wiki page file 명령 (`wiki page file *`) 추가/수정         | **ADR-029** (multipart `type` 필드 순서 의존 + 307 redirect — ADR-015 재사용)                  |
 | member-group resolver (응답 shape 정규화 + 가드)           | **ADR-028** (nested array unwrap `flat()` + id 직접 입력 fallback + `match.ts` 가드, Issue #65 #76) |
 | project resolver (numeric 입력 fallback)                   | **ADR-030** (`PROJECT_ID_RE` 분기 + cache 우회 + 권한은 후속 API 4xx 위임, Issue #78)         |
+| file 명령군 `--json` 출력 (post file + wiki page file)     | **ADR-031** (8 명령 스키마 통일 + `download-all` 부분 실패 표현 + quiet 모드 일관, Issue #73)  |
 | `post create --template` + `project templates` 명령        | **ADR-027** (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외) |
 | 파일 업로드/다운로드 (307 처리)                            | **ADR-015** (수동 redirect + Auth 헤더 재첨부)                                                 |
 | `dooray setup` 마법사 변경                                 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치)                                                  |

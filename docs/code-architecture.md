@@ -126,10 +126,10 @@ src/
           delete.ts           # reference 제거 + 파일 삭제 (atomic 보장 X, ADR-024)
       file/
         list.ts               # 첨부파일 목록
-        download.ts           # 단일 파일 다운로드
-        download-all.ts       # 전체 파일 다운로드
-        upload.ts             # 파일 업로드
-        delete.ts             # 파일 삭제
+        download.ts           # 단일 파일 다운로드 (--json/--quiet 스키마 ADR-031)
+        download-all.ts       # 전체 파일 다운로드 (--json: count/succeeded/failed, ADR-031)
+        upload.ts             # 파일 업로드 (--json: res.result raw, --quiet: id, ADR-031)
+        delete.ts             # 파일 삭제 (--json/--quiet 스키마 ADR-031)
 
     wiki/
       list.ts
@@ -140,10 +140,10 @@ src/
       page-file/
         index.ts            # wikiPageFileCommand 조립
         list.ts             # 페이지 첨부 목록 (getWikiPage 응답의 files[] + images[] 합성)
-        upload.ts           # 파일 업로드 (multipart type 먼저 → file, ADR-029) + --type general|inline_image
-        download.ts         # 단일 파일 다운로드 (307 redirect, ADR-015 패턴)
-        download-all.ts     # 페이지 모든 첨부 + inline image 일괄 다운로드
-        delete.ts           # 파일 삭제 (post file delete 와 동일 — confirm 없이 즉시)
+        upload.ts           # 파일 업로드 (multipart type 먼저 → file, ADR-029) + --type general|inline_image (--json/--quiet 스키마 ADR-031)
+        download.ts         # 단일 파일 다운로드 (307 redirect, ADR-015 패턴) (--json 스키마 ADR-031)
+        download-all.ts     # 페이지 모든 첨부 + inline image 일괄 다운로드 (--json: count/succeeded/failed, ADR-031)
+        delete.ts           # 파일 삭제 (post file delete 와 동일 — confirm 없이 즉시) (--json 스키마 ADR-031)
       page-comment/
         index.ts            # wikiPageCommentCommand 조립
         list.ts             # 댓글 목록 (size/page/--latest 지원, 최신순)

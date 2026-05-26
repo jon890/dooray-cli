@@ -1,0 +1,20 @@
+{
+  "name": "040-feat-file-commands-json-output",
+  "description": "GitHub Issue #73 — file 명령군 8 명령 (`post file` + `wiki page file` 각 4종: upload/download/download-all/delete) 의 `--json` 출력 스키마 통일. 현재 list 만 양쪽 다 동작, upload 는 post file 만 동작, 나머지는 plain text 만. 자동화 스크립트의 parse 일관성 부재 해결. ADR-031 신설 — 스키마 통일 + 부분 실패 표현 + quiet 모드 의미 명시. download = `{outputPath, fileName, size}` / download-all = `{count, succeeded, failed}` (부분 실패 시 exit 1) / delete = `{fileId, status: 'deleted'}`. quiet 모드는 id / outputPath / fileId 만. 두 명령군 mirror — 자동화가 동일 코드로 parse.",
+  "created_at": "2026-05-26T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 1,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "8 명령 --json/--quiet 분기 추가 + 단위 테스트 + README/SKILL 갱신",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-05-26T00:00:00Z"
+}
