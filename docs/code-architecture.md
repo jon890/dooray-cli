@@ -68,6 +68,7 @@ src/
     member.ts               # Member 상세/목록 포맷 (ADR-021)
     comment.ts              # PostComment 상세 포맷 (table/JSON/quiet, Issue #45)
     wiki-comment.ts         # WikiComment 전용 포맷 — page.id + creator.member 시그니처 차이 (post comment 와 mailUsers/files/mention 부재)
+    file-output.ts          # file 명령군 emit 헬퍼 (ADR-031) — download/download-all/delete 3종
 
   utils/
     errors.ts               # DoorayCliError (message + exitCode)

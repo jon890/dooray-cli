@@ -34,6 +34,8 @@ export function emitDownloadResult(
 ): void {
   if (globalOpts.json) {
     printJson(result);
+  } else if (globalOpts.quiet) {
+    process.stdout.write(`${result.outputPath}\n`);
   } else {
     process.stdout.write(`${result.outputPath}\n`);
   }
