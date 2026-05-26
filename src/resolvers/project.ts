@@ -5,6 +5,9 @@ import { PROJECTS_TTL_MS } from "../cache/types.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
+// resolveMember 의 MEMBER_ID_RE 와 동일 패턴 — ADR-030
+const PROJECT_ID_RE = /^\d{15,}$/;
+
 async function fetchAllProjects(
   client: DoorayApiClient,
   options?: { type?: string },
@@ -53,6 +56,14 @@ export async function resolveProject(
   client: DoorayApiClient,
   input: string,
 ): Promise<string> {
+  // 1. numeric 15+자리 — cache 우회 (ADR-030, Issue #78)
+  // member=me 응답에 없는 프로젝트도 projectId 만 있으면 후속 API 호출 가능.
+  // 권한 검증은 후속 호출의 4xx 에 위임.
+  if (PROJECT_ID_RE.test(input)) {
+    return input;
+  }
+
+  // 2. cache 매칭 (기존 흐름)
   const projects = await ensureProjects(client);
   const match = projects.find((p) => p.code === input || p.id === input);
   if (match) return match.id;
@@ -65,7 +76,7 @@ export async function resolveProject(
   }
 
   throw new DoorayCliError(
-    `프로젝트를 찾을 수 없습니다: ${input}\n  개인 프로젝트라면: dooray project list --type private 로 캐시를 갱신하세요`,
+    `프로젝트를 찾을 수 없습니다: ${input}\n  개인 프로젝트라면: dooray project list --type private 로 캐시를 갱신하세요\n  member=me 응답에 없는 프로젝트는 projectId (15+자리 numeric) 직접 입력으로 우회 가능 (ADR-030)`,
     EXIT_PARAM_ERROR,
   );
 }
