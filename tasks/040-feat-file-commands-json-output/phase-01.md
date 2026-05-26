@@ -58,13 +58,14 @@ const globalOpts = fileDownloadCommand.optsWithGlobals() as OutputOptions;
 
 // ...기존 download 호출...
 const { buffer, fileName } = await client.downloadPostFile(...);
-const outputPath = path.join(opts.output ?? ".", fileName);
+const safeName = path.basename(decodeURIComponent(fileName));  // CLI7: path-traversal 방지
+const outputPath = path.join(opts.output ?? ".", safeName);
 await writeFile(outputPath, Buffer.from(buffer));
 stopSpinner(true, "다운로드 완료");
 
 // ADR-031: --json / --quiet / plain 3 모드 분기
 if (globalOpts.json) {
-  printJson({ outputPath, fileName, size: buffer.byteLength });
+  printJson({ outputPath, fileName: safeName, size: buffer.byteLength });
 } else if (globalOpts.quiet) {
   process.stdout.write(`${outputPath}\n`);
 } else {
@@ -72,9 +73,16 @@ if (globalOpts.json) {
 }
 ```
 
-**주의 — quiet vs plain 동작 동일성**: 현재 `download` 의 plain text 출력이 이미 `outputPath\n` 한 줄이라 quiet 와 동일.
-plain 그대로 유지 + json 모드만 추가.
-`--quiet` 명시 시 동일 결과지만 의미 일관성 위해 분기는 유지.
+**주의 사항**:
+- quiet vs plain 동작 동일성: 현재 `download` 의 plain text 출력이 이미 `outputPath\n` 한 줄이라 quiet 와 동일.
+  plain 그대로 유지 + json 모드만 추가.
+  `--quiet` 명시 시 동일 결과지만 의미 일관성 위해 분기는 유지.
+- **CLI7 basename 필수**: 아래 3 파일에 `basename(decodeURIComponent(fileName))` 미적용 상태.
+  본 phase 에서 반드시 적용.
+  - `post/file/download.ts`
+  - `post/file/download-all.ts`
+  - `wiki/page-file/download-all.ts`
+  - `wiki/page-file/download.ts` 는 이미 적용 → skip
 
 ### 2. `download-all` 양 명령군 — 2 파일
 
@@ -86,9 +94,10 @@ const failed: { fileId: string; error: string }[] = [];
 for (const f of allFiles) {
   try {
     const { buffer, fileName } = await client.downloadPostFile(projectId, postId, f.id);
-    const outputPath = path.join(outDir, fileName);
+    const safeName = path.basename(decodeURIComponent(fileName));  // CLI7: path-traversal 방지
+    const outputPath = path.join(outDir, safeName);
     await writeFile(outputPath, Buffer.from(buffer));
-    succeeded.push({ path: outputPath, fileName });
+    succeeded.push({ path: outputPath, fileName: safeName });
     // plain 모드만 ✓ 마크 출력 (json/quiet 는 마지막에 일괄)
     if (!globalOpts.json && !globalOpts.quiet) {
       process.stdout.write(`✓ ${fileName}\n`);
@@ -114,7 +123,13 @@ if (globalOpts.json) {
 if (failed.length > 0) process.exitCode = 1;
 ```
 
-**주의**: `process.exit(1)` 대신 `process.exitCode = 1` — Node 의 비동기 flush 보장 (기존 패턴).
+**주의 사항**:
+- `process.exit(1)` 대신 `process.exitCode = 1` — Node 의 비동기 flush 보장 (기존 패턴)
+- **빈 파일 조기 반환**: 양 명령군 모두 파일 0개 시 기존 plain "첨부파일이 없습니다" early return 존재.
+  `--json` 모드에서는 `{ count: 0, succeeded: [], failed: [] }` 로 반환해야 ADR-031 스키마 일관.
+  early return 분기에 `globalOpts.json` 체크 추가
+- **wiki/download-all.ts orphan import 제거**: 기존 `EXIT_API_ERROR` import 가 `process.exitCode = 1` 전환 후 미사용.
+  orphan import 정리
 
 ### 3. `delete` 양 명령군 — 2 파일
 
@@ -270,6 +285,13 @@ grep -nE "process\.exitCode = 1" src/commands/{post/file,wiki/page-file}/downloa
 grep -c "file.*--json" README.md
 # 기대: 4 이상 (양 명령군 × 사용 예 2 이상)
 ```
+
+### index.json 완료 마킹 (마지막 phase 의무)
+
+`tasks/040-feat-file-commands-json-output/index.json` 의 다음 필드를 갱신:
+- `status`: `"completed"`
+- `current_phase`: `2` (total_phases + 1)
+- `phases[0].status`: `"completed"`
 
 ## 작업 외 금지
 

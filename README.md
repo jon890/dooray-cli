@@ -399,6 +399,22 @@ dooray wiki page file list "https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>"
 dooray wiki page file upload --id <pageId> --project <project> --file ./README.md
 ```
 
+`--json` 옵션으로 자동화 파이프라인에서 동일 parse 코드를 사용할 수 있습니다 (ADR-031):
+
+```bash
+# download — { outputPath, fileName, size }
+dooray wiki page file download <project> <page-id> --file-id <id> -o ./ --json
+
+# download-all — { count, succeeded, failed } (부분 실패 시 exit 1)
+dooray wiki page file download-all <project> <page-id> -o ./ --json | jq '.failed'
+
+# delete — { fileId, status: "deleted" }
+dooray wiki page file delete <project> <page-id> --file-id <id> --json
+
+# upload — res.result raw (--quiet 는 id 만)
+dooray wiki page file upload <project> <page-id> --file ./report.pdf --json
+```
+
 **주의**:
 - `upload` 시 multipart 필드 순서 (`type` → `file`) 가 중요.
   클라이언트가 자동으로 강제 (ADR-029 참조)
@@ -488,6 +504,25 @@ dooray post file upload <project> <number> ./report.pdf
 
 # 파일 삭제
 dooray post file delete <project> <number> <file-id>
+```
+
+자동화 스크립트에서 `--json` 옵션으로 구조화된 출력을 파이프로 가공할 수 있습니다 (ADR-031):
+
+```bash
+# download — { outputPath, fileName, size }
+dooray post file download <project> <number> --file-id <id> -o ./ --json
+# 출력: {"outputPath": "./<fileName>", "fileName": "...", "size": 12345}
+
+# download-all — { count, succeeded, failed } (부분 실패 시 exit 1)
+dooray post file download-all <project> <number> -o ./ --json | jq '.failed'
+# 출력: [] 또는 [{"fileId": "...", "error": "..."}]
+
+# delete — { fileId, status: "deleted" }
+dooray post file delete <project> <number> --file-id <id> --json
+# 출력: {"fileId": "...", "status": "deleted"}
+
+# upload — res.result raw (--quiet 는 id 만)
+dooray post file upload <project> <number> ./report.pdf --json
 ```
 
 URL/`--id`/`--url` 모드에서는 sub-id를 옵션으로 전달:

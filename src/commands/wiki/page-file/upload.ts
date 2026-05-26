@@ -6,6 +6,8 @@ import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
 import type { WikiPageFileType } from "../../../api/types.js";
+import type { OutputOptions } from "../../../formatters/table.js";
+import { printJson } from "../../../formatters/table.js";
 
 export const wikiPageFileUploadCommand = new Command("upload")
   .description("위키 페이지 첨부파일 업로드 (multipart type 순서 강제, ADR-029)")
@@ -18,6 +20,7 @@ export const wikiPageFileUploadCommand = new Command("upload")
   .option("--file <path>", "업로드할 파일 경로 (positional 대체)")
   .option("--type <type>", "파일 타입: general | inline_image (기본 general)", "general")
   .action(async (arg1, arg2, arg3, opts) => {
+    const globalOpts = wikiPageFileUploadCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
@@ -82,14 +85,21 @@ export const wikiPageFileUploadCommand = new Command("upload")
       const res = await client.uploadWikiPageFile(wikiId, pageId, filePath, fileType);
       stopSpinner(true, "업로드 완료");
 
-      process.stdout.write(`attachFileId: ${res.result.attachFileId}\n`);
-      process.stdout.write(`name:         ${res.result.name}\n`);
-      process.stdout.write(`size:         ${res.result.size}\n`);
-      process.stdout.write(`type:         ${res.result.type}\n`);
+      // ADR-031: --json / --quiet / plain 3 모드 분기
+      if (globalOpts.json) {
+        printJson(res.result);
+      } else if (globalOpts.quiet) {
+        process.stdout.write(`${res.result.id}\n`);
+      } else {
+        process.stdout.write(`attachFileId: ${res.result.attachFileId}\n`);
+        process.stdout.write(`name:         ${res.result.name}\n`);
+        process.stdout.write(`size:         ${res.result.size}\n`);
+        process.stdout.write(`type:         ${res.result.type}\n`);
 
-      if (fileType === "inline_image") {
-        process.stdout.write("\n본문 삽입용 markdown snippet (직접 wiki page edit 으로 본문에 박으세요):\n");
-        process.stdout.write(`  ![${res.result.name}](/wikis/${wikiId}/files/${res.result.attachFileId})\n`);
+        if (fileType === "inline_image") {
+          process.stdout.write("\n본문 삽입용 markdown snippet (직접 wiki page edit 으로 본문에 박으세요):\n");
+          process.stdout.write(`  ![${res.result.name}](/wikis/${wikiId}/files/${res.result.attachFileId})\n`);
+        }
       }
     } catch (e) {
       stopSpinner(false);

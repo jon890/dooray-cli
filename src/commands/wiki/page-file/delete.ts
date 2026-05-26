@@ -5,6 +5,8 @@ import { resolveWikiPageInput } from "../../../resolvers/wiki-page-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import type { OutputOptions } from "../../../formatters/table.js";
+import { emitDeleteResult } from "../../../formatters/file-output.js";
 
 export const wikiPageFileDeleteCommand = new Command("delete")
   .description("위키 페이지 첨부파일 삭제")
@@ -16,6 +18,7 @@ export const wikiPageFileDeleteCommand = new Command("delete")
   .option("--project <code>", "프로젝트 코드 (--id 모드에서 wikiId 해석용)")
   .option("--file-id <fileId>", "파일 ID (positional 대체)")
   .action(async (arg1, arg2, arg3, opts) => {
+    const globalOpts = wikiPageFileDeleteCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
@@ -72,7 +75,8 @@ export const wikiPageFileDeleteCommand = new Command("delete")
       await client.deleteWikiPageFile(wikiId, pageId, fileId);
       stopSpinner(true, "삭제 완료");
 
-      process.stdout.write(`파일(${fileId})이 삭제되었습니다.\n`);
+      // ADR-031: --json / --quiet / plain 3 모드 분기
+      emitDeleteResult(globalOpts, { fileId });
     } catch (e) {
       stopSpinner(false);
       throw e;

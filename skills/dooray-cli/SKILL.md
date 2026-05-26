@@ -104,6 +104,7 @@ dooray doctor                                 # 설정 검증
 | 전체 첨부파일 다운로드 | `dooray post file download-all <project> <number>` |
 | 첨부파일 업로드 | `dooray post file upload <project> <number> <file-path>` |
 | 첨부파일 삭제 | `dooray post file delete <project> <number> <file-id>` |
+| file 명령군 자동화 파싱 | `dooray post file <verb> ... --json` — `download` = `{outputPath,fileName,size}`, `download-all` = `{count,succeeded,failed}` (부분 실패 시 exit 1), `delete` = `{fileId,status}`, `upload` = `res.result` raw (ADR-031) |
 | 댓글 첨부 목록 | `dooray post comment file list <project> <number> <comment-id>` |
 | 댓글 파일 업로드 | `dooray post comment file upload <project> <number> <comment-id> <path>` |
 | 댓글 파일 다운로드 | `dooray post comment file download <project> <number> <comment-id> <file-id>` |
@@ -205,6 +206,16 @@ dooray wiki pages <project> --json
 
 # 2. 페이지 내용 조회
 dooray wiki page get <project> <pageId> --json
+```
+
+### 첨부파일 일괄 다운로드 후 실패 분리 (ADR-031)
+
+```bash
+# --json 으로 구조화 출력 → jq 로 성공/실패 분리
+RESULT=$(dooray post file download-all <project> <number> -o ./ --json)
+echo "$RESULT" | jq -r '.failed[] | "\(.fileId): \(.error)"' >&2
+echo "$RESULT" | jq -r '.succeeded[].path'
+# exit code 1 이 설정되어 있으면 실패 있는 상태
 ```
 
 ### 위키 페이지 첨부파일 — 스킬 파일 팀 공유 (Issue #70)
