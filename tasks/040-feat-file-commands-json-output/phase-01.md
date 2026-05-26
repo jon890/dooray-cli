@@ -77,9 +77,12 @@ if (globalOpts.json) {
 - quiet vs plain 동작 동일성: 현재 `download` 의 plain text 출력이 이미 `outputPath\n` 한 줄이라 quiet 와 동일.
   plain 그대로 유지 + json 모드만 추가.
   `--quiet` 명시 시 동일 결과지만 의미 일관성 위해 분기는 유지.
-- **CLI7 basename 필수**: `post/file/download.ts` 와 `wiki/page-file/download-all.ts` 에 `basename(decodeURIComponent(fileName))` 미적용 상태.
-  본 phase 에서 수정 시 반드시 적용.
-  `wiki/page-file/download.ts` 는 이미 적용되어 있으므로 skip.
+- **CLI7 basename 필수**: 아래 3 파일에 `basename(decodeURIComponent(fileName))` 미적용 상태.
+  본 phase 에서 반드시 적용.
+  - `post/file/download.ts`
+  - `post/file/download-all.ts`
+  - `wiki/page-file/download-all.ts`
+  - `wiki/page-file/download.ts` 는 이미 적용 → skip
 
 ### 2. `download-all` 양 명령군 — 2 파일
 
@@ -91,9 +94,10 @@ const failed: { fileId: string; error: string }[] = [];
 for (const f of allFiles) {
   try {
     const { buffer, fileName } = await client.downloadPostFile(projectId, postId, f.id);
-    const outputPath = path.join(outDir, fileName);
+    const safeName = path.basename(decodeURIComponent(fileName));  // CLI7: path-traversal 방지
+    const outputPath = path.join(outDir, safeName);
     await writeFile(outputPath, Buffer.from(buffer));
-    succeeded.push({ path: outputPath, fileName });
+    succeeded.push({ path: outputPath, fileName: safeName });
     // plain 모드만 ✓ 마크 출력 (json/quiet 는 마지막에 일괄)
     if (!globalOpts.json && !globalOpts.quiet) {
       process.stdout.write(`✓ ${fileName}\n`);
