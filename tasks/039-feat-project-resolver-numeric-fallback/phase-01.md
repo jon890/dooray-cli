@@ -8,13 +8,13 @@ Issue #78 — `dooray post search <project>` (외 12 호출자) 가 `member=me` 
 **해결 (ADR-030)**:
 - `resolveProject` 입력이 numeric 15+자리이면 cache 우회 + 그대로 projectId 반환
 - 권한 검증은 후속 API 호출의 4xx 에 위임
-- 13 호출자 시그니처 불변 — 자동 혜택
+- 12 호출자 시그니처 불변 — 자동 혜택
 
 코드 컨텍스트:
 - `src/resolvers/project.ts:54-72` — `resolveProject` (현재 cache 매칭만)
 - `src/resolvers/member.ts:9` — `MEMBER_ID_RE = /^\d{15,}$/` 패턴 mirror
 - `src/resolvers/member-group.ts` — `GROUP_ID_RE` 동일 패턴
-- 13 호출자 (`grep -rn "resolveProject\b" src/`):
+- 12 호출자 (`grep -rn "resolveProject\b" src/`):
   - `src/resolvers/wiki.ts:13` (freshness 트리거 — wiki 도 numeric 허용으로 결정)
   - `src/resolvers/post-input.ts:96`
   - `src/resolvers/postRef.ts:22`
@@ -81,6 +81,8 @@ export async function resolveProject(
 
 ```ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { resolveProject } from "./project.js";
+import type { DoorayApiClient } from "../api/client.js";
 
 // fixture: cache 안의 정상 프로젝트
 const fixtureProjects = [
@@ -88,59 +90,52 @@ const fixtureProjects = [
   { id: "2222333344445555666", code: "project-b", wikiId: undefined },
 ];
 
-vi.mock("./project.js", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("./project.js")>();
-  return {
-    ...mod,
-    ensureProjects: vi.fn(() => Promise.resolve(fixtureProjects)),
-  };
-});
-
-// getPrivateProjects mock — null (private cache 없음 가정)
-vi.mock("../cache/store.js", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("../cache/store.js")>();
-  return {
-    ...mod,
-    getPrivateProjects: vi.fn(() => Promise.resolve(null)),
-  };
-});
-
-import { resolveProject } from "./project.js";
+// cache store mock — ensureProjects 내부에서 호출하는 함수들을 mock
+// self-mock (vi.mock("./project.js")) 는 동일 파일 내부 함수 참조를 교체 못함 → 사용 금지
+vi.mock("../cache/store.js", () => ({
+  getProjects: vi.fn().mockResolvedValue({
+    data: fixtureProjects,
+    updatedAt: Date.now(),
+  }),
+  setProjects: vi.fn().mockResolvedValue(undefined),
+  getPrivateProjects: vi.fn().mockResolvedValue(null),
+  isExpired: vi.fn().mockReturnValue(false),
+}));
 
 describe("resolveProject", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("code 매칭 — 기존 흐름", async () => {
-    const result = await resolveProject({} as any, "project-a");
+    const result = await resolveProject({} as unknown as DoorayApiClient, "project-a");
     expect(result).toBe("1111222233334444555");
   });
 
   it("numeric 15+자리 — cache 우회 (ADR-030)", async () => {
-    // cache 에 없는 projectId 도 그대로 반환
-    const result = await resolveProject({} as any, "9999888877776666555");
+    const result = await resolveProject({} as unknown as DoorayApiClient, "9999888877776666555");
     expect(result).toBe("9999888877776666555");
   });
 
   it("numeric 15+자리 — cache 에 있어도 그대로 반환 (성능 우선)", async () => {
-    // cache hit 케이스도 numeric 분기가 먼저 잡힘
-    const result = await resolveProject({} as any, "1111222233334444555");
+    const result = await resolveProject({} as unknown as DoorayApiClient, "1111222233334444555");
     expect(result).toBe("1111222233334444555");
   });
 
   it("code 매칭 실패 — 친절한 안내 (ADR-030 회피책 포함)", async () => {
-    await expect(resolveProject({} as any, "nonexistent-code"))
+    await expect(resolveProject({} as unknown as DoorayApiClient, "nonexistent-code"))
       .rejects.toThrow(/프로젝트를 찾을 수 없습니다.*ADR-030/);
   });
 });
 ```
 
-mock 패턴은 기존 `src/resolvers/member-group.test.ts` (task 038 산출물) 답습.
+mock 패턴은 기존 `src/resolvers/member-group.test.ts` (task 038 산출물) 동일 패턴 적용.
+self-mock (`vi.mock("./project.js")`) 는 동일 파일 내부 함수 참조를 교체하지 못하므로 사용 금지.
+대신 `../cache/store.js` mock 으로 `getProjects` + `setProjects` + `isExpired` 를 교체해 `ensureProjects` 가 네트워크/파일시스템 호출 없이 fixture 반환하도록 한다.
 
-### 3. 13 호출자 시그니처 무변경 검증
+### 3. 12 호출자 시그니처 무변경 검증
 
 ```bash
 grep -rnE "resolveProject\(client, " src/ | grep -v "\.test\.ts\|src/resolvers/project\.ts"
-# 기대: 13 호출자 모두 `resolveProject(client, <input>)` 시그니처 그대로
+# 기대: 12 호출자 모두 `resolveProject(client, <input>)` 시그니처 그대로
 # 동작 변경: numeric 입력 시 cache 우회만 (반환 타입 / 호출 시그니처 불변)
 ```
 
@@ -224,7 +219,7 @@ node dist/index.js post search 1234567890123456789 "test"
 
 - **1-x (spinner 순서)**: resolver 함수만 수정 — spinner 무관
 - **3-3 (테스트 mock mirror)**: `member-group.test.ts` 패턴 답습
-- **4-x (외과적 변경)**: `resolveProject` 함수 본체만 수정. 시그니처 / 반환 타입 불변 → 13 호출자 코드 변경 0
+- **4-x (외과적 변경)**: `resolveProject` 함수 본체만 수정. 시그니처 / 반환 타입 불변 → 12 호출자 코드 변경 0
 - **CLI23 (이중 단언)**: 본 phase 는 type 단언 없음 — 무관
 - **에러 메시지 일관성**: 기존 "프로젝트를 찾을 수 없습니다" 톤 유지 + ADR-030 회피책 한 줄만 추가
 
@@ -244,7 +239,7 @@ grep -nE "ADR-030" src/resolvers/project.ts
 # 기대: 1 이상 (주석 + 에러 메시지)
 
 grep -nE "resolveProject\(client, " src/ | grep -v "\.test\.ts\|src/resolvers/project\.ts" | wc -l
-# 기대: 13 (호출자 시그니처 무변경)
+# 기대: 12 (호출자 시그니처 무변경)
 
 grep -c "projectId 직접 입력" README.md
 # 기대: 1 이상
@@ -252,6 +247,13 @@ grep -c "projectId 직접 입력" README.md
 grep -c "projectId 직접 입력 시나리오" skills/dooray-cli/SKILL.md
 # 기대: 1
 ```
+
+### index.json 완료 마킹 (마지막 phase 의무)
+
+`tasks/039-feat-project-resolver-numeric-fallback/index.json` 의 다음 필드를 갱신:
+- `status`: `"completed"`
+- `current_phase`: `2` (total_phases + 1)
+- `phases[0].status`: `"completed"`
 
 ## 작업 외 금지
 
@@ -282,7 +284,7 @@ cache 채워서 member 가 아닌 프로젝트는 cache 에 없음. 자동화 �
 - 권한 검증은 후속 API 호출 (getPosts 등) 의 4xx 에 위임
 - 에러 메시지에 ADR-030 회피책 안내 추가
 - resolveMember / resolveMemberGroup 의 numeric 분기 패턴 mirror
-- 13 호출자 시그니처 불변 → 자동 혜택
+- 12 호출자 시그니처 불변 → 자동 혜택
 - 단위 테스트 4 케이스 (code 매칭 / numeric 우회 / cache hit numeric / 매칭 실패)
 
 planning docs (CLAUDE.md / adr.md ADR-030 / code-arch / flow.md) 는
