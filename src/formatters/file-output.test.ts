@@ -12,7 +12,7 @@ import {
 
 function captureStdout(): { writes: string[]; restore: () => void } {
   const writes: string[] = [];
-  const spy = vi.spyOn(process.stdout, "write").mockImplementation((s: any) => {
+  const spy = vi.spyOn(process.stdout, "write").mockImplementation((s: string | Uint8Array) => {
     writes.push(String(s));
     return true;
   });

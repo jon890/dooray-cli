@@ -34,8 +34,6 @@ export function emitDownloadResult(
 ): void {
   if (globalOpts.json) {
     printJson(result);
-  } else if (globalOpts.quiet) {
-    process.stdout.write(`${result.outputPath}\n`);
   } else {
     process.stdout.write(`${result.outputPath}\n`);
   }
@@ -50,6 +48,9 @@ export function emitDownloadAllResult(
   } else if (globalOpts.quiet) {
     for (const s of data.succeeded) {
       process.stdout.write(`${s.path}\n`);
+    }
+    if (data.failed.length > 0) {
+      process.stderr.write(`${data.failed.length} failed\n`);
     }
   } else {
     process.stdout.write(`\n완료: ${data.succeeded.length}/${data.count}\n`);
