@@ -681,6 +681,39 @@ grep -nE "as unknown as .*\|" src/
   리뷰 권장에 따라 `MemberGroupListResponse.result` union 으로 옮기고 단언 제거 (PR #77 commit `76105b5`).
   같은 패턴이 향후 spec ↔ runtime mismatch 흡수 (ADR-028 류) 에 재발 가능 — API client 단에서 union 으로 흡수하는 게 type-safety 측면에서 우선.
 
+## 1-17. 테스트 mock — self-mock (vi.mock("./same-file.js")) 금지
+
+**증상**: `vi.mock("./project.js", ...)` 처럼 테스트 대상 파일 자체를 mock 하면 동일 파일 내부 함수 참조가 교체되지 않아 실제 구현이 호출됨.
+캐시/네트워크 접근이 발생하여 환경마다 flaky.
+
+**self-check**:
+```bash
+# phase 의 테스트 코드 블록에서 vi.mock 경로가 테스트 대상과 같은 파일인지 확인
+grep -n 'vi\.mock("\./' tasks/*/phase-*.md
+# "vi.mock("./project.js")" 같이 같은 디렉터리 파일을 mock 하면 self-mock 의심
+```
+
+**대안**: 테스트 대상이 내부에서 호출하는 **외부 의존성** (`../cache/store.js` 등) 을 mock.
+기존 패턴: `member-group.test.ts` 참조.
+
+**Why**: plan039 critic REVISE — `ensureProjects` 를 self-mock 했으나 CommonJS 번들에서 동일 파일 내부 참조는 원본 유지. 실제 `getProjects` 가 `~/.dooray/cache/` 에 접근하며 flaky 테스트 발생.
+
+## 1-18. 테스트 정규식 — 에러 메시지 개행 시 dotAll (`s`) 플래그 필수
+
+**증상**: `.toThrow(/패턴A.*패턴B/)` 에서 에러 메시지 중간에 `\n` 이 있으면 `.` 가 매칭 안 해서 테스트 항상 실패.
+
+**self-check**:
+```bash
+# phase 테스트 코드에서 .toThrow 정규식이 멀티라인 에러 메시지를 잡는지 확인
+# 에러 메시지에 \n 포함 여부: 대상 함수의 throw 구문 확인
+grep -A2 'toThrow(/' tasks/*/phase-*.md | grep -v '/s)'
+# /s) 없이 .* 로 멀티라인 매칭 시도하면 실패
+```
+
+**대안**: `/패턴A.*패턴B/s` — `s` (dotAll) 플래그로 `.` 가 `\n` 포함 매칭.
+
+**Why**: plan039 critic REVISE v2 — `DoorayCliError` 메시지에 `\n` 2개 포함. dotAll 없이 `.*` 가 연결 실패해 테스트 항상 red.
+
 ---
 
 이 파일은 dooray-cli 전용. 시드 1 / 2 패턴은 fos-blog 와 동일 구조이지만 도메인별 예시는 dooray-cli 컨텍스트로 표현. 3 / 4 / ... 는 이 레포 고유.
