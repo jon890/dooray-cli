@@ -7,6 +7,8 @@ import { resolveWikiPageInput } from "../../../resolvers/wiki-page-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import type { OutputOptions } from "../../../formatters/table.js";
+import { emitDownloadResult } from "../../../formatters/file-output.js";
 
 export const wikiPageFileDownloadCommand = new Command("download")
   .description("위키 페이지 첨부파일 다운로드")
@@ -19,6 +21,7 @@ export const wikiPageFileDownloadCommand = new Command("download")
   .option("--file-id <fileId>", "파일 ID (positional 대체)")
   .option("-o, --output <dir>", "저장 디렉토리", ".")
   .action(async (arg1, arg2, arg3, opts) => {
+    const globalOpts = wikiPageFileDownloadCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
@@ -73,12 +76,14 @@ export const wikiPageFileDownloadCommand = new Command("download")
     startSpinner("파일 다운로드 중...");
     try {
       const { buffer, fileName } = await client.downloadWikiPageFile(wikiId, pageId, fileId);
-      // 방어적 basename — client 가 이미 sanitize 하지만 출력 경로 조합 전 한 번 더
-      const outputPath = join(opts.output, basename(fileName));
+      // CLI7: path-traversal 방지 — basename + decodeURIComponent
+      const safeName = basename(decodeURIComponent(fileName));
+      const outputPath = join(opts.output, safeName);
       await writeFile(outputPath, Buffer.from(buffer));
       stopSpinner(true, `다운로드 완료: ${outputPath}`);
 
-      process.stdout.write(`${outputPath}\n`);
+      // ADR-031: --json / --quiet / plain 3 모드 분기
+      emitDownloadResult(globalOpts, { outputPath, fileName: safeName, size: buffer.byteLength });
     } catch (e) {
       stopSpinner(false);
       throw e;

@@ -5,6 +5,8 @@ import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import type { OutputOptions } from "../../../formatters/table.js";
+import { emitDeleteResult } from "../../../formatters/file-output.js";
 
 export const fileDeleteCommand = new Command("delete")
   .description("첨부파일 삭제")
@@ -15,6 +17,7 @@ export const fileDeleteCommand = new Command("delete")
   .option("--url <url>", "Dooray 업무 URL (project/post-number 대신)")
   .option("--file-id <fileId>", "파일 ID (positional 대체)")
   .action(async (arg1, arg2, arg3, opts) => {
+    const globalOpts = fileDeleteCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
@@ -67,5 +70,6 @@ export const fileDeleteCommand = new Command("delete")
     await client.deletePostFile(projectId, postId, fileId);
     stopSpinner(true, "삭제 완료");
 
-    process.stdout.write(`파일(${fileId})이 삭제되었습니다.\n`);
+    // ADR-031: --json / --quiet / plain 3 모드 분기
+    emitDeleteResult(globalOpts, { fileId });
   });

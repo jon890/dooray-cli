@@ -1,13 +1,14 @@
 import { Command } from "commander";
 import { writeFile, mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { getConfigOrThrow } from "../../../config/store.js";
 import { DoorayApiClient } from "../../../api/client.js";
 import { resolveWikiPageInput } from "../../../resolvers/wiki-page-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
-import { DoorayCliError } from "../../../utils/errors.js";
-import { EXIT_API_ERROR } from "../../../utils/exit-codes.js";
 import type { WikiPageFile } from "../../../api/types.js";
+import type { OutputOptions } from "../../../formatters/table.js";
+import { printJson } from "../../../formatters/table.js";
+import { emitDownloadAllResult } from "../../../formatters/file-output.js";
 
 export const wikiPageFileDownloadAllCommand = new Command("download-all")
   .description("위키 페이지의 모든 첨부파일 다운로드 (general + inline image)")
@@ -18,6 +19,7 @@ export const wikiPageFileDownloadAllCommand = new Command("download-all")
   .option("--project <code>", "프로젝트 코드 (--id 모드에서 wikiId 해석용)")
   .option("-o, --output <dir>", "저장 디렉토리", ".")
   .action(async (project, pageIdArg, opts) => {
+    const globalOpts = wikiPageFileDownloadAllCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
@@ -42,7 +44,12 @@ export const wikiPageFileDownloadAllCommand = new Command("download-all")
 
     if (allFiles.length === 0) {
       stopSpinner(true, "첨부파일 없음");
-      process.stdout.write("첨부파일이 없습니다.\n");
+      // ADR-031: --json 모드에서는 빈 스키마 반환
+      if (globalOpts.json) {
+        printJson({ count: 0, succeeded: [], failed: [] });
+      } else {
+        process.stdout.write("첨부파일이 없습니다.\n");
+      }
       return;
     }
 
@@ -50,26 +57,32 @@ export const wikiPageFileDownloadAllCommand = new Command("download-all")
 
     await mkdir(opts.output, { recursive: true });
 
-    let successCount = 0;
-    const failures: { fileId: string; error: string }[] = [];
+    const succeeded: { path: string; fileName: string }[] = [];
+    const failed: { fileId: string; error: string }[] = [];
 
     for (const f of allFiles) {
       try {
         const { buffer, fileName } = await client.downloadWikiPageFile(wikiId, pageId, f.id);
-        await writeFile(join(opts.output, fileName), Buffer.from(buffer));
-        process.stdout.write(`✓ ${fileName}\n`);
-        successCount++;
+        // CLI7: path-traversal 방지 — basename + decodeURIComponent
+        const safeName = basename(decodeURIComponent(fileName));
+        const outputPath = join(opts.output, safeName);
+        await writeFile(outputPath, Buffer.from(buffer));
+        succeeded.push({ path: outputPath, fileName: safeName });
+        // plain 모드만 ✓ 진행 출력 (json/quiet 는 마지막에 일괄)
+        if (!globalOpts.json && !globalOpts.quiet) {
+          process.stdout.write(`✓ ${safeName}\n`);
+        }
       } catch (e) {
-        failures.push({ fileId: f.id, error: e instanceof Error ? e.message : String(e) });
-        process.stderr.write(`✗ ${f.name} (${f.id}): ${e instanceof Error ? e.message : String(e)}\n`);
+        failed.push({ fileId: f.id, error: e instanceof Error ? e.message : String(e) });
+        if (!globalOpts.json) {
+          process.stderr.write(`✗ ${f.name} (${f.id}): ${e instanceof Error ? e.message : String(e)}\n`);
+        }
       }
     }
 
-    process.stdout.write(`\n완료: ${successCount}/${allFiles.length}\n`);
-    if (failures.length > 0) {
-      throw new DoorayCliError(
-        `${failures.length}개 파일 다운로드 실패 (성공: ${successCount}/${allFiles.length})`,
-        EXIT_API_ERROR,
-      );
-    }
+    // ADR-031: --json / --quiet / plain 최종 출력
+    emitDownloadAllResult(globalOpts, { count: allFiles.length, succeeded, failed });
+
+    // 부분 실패 시 exit 1 (process.exit 대신 exitCode — 비동기 flush 보장)
+    if (failed.length > 0) process.exitCode = 1;
   });
