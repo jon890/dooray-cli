@@ -94,10 +94,7 @@ jobs:
             done
 
       - name: Claude 코드 리뷰 실행 (병렬 에이전트 + 인라인 리뷰)
-        # v1 floating tag 가 install.sh 에서 silently 교체된 binary tarball 로 깨진 후
-        # (issue anthropics/claude-code-action#1290, 2026-05-06 회귀) v1.0.111 로 pin.
-        # upstream 픽스 후 다시 v1 으로 풀 것.
-        uses: anthropics/claude-code-action@v1.0.111
+        uses: anthropics/claude-code-action@v1.0.133
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_bots: "*"
@@ -415,7 +412,7 @@ jobs:
               shell 이 `\n` 을 literal 로 처리해 댓글 포매팅이 깨진다 (4단계의 CRITICAL 참조).
               3단계의 인라인 review JSON body 안의 `\n` 은 JSON parser 가 해석하므로 정상.
 
-          claude_args: '--model claude-sonnet-4-6 --allowedTools "Agent,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*),Bash(gh api:*)" --disallowedTools "Read,Write,Edit,Glob,Grep,LS"'
+          claude_args: '--model claude-sonnet-4-6 --allowedTools "Agent,Bash" --disallowedTools "Read,Write,Edit,Glob,Grep,LS"'
 
       # 게시된 인라인 댓글 중 dummy / 길이 미달 / 마커 부재 entry 를 자동 정리
       # — Claude action 이 자연어 sanity check 를 무시하고 "test body" / "test2"
