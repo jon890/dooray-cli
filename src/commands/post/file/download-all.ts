@@ -32,10 +32,9 @@ export const fileDownloadAllCommand = new Command("download-all")
 
     if (res.result.length === 0) {
       stopSpinner(true, "첨부파일 없음");
-      // ADR-031: --json 모드에서는 빈 스키마 반환
       if (globalOpts.json) {
         printJson({ count: 0, succeeded: [], failed: [] });
-      } else {
+      } else if (!globalOpts.quiet) {
         process.stdout.write("첨부파일이 없습니다.\n");
       }
       return;

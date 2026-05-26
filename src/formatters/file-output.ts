@@ -27,11 +27,7 @@ export interface DeleteResult {
   fileId: string;
 }
 
-/**
- * download 명령 출력 (ADR-031)
- * --json: { outputPath, fileName, size }
- * --quiet / plain: outputPath 한 줄
- */
+// ADR-031 file 명령 출력 헬퍼
 export function emitDownloadResult(
   globalOpts: OutputOptions,
   result: DownloadResult,
@@ -39,19 +35,10 @@ export function emitDownloadResult(
   if (globalOpts.json) {
     printJson(result);
   } else {
-    // quiet 와 plain 모두 outputPath 한 줄 — 의미 일관성 위해 분기는 동일
     process.stdout.write(`${result.outputPath}\n`);
   }
 }
 
-/**
- * download-all 명령 최종 출력 (ADR-031)
- * --json: { count, succeeded, failed }
- * --quiet: succeeded 경로 한 줄씩
- * plain: 완료 요약 한 줄
- *
- * 루프 중 ✓/✗ 진행 출력은 각 명령 파일에서 직접 처리.
- */
 export function emitDownloadAllResult(
   globalOpts: OutputOptions,
   data: DownloadAllResult,
@@ -67,12 +54,6 @@ export function emitDownloadAllResult(
   }
 }
 
-/**
- * delete 명령 출력 (ADR-031)
- * --json: { fileId, status: "deleted" }
- * --quiet: fileId 한 줄
- * plain: 삭제 확인 메시지
- */
 export function emitDeleteResult(
   globalOpts: OutputOptions,
   result: DeleteResult,
