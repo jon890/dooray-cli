@@ -62,7 +62,7 @@ dooray doctor                                 # 설정 검증
 | 멤버 상세 (organizationMemberId) | `dooray member get <organizationMemberId>` (cache 우회, ADR-021) |
 | organization 전체 멤버 검색 | `dooray member search <keyword>` (이름 기본), `--email`(이메일 exact), `--user-code`(사번 like), `--user-code-exact`(사번 exact), `--page`/`--size` |
 | 업무 목록 조회 | `dooray post list <project>` |
-| 업무 검색 | `dooray post search <project> "<keyword>"` |
+| 업무 검색 | `dooray post search <project|projectId> "<keyword>"` — projectId (15+자리 numeric) 직접 입력 시 cache 우회 (ADR-030) |
 | 업무 상세 보기 | `dooray post get <project> <number>` |
 | 업무 생성 | `dooray post create <project> --title "..." [--body "..." \| --body-file <path>]` (`--tag`/`--parent`/`--workflow`/`--milestone` 지원) |
 | 템플릿 기반 업무 생성 | `dooray post create <project> --template <name\|id>` — body/users/tags 자동 채움 (사용자 옵션 우선 override, ADR-027) |
@@ -586,6 +586,24 @@ POST_ID=$(dooray post create <project> \
 
 템플릿 본문의 `${year}` / `${month}` 등 매크로는 Dooray 가 자동 치환 (`interpolation=true` 기본).
 사용자 정의 변수는 미지원 — 필요 시 client 측 string replace 로 처리.
+
+## projectId 직접 입력 시나리오 (Issue #78, ADR-030)
+
+AI agent 가 `member=me` 응답에 없는 프로젝트의 업무를 다뤄야 할 때:
+
+1. **사용자가 projectId (19자리 numeric) 를 줬으면 그대로 명령에 사용**:
+   ```bash
+   dooray post search 1234567890123456789 "keyword"
+   ```
+
+2. **사용자가 코드만 줬고 cache 매칭 실패 (member 아닌 프로젝트)**:
+   - 에러 메시지의 ADR-030 안내 확인
+   - 사용자에게 "프로젝트 ID 가 필요합니다 — Dooray UI 의 프로젝트 URL 에서 확인 가능" 요청
+   - 또는 `dooray project list --type private` 로 private 캐시 갱신 시도
+
+3. **권한 없는 projectId 입력 시**: resolver 통과 후 후속 API 4xx 발생 — 에러 메시지에서 권한 부재 확인 후 사용자에게 보고
+
+권한 검증이 resolver 단보다 한 단계 지연되는 trade-off — AI 친화적 자동화 우선 (ADR-030).
 
 ## 캐시
 
