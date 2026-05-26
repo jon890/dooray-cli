@@ -252,12 +252,16 @@ for f in <변경 파일>; do
   ' "$f"
   # 패턴 2 (enumerated inline)
   grep -nE "①|②|③|④|⑤|⑥|⑦|⑧|⑨" "$f"
+  # CLAUDE.md 한국어 표현 정책 — 외래어 음차 합성 (매트릭스/게이트/트리아지/베이스라인/스파이크)
+  # 정책 정의 자체 (금지 표 본문) 는 grep 결과에서 사람이 판단해 제외
+  grep -nE "매트릭스|게이트|트리아지|베이스라인|스파이크" "$f"
 done
 ```
 
 위반 검출 시:
 - 패턴 5 (200+ char) — semantic line break 적용 또는 sub-bullet 분리
 - 패턴 2 (enumerated inline) — bullet list 로 변환
+- 외래어 음차 합성 — `CLAUDE.md` "한국어 표현 정책" 표의 권장 대체 적용 (예: "매트릭스" → "표 / 분담 표 / 영향 표", "게이트" → "사전 점검 / 통과 조건")
 
 이 self-check 를 거치지 않고 commit 하면 docs-check (주기적 종합 검토) 가 다음 cycle 에서 후속 검출 — 한 cycle 지연 + commit history 에 위반 commit 누적.
 **검사 대상은 본 변경 파일만** (전체 docs 가독성 점검은 `docs-check` skill).
