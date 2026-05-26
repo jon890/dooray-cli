@@ -30,7 +30,7 @@ src/
 
   resolvers/
     me.ts                   # /common/v1/members/me → CachedMe (id·name·orgId; orgId 없으면 캐시 갱신)
-    project.ts              # code·id → projectId
+    project.ts              # code·id → projectId. 입력 자동 분기: numeric 15+자리 → cache 우회 + 그대로 반환 / 그 외 → cache 매칭 (code+id). 권한 검증은 후속 API 4xx 위임 (ADR-030, Issue #78)
     member.ts               # 입력 자동 분기: 15자리 숫자 / 이메일 / 이름. lookupMemberName + buildMemberNameMap (ADR-021)
     workflow.ts             # name·class → workflowId
     post.ts                 # postNumber → postId (API 호출)

@@ -163,6 +163,11 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 ### resolver
 
 - 일반 정책: 정확일치 → 이름 부분일치 → 모호 시 에러 + 후보 목록 출력 (멤버 · 워크플로우 · 태그 · 마일스톤 공통)
+- project resolver (`resolveProject`) — numeric 입력 cache 우회 fallback (ADR-030, Issue #78)
+  - 입력 형식 자동 분기: numeric 15+자리 → 그대로 projectId 반환 (cache 우회) / 그 외 → cache 매칭 (code + id)
+  - 권한 검증: 후속 API 호출 (getPosts 등) 의 4xx 에 위임 — `member=me` 응답 외 프로젝트도 자동화 가능
+  - 13 호출자 (post create/list/search, member/list, project/templates·tags·groups·members·workflows, post-input, postRef, wiki) 자동 혜택
+  - wiki resolver freshness — numeric 우회 시 cache 갱신 누락. 사용자에게 `dooray cache refresh` 안내
 - member resolver (`resolveMember`) 입력 형식 자동 분기
   - 15자리 이상 숫자: `getMemberDetail` 로 organizationMemberId 검증
   - 이메일 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`): `searchMembers({externalEmailAddresses})` exact
@@ -208,6 +213,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | Wiki 명령 (`wiki page create/edit`) 추가/수정              | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기)       |
 | Wiki page file 명령 (`wiki page file *`) 추가/수정         | **ADR-029** (multipart `type` 필드 순서 의존 + 307 redirect — ADR-015 재사용)                  |
 | member-group resolver (응답 shape 정규화 + 가드)           | **ADR-028** (nested array unwrap `flat()` + id 직접 입력 fallback + `match.ts` 가드, Issue #65 #76) |
+| project resolver (numeric 입력 fallback)                   | **ADR-030** (`PROJECT_ID_RE` 분기 + cache 우회 + 권한은 후속 API 4xx 위임, Issue #78)         |
 | `post create --template` + `project templates` 명령        | **ADR-027** (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외) |
 | 파일 업로드/다운로드 (307 처리)                            | **ADR-015** (수동 redirect + Auth 헤더 재첨부)                                                 |
 | `dooray setup` 마법사 변경                                 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치)                                                  |

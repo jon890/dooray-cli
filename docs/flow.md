@@ -64,6 +64,19 @@ dooray post get my-project 42              # 3) 업무 상세 (#42번)
 dooray post search my-project "스프린트"   # 4) 제목 검색
 ```
 
+### projectId 직접 입력 (member=me 응답 외 프로젝트, ADR-030, Issue #78)
+
+`member=me` 응답에 없는 프로젝트 (다른 팀 프로젝트 등) 는 코드로 resolve 안 됨.
+projectId (19자리 numeric) 를 직접 입력하면 cache 우회 + 후속 API 호출에 그대로 사용.
+
+```
+dooray post search 1234567890123456789 "keyword"
+dooray post list 1234567890123456789
+dooray member list 1234567890123456789
+```
+
+권한 검증은 후속 API 호출 시점 — 권한이 없으면 4xx 발생.
+
 ## 업무 생성 흐름
 
 ```

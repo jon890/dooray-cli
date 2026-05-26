@@ -230,7 +230,39 @@ docs/flow.md                  ←  docs/prd.md
 
 ## 중간 의사결정 시 즉시 docs 반영 (필수)
 
-각 단계에서 사용자와 의사결정이 완료되면, 8단계를 기다리지 않고 **즉시 docs에 반영**한다. 이는 논의가 길어질 때 결정 사항이 유실되는 것을 방지하고, 다음 대화에서도 결정 맥락을 참조할 수 있게 한다.
+각 단계에서 사용자와 의사결정이 완료되면, 8단계를 기다리지 않고 **즉시 docs에 반영**한다.
+이는 논의가 길어질 때 결정 사항이 유실되는 것을 방지하고, 다음 대화에서도 결정 맥락을 참조할 수 있게 한다.
+
+### 반영 직후 가독성 self-check (필수, commit 직전)
+
+`CLAUDE.md` "docs / ADR 작성 형식" 6가지 패턴 정책 단일 소스.
+작성/수정한 docs 에 대해 commit 직전 다음 명령으로 자가 점검:
+
+```bash
+# 변경한 docs 파일들 (예: docs/adr.md CLAUDE.md docs/code-architecture.md docs/flow.md)
+for f in <변경 파일>; do
+  echo "=== $f ==="
+  # 패턴 5 (200+ char) — 디렉터리 트리 / 코드 블록 / 표 / 헤더 제외 (정책 명시)
+  awk '
+    /^```/ { in_code = !in_code; next }
+    in_code { next }
+    /^\|/ { next }
+    /^#/ { next }
+    { if (length($0) > 200) print "  "NR": "length($0)" chars" }
+  ' "$f"
+  # 패턴 2 (enumerated inline)
+  grep -nE "①|②|③|④|⑤|⑥|⑦|⑧|⑨" "$f"
+done
+```
+
+위반 검출 시:
+- 패턴 5 (200+ char) — semantic line break 적용 또는 sub-bullet 분리
+- 패턴 2 (enumerated inline) — bullet list 로 변환
+
+이 self-check 를 거치지 않고 commit 하면 docs-check (주기적 종합 검토) 가 다음 cycle 에서 후속 검출 — 한 cycle 지연 + commit history 에 위반 commit 누적.
+**검사 대상은 본 변경 파일만** (전체 docs 가독성 점검은 `docs-check` skill).
+
+거울 구조 — 패턴 정의는 `CLAUDE.md` 단일 소스. 본 섹션은 *검증 시점 + 실행 명령*만 명시.
 
 ## 완료 후
 

@@ -1,0 +1,20 @@
+{
+  "name": "039-feat-project-resolver-numeric-fallback",
+  "description": "GitHub Issue #78 — `resolveProject` 에 numeric 입력 cache 우회 fallback 추가. 현재 `ensureProjects` 가 `GET /project/v1/projects?member=me` 응답 기반으로 cache 채워서 member 가 아닌 프로젝트 (다른 팀 프로젝트 등) 는 cache 에 없음 → resolveProject 가 차단 → 자동화 스크립트가 멤버 아닌 프로젝트의 업무 검색 불가. 해결: 입력이 numeric 15+자리이면 `PROJECT_ID_RE` 분기로 cache 우회 + 그대로 projectId 반환. 권한 검증은 후속 API 호출 (getPosts 등) 의 4xx 에 위임. 13 호출자 (post create/list/search, member/list, project/templates·tags·groups·members·workflows, post-input, postRef, wiki) 시그니처 불변 → 자동 혜택. resolveMember (MEMBER_ID_RE), resolveMemberGroup (GROUP_ID_RE) 의 numeric 분기 패턴 mirror. 신규 ADR-030.",
+  "created_at": "2026-05-26T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 1,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "resolveProject numeric 분기 + 단위 테스트 + README/SKILL 사용 예",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ],
+  "updated_at": "2026-05-26T00:00:00Z"
+}
