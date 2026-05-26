@@ -122,7 +122,7 @@ describe("resolveProject", () => {
 
   it("code 매칭 실패 — 친절한 안내 (ADR-030 회피책 포함)", async () => {
     await expect(resolveProject({} as unknown as DoorayApiClient, "nonexistent-code"))
-      .rejects.toThrow(/프로젝트를 찾을 수 없습니다.*ADR-030/);
+      .rejects.toThrow(/프로젝트를 찾을 수 없습니다.*ADR-030/s);
   });
 });
 ```
@@ -258,7 +258,7 @@ grep -c "projectId 직접 입력 시나리오" skills/dooray-cli/SKILL.md
 ## 작업 외 금지
 
 - planning docs (CLAUDE.md / docs/adr.md / docs/code-architecture.md / docs/flow.md) 변경 금지 — task 생성 시점 main commit 으로 반영됨
-- `resolveProject` 시그니처 / 반환 타입 변경 금지 — 13 호출자 영향
+- `resolveProject` 시그니처 / 반환 타입 변경 금지 — 12 호출자 영향
 - `ensureProjects` / `ensurePrivateProjects` / cache 스키마 변경 금지
 - 새 ADR 추가 금지 — ADR-030 만
 - 다른 resolver 동작 변경 금지
