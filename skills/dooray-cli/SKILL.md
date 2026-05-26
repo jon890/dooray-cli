@@ -591,7 +591,7 @@ POST_ID=$(dooray post create <project> \
 
 AI agent 가 `member=me` 응답에 없는 프로젝트의 업무를 다뤄야 할 때:
 
-1. **사용자가 projectId (19자리 numeric) 를 줬으면 그대로 명령에 사용**:
+1. **사용자가 projectId (15+자리 numeric) 를 줬으면 그대로 명령에 사용**:
    ```bash
    dooray post search 1234567890123456789 "keyword"
    ```

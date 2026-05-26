@@ -93,7 +93,7 @@ AI 에이전트는 사용자 메시지의 Dooray URL을 그대로 첫 인자로 
 
 **projectId 직접 입력** (Issue #78, ADR-030):
 
-`member=me` 응답에 없는 프로젝트 (다른 팀 / 권한만 있는 프로젝트) 도 projectId (19자리 numeric) 를 직접 입력하면 자동으로 cache 우회.
+`member=me` 응답에 없는 프로젝트 (다른 팀 / 권한만 있는 프로젝트) 도 projectId (15+자리 numeric) 를 직접 입력하면 자동으로 cache 우회.
 
 ```bash
 # 코드 매칭 (기존)
