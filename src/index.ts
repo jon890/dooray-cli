@@ -53,7 +53,7 @@ const program = new Command();
 program
   .name("dooray")
   .description("Dooray REST API CLI")
-  .version("0.11.0")
+  .version("0.12.0")
   .option("--json", "JSON 형식으로 출력")
   .option("--quiet", "ID만 출력")
   .option("--no-color", "색상 비활성화");
