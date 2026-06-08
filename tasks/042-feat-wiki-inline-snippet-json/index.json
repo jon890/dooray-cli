@@ -2,7 +2,7 @@
   "name": "042-feat-wiki-inline-snippet-json",
   "description": "GitHub Issue #81 — wiki page file upload 의 inline_image 타입은 plain 모드에서만 markdown snippet(![name](/wikis/{wikiId}/files/{attachFileId}))을 출력하고, --json / --quiet 모드에서는 제공하지 않아 자동화 스크립트가 snippet 을 얻을 길이 없다. 결정(2026-06-08): --json 응답에 inline_image 일 때만 markdownSnippet 필드를 추가한다. --quiet 은 'id 만' 원칙을 유지(snippet 미포함). plain 모드 snippet 과 --json 의 markdownSnippet 이 같은 문자열이 되도록 wikiInlineImageSnippet 헬퍼로 단일화해 단위 테스트한다. ADR-031(file 명령군 --json 출력 통일)에 보강 섹션을 추가한다. general 타입은 변경 없음.",
   "created_at": "2026-06-08T00:00:00Z",
-  "status": "pending",
+  "status": "completed",
   "current_phase": 1,
   "total_phases": 1,
   "error_message": null,
@@ -12,9 +12,9 @@
       "number": 1,
       "title": "wikiInlineImageSnippet 헬퍼 추출 + upload --json markdownSnippet + 단위 테스트 + ADR-031 보강 + docs",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-06-08T00:00:00Z"
+  "updated_at": "2026-06-08T16:01:00Z"
 }
