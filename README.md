@@ -83,10 +83,15 @@ dooray post get <project> 42 --json           # JSON 출력
 | 방식 | 예시 |
 |---|---|
 | `<project> <number>` | `dooray post get <project> 42` |
-| Dooray URL positional (`/task/to/<postId>`) | `dooray post get https://x.dooray.com/task/to/<postId>` |
-| Dooray URL positional (브라우저 주소창 복사본) | `dooray post get https://x.dooray.com/task/<projectId>/<postId>` |
+| Dooray URL positional | `dooray post get https://x.dooray.com/task/to/<postId>` |
 | `--id <postId>` | `dooray post get --id <postId>` |
-| `--url <url>` | `dooray post get --url https://x.dooray.com/task/to/...` |
+| `--url <url>` | `dooray post get --url https://x.dooray.com/task/to/<postId>` |
+
+지원 URL 형식 3종 (positional 첫 인자 / `--url` 공통):
+
+- `https://*.dooray.com/task/to/<postId>`
+- `https://*.dooray.com/task/<projectId>/<postId>` — 브라우저 주소창 복사본
+- `https://*.dooray.com/project/tasks/<postId>` — 프로젝트 업무 목록에서 열기 (Issue #83)
 
 대상: `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`.
 AI 에이전트는 사용자 메시지의 Dooray URL을 그대로 첫 인자로 전달하면 가장 빠르다 (ADR-020).
@@ -130,6 +135,17 @@ dooray post create <project> \
 
 > mandatory-tag 정책 프로젝트(예: `<project>`)에서는 mandatory 그룹마다 1개 이상 `--tag`로 지정해야 한다.
 > 누락 시 클라이언트가 사전 검증으로 후보 목록과 함께 에러 출력.
+
+> **`post create` 출력의 `.id` 는 internal postId (19자리 숫자)입니다.**
+> 이 ID 로 후속 조회·수정·댓글 작업을 할 때는 **`--id <postId>`** 를 사용하세요.
+> `<project> <업무번호>` 의 번호 자리에 postId 를 넣으면 안내 에러가 발생합니다.
+>
+> ```bash
+> # 생성 후 바로 조회하는 패턴
+> POST_ID=$(dooray post create <project> --title "..." --json | jq -r '.id')
+> dooray post get --id "$POST_ID"
+> dooray post comment add --id "$POST_ID" --body "첫 댓글"
+> ```
 
 #### 템플릿 기반 정형 task (ADR-027)
 
