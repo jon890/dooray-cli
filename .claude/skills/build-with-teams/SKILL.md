@@ -435,7 +435,8 @@ UPDATE_NEEDED 가 3곳 같이 잡혔는데 그중 1곳을 잘못 갱신했어도
 2. 통합 검증 명령 (`{{CI_CMD}}`) 최종 확인 — 모든 phase 누적 후에도 build/test 통과 확인
 3. (FIX_NEEDED 처리 commit 들이 있었다면 그대로 push, amend 금지)
 4. `git push origin feat/{plan}` — n 개 commit 일괄 push
-5. **PR 생성** — `gh pr create` (main 대상). PR description 에 phase 별 commit 목록 자동 포함 (`gh pr create --body` 안에 `git log --oneline {base}..HEAD` 결과)
+5. **PR 생성** — `gh pr create` (main 대상). PR description 에는 개요·결정·검증만 담는다.
+   - **commit 목록은 나열하지 않는다** — GitHub PR 의 Commits 탭에서 바로 확인 가능 (본문 중복 + 해시 변경 시 유지보수 부담)
 6. **index.json 완료 상태는 PR 브랜치에만 존재** — 메인 워킹 디렉토리에서는 **건드리지 않는다**:
    - 마지막 phase 커밋이 이미 `index.json` 의 `status="completed"` + 모든 phase `status="completed"` 를 포함해야 한다
    - task 파일 설계 시 마지막 phase 에 해당 업데이트 명시 (4단계 참조)

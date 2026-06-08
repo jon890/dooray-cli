@@ -432,6 +432,11 @@ type(scope): description
 
 이 형식에서 절대 벗어나지 않는다.
 
+### PR 본문
+
+- **commit 목록을 본문에 나열하지 않는다** — GitHub PR 의 Commits 탭에서 바로 확인 가능 (본문 중복 + 해시 변경 시 유지보수 부담)
+- 본문에는 개요·결정 근거·검증 결과만 담는다
+
 ### 브랜치 명명 (5 prefix)
 
 | 카테고리 | branch prefix | 사용 | 예시 |
