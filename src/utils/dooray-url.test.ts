@@ -3,8 +3,8 @@ import { parseDoorayTaskUrl, parseDoorayWikiUrl, isLikelyDoorayUrl } from "./doo
 
 describe("parseDoorayTaskUrl", () => {
   it("정상 URL에서 postId 추출", () => {
-    expect(parseDoorayTaskUrl("https://nhnent.dooray.com/task/to/4319587406666362045"))
-      .toBe("4319587406666362045");
+    expect(parseDoorayTaskUrl("https://x.dooray.com/task/to/1234567890123456789"))
+      .toBe("1234567890123456789");
   });
   it("query string 무시", () => {
     expect(parseDoorayTaskUrl("https://x.dooray.com/task/to/123?projectScope=from_to_cc"))
@@ -24,7 +24,7 @@ describe("parseDoorayTaskUrl", () => {
     expect(parseDoorayTaskUrl("https://x.dooray.com/wiki/123")).toBeNull();
   });
   it("URL 형식이 아니면 null", () => {
-    expect(parseDoorayTaskUrl("tc-ocr/337")).toBeNull();
+    expect(parseDoorayTaskUrl("my-project/337")).toBeNull();
     expect(parseDoorayTaskUrl("12345")).toBeNull();
   });
   it("/task/<projectId>/<postId> 형 URL 에서 postId 추출", () => {
@@ -40,6 +40,32 @@ describe("parseDoorayTaskUrl", () => {
   });
   it("/task/<projectId>/<postId> 형도 dooray.com 도메인 외 reject", () => {
     expect(parseDoorayTaskUrl("https://other.com/task/123/456")).toBeNull();
+  });
+
+  // Issue #83 — 브라우저 '프로젝트 업무 목록 → 업무 열기' URL
+  it("/project/tasks/<postId> 에서 postId 추출", () => {
+    expect(
+      parseDoorayTaskUrl("https://x.dooray.com/project/tasks/1234567890123456789"),
+    ).toBe("1234567890123456789");
+  });
+
+  it("/project/tasks/<postId> query string 무시", () => {
+    expect(
+      parseDoorayTaskUrl("https://x.dooray.com/project/tasks/1234567890123456789?workflowIds=a,b,c"),
+    ).toBe("1234567890123456789");
+  });
+
+  it("/project/tasks/<postId> dooray.com 도메인 외 reject", () => {
+    expect(parseDoorayTaskUrl("https://other.com/project/tasks/123")).toBeNull();
+  });
+
+  // Issue #83 — /task/{pid}/{id}?workflowIds= 회귀 (TASK_URL_ALT_RE 의 query 무시 확인)
+  it("/task/<projectId>/<postId>?workflowIds=a,b,c query 무시 회귀", () => {
+    expect(
+      parseDoorayTaskUrl(
+        "https://x.dooray.com/task/1234567890123456789/9876543210987654321?workflowIds=a,b,c",
+      ),
+    ).toBe("9876543210987654321");
   });
 });
 
@@ -63,7 +89,7 @@ describe("isLikelyDoorayUrl", () => {
     expect(isLikelyDoorayUrl("http://x.com")).toBe(true);
   });
   it("URL 아니면 false", () => {
-    expect(isLikelyDoorayUrl("tc-ocr")).toBe(false);
+    expect(isLikelyDoorayUrl("my-project")).toBe(false);
     expect(isLikelyDoorayUrl("12345")).toBe(false);
   });
 });

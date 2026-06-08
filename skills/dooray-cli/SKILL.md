@@ -47,7 +47,12 @@ dooray doctor                                 # 설정 검증
 
 > **공통 (post 하위 16개 명령)**: 아래 명령은 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL 을 직접 받는다.
 > `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`.
-> URL 형식: `https://*.dooray.com/task/to/<postId>` 또는 브라우저 주소창 복사본 `https://*.dooray.com/task/<projectId>/<postId>`.
+>
+> 지원 URL 형식 3종 (positional 첫 인자 / `--url` 공통):
+> - `https://*.dooray.com/task/to/<postId>`
+> - `https://*.dooray.com/task/<projectId>/<postId>` — 브라우저 주소창 복사본
+> - `https://*.dooray.com/project/tasks/<postId>` — 프로젝트 업무 목록 → 업무 열기 (Issue #83)
+>
 > **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축, ADR-020).
 
 | 의도 | 커맨드 |
@@ -63,7 +68,7 @@ dooray doctor                                 # 설정 검증
 | organization 전체 멤버 검색 | `dooray member search <keyword>` (이름 기본), `--email`(이메일 exact), `--user-code`(사번 like), `--user-code-exact`(사번 exact), `--page`/`--size` |
 | 업무 목록 조회 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project|projectId> "<keyword>"` — projectId (15+자리 numeric) 직접 입력 시 cache 우회 (ADR-030) |
-| 업무 상세 보기 | `dooray post get <project> <number>` |
+| 업무 상세 보기 | `dooray post get <project> <number>` (번호) / `dooray post get --id <postId>` (internal ID) |
 | 업무 생성 | `dooray post create <project> --title "..." [--body "..." \| --body-file <path>]` (`--tag`/`--parent`/`--workflow`/`--milestone` 지원) |
 | 템플릿 기반 업무 생성 | `dooray post create <project> --template <name\|id>` — body/users/tags 자동 채움 (사용자 옵션 우선 override, ADR-027) |
 | 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` 또는 `--body-file <path>` |
@@ -279,18 +284,32 @@ dooray wiki page comment latest <project> <page-id>
 `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`.
 
 ```bash
-# (1) 기존 positional — 가장 익숙한 형태
+# (1) 기존 positional — 가장 익숙한 형태 (<number> 는 업무 번호 #N)
 dooray post get <project> 42
 
 # (2) Dooray URL을 첫 인자로 — 사용자 메시지에서 URL을 그대로 복사할 때 최적
+#     지원 형식 3종 모두 동일하게 작동
 dooray post get https://x.dooray.com/task/to/<postId>
+dooray post get https://x.dooray.com/task/<projectId>/<postId>
+dooray post get https://x.dooray.com/project/tasks/<postId>
 
-# (3) --id <postId>
+# (3) --id <postId>  — post create 결과의 .id 를 그대로 전달
 dooray post get --id <postId>
 
-# (4) --url <url>
+# (4) --url <url>  — URL 형식 3종 모두 지원
 dooray post get --url https://x.dooray.com/task/to/<postId>
 ```
+
+> ⚠️ **`post create` 결과 `.id` 는 internal postId (19자리 숫자)입니다.**
+> 이 숫자를 `<project> <업무번호>` 의 번호 자리에 넣으면 안내 에러가 발생합니다.
+> 후속 조회·수정·댓글은 반드시 **`--id <postId>`** 를 사용하세요.
+>
+> ```bash
+> POST_ID=$(dooray post create <project> --title "..." --json | jq -r '.id')
+> dooray post get --id "$POST_ID"                          # ✅ --id 사용
+> dooray post comment add --id "$POST_ID" --body "댓글"   # ✅ --id 사용
+> # dooray post get <project> "$POST_ID"                  # ❌ 안내 에러 발생
+> ```
 
 **우선순위 / 충돌 규칙**: `--id`+`--url` 동시 지정 → 에러.
 `--id`/`--url`+positional 동시 지정 → 에러.

@@ -87,7 +87,7 @@ export function parseDoorayTaskUrl(input: string): string | null {
 
 | 진입점 | 검증 대상 | 기대 타입 | 불일치 시 동작 |
 |---|---|---|---|
-| `--id` 단독 (경로 4) | `idOpt` | postId | `postNumber` → "`<project> <number>` 형식을 쓰세요"<br>`url` → "`--url` 을 쓰세요" |
+| `--id` 단독 (경로 4) | `idOpt` | postId | `postNumber` → "`<project> <number>` 형식을 쓰세요"<br>`url` → "`--url` 을 쓰세요"<br>`project` (비숫자) → 기존 pass-through 유지 (resolveByPostId → API 404 위임) |
 | positional 2개 (경로 6) | `postNumberArg` | postNumber | `postId` → **#82 안내** (아래 코드)<br>그 외 → "`<post-number>`가 올바르지 않습니다" |
 | `--url` / positional URL | URL 문자열 | url | parse 실패 → **지원 형식 목록** 제시 (아래) |
 
@@ -131,6 +131,10 @@ if (numType !== "postNumber") {
 - positional 2번째가 15+자리 numeric → `--id` 안내 에러 (`rejects.toThrow(/--id/)`)
 - `--id` 에 업무 번호(짧은 numeric) → `<project> <number>` 안내 에러
 - 기존 정상 케이스 회귀: `<project> 337`, `--id <19자리>`, `--url /task/to/{id}` 통과
+- **기존 테스트 교체 (회귀 방지, critic 노트)**: 현재 `--id 999` 정상 케이스 (line 57-64) 는
+  3자리라 신규 guard 에서 `postNumber` 로 분류돼 깨진다.
+  → `--id` 정상 케이스의 입력값과 standalone mock `id` 를 **19자리 postId** 로 함께 교체한다.
+  (line 50-54 의 `--url .../task/to/999` 는 URL 경로라 classifier 무관 — 유지)
 
 `dooray-url.test.ts`:
 - `/project/tasks/{id}` → postId 반환
