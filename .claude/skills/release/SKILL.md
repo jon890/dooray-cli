@@ -116,10 +116,17 @@ grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실
 ```bash
 CURRENT=$(git branch --show-current)
 if [ "$CURRENT" != "main" ]; then
-  echo "⚠  현재 branch: $CURRENT — main 으로 switch 필요"
-  git switch main && git pull --ff-only
+  echo "⚠  현재 branch: $CURRENT — main 으로 switch"
+  git switch main
 fi
+# main 이어도 항상 origin 과 동기화 — 다른 세션이 PR 을 머지해 로컬이 stale 이면
+# bump→push 가 non-fast-forward 로 거부된다 (v0.12.0 release 시 3회 발생).
+# fetch + rebase 로 로컬 미push 커밋이 있어도 안전하게 최신 위로 올린다.
+git fetch origin
+git rebase origin/main
 ```
+
+**Why fetch+rebase (단순 `pull --ff-only` 아님)**: release 직전엔 로컬에 미push 커밋(직전 작업)이 남아 있을 수 있다. `pull --ff-only` 는 그 경우 실패하지만 `fetch + rebase` 는 로컬 커밋을 origin 최신 위로 재배치해 통과시킨다.
 
 버전 변경:
 
