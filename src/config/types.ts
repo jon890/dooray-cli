@@ -21,7 +21,7 @@ export const API_ENDPOINTS = {
 
 export const DEFAULTS = {
   baseUrl: "https://api.dooray.com",
-  tenantName: "nhnent",
+  tenantName: "example",
   imapHost: "imap.dooray.com",
   imapPort: 993,
   smtpHost: "smtp.dooray.com",
