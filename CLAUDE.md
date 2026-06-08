@@ -384,11 +384,14 @@ markdown bullet list 로 변환한다.
 
 이 repo는 GitHub public이므로 다음 식별자는 **README/skills/docs/CLAUDE.md/이슈 본문 + src 코드 (테스트 fixture·에러 메시지 예시 포함) 어디에도 노출 금지**. 코드 예시·시나리오·issue body·테스트 fixture 작성 시 항상 placeholder 사용.
 
+CLAUDE.md 자체도 public repo 에 포함되므로 사내 식별자를 블랙리스트로 나열하면 그 자체가 노출이다.
+구체 식별자는 여기 적지 않고, 유형만 기술 + 검증은 공개 화이트리스트 외 검출 방식을 쓴다.
+
 | 노출 금지                                                         | 대체                                                      |
 | ----------------------------------------------------------------- | --------------------------------------------------------- |
-| 사내 Dooray 프로젝트 코드 (예: `tc-ocr`)                          | `<project>`                                               |
-| NHN 도메인 (`nhnent`, `nhn.com`, `nhnent.com`, `nhn-comico` 등)   | `<tenant>` / `example.com`                                |
-| 사내 이메일 (`*@nhn*.com`, `*@example.com` 사용 사외)             | `user@example.com`                                        |
+| 사내 Dooray 프로젝트 코드                                         | `<project>`                                               |
+| 사내 NHN 도메인 (구체 도메인은 public repo 라 여기 명시하지 않음) | `<tenant>` / `example.com`                                |
+| 사내 이메일                                                       | `user@example.com`                                        |
 | 실제 19자리 numeric ID (postId/pageId/memberId/projectId/groupId) | `<postId>` / `<pageId>` / `<memberId>` 등                 |
 | 실명 (사용자 본인 + 동료 한국어 이름)                             | `<사용자A>` 또는 가상 이름(`홍길동`/`김철수`) — 가상은 OK |
 | Dooray orgId (실제 19자리)                                        | `<orgId>`                                                 |
@@ -397,11 +400,14 @@ markdown bullet list 로 변환한다.
 
 ```bash
 # cwd: <repo root>
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com|kim@example\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
-# 0건이어야 함
+# 1) 공개 도메인 화이트리스트 밖의 URL/이메일 도메인 (사내 도메인 가능성) — 사내 도메인은 여기 명시하지 않는다
+#    https:// 또는 @ prefix 를 요구해 코드의 property 접근(.com/.net) false positive 를 배제
+grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" README.md skills/ docs/ CLAUDE.md src/ 2>/dev/null \
+  | grep -vE "dooray\.com|gov-dooray\.com|dooray\.co\.kr|gov-dooray\.co\.kr|helpdesk\.dooray\.com|github\.com|npmjs\.com|example\.com|youtube\.com"
+# 0건이어야 함 (남으면 사내/미허용 도메인 가능성 — placeholder 또는 화이트리스트 검토)
 
-# 19자리 numeric (단 doc 예시의 dummy 패턴 1234567890123456789, 9876543210987654321은 OK)
-grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|<postId>|<pageId>"
+# 2) 19자리 numeric (dummy + 공개 helpdesk 페이지 ID 예외)
+grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
 # 0건이어야 함 (남으면 실제값 가능성 — 검토 후 placeholder 또는 dummy로 교체)
 ```
 
