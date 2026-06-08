@@ -33,39 +33,39 @@ describe("resolvePostInput", () => {
 
   it("--id + positional 동시 → 에러", async () => {
     await expect(
-      resolvePostInput(makeClient({}), { idOpt: "1", projectArg: "tc-ocr" }),
+      resolvePostInput(makeClient({}), { idOpt: "1", projectArg: "my-project" }),
     ).rejects.toBeInstanceOf(DoorayCliError);
   });
 
   it("--url + positional 동시 → 에러", async () => {
     await expect(
-      resolvePostInput(makeClient({}), { urlOpt: "https://x.dooray.com/task/to/1", projectArg: "tc-ocr" }),
+      resolvePostInput(makeClient({}), { urlOpt: "https://x.dooray.com/task/to/1", projectArg: "my-project" }),
     ).rejects.toBeInstanceOf(DoorayCliError);
   });
 
   it("--url 단독 → standalone 호출", async () => {
     const c = makeClient({
-      standalone: { id: "999", projectId: "p1", projectCode: "tc-ocr", number: 337 },
+      standalone: { id: "999", projectId: "p1", projectCode: "my-project", number: 337 },
     });
     const out = await resolvePostInput(c, {
       urlOpt: "https://x.dooray.com/task/to/999",
     });
-    expect(out).toEqual({ projectId: "p1", projectCode: "tc-ocr", postId: "999", postNumber: 337 });
+    expect(out).toEqual({ projectId: "p1", projectCode: "my-project", postId: "999", postNumber: 337 });
     expect(c.getPostStandalone).toHaveBeenCalledWith("999");
   });
 
   it("--id 단독 → standalone 호출", async () => {
     const c = makeClient({
-      standalone: { id: "4319587406666362045", projectId: "p1", projectCode: "tc-ocr", number: 337 },
+      standalone: { id: "1234567890123456789", projectId: "p1", projectCode: "my-project", number: 337 },
     });
-    const out = await resolvePostInput(c, { idOpt: "4319587406666362045" });
-    expect(out.postId).toBe("4319587406666362045");
-    expect(c.getPostStandalone).toHaveBeenCalledWith("4319587406666362045");
+    const out = await resolvePostInput(c, { idOpt: "1234567890123456789" });
+    expect(out.postId).toBe("1234567890123456789");
+    expect(c.getPostStandalone).toHaveBeenCalledWith("1234567890123456789");
   });
 
   it("positional 1개가 URL이면 standalone", async () => {
     const c = makeClient({
-      standalone: { id: "999", projectId: "p1", projectCode: "tc-ocr", number: 337 },
+      standalone: { id: "999", projectId: "p1", projectCode: "my-project", number: 337 },
     });
     const out = await resolvePostInput(c, {
       projectArg: "https://x.dooray.com/task/to/999",
@@ -78,18 +78,18 @@ describe("resolvePostInput", () => {
     vi.mocked(resolvePost).mockResolvedValue("post-id-123");
 
     const c = makeClient({});
-    const out = await resolvePostInput(c, { projectArg: "tc-ocr", postNumberArg: "337" });
+    const out = await resolvePostInput(c, { projectArg: "my-project", postNumberArg: "337" });
     expect(out.projectId).toBe("proj-id-abc");
     expect(out.postId).toBe("post-id-123");
-    expect(out.projectCode).toBe("tc-ocr");
+    expect(out.projectCode).toBe("my-project");
     expect(out.postNumber).toBe(337);
-    expect(resolveProject).toHaveBeenCalledWith(c, "tc-ocr");
+    expect(resolveProject).toHaveBeenCalledWith(c, "my-project");
     expect(resolvePost).toHaveBeenCalledWith(c, "proj-id-abc", 337);
   });
 
   it("post-number 비정수 → 에러", async () => {
     await expect(
-      resolvePostInput(makeClient({}), { projectArg: "tc-ocr", postNumberArg: "abc" }),
+      resolvePostInput(makeClient({}), { projectArg: "my-project", postNumberArg: "abc" }),
     ).rejects.toBeInstanceOf(DoorayCliError);
   });
 
@@ -109,8 +109,8 @@ describe("resolvePostInput", () => {
   it("positional 2번째가 19자리 postId → --id 안내 에러", async () => {
     await expect(
       resolvePostInput(makeClient({}), {
-        projectArg: "tc-ocr",
-        postNumberArg: "4319587406666362045",
+        projectArg: "my-project",
+        postNumberArg: "1234567890123456789",
       }),
     ).rejects.toThrow(/--id/);
   });
@@ -125,20 +125,20 @@ describe("resolvePostInput", () => {
   // --id 에 URL → --url 안내
   it("--id 에 URL → --url 안내 에러", async () => {
     await expect(
-      resolvePostInput(makeClient({}), { idOpt: "https://x.dooray.com/task/to/4319587406666362045" }),
+      resolvePostInput(makeClient({}), { idOpt: "https://x.dooray.com/task/to/1234567890123456789" }),
     ).rejects.toThrow(/--url/);
   });
 
   // Issue #83 — /project/tasks/{postId} URL → 정상 standalone 호출
   it("positional 1개가 /project/tasks/ URL이면 standalone", async () => {
     const c = makeClient({
-      standalone: { id: "4319587406666362045", projectId: "p1", projectCode: "tc-ocr", number: 337 },
+      standalone: { id: "1234567890123456789", projectId: "p1", projectCode: "my-project", number: 337 },
     });
     const out = await resolvePostInput(c, {
-      projectArg: "https://x.dooray.com/project/tasks/4319587406666362045",
+      projectArg: "https://x.dooray.com/project/tasks/1234567890123456789",
     });
-    expect(out.postId).toBe("4319587406666362045");
-    expect(c.getPostStandalone).toHaveBeenCalledWith("4319587406666362045");
+    expect(out.postId).toBe("1234567890123456789");
+    expect(c.getPostStandalone).toHaveBeenCalledWith("1234567890123456789");
   });
 
   // 기존 정상 케이스 회귀 — <project> 337
@@ -146,8 +146,8 @@ describe("resolvePostInput", () => {
     vi.mocked(resolveProject).mockResolvedValue("proj-id-abc");
     vi.mocked(resolvePost).mockResolvedValue("post-id-123");
     const c = makeClient({});
-    const out = await resolvePostInput(c, { projectArg: "tc-ocr", postNumberArg: "337" });
-    expect(out.projectCode).toBe("tc-ocr");
+    const out = await resolvePostInput(c, { projectArg: "my-project", postNumberArg: "337" });
+    expect(out.projectCode).toBe("my-project");
     expect(out.postNumber).toBe(337);
   });
 });
@@ -159,7 +159,7 @@ describe("classifyPostInputToken", () => {
   });
 
   it("15자리 이상 numeric → postId", () => {
-    expect(classifyPostInputToken("4319587406666362045")).toBe("postId");
+    expect(classifyPostInputToken("1234567890123456789")).toBe("postId");
     expect(classifyPostInputToken("123456789012345")).toBe("postId");
   });
 
@@ -170,7 +170,7 @@ describe("classifyPostInputToken", () => {
   });
 
   it("비숫자 문자열 → project", () => {
-    expect(classifyPostInputToken("tc-ocr")).toBe("project");
+    expect(classifyPostInputToken("my-project")).toBe("project");
     expect(classifyPostInputToken("abc")).toBe("project");
     expect(classifyPostInputToken("my-project-code")).toBe("project");
   });
