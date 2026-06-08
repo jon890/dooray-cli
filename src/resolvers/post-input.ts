@@ -35,17 +35,18 @@ export interface ResolvedPostInput {
   postNumber: number;
 }
 
-const INPUT_HELP =
-  "업무를 식별할 정보가 부족합니다. 다음 중 하나를 입력하세요:\n" +
-  "  - <project> <post-number>     예: tc-ocr 337\n" +
-  "  - --id <postId>                예: --id 4319587406666362045\n" +
-  "  - <Dooray URL>                 예: https://x.dooray.com/task/to/4319587406666362045";
-
 const URL_FORMAT_HINT =
   "지원 형식:\n" +
   "  https://x.dooray.com/task/to/{postId}\n" +
   "  https://x.dooray.com/task/{projectId}/{postId}\n" +
   "  https://x.dooray.com/project/tasks/{postId}";
+
+// URL 형식 목록은 URL_FORMAT_HINT 단일 소스를 참조 (중복 정의 회피)
+const INPUT_HELP =
+  "업무를 식별할 정보가 부족합니다. 다음 중 하나를 입력하세요:\n" +
+  "  - <project> <post-number>     예: my-project 337\n" +
+  "  - --id <postId>                예: --id 1234567890123456789\n" +
+  `  - <Dooray URL>\n  ${URL_FORMAT_HINT}`;
 
 async function resolveByPostId(
   client: DoorayApiClient,
@@ -113,7 +114,8 @@ export async function resolvePostInput(
         EXIT_PARAM_ERROR,
       );
     }
-    // project (비숫자) 또는 postId → resolveByPostId 에 위임 (API 404 응답으로 알림)
+    // project (비숫자) 또는 postId → resolveByPostId 에 위임 (의도된 pass-through)
+    // 비숫자는 ky 가 URL 인코딩 처리, 존재하지 않는 postId 이므로 서버가 404 로 거부
     return resolveByPostId(client, idOpt);
   }
 
@@ -148,7 +150,9 @@ export async function resolvePostInput(
     }
     const projectId = await resolveProject(client, projectArg);
     const num = Number(postNumberArg);
-    if (num <= 0) {
+    // classifyPostInputToken 이 postNumber 를 보장하므로 NaN 불가하나,
+    // 분류 로직 변경 시 NaN <= 0 (false) 로 0번 조회되는 회귀 방지로 isFinite 명시
+    if (!Number.isFinite(num) || num <= 0) {
       throw new DoorayCliError(
         `<post-number>가 올바르지 않습니다: "${postNumberArg}"`,
         EXIT_PARAM_ERROR,
