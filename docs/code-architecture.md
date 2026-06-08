@@ -39,7 +39,7 @@ src/
     tag.ts                  # name[] → tagIds + mandatory/selectOne 검증
     milestone.ts            # name → milestoneId
     match.ts                # 공용 매칭: 정확일치 → 부분일치 → 모호 시 에러. helpHint 옵션 + name 가드 (ADR-028)
-    post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020)
+    post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020). 입력 토큰 타입 판별 (classifyPostInputToken) + 진입점별 검증 (ADR-020 보강)
     comment-file-input.ts   # comment file 4개 명령 입력 분기 헬퍼 (parseCommentFilePositional pure + resolveCommentFileInput orchestrator, ADR-020 확장)
     task-link.ts            # --link-task ref[] → TaskLinkInput[] (resolvePostInput + getPost detail 합성, post create/edit 인라인 변환)
     member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선). 응답 nested array 정규화 (`res.result.flat()`) + 입력 자동 분기 (15+자리 numeric → id 직접 / 그 외 → code matchByName) + 개별 code 누락 가드 (ADR-028, Issue #65 #76)
@@ -75,7 +75,7 @@ src/
     spinner.ts              # ora 래퍼 + setQuiet (--json/--quiet 시 noop proxy 반환, Issue #35 item 1)
     exit-codes.ts           # 0 성공 / 1 API오류 / 2 인증실패 / 3 파라미터오류 / 4 설정오류
     body-input.ts           # --body / --body-file → string (stdin "-" + 충돌 가드)
-    dooray-url.ts           # task URL (/task/to/<postId> + /task/<projectId>/<postId>) + wiki URL (/wiki/<wikiId>/<pageId>) parser (ADR-020)
+    dooray-url.ts           # task URL (/task/to/<postId> + /task/<projectId>/<postId> + /project/tasks/<postId>) + wiki URL (/wiki/<wikiId>/<pageId>) parser (ADR-020)
     comment-enrich.ts       # PostComment[] Creator 이름 채우기 (ADR-021, immutable)
     mention.ts              # 멤버·그룹 멘션 마크업 빌더 + prependMentions (Issue #25)
     task-link.ts            # 업무 링크 빌더 (escapeLinkText / buildTaskLink / appendTaskLinks / parseLinkRef, Issue #33)

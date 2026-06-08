@@ -353,6 +353,18 @@ standalone API `GET /project/v1/posts/{postId}` 응답에 `project.{id,code}` �
 분기 규칙·URL 정규식·테스트 케이스는 `src/resolvers/post-input.ts` + `src/utils/dooray-url.ts` 참조.
 후속 (wiki input 통합, CI 통합) 은 별도 task.
 
+**보강 (Issue #82/#83, 2026-06)**: 입력 처리를 '만능 추론' 에서 '명시적 타입 분류' 로 강화한다.
+`classifyPostInputToken` 이 토큰을 postId / postNumber / url / project 로 분류한다.
+진입점 (`--id` / `--url` / positional) 이 기대 타입과 불일치하면 타입별 안내 에러를 던진다.
+
+- positional 2번째가 postId (15+자리 numeric) 면 "`--id` 를 쓰세요" 안내 (#82).
+- URL 형식에 `/project/tasks/{postId}` 추가 (#83 — `/task/{pid}/{id}` 는 기존 처리).
+
+길이 임계 (15+자리) 는 **안내 트리거로만** 쓰고 조회 분기로는 쓰지 않는다.
+따라서 본 ADR 의 'positional numeric → postId 자동 인식 기각' 은 유지된다.
+긴 numeric 을 postId 로 조용히 조회하지 않고 `--id` 명시 경로로 유도한다.
+ID 체계가 바뀌어 분류가 틀려도 `--id` 경로는 영향받지 않는다.
+
 ---
 
 <a id="adr-021"></a>

@@ -73,6 +73,8 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
   - 대상: `get` / `edit` / `done` / `workflow` + comment 5 + file 5 + comment file 4
   - 입력 형식: `<project> <post-number>` / `--id <postId>` / `--url <url>` / 첫 positional 에 Dooray URL 직접 입력
   - 분기 헬퍼: post / comment / file 13 = `resolvePostInput` / comment file 4 = `resolveCommentFileInput` (`resolvePostInput` 위임 + comment-id 분기)
+  - 입력 토큰 타입 판별 (`classifyPostInputToken`, ADR-020 보강): postId (15+자리) / postNumber / url / project
+    - 진입점이 기대 타입과 불일치하면 타입별 안내 에러 (예: positional 에 postId → `--id` 안내, #82)
 - wiki page file 5 + comment 6 명령 input 통합
   - 분기 헬퍼: `resolveWikiPageInput` (`resolveProject` + URL `/wiki/<wikiId>/<pageId>` parser)
   - `--id <pageId>` 모드는 `--project <code>` 동반 필수 (wiki API 가 page-only fetch 미지원)
