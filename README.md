@@ -430,7 +430,7 @@ dooray wiki page file delete <project> <page-id> --file-id <id> --json
 # upload (general) — res.result raw (--quiet 는 id 만)
 dooray wiki page file upload <project> <page-id> --file ./report.pdf --json
 
-# upload (inline_image) — res.result + markdownSnippet 필드 추가 (ADR-031 보강)
+# upload (inline_image) — res.result + markdownSnippet 필드 추가
 dooray wiki page file upload <project> <page-id> --file ./diagram.png --type inline_image --json
 # 출력 예:
 # {

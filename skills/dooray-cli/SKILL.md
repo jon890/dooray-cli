@@ -238,7 +238,7 @@ dooray wiki page file download-all <project> <page-id> -o ~/.claude/skills/my-sk
 dooray wiki page file list <project> <page-id>
 ```
 
-### 위키 페이지 인라인 이미지 업로드 후 본문 자동 삽입 (Issue #81)
+### 위키 페이지 인라인 이미지 업로드 후 본문 자동 삽입
 
 `--type inline_image` 로 업로드 시 `--json` 응답에 `markdownSnippet` 필드가 포함됩니다.
 jq 로 추출해 본문에 바로 삽입하는 자동화가 가능합니다.
