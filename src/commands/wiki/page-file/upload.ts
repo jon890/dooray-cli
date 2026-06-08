@@ -8,6 +8,7 @@ import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
 import type { WikiPageFileType } from "../../../api/types.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { printJson } from "../../../formatters/table.js";
+import { wikiInlineImageSnippet } from "../../../utils/wiki-snippet.js";
 
 export const wikiPageFileUploadCommand = new Command("upload")
   .description("위키 페이지 첨부파일 업로드 (multipart type 순서 강제, ADR-029)")
@@ -87,7 +88,18 @@ export const wikiPageFileUploadCommand = new Command("upload")
 
       // ADR-031: --json / --quiet / plain 3 모드 분기
       if (globalOpts.json) {
-        printJson(res.result);
+        const payload =
+          fileType === "inline_image"
+            ? {
+                ...res.result,
+                markdownSnippet: wikiInlineImageSnippet(
+                  wikiId,
+                  res.result.attachFileId,
+                  res.result.name,
+                ),
+              }
+            : res.result;
+        printJson(payload);
       } else if (globalOpts.quiet) {
         process.stdout.write(`${res.result.id}\n`);
       } else {
@@ -98,7 +110,9 @@ export const wikiPageFileUploadCommand = new Command("upload")
 
         if (fileType === "inline_image") {
           process.stdout.write("\n본문 삽입용 markdown snippet (직접 wiki page edit 으로 본문에 박으세요):\n");
-          process.stdout.write(`  ![${res.result.name}](/wikis/${wikiId}/files/${res.result.attachFileId})\n`);
+          process.stdout.write(
+            `  ${wikiInlineImageSnippet(wikiId, res.result.attachFileId, res.result.name)}\n`,
+          );
         }
       }
     } catch (e) {

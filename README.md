@@ -427,15 +427,30 @@ dooray wiki page file download-all <project> <page-id> -o ./ --json | jq '.faile
 # delete — { fileId, status: "deleted" }
 dooray wiki page file delete <project> <page-id> --file-id <id> --json
 
-# upload — res.result raw (--quiet 는 id 만)
+# upload (general) — res.result raw (--quiet 는 id 만)
 dooray wiki page file upload <project> <page-id> --file ./report.pdf --json
+
+# upload (inline_image) — res.result + markdownSnippet 필드 추가 (ADR-031 보강)
+dooray wiki page file upload <project> <page-id> --file ./diagram.png --type inline_image --json
+# 출력 예:
+# {
+#   "id": "<id>",
+#   "attachFileId": "<attachFileId>",
+#   "name": "diagram.png",
+#   "size": 12345,
+#   "type": "inline_image",
+#   "markdownSnippet": "![diagram.png](/wikis/<wikiId>/files/<attachFileId>)"
+# }
+
+# 자동화: markdownSnippet 을 jq 로 추출해 본문에 삽입
+SNIPPET=$(dooray wiki page file upload <project> <page-id> --file ./diagram.png --type inline_image --json | jq -r '.markdownSnippet')
 ```
 
 **주의**:
 - `upload` 시 multipart 필드 순서 (`type` → `file`) 가 중요.
   클라이언트가 자동으로 강제 (ADR-029 참조)
 - `inline_image` 로 올린 파일은 본문에 markdown 으로 박혀야 위키에서 보임.
-  upload stdout 의 snippet 을 복사해서 `dooray wiki page edit` 으로 본문에 직접 추가
+  `--json` 의 `markdownSnippet` 을 복사하거나 jq 로 추출해 `dooray wiki page edit` 본문에 직접 추가
 - `delete` 는 confirm 없이 즉시 삭제 (실수 방지 책임은 호출자)
 
 #### 위키 페이지 댓글

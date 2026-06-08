@@ -238,6 +238,30 @@ dooray wiki page file download-all <project> <page-id> -o ~/.claude/skills/my-sk
 dooray wiki page file list <project> <page-id>
 ```
 
+### 위키 페이지 인라인 이미지 업로드 후 본문 자동 삽입 (Issue #81)
+
+`--type inline_image` 로 업로드 시 `--json` 응답에 `markdownSnippet` 필드가 포함됩니다.
+jq 로 추출해 본문에 바로 삽입하는 자동화가 가능합니다.
+
+```bash
+# 1. 인라인 이미지 업로드 — --json 으로 markdownSnippet 추출
+SNIPPET=$(dooray wiki page file upload <project> <page-id> \
+  --file ./diagram.png --type inline_image --json \
+  | jq -r '.markdownSnippet')
+# SNIPPET = "![diagram.png](/wikis/<wikiId>/files/<attachFileId>)"
+
+# 2. 기존 본문 조회
+CURRENT_BODY=$(dooray wiki page get <project> <page-id> --json | jq -r '.body.content')
+
+# 3. snippet 을 본문 끝에 추가해 업데이트
+NEW_BODY="${CURRENT_BODY}
+
+${SNIPPET}"
+dooray wiki page edit <project> <page-id> --body "$NEW_BODY"
+```
+
+**참고**: `general` 타입은 `markdownSnippet` 없음. `--quiet` 은 id 만 출력 (snippet 미포함).
+
 ### 위키 페이지 댓글 — 회의록 결정사항 자동 누적
 
 **회의록 결정사항 자동 누적**: 회의록 위키 페이지에 자동화 봇이 `wiki page comment add` 로 결정사항을 댓글로 누적, `wiki page comment list --latest 20` 으로 최근 토론 흐름 추적.
