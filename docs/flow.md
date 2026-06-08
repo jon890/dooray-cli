@@ -61,8 +61,14 @@ dooray doctor
 dooray project list                         # 1) 프로젝트 목록 (캐시 자동 갱신)
 dooray post list my-project                 # 2) 업무 목록 (postNumber 포함)
 dooray post get my-project 42              # 3) 업무 상세 (#42번)
+dooray post get --id <postId>              # 3-1) internal postId 로 (create 출력값)
+dooray post get https://x.dooray.com/task/to/<postId>        # 3-2) URL 직접 입력 (task/to)
+dooray post get https://x.dooray.com/project/tasks/<postId>  # 3-3) URL 직접 입력 (project/tasks, #83)
 dooray post search my-project "스프린트"   # 4) 제목 검색
 ```
+
+`post create` 출력의 긴 숫자는 internal postId 다 (업무 번호 #N 아님).
+후속 조회·수정은 `--id <postId>` 로 한다 — positional `<project> <number>` 자리에 넣으면 안내 에러로 거부된다 (#82).
 
 ### projectId 직접 입력 (member=me 응답 외 프로젝트, ADR-030, Issue #78)
 
