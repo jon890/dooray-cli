@@ -2,7 +2,7 @@
   "name": "041-feat-post-input-type-classifier",
   "description": "GitHub Issue #82 + #83 통합. 두 이슈의 공통 근원은 resolvePostInput 의 '만능 추론' — 입력값 형태로 타입을 짐작하다 경계가 흐려진다. #82: post create 가 internal postId 만 출력해, post get 에 그 id 를 positional 로 넣으면 업무 번호로 처리되어 USER_INVALID_ERROR. #83: URL 파서가 /task/to/{id} 형태만 받고 브라우저가 만드는 /project/tasks/{id} 를 거부. 결정(2026-06-08): 추론을 없애지 않고 명시화한다. classifyPostInputToken 순수 함수가 토큰을 네 타입(postId, postNumber, url, project)으로 분류하고, 진입점마다 기대 타입과 불일치하면 타입별 안내 에러를 던진다. #82 는 positional 2번째가 postId 면 --id 사용을 안내한다. #83 은 parseDoorayTaskUrl 에 /project/tasks/{id} 를 추가한다. 길이 임계는 안내 트리거로만 쓰고 조회 분기로는 쓰지 않아 ADR-020 의 'numeric 자동 인식' 기각과 일관된다. ADR-020 에 보강 섹션을 추가한다. SKILL 과 README 에 'create 출력은 internal postId 이므로 후속 조회·수정은 --id 사용' 을 안내해 AI 라우팅을 코드 에러 이전에 잡는다.",
   "created_at": "2026-06-08T00:00:00Z",
-  "status": "pending",
+  "status": "in_progress",
   "current_phase": 1,
   "total_phases": 2,
   "error_message": null,
@@ -12,7 +12,7 @@
       "number": 1,
       "title": "classifyPostInputToken 판별기 + dooray-url /project/tasks 확장 + resolvePostInput 타입 검증 + 단위 테스트",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {

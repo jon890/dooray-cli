@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { resolvePostInput } from "./post-input.js";
+import { resolvePostInput, classifyPostInputToken } from "./post-input.js";
 import { DoorayCliError } from "../utils/errors.js";
 
 vi.mock("./project.js");
@@ -56,11 +56,11 @@ describe("resolvePostInput", () => {
 
   it("--id 단독 → standalone 호출", async () => {
     const c = makeClient({
-      standalone: { id: "999", projectId: "p1", projectCode: "tc-ocr", number: 337 },
+      standalone: { id: "4319587406666362045", projectId: "p1", projectCode: "tc-ocr", number: 337 },
     });
-    const out = await resolvePostInput(c, { idOpt: "999" });
-    expect(out.postId).toBe("999");
-    expect(c.getPostStandalone).toHaveBeenCalledWith("999");
+    const out = await resolvePostInput(c, { idOpt: "4319587406666362045" });
+    expect(out.postId).toBe("4319587406666362045");
+    expect(c.getPostStandalone).toHaveBeenCalledWith("4319587406666362045");
   });
 
   it("positional 1개가 URL이면 standalone", async () => {
@@ -103,5 +103,75 @@ describe("resolvePostInput", () => {
     await expect(resolvePostInput(makeClient({}), {})).rejects.toThrow(
       /업무를 식별할 정보가 부족합니다/,
     );
+  });
+
+  // Issue #82 — positional 2번째에 19자리 postId 입력 시 --id 안내
+  it("positional 2번째가 19자리 postId → --id 안내 에러", async () => {
+    await expect(
+      resolvePostInput(makeClient({}), {
+        projectArg: "tc-ocr",
+        postNumberArg: "4319587406666362045",
+      }),
+    ).rejects.toThrow(/--id/);
+  });
+
+  // --id 에 업무 번호(짧은 numeric) → <project> <number> 안내
+  it("--id 에 업무 번호(짧은 numeric) → <project> <number> 안내 에러", async () => {
+    await expect(
+      resolvePostInput(makeClient({}), { idOpt: "337" }),
+    ).rejects.toThrow(/<project>/);
+  });
+
+  // --id 에 URL → --url 안내
+  it("--id 에 URL → --url 안내 에러", async () => {
+    await expect(
+      resolvePostInput(makeClient({}), { idOpt: "https://x.dooray.com/task/to/4319587406666362045" }),
+    ).rejects.toThrow(/--url/);
+  });
+
+  // Issue #83 — /project/tasks/{postId} URL → 정상 standalone 호출
+  it("positional 1개가 /project/tasks/ URL이면 standalone", async () => {
+    const c = makeClient({
+      standalone: { id: "4319587406666362045", projectId: "p1", projectCode: "tc-ocr", number: 337 },
+    });
+    const out = await resolvePostInput(c, {
+      projectArg: "https://x.dooray.com/project/tasks/4319587406666362045",
+    });
+    expect(out.postId).toBe("4319587406666362045");
+    expect(c.getPostStandalone).toHaveBeenCalledWith("4319587406666362045");
+  });
+
+  // 기존 정상 케이스 회귀 — <project> 337
+  it("<project> 337 정상 경로 회귀", async () => {
+    vi.mocked(resolveProject).mockResolvedValue("proj-id-abc");
+    vi.mocked(resolvePost).mockResolvedValue("post-id-123");
+    const c = makeClient({});
+    const out = await resolvePostInput(c, { projectArg: "tc-ocr", postNumberArg: "337" });
+    expect(out.projectCode).toBe("tc-ocr");
+    expect(out.postNumber).toBe(337);
+  });
+});
+
+describe("classifyPostInputToken", () => {
+  it("http(s):// → url", () => {
+    expect(classifyPostInputToken("https://x.dooray.com/task/to/123")).toBe("url");
+    expect(classifyPostInputToken("http://x.dooray.com/project/tasks/123")).toBe("url");
+  });
+
+  it("15자리 이상 numeric → postId", () => {
+    expect(classifyPostInputToken("4319587406666362045")).toBe("postId");
+    expect(classifyPostInputToken("123456789012345")).toBe("postId");
+  });
+
+  it("1~14자리 numeric → postNumber", () => {
+    expect(classifyPostInputToken("337")).toBe("postNumber");
+    expect(classifyPostInputToken("1")).toBe("postNumber");
+    expect(classifyPostInputToken("99999999999999")).toBe("postNumber");
+  });
+
+  it("비숫자 문자열 → project", () => {
+    expect(classifyPostInputToken("tc-ocr")).toBe("project");
+    expect(classifyPostInputToken("abc")).toBe("project");
+    expect(classifyPostInputToken("my-project-code")).toBe("project");
   });
 });

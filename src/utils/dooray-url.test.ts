@@ -41,6 +41,32 @@ describe("parseDoorayTaskUrl", () => {
   it("/task/<projectId>/<postId> 형도 dooray.com 도메인 외 reject", () => {
     expect(parseDoorayTaskUrl("https://other.com/task/123/456")).toBeNull();
   });
+
+  // Issue #83 — 브라우저 '프로젝트 업무 목록 → 업무 열기' URL
+  it("/project/tasks/<postId> 에서 postId 추출", () => {
+    expect(
+      parseDoorayTaskUrl("https://x.dooray.com/project/tasks/4319587406666362045"),
+    ).toBe("4319587406666362045");
+  });
+
+  it("/project/tasks/<postId> query string 무시", () => {
+    expect(
+      parseDoorayTaskUrl("https://x.dooray.com/project/tasks/4319587406666362045?workflowIds=a,b,c"),
+    ).toBe("4319587406666362045");
+  });
+
+  it("/project/tasks/<postId> dooray.com 도메인 외 reject", () => {
+    expect(parseDoorayTaskUrl("https://other.com/project/tasks/123")).toBeNull();
+  });
+
+  // Issue #83 — /task/{pid}/{id}?workflowIds= 회귀 (TASK_URL_ALT_RE 의 query 무시 확인)
+  it("/task/<projectId>/<postId>?workflowIds=a,b,c query 무시 회귀", () => {
+    expect(
+      parseDoorayTaskUrl(
+        "https://x.dooray.com/task/1234567890123456789/9876543210987654321?workflowIds=a,b,c",
+      ),
+    ).toBe("9876543210987654321");
+  });
 });
 
 describe("parseDoorayWikiUrl", () => {

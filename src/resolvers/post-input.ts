@@ -5,6 +5,22 @@ import { parseDoorayTaskUrl, isLikelyDoorayUrl } from "../utils/dooray-url.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
+export type PostInputTokenType = "postId" | "postNumber" | "url" | "project";
+
+/**
+ * 입력 토큰을 형태로 분류. 추론을 '명시화' 하는 단일 분류기.
+ * - url:        http(s):// 로 시작
+ * - postId:     15자리 이상 numeric (Dooray postId 는 19자리, ADR-030 의 15+ 기준과 일관)
+ * - postNumber: 1~14자리 numeric (업무 번호 #N)
+ * - project:    그 외 (프로젝트 코드 등 비숫자)
+ */
+export function classifyPostInputToken(token: string): PostInputTokenType {
+  if (/^https?:\/\//.test(token)) return "url";
+  if (/^\d{15,}$/.test(token)) return "postId";
+  if (/^\d+$/.test(token)) return "postNumber";
+  return "project";
+}
+
 export interface PostInputArgs {
   projectArg?: string;
   postNumberArg?: string;
@@ -24,6 +40,12 @@ const INPUT_HELP =
   "  - <project> <post-number>     예: tc-ocr 337\n" +
   "  - --id <postId>                예: --id 4319587406666362045\n" +
   "  - <Dooray URL>                 예: https://x.dooray.com/task/to/4319587406666362045";
+
+const URL_FORMAT_HINT =
+  "지원 형식:\n" +
+  "  https://x.dooray.com/task/to/{postId}\n" +
+  "  https://x.dooray.com/task/{projectId}/{postId}\n" +
+  "  https://x.dooray.com/project/tasks/{postId}";
 
 async function resolveByPostId(
   client: DoorayApiClient,
@@ -67,7 +89,7 @@ export async function resolvePostInput(
     const postId = parseDoorayTaskUrl(urlOpt);
     if (!postId) {
       throw new DoorayCliError(
-        `--url 형식이 올바르지 않습니다: "${urlOpt}"\n예: https://x.dooray.com/task/to/4319587406666362045`,
+        `--url 형식이 올바르지 않습니다: "${urlOpt}"\n${URL_FORMAT_HINT}`,
         EXIT_PARAM_ERROR,
       );
     }
@@ -76,6 +98,22 @@ export async function resolvePostInput(
 
   // 4. --id 단독
   if (idOpt) {
+    const idType = classifyPostInputToken(idOpt);
+    if (idType === "postNumber") {
+      throw new DoorayCliError(
+        `"${idOpt}" 는 업무 번호로 보입니다. <project> <post-number> 형식을 쓰세요:\n` +
+          `  dooray post get <project> ${idOpt}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+    if (idType === "url") {
+      throw new DoorayCliError(
+        `"${idOpt}" 는 URL 형식입니다. --url 옵션을 쓰세요:\n` +
+          `  dooray post get --url "${idOpt}"`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+    // project (비숫자) 또는 postId → resolveByPostId 에 위임 (API 404 응답으로 알림)
     return resolveByPostId(client, idOpt);
   }
 
@@ -84,18 +122,33 @@ export async function resolvePostInput(
     const postId = parseDoorayTaskUrl(projectArg);
     if (!postId) {
       throw new DoorayCliError(
-        `Dooray URL 형식이 올바르지 않습니다: "${projectArg}"\n예: https://x.dooray.com/task/to/4319587406666362045`,
+        `Dooray URL 형식이 올바르지 않습니다: "${projectArg}"\n${URL_FORMAT_HINT}`,
         EXIT_PARAM_ERROR,
       );
     }
     return resolveByPostId(client, postId);
   }
 
-  // 6. positional 2개 (기존 경로)
+  // 6. positional 2개
   if (projectArg && postNumberArg) {
+    const numType = classifyPostInputToken(postNumberArg);
+    if (numType === "postId") {
+      throw new DoorayCliError(
+        `"${postNumberArg}" 는 내부 ID(postId)로 보입니다.\n` +
+          `업무 번호(#N)가 아닌 내부 ID 로 조회하려면 --id 옵션을 사용하세요:\n` +
+          `  dooray post get --id ${postNumberArg}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+    if (numType !== "postNumber") {
+      throw new DoorayCliError(
+        `<post-number>가 올바르지 않습니다: "${postNumberArg}"`,
+        EXIT_PARAM_ERROR,
+      );
+    }
     const projectId = await resolveProject(client, projectArg);
     const num = Number(postNumberArg);
-    if (!Number.isFinite(num) || num <= 0) {
+    if (num <= 0) {
       throw new DoorayCliError(
         `<post-number>가 올바르지 않습니다: "${postNumberArg}"`,
         EXIT_PARAM_ERROR,
