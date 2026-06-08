@@ -378,7 +378,7 @@ markdown bullet list 로 변환한다.
 
 ## 개인 식별 정보 / 사내 식별자 노출 금지 (public OSS)
 
-이 repo는 GitHub public이므로 다음 식별자는 **README/skills/docs/CLAUDE.md/이슈 본문 어디에도 노출 금지**. 코드 예시·시나리오·issue body 작성 시 항상 placeholder 사용.
+이 repo는 GitHub public이므로 다음 식별자는 **README/skills/docs/CLAUDE.md/이슈 본문 + src 코드 (테스트 fixture·에러 메시지 예시 포함) 어디에도 노출 금지**. 코드 예시·시나리오·issue body·테스트 fixture 작성 시 항상 placeholder 사용.
 
 | 노출 금지                                                         | 대체                                                      |
 | ----------------------------------------------------------------- | --------------------------------------------------------- |
