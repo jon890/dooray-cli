@@ -409,6 +409,31 @@ grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "123456789
 
 **예외**: 사용자가 명시적으로 "내부 wiki라 OK" 등 동의한 경우만. 디폴트는 placeholder.
 
+## 공개 문서(README · 공개 SKILL) — 내부 참조 번호 제외
+
+`README.md` 와 `skills/dooray-cli/SKILL.md` 는 **사용자 대상** 문서다.
+`ADR-NNN` / `Issue #NN` / `task NN` 같은 **내부 개발 추적 번호를 본문에 넣지 않는다.**
+
+이유:
+
+- 사용자는 프로젝트의 의사결정(ADR) 맥락을 전혀 모른다 — 번호는 의미 없는 노이즈.
+- 사용자가 README/SKILL 본문을 그대로 LLM 에게 붙여 실행을 요청하기도 한다 — 내부 참조가 혼란을 준다.
+
+규칙:
+
+- 기능 **동작·사용법**만 기술한다.
+- "왜 이렇게 설계했는가" 는 `docs/adr.md` 단일 소스에만 둔다.
+- `... (ADR-027)` 같은 괄호 참조는 삭제한다.
+- 문장에 녹은 참조(예: "ADR-030 안내 확인")는 번호를 빼고 자연스럽게 재작성한다.
+- 적용 대상은 `README.md` 와 `skills/dooray-cli/SKILL.md` 뿐이다. 내부 문서(`CLAUDE.md` / `docs/*` / `tasks/*`)는 내부 참조를 유지한다.
+
+**검증 grep** (README/SKILL 작성·수정 후 실행):
+
+```bash
+grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKILL.md 2>/dev/null
+# 0건이어야 함
+```
+
 ## Task 작업 규칙
 
 - 각 phase는 **원자적 단일 책임** — 다른 관심사면 별도 phase로 분리. **작업 항목 5개 이하** 엄수
