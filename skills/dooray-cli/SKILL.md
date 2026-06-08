@@ -51,9 +51,9 @@ dooray doctor                                 # 설정 검증
 > 지원 URL 형식 3종 (positional 첫 인자 / `--url` 공통):
 > - `https://*.dooray.com/task/to/<postId>`
 > - `https://*.dooray.com/task/<projectId>/<postId>` — 브라우저 주소창 복사본
-> - `https://*.dooray.com/project/tasks/<postId>` — 프로젝트 업무 목록 → 업무 열기 (Issue #83)
+> - `https://*.dooray.com/project/tasks/<postId>` — 프로젝트 업무 목록 → 업무 열기
 >
-> **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축, ADR-020).
+> **사용자가 URL을 줬으면 그대로 첫 인자로 전달**하는 것이 가장 빠른 경로 (resolve 단계 단축).
 
 | 의도 | 커맨드 |
 |------|--------|
@@ -64,17 +64,17 @@ dooray doctor                                 # 설정 검증
 | 프로젝트 멤버 그룹 목록 | `dooray project groups <project>` (ID / Code) |
 | 프로젝트 태그 목록 | `dooray project tags <project>` (ID / Color / Name / Group / Mandatory) |
 | 프로젝트 템플릿 목록 | `dooray project templates <project>` (id / templateName) |
-| 멤버 상세 (organizationMemberId) | `dooray member get <organizationMemberId>` (cache 우회, ADR-021) |
+| 멤버 상세 (organizationMemberId) | `dooray member get <organizationMemberId>` (cache 우회) |
 | organization 전체 멤버 검색 | `dooray member search <keyword>` (이름 기본), `--email`(이메일 exact), `--user-code`(사번 like), `--user-code-exact`(사번 exact), `--page`/`--size` |
 | 업무 목록 조회 | `dooray post list <project>` |
-| 업무 검색 | `dooray post search <project|projectId> "<keyword>"` — projectId (15+자리 numeric) 직접 입력 시 cache 우회 (ADR-030) |
+| 업무 검색 | `dooray post search <project|projectId> "<keyword>"` — projectId (15+자리 numeric) 직접 입력 시 cache 우회 |
 | 업무 상세 보기 | `dooray post get <project> <number>` (번호) / `dooray post get --id <postId>` (internal ID) |
 | 업무 생성 | `dooray post create <project> --title "..." [--body "..." \| --body-file <path>]` (`--tag`/`--parent`/`--workflow`/`--milestone` 지원) |
-| 템플릿 기반 업무 생성 | `dooray post create <project> --template <name\|id>` — body/users/tags 자동 채움 (사용자 옵션 우선 override, ADR-027) |
+| 템플릿 기반 업무 생성 | `dooray post create <project> --template <name\|id>` — body/users/tags 자동 채움 (사용자 옵션 우선 override) |
 | 업무 제목/본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` 또는 `--body-file <path>` |
 | 업무 완료 처리 | `dooray post done <project> <number>` |
 | 업무 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
-| 댓글 조회 | `dooray post comment list <project> <number>` (`--sort`, `--reverse`, `--latest`, `--since`, `--from-author` 필터. table: Creator 자동 채움, `--json`: raw, ADR-021) |
+| 댓글 조회 | `dooray post comment list <project> <number>` (`--sort`, `--reverse`, `--latest`, `--since`, `--from-author` 필터. table: Creator 자동 채움, `--json`: raw) |
 | 최신 댓글 조회 | `dooray post comment latest <project> <number>` — 최신 댓글 1개 빠른 조회. `-n <N>`으로 N개 지정 |
 | 단일 댓글 조회 | `dooray post comment get <project> <number> <comment-id>` — 본문·메타·attachments 직접 fetch. `--id`/`--url` + `--comment-id` 모드 지원 |
 | 댓글 추가 | `dooray post comment add <project> <number> --body "..."` 또는 `--body-file <path>` |
@@ -88,7 +88,7 @@ dooray doctor                                 # 설정 검증
 | 위키 페이지 수정 (본문) | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` |
 | 위키 페이지 수정 (에디터) | `dooray wiki page edit <project> <page-id>` (플래그 없으면 $EDITOR 열림) |
 | 위키 페이지 첨부 목록 | `dooray wiki page file list <project> <page-id>` (general + inline 합산, type 컬럼) |
-| 위키 페이지 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` (multipart type 순서 ADR-029) |
+| 위키 페이지 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` (multipart `type` 필드를 `file` 앞에 전송) |
 | 위키 페이지 첨부 다운로드 | `dooray wiki page file download <project> <page-id> --file-id <id> -o <dir>` |
 | 위키 페이지 첨부 일괄 다운로드 | `dooray wiki page file download-all <project> <page-id> -o <dir>` (files + images 전부) |
 | 위키 페이지 첨부 삭제 | `dooray wiki page file delete <project> <page-id> --file-id <id>` (confirm 없음) |
@@ -109,15 +109,15 @@ dooray doctor                                 # 설정 검증
 | 전체 첨부파일 다운로드 | `dooray post file download-all <project> <number>` |
 | 첨부파일 업로드 | `dooray post file upload <project> <number> <file-path>` |
 | 첨부파일 삭제 | `dooray post file delete <project> <number> <file-id>` |
-| file 명령군 자동화 파싱 | `dooray post file <verb> ... --json` — `download` = `{outputPath,fileName,size}`, `download-all` = `{count,succeeded,failed}` (부분 실패 시 exit 1), `delete` = `{fileId,status}`, `upload` = `res.result` raw (ADR-031) |
+| file 명령군 자동화 파싱 | `dooray post file <verb> ... --json` — `download` = `{outputPath,fileName,size}`, `download-all` = `{count,succeeded,failed}` (부분 실패 시 exit 1), `delete` = `{fileId,status}`, `upload` = `res.result` raw |
 | 댓글 첨부 목록 | `dooray post comment file list <project> <number> <comment-id>` |
 | 댓글 파일 업로드 | `dooray post comment file upload <project> <number> <comment-id> <path>` |
 | 댓글 파일 다운로드 | `dooray post comment file download <project> <number> <comment-id> <file-id>` |
 | 댓글 파일 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id> --yes` |
-| 참조자(cc) 멤버/그룹 추가 | `dooray post edit <project> <number> --cc-group <code>` — 기존 참조자 유지 + 그룹 추가 (dedupe, ADR-025) |
+| 참조자(cc) 멤버/그룹 추가 | `dooray post edit <project> <number> --cc-group <code>` — 기존 참조자 유지 + 그룹 추가 (dedupe) |
 | 참조자 전체 교체 | `dooray post edit <project> <number> --cc-clear --cc <name>` — 기존 참조자 비우고 신규 멤버만 |
 | 신규 업무 + 그룹 cc | `dooray post create <project> --title "..." --cc-group <code>` — 생성 시 그룹 참조자 포함 |
-| `--cc-group <code\|id>` / `--mention-group <code\|id>` | 그룹 매칭 — 15+자리 numeric → id 직접 / 그 외 → code matchByName (부분일치, ADR-028) |
+| `--cc-group <code\|id>` / `--mention-group <code\|id>` | 그룹 매칭 — 15+자리 numeric → id 직접 / 그 외 → code matchByName (부분일치) |
 | 상위 업무 설정/변경 | `dooray post edit <project> <number> --title "<원제목>" --parent <ref>` (`<ref>`: `<project>/<number>` 또는 raw postId. `--title` 필수, unset 미지원) |
 | `dooray post edit --id <postId> --tag <name>` | 태그 추가 (반복, dedupe) |
 | `dooray post edit --id <postId> --tag-clear --tag <name>` | 태그 전체 교체 |
@@ -192,7 +192,7 @@ dooray post comment add <project> 42 --body "진행 상황 업데이트: 80% 완
 ### 시나리오 — 댓글에 스크린샷 자동 첨부
 
 스크립트가 스크린샷을 댓글에 삽입하거나, 에이전트가 결과 파일을 첨부 댓글로 보고할 때 사용.
-Dooray REST API 가 댓글 전용 attachment endpoint 를 미지원하므로 내부적으로 post-level files API + 댓글 본문 PUT 합성으로 동작 (ADR-024).
+Dooray REST API 가 댓글 전용 attachment endpoint 를 미지원하므로 내부적으로 post-level files API + 댓글 본문 PUT 합성으로 동작한다.
 
 ```bash
 # 1. 댓글을 먼저 만든다 (텍스트만, --json 으로 commentId 획득)
@@ -213,7 +213,7 @@ dooray wiki pages <project> --json
 dooray wiki page get <project> <pageId> --json
 ```
 
-### 첨부파일 일괄 다운로드 후 실패 분리 (ADR-031)
+### 첨부파일 일괄 다운로드 후 실패 분리
 
 ```bash
 # --json 으로 구조화 출력 → jq 로 성공/실패 분리
@@ -223,7 +223,7 @@ echo "$RESULT" | jq -r '.succeeded[].path'
 # exit code 1 이 설정되어 있으면 실패 있는 상태
 ```
 
-### 위키 페이지 첨부파일 — 스킬 파일 팀 공유 (Issue #70)
+### 위키 페이지 첨부파일 — 스킬 파일 팀 공유
 
 **스킬 파일 팀 공유**: 팀 위키에 스킬 파일 (예: `SKILL.md`) 을 `wiki page file upload` 로 첨부 → 팀원이 `wiki page file download-all` 로 일괄 받아 `~/.claude/skills/` 에 그대로 설치.
 
@@ -302,7 +302,7 @@ dooray wiki page comment latest <project> <page-id>
 
 ## 커맨드 상세
 
-### 업무 식별 방식 (post 하위 16개 명령 공통, ADR-020)
+### 업무 식별 방식 (post 하위 16개 명령 공통)
 
 아래 16개 명령은 4가지 입력을 모두 받는다:
 `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`.
@@ -393,7 +393,7 @@ dooray post edit <project> <number> --body "새 본문"
 dooray post edit <project> <number> --title "새 제목" --body-file ./updated.md
 ```
 
-### 참조자(cc) / 담당자(to) 변경 — 멤버 · 그룹 (ADR-025)
+### 참조자(cc) / 담당자(to) 변경 — 멤버 · 그룹
 
 ```bash
 # 기존 참조자 유지 + 그룹 추가 (dedupe: organizationMemberId / projectMemberGroupId)
@@ -415,7 +415,7 @@ dooray post edit --id "$POST_ID" --cc-group qa-team --dry-run --json \
 
 > interactive (`$EDITOR`) 모드에서는 위 옵션이 무시되고 stderr 경고가 출력됩니다.
 
-## 동명이인 우회 — 이메일 / memberId 직접 (Issue #58)
+## 동명이인 우회 — 이메일 / memberId 직접
 
 이름이 동일한 멤버가 여러 명이라 `--cc 홍길동` 이 모호로 실패할 때:
 
@@ -433,7 +433,7 @@ dooray post edit --id "$POST_ID" --cc "$MEMBER_ID"
 - 이메일 정규형 — searchMembers exact
 - 그 외 — 이름 부분일치
 
-## 신규 업무 생성 후 그룹 cc 첨부 (ADR-025)
+## 신규 업무 생성 후 그룹 cc 첨부
 
 자동화 패턴:
 1. audit 리포트 분석
@@ -454,7 +454,7 @@ dooray post edit --id "$POST_ID" --cc-group qa-team
 
 ---
 
-## 자식 업무 먼저 → 후속 부모 지정 (Issue #60)
+## 자식 업무 먼저 → 후속 부모 지정
 
 ```bash
 # 1. 자식 업무 생성 (parent 모르고)
@@ -468,7 +468,7 @@ dooray post edit --id "$CHILD_ID" --title "subtask A" --parent <project>/<parent
 
 ---
 
-## 태그 사후 분류 자동화 (Issue #66)
+## 태그 사후 분류 자동화
 
 분류 분석 결과를 받아 태그를 재분류하는 자동화는 단독 호출 패턴이 효율적:
 
@@ -480,7 +480,7 @@ dooray post edit --id "$POST_ID" --tag "분류: $CATEGORY"
 ```
 
 태그만 변경하는 시나리오에서 `--title` / `--body` 강제 없음.
-mandatory 그룹은 친절한 에러 메시지로 안내 (ADR-019).
+mandatory 그룹은 친절한 에러 메시지로 안내.
 
 ---
 
@@ -506,7 +506,7 @@ dooray post comment latest <project> <number>
 
 ---
 
-## 그룹 멘션 / cc 시 AI agent 동선 (Issue #76, ADR-028)
+## 그룹 멘션 / cc 시 AI agent 동선
 
 자연어 그룹명을 사용자가 지칭했을 때 AI agent 의 의사결정 순서:
 
@@ -524,7 +524,7 @@ dooray post comment latest <project> <number>
    AI agent 가 자연어 의도와 가장 가까운 code 선택 후 재시도.
 
 3. **모든 컬럼이 빈값일 때 (response shape 이상) 회피**
-   - ADR-028 fix 이후 거의 발생 안 함 (`fetchAllMemberGroups` 가 nested array 정규화)
+   - 최근 수정 이후 거의 발생 안 함 (`fetchAllMemberGroups` 가 nested array 정규화)
    - 만약 발생 시: 사용자에게 그룹 id (UI 의 그룹 URL 에서 19자리 numeric) 확인 요청
    - `--cc-group <id>` / `--mention-group <id>` 직접 입력
    - 또는 그룹 멤버를 개별 `--cc <member>` / `--mention <member>` 로 지정
@@ -608,7 +608,7 @@ dooray feedback --last --title "에러 제목" --body "추가 설명" --dry-run 
 dooray feedback --last --title "에러 제목" --body "추가 설명"            # 실제 등록
 ```
 
-> **참고**: `--last` 모드는 `trackLastRun: true` (ADR-023 opt-in)가 설정된 경우에만 직전 실패 명령이 자동 기록됨.
+> **참고**: `--last` 모드는 `trackLastRun: true` (opt-in)가 설정된 경우에만 직전 실패 명령이 자동 기록됨.
 > argv는 시크릿 패턴(`--api-key`/`--token`/`Authorization`) 마스킹 후 저장.
 
 ## 에러 핸들링
@@ -625,7 +625,7 @@ CLI 에러 발생 시 복구 방법:
 
 ---
 
-## 정형 task 자동화 (Issue #59 / ADR-027)
+## 정형 task 자동화
 
 매주 같은 형식의 task 를 만드는 자동화는 템플릿 + override 패턴이 효율적:
 
@@ -641,7 +641,7 @@ POST_ID=$(dooray post create <project> \
 템플릿 본문의 `${year}` / `${month}` 등 매크로는 Dooray 가 자동 치환 (`interpolation=true` 기본).
 사용자 정의 변수는 미지원 — 필요 시 client 측 string replace 로 처리.
 
-## projectId 직접 입력 시나리오 (Issue #78, ADR-030)
+## projectId 직접 입력 시나리오
 
 AI agent 가 `member=me` 응답에 없는 프로젝트의 업무를 다뤄야 할 때:
 
@@ -651,13 +651,13 @@ AI agent 가 `member=me` 응답에 없는 프로젝트의 업무를 다뤄야 �
    ```
 
 2. **사용자가 코드만 줬고 cache 매칭 실패 (member 아닌 프로젝트)**:
-   - 에러 메시지의 ADR-030 안내 확인
+   - 에러 메시지의 안내 확인
    - 사용자에게 "프로젝트 ID 가 필요합니다 — Dooray UI 의 프로젝트 URL 에서 확인 가능" 요청
    - 또는 `dooray project list --type private` 로 private 캐시 갱신 시도
 
 3. **권한 없는 projectId 입력 시**: resolver 통과 후 후속 API 4xx 발생 — 에러 메시지에서 권한 부재 확인 후 사용자에게 보고
 
-권한 검증이 resolver 단보다 한 단계 지연되는 trade-off — AI 친화적 자동화 우선 (ADR-030).
+권한 검증이 resolver 단보다 한 단계 지연되는 trade-off — AI 친화적 자동화 우선.
 
 ## 캐시
 
