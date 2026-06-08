@@ -144,6 +144,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
   - `--type general|inline_image` flag (기본 `general`)
   - **multipart 필드 순서 의존**: `type` 필드를 `file` 보다 먼저 append 해야 정상 동작 (ADR-029, Dooray 서버 검증)
   - inline_image 일 때: 본문 markdown 자동 삽입 안 함 — stdout 에 `attachFileId` + 사용자 직접 박을 snippet 안내
+    - `--json` 출력에 `markdownSnippet` 필드 포함 (자동화용, ADR-031 보강, Issue #81). `--quiet` 은 id 만
 - list: 별도 endpoint 부재 → `getWikiPage` 의 `result.files[]` (general) + `result.images[]` (inline) 합성
 - delete: confirm 없이 즉시 (post file delete mirror)
 
@@ -152,6 +153,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 `post file` + `wiki page file` 동의 4 명령 (`upload` / `download` / `download-all` / `delete`) 의 출력 스키마 통일 — 두 명령군이 mirror.
 
 - `upload`: `--json` = `res.result` raw / `--quiet` = `id` 만
+  - wiki page file 의 inline_image 업로드는 `--json` 에 `markdownSnippet` 필드 추가 (ADR-031 보강, Issue #81)
 - `download`: `--json` = `{ outputPath, fileName, size }` / `--quiet` = `outputPath` 만
 - `download-all`: `--json` = `{ count, succeeded: [{path, fileName}], failed: [{fileId, error}] }` / 부분 실패 시 exit 1
 - `delete`: `--json` = `{ fileId, status: "deleted" }` / `--quiet` = `fileId` 만

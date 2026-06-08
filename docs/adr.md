@@ -681,3 +681,8 @@ post file 도 `upload` 만 `--json` 동작 (Issue #73 본문 가정과 달리 4 
 **트레이드오프**:
 - 8 파일 일괄 수정 — scope 크지만 동일 패턴 복제라 회귀 위험 낮음
 - `download-all` 의 failed 배열 표현이 sequential 호출 (ADR-024 patterns) 의 partial-failure 정책 (`common-pitfalls.md` CLI23) 과 일관
+
+**보강 (Issue #81, 2026-06)**: `wiki page file upload` 의 `--json` 출력에 inline_image 시 `markdownSnippet` 필드 추가.
+`--quiet` 은 "id 만" 원칙 유지 (snippet 미포함).
+plain 모드 snippet 과 동일 문자열을 `wikiInlineImageSnippet` 헬퍼로 단일화한다.
+general 타입은 변경 없음.

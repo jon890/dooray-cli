@@ -82,6 +82,7 @@ src/
     feedback-meta.ts        # CLI 버전·환경 수집 + GitHub issue body 빌더 + buildLastRunBlock (ADR-022, ADR-023)
     argv-sanitize.ts        # argv 시크릿 패턴 마스킹 (--api-key/--token/--password/Authorization, ADR-023)
     comment-files.ts        # appendFileReference / removeFileReference — 댓글 본문 markdown reference 조작 (ADR-024)
+    wiki-snippet.ts         # wiki inline_image 본문 삽입용 markdown reference 빌더 (ADR-031 보강, Issue #81)
     dooray-message.ts       # resultMessage URL-encoding 디코드 정규화 (API 에러 메시지 표시용)
     attachment-check.ts     # 본문 markdown 의 attachment fileId 추출 (post edit body full-replace 시 누락 confirm)
 
