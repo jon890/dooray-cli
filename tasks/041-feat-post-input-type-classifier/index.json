@@ -17,7 +17,7 @@
     },
     {
       "number": 2,
-      "title": "docs — ADR-020 보강 + CLAUDE.md + code-architecture.md + README + SKILL 라우팅 안내",
+      "title": "docs — README + SKILL 라우팅 안내 (사용자 가이드, planning 결정 docs 는 3단계 선반영)",
       "file": "phase-02.md",
       "status": "pending",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
