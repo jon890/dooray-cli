@@ -1,20 +1,24 @@
-# Phase 01 — wikiInlineImageSnippet 헬퍼 + upload --json markdownSnippet + 테스트 + ADR-031 보강 + docs
+# Phase 01 — wikiInlineImageSnippet 헬퍼 + upload --json markdownSnippet + 테스트 + README/SKILL
 
 ## 컨텍스트
 
 Issue #81 — `wiki page file upload` 의 `inline_image` 타입이 plain 모드에서만 markdown snippet 출력.
 `--json` / `--quiet` 자동화 경로에서 snippet 을 얻을 길이 없음.
 
-**현재 상태** (`src/commands/wiki/page-file/upload.ts`):
-- plain 모드: inline_image 시 `![name](/wikis/{wikiId}/files/{attachFileId})` snippet 출력
-- `--json`: `printJson(res.result)` — snippet 필드 없음
-- `--quiet`: `id` 만
+**영향 범위**: `wiki page file upload` 단일 명령.
+inline_image 타입은 wiki page file 에만 존재 (`WikiPageFileType = "general" | "inline_image"`).
+post file / comment file 엔 inline 개념 없음 → 무관.
 
-**결정**:
+**결정** (필드명 `markdownSnippet` 확정):
 - `--json` 응답에 inline_image 일 때만 `markdownSnippet` 필드 추가
 - `--quiet` 은 "id 만" 원칙 유지 (snippet 미포함)
 - plain snippet 과 `--json` snippet 을 `wikiInlineImageSnippet` 헬퍼로 단일화 → 동일 문자열 보장 + 테스트
 - `general` 타입은 변경 없음
+
+**planning 결정 docs 는 선반영 완료**:
+ADR-031 보강 / CLAUDE.md / code-architecture.md 는 planning 단계에서 이미 반영 + commit.
+본 phase 는 코드 + 사용자 가이드 docs (README / SKILL) 만 다룬다.
+README/SKILL 은 phase 의 실제 출력 예시에 의존하므로 코드 확정과 함께 작성.
 
 ## 변경 파일 (정확)
 
@@ -22,8 +26,6 @@ Issue #81 — `wiki page file upload` 의 `inline_image` 타입이 plain 모드�
 src/utils/wiki-snippet.ts                   (신규 — wikiInlineImageSnippet 순수 함수)
 src/utils/wiki-snippet.test.ts              (신규 — 헬퍼 단위 테스트)
 src/commands/wiki/page-file/upload.ts       (수정 — 헬퍼 사용 + --json markdownSnippet)
-docs/adr.md                                 (수정 — ADR-031 보강 섹션)
-CLAUDE.md                                   (수정 — file 명령군 출력 섹션 + wiki page file 섹션 한 줄)
 README.md                                   (수정 — wiki inline_image --json 사용 예)
 skills/dooray-cli/SKILL.md                  (수정 — 자동화 시나리오)
 tasks/042-feat-wiki-inline-snippet-json/index.json   (완료 마킹)
@@ -90,30 +92,27 @@ if (globalOpts.json) {
 - `wikiInlineImageSnippet("W", "F", "a.png")` → `![a.png](/wikis/W/files/F)`
 - 공백·한글 파일명 등 그대로 보존 확인
 
-### 4. ADR-031 보강 + CLAUDE.md
-
-`docs/adr.md` ADR-031 본문 끝(`**트레이드오프**` 블록 다음, `---` 앞)에 추가:
-
-```markdown
-**보강 (Issue #81, 2026-06)**: `wiki page file upload` 의 `--json` 출력에 inline_image 시 `markdownSnippet` 필드 추가.
-`--quiet` 은 "id 만" 원칙 유지(snippet 미포함).
-plain 모드 snippet 과 동일 문자열을 `wikiInlineImageSnippet` 헬퍼로 단일화.
-general 타입은 변경 없음.
-```
-
-`CLAUDE.md` 변경:
-- "file 명령군 `--json` / `--quiet` 출력" 섹션의 `upload` 줄에 "inline_image 시 `markdownSnippet` 필드 (ADR-031 보강)" 한 줄.
-- "wiki page file" 섹션 inline_image 항목에 "`--json` 은 `markdownSnippet` 포함" 한 줄.
-
-### 5. README + SKILL 사용 예
+### 4. README + SKILL 사용 예
 
 - `README.md`: wiki inline_image 업로드 `--json` 출력에 `markdownSnippet` 포함 예시.
+  - 예시의 ID 는 placeholder (`<wikiId>` / `<attachFileId>`) 또는 dummy 패턴 — 실제 19자리 금지.
 - `skills/dooray-cli/SKILL.md`: 자동화 시나리오에 "inline_image 업로드 후 `--json` 의 `markdownSnippet` 으로 본문 삽입" 추가.
+
+### 5. 빌드·테스트 + 완료 마킹
+
+```bash
+pnpm tsc --noEmit && pnpm test && pnpm run build
+```
+
+- `index.json` `status` → `completed`, phase-01 `status` → `completed`, `updated_at` 갱신.
 
 ## 검증 기준
 
-- `pnpm tsc --noEmit && pnpm test && pnpm run build` 통과
 - inline_image `--json` 출력에 `markdownSnippet` 존재, plain snippet 과 문자열 일치
 - general `--json` 출력은 `markdownSnippet` 없음 (변경 없음)
 - `--quiet` 은 id 만 (회귀 0)
-- 가독성 + 개인 식별 정보 grep 통과 (placeholder 사용)
+- 개인 식별 정보 grep 통과 (placeholder 사용):
+  ```bash
+  grep -rnE "[0-9]{15,}" README.md skills/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|<postId>|<pageId>|<wikiId>|<attachFileId>"
+  # 0건이어야 함
+  ```
