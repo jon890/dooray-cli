@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import tmp from "tmp";
-import yaml from "js-yaml";
+import { dump as yamlDump, load as yamlLoad } from "js-yaml";
 import type { PostDetail } from "../api/types.js";
 import type { CachedMember } from "../cache/types.js";
 import { DoorayCliError } from "../utils/errors.js";
@@ -100,8 +100,8 @@ export function serializePostFrontmatter(
       .filter(Boolean),
   };
 
-  const yamlStr = yaml.dump(frontmatter, {
-    quotingType: '"',
+  const yamlStr = yamlDump(frontmatter, {
+    quoteStyle: "double",
     forceQuotes: false,
     lineWidth: -1,
   });
@@ -118,7 +118,7 @@ export function parsePostFrontmatter(content: string): ParsedPost {
     );
   }
 
-  const frontmatter = yaml.load(match[1]) as PostFrontmatter;
+  const frontmatter = yamlLoad(match[1]) as PostFrontmatter;
   const body = match[2];
 
   return {
@@ -146,8 +146,8 @@ export function serializeWikiFrontmatter(page: { subject: string; body?: { conte
     title: page.subject,
   };
 
-  const yamlStr = yaml.dump(frontmatter, {
-    quotingType: '"',
+  const yamlStr = yamlDump(frontmatter, {
+    quoteStyle: "double",
     forceQuotes: false,
     lineWidth: -1,
   });
@@ -164,7 +164,7 @@ export function parseWikiFrontmatter(content: string): ParsedWikiPage {
     );
   }
 
-  const frontmatter = yaml.load(match[1]) as WikiFrontmatter;
+  const frontmatter = yamlLoad(match[1]) as WikiFrontmatter;
   const body = match[2];
 
   return {
