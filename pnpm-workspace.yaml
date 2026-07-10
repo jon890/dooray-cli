@@ -1,0 +1,5 @@
+# pnpm 11 은 package.json 의 pnpm 필드를 더 이상 읽지 않는다.
+# 의존성 build 스크립트 승인은 이 파일의 allowBuilds 로 관리한다.
+# esbuild(tsup·vitest 경유)의 postinstall 을 허용해 ERR_PNPM_IGNORED_BUILDS 를 방지한다.
+allowBuilds:
+  esbuild: true
