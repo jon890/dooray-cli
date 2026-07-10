@@ -12,15 +12,18 @@ import type { PostDetail } from "../api/types.js";
 // 이 경로는 tsc·기존 테스트가 잡지 못하는 런타임 전용이라 왕복 테스트로 고정한다.
 describe("editor frontmatter YAML 왕복 (js-yaml named import)", () => {
   it("post frontmatter serialize → parse 왕복", () => {
-    const post = {
+    const post: Pick<
+      PostDetail,
+      "subject" | "priority" | "dueDate" | "users" | "body"
+    > = {
       subject: 'Title: "quoted"',
       priority: "highest",
-      dueDate: null,
-      users: { to: [], cc: [] },
-      body: { content: "본문 내용" },
-    } as unknown as PostDetail;
+      dueDate: undefined,
+      users: { from: { type: "member" }, to: [], cc: [] },
+      body: { mimeType: "text/x-markdown", content: "본문 내용" },
+    };
 
-    const serialized = serializePostFrontmatter(post, []);
+    const serialized = serializePostFrontmatter(post as PostDetail, []);
     expect(serialized).toContain("subject:");
     expect(serialized).toContain("본문 내용");
 
