@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { CachedMe } from "./types.js";
 
 // writeJson 은 내부 함수라 public setter (setMe) 를 통해 검증한다.
 // 재현 대상: Windows 에서 캐시 디렉터리가 생성되지 않아 write 가 실패하던 문제 (#89).
@@ -28,7 +29,7 @@ describe("cache store writeJson 디렉터리 생성", () => {
     // homedir() 가 import 시점에 평가되므로 env 설정 후 동적 import.
     const { setMe, getMe } = await import("./store.js");
 
-    await setMe({ id: "1", name: "홍길동" } as never);
+    await setMe({ id: "1", name: "홍길동", orgId: "test-org" } satisfies CachedMe);
 
     const filePath = join(home, ".dooray", "cache", "me.json");
     const s = await stat(filePath);
