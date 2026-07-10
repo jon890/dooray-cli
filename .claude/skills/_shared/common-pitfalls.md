@@ -681,6 +681,18 @@ grep -nE "as unknown as .*\|" src/
   리뷰 권장에 따라 `MemberGroupListResponse.result` union 으로 옮기고 단언 제거 (PR #77 commit `76105b5`).
   같은 패턴이 향후 spec ↔ runtime mismatch 흡수 (ADR-028 류) 에 재발 가능 — API client 단에서 union 으로 흡수하는 게 type-safety 측면에서 우선.
 
+## CLI25. 테스트 fixture `as never` / `as any` 로 required 필드 우회
+
+**증상**: 도메인 객체를 만드는 테스트에서 `{ 일부필드 } as never` 로 타입 검사를 무력화 → required 필드 누락이 은폐됨.
+  이후 타입에 필드가 추가돼도 테스트가 조용히 통과한다 (CLI24 의 production 이중 단언과 구별되는 테스트 fixture 하위 패턴).
+**Good**: `{ ...필수필드 } satisfies T` — 필드를 모두 채우고 `satisfies` 로 검증. 타입 확장 시 컴파일 오류로 드러난다.
+**검출**: 신규 테스트 추가 시:
+```bash
+grep -rnE "as (never|any)\b" src/**/*.test.ts
+# 결과 있으면 satisfies 로 대체 가능한지 검토
+```
+**Why**: PR #91 review — `store.test.ts` 가 `CachedMe.orgId` 누락을 `as never` 로 감춤. `satisfies CachedMe` 로 교체 (commit `01fa20e`).
+
 ## 1-17. 테스트 mock — self-mock (vi.mock("./same-file.js")) 금지
 
 **증상**: `vi.mock("./project.js", ...)` 처럼 테스트 대상 파일 자체를 mock 하면 동일 파일 내부 함수 참조가 교체되지 않아 실제 구현이 호출됨.
