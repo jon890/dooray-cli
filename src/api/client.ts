@@ -144,7 +144,7 @@ export class DoorayApiClient {
     this.authHeader = `dooray-api ${apiKey}`;
     this.baseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
     this.api = ky.create({
-      prefixUrl: baseUrl,
+      prefix: baseUrl,
       headers: {
         Authorization: this.authHeader,
       },

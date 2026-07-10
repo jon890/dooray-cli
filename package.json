@@ -36,26 +36,26 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@inquirer/prompts": "^8.3.2",
+    "@inquirer/prompts": "^8.5.2",
     "chalk": "^5.6.2",
     "cli-table3": "^0.6.5",
-    "commander": "^14.0.3",
-    "imapflow": "^1.2.18",
-    "js-yaml": "^4.1.1",
-    "ky": "^1.14.3",
-    "mailparser": "^3.9.6",
-    "nodemailer": "^8.0.4",
-    "ora": "^9.3.0",
-    "tmp": "^0.2.5"
+    "commander": "^15.0.0",
+    "imapflow": "^1.4.6",
+    "js-yaml": "^5.2.1",
+    "ky": "^2.0.2",
+    "mailparser": "^3.9.14",
+    "nodemailer": "^9.0.3",
+    "ora": "^9.4.1",
+    "tmp": "^0.2.7"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/mailparser": "^3.4.6",
-    "@types/node": "^25.5.0",
-    "@types/nodemailer": "^7.0.11",
+    "@types/node": "^26.1.1",
+    "@types/nodemailer": "^8.0.1",
     "@types/tmp": "^0.2.6",
     "tsup": "^8.5.1",
-    "typescript": "^6.0.2",
-    "vitest": "^4.1.5"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }
