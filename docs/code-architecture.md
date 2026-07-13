@@ -139,6 +139,7 @@ src/
       page-get.ts
       page-create.ts
       page-edit.ts          # $EDITOR + 비대화형 플래그(--title/--body/--body-file)
+      page-delete.ts        # 페이지 삭제 (비공식 DELETE endpoint, ADR-032) — confirm 기본 + --yes, resolveWikiPageInput
       page-file/
         index.ts            # wikiPageFileCommand 조립
         list.ts             # 페이지 첨부 목록 (getWikiPage 응답의 files[] + images[] 합성)

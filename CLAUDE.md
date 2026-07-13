@@ -174,6 +174,18 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - request body: `{ body: { content } }` 만 (mimeType 미전송 — wiki API 스펙)
 - delete: confirm 없이 즉시
 
+### wiki page delete (Issue #87, ADR-032)
+
+- 1 명령: `dooray wiki page delete`
+- **비공식(미문서화) endpoint** — `DELETE /wiki/v1/wikis/{wikiId}/pages/{pageId}`. 도움말·client 주석에 비공식 표기
+- 입력: `resolveWikiPageInput` 재사용 (`<project> <page-id>` / `--id`+`--project` / `--url` / positional URL)
+- client: `deleteWikiPage(wikiId, pageId)` — plain `.delete()` (파일 API 307 처리 불요)
+- 파괴적 → confirm 기본
+  - non-TTY: abort
+  - `--yes` / `-y` 로 생략
+- 하위 페이지: 삭제 시 조부모로 재부착 (실측) → orphan 없음, 사전 조회·차단 없음
+- 출력: `--json {pageId, status:"deleted"}` / `--quiet pageId`
+
 ### resolver
 
 - 일반 정책: 정확일치 → 이름 부분일치 → 모호 시 에러 + 후보 목록 출력 (멤버 · 워크플로우 · 태그 · 마일스톤 공통)
@@ -226,6 +238,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | `post edit/create` 의 cc/to 변경 (멤버/그룹)               | **ADR-025** (full payload PUT + `type: "group"` + `projectMemberGroupId`)                      |
 | Wiki 명령 (`wiki page create/edit`) 추가/수정              | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기)       |
 | Wiki page file 명령 (`wiki page file *`) 추가/수정         | **ADR-029** (multipart `type` 필드 순서 의존 + 307 redirect — ADR-015 재사용)                  |
+| `wiki page delete` 명령 (비공식 endpoint)                  | **ADR-032** (미문서화 DELETE endpoint + 하위 페이지 조부모 재부착 실측 + confirm 기본, Issue #87) |
 | member-group resolver (응답 shape 정규화 + 가드)           | **ADR-028** (nested array unwrap `flat()` + id 직접 입력 fallback + `match.ts` 가드, Issue #65 #76) |
 | project resolver (numeric 입력 fallback)                   | **ADR-030** (`PROJECT_ID_RE` 분기 + cache 우회 + 권한은 후속 API 4xx 위임, Issue #78)         |
 | file 명령군 `--json` 출력 (post file + wiki page file)     | **ADR-031** (8 명령 스키마 통일 + `download-all` 부분 실패 표현 + quiet 모드 일관, Issue #73)  |

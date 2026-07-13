@@ -40,3 +40,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-029](029-wiki-page-file-multipart-order.md) — wiki page file multipart `type` 필드 순서 의존성 (Issue #70)
 - [ADR-030](030-resolveproject-numeric-fallback.md) — `resolveProject` numeric 입력 cache 우회 fallback (Issue #78)
 - [ADR-031](031-file-json-output-schema.md) — file 명령군 `--json` 출력 스키마 통일 (`post file` + `wiki page file`, Issue #73)
+- [ADR-032](032-wiki-page-delete.md) — wiki page delete 비공식(미문서화) DELETE endpoint (Issue #87)
