@@ -2,8 +2,8 @@
   "name": "046-feat-wiki-page-delete",
   "description": "Issue #87 — dooray wiki page delete 명령 추가. 비공식(미문서화) DELETE /wiki/v1/wikis/{wikiId}/pages/{pageId} endpoint (실측 확인). 설계는 ADR-032 + CLAUDE.md 'wiki page delete' 섹션 단일 소스. 입력 resolveWikiPageInput 재사용, client deleteWikiPage plain .delete() (307 불요), 파괴적이라 confirm 기본 + --yes/-y 생략 + non-TTY abort, 하위 페이지는 조부모 재부착이라 사전 조회 없음, 출력 {pageId, status:deleted}/quiet pageId. 도움말·client 주석에 비공식 표기. planning 결정 docs(ADR-032/CLAUDE.md/code-architecture/flow)는 반영 완료 — phase 안에서 변경 금지. README/SKILL 만 마지막 phase 에서 갱신.",
   "created_at": "2026-07-13T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "in_progress",
+  "current_phase": 2,
   "total_phases": 2,
   "error_message": null,
   "blocked_reason": null,
@@ -12,7 +12,7 @@
       "number": 1,
       "title": "client deleteWikiPage + page-delete.ts 명령 + 등록 + confirm/출력",
       "file": "phase-01.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     },
     {
@@ -23,5 +23,5 @@
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
     }
   ],
-  "updated_at": "2026-07-13T00:00:00Z"
+  "updated_at": "2026-07-13T01:00:00Z"
 }

@@ -111,7 +111,7 @@ describe("emitDownloadAllResult", () => {
 
 // --- emitDeleteResult ---
 
-const deleteFixture: DeleteResult = { fileId: "abc123" };
+const deleteFixture: DeleteResult = { id: "abc123" };
 
 describe("emitDeleteResult", () => {
   afterEach(() => vi.restoreAllMocks());

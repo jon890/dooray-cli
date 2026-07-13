@@ -34,6 +34,7 @@ import { wikiPagesCommand } from "./commands/wiki/pages.js";
 import { wikiPageGetCommand } from "./commands/wiki/page-get.js";
 import { wikiPageCreateCommand } from "./commands/wiki/page-create.js";
 import { wikiPageEditCommand } from "./commands/wiki/page-edit.js";
+import { wikiPageDeleteCommand } from "./commands/wiki/page-delete.js";
 import { wikiPageFileCommand } from "./commands/wiki/page-file/index.js";
 import { wikiPageCommentCommand } from "./commands/wiki/page-comment/index.js";
 import { memberCommand } from "./commands/member/index.js";
@@ -118,6 +119,7 @@ const wikiPageCommand = new Command("page").description("위키 페이지 관련
 wikiPageCommand.addCommand(wikiPageGetCommand);
 wikiPageCommand.addCommand(wikiPageCreateCommand);
 wikiPageCommand.addCommand(wikiPageEditCommand);
+wikiPageCommand.addCommand(wikiPageDeleteCommand);
 wikiPageCommand.addCommand(wikiPageFileCommand);
 wikiPageCommand.addCommand(wikiPageCommentCommand);
 wikiCommand.addCommand(wikiPageCommand);

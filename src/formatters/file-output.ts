@@ -24,7 +24,11 @@ export interface DownloadAllResult {
 }
 
 export interface DeleteResult {
-  fileId: string;
+  id: string;
+  // --json 출력의 id 필드명. 기본 "fileId" (기존 file 명령군 호환, ADR-031)
+  jsonKey?: string;
+  // plain 모드 전체 문장 override (예: "이/가" 조사 차이 대응). 기본 "파일(${id})이 삭제되었습니다."
+  message?: string;
 }
 
 // ADR-031 file 명령 출력 헬퍼
@@ -61,11 +65,13 @@ export function emitDeleteResult(
   globalOpts: OutputOptions,
   result: DeleteResult,
 ): void {
+  const jsonKey = result.jsonKey ?? "fileId";
+  const message = result.message ?? `파일(${result.id})이 삭제되었습니다.`;
   if (globalOpts.json) {
-    printJson({ fileId: result.fileId, status: "deleted" });
+    printJson({ [jsonKey]: result.id, status: "deleted" });
   } else if (globalOpts.quiet) {
-    process.stdout.write(`${result.fileId}\n`);
+    process.stdout.write(`${result.id}\n`);
   } else {
-    process.stdout.write(`파일(${result.fileId})이 삭제되었습니다.\n`);
+    process.stdout.write(`${message}\n`);
   }
 }
