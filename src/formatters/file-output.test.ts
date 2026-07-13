@@ -111,7 +111,7 @@ describe("emitDownloadAllResult", () => {
 
 // --- emitDeleteResult ---
 
-const deleteFixture: DeleteResult = { fileId: "abc123" };
+const deleteFixture: DeleteResult = { id: "abc123" };
 
 describe("emitDeleteResult", () => {
   afterEach(() => vi.restoreAllMocks());
@@ -138,5 +138,36 @@ describe("emitDeleteResult", () => {
     restore();
     expect(writes.join("")).toContain("abc123");
     expect(writes.join("")).toContain("삭제");
+  });
+
+  // wiki page delete 처럼 jsonKey/message 를 override 하는 호출부 (ADR-032)
+  const pageDeleteFixture: DeleteResult = {
+    id: "page1",
+    jsonKey: "pageId",
+    message: "페이지(page1)가 삭제되었습니다.",
+  };
+
+  it("--json 모드, jsonKey override — { pageId, status: 'deleted' } JSON 출력", () => {
+    const { writes, restore } = captureStdout();
+    emitDeleteResult({ json: true }, pageDeleteFixture);
+    restore();
+    const parsed = JSON.parse(writes.join(""));
+    expect(parsed.pageId).toBe("page1");
+    expect(parsed.fileId).toBeUndefined();
+    expect(parsed.status).toBe("deleted");
+  });
+
+  it("--quiet 모드, jsonKey override — id 값만 한 줄 출력 (필드명 무관)", () => {
+    const { writes, restore } = captureStdout();
+    emitDeleteResult({ quiet: true }, pageDeleteFixture);
+    restore();
+    expect(writes.join("").trim()).toBe("page1");
+  });
+
+  it("plain 모드, message override — 커스텀 메시지 그대로 출력", () => {
+    const { writes, restore } = captureStdout();
+    emitDeleteResult({}, pageDeleteFixture);
+    restore();
+    expect(writes.join("").trim()).toBe("페이지(page1)가 삭제되었습니다.");
   });
 });

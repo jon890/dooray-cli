@@ -560,6 +560,17 @@ export class DoorayApiClient {
     }
   }
 
+  // 비공식(미문서화) endpoint — Dooray 공식 API 문서에 없으나 실측 확인 (ADR-032)
+  async deleteWikiPage(wikiId: string, pageId: string): Promise<DoorayApiUnitResponse> {
+    try {
+      return await this.api
+        .delete(`wiki/v1/wikis/${wikiId}/pages/${pageId}`)
+        .json<DoorayApiUnitResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
   // ─── Post Files ─────────────────────────────────────
 
   async getPostFiles(projectId: string, postId: string): Promise<PostFileListResponse> {

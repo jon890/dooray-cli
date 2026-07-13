@@ -76,7 +76,7 @@ export const wikiPageFileDeleteCommand = new Command("delete")
       stopSpinner(true, "삭제 완료");
 
       // ADR-031: --json / --quiet / plain 3 모드 분기
-      emitDeleteResult(globalOpts, { fileId });
+      emitDeleteResult(globalOpts, { id: fileId });
     } catch (e) {
       stopSpinner(false);
       throw e;
