@@ -267,7 +267,7 @@ critic 평가 관점:
 4. Phase 크기가 5개 이하인가?
 5. 성공 기준이 충분한가?
 6. **실제 코드와 일치하는가?** (파일 존재, 함수명, 줄 수 검증)
-7. **`common-pitfalls.md`의 모든 패턴이 사전 해소되었는가?**
+7. **`docs/pitfalls/plan/` + `docs/pitfalls/team/` 의 모든 패턴이 사전 해소되었는가?**
 
 판정:
 - **APPROVE** → 6단계로
@@ -328,9 +328,9 @@ executor 완료 후 team-lead가 **code-reviewer 팀원에게 SendMessage로 검
 
 **code-reviewer 스폰 시점**: executor와 동시에 `run_in_background: true`로 스폰하되, executor 완료 후 SendMessage로 검사 시작 지시.
 
-**사전 해소 점검 (필수)**: code-reviewer 검사 시작 전에 `.claude/skills/_shared/code-review-pitfalls.md` 의 모든 항목이 코드에 적용됐는지 확인.
+**사전 해소 점검 (필수)**: code-reviewer 검사 시작 전에 `docs/pitfalls/code-review/` 의 모든 패턴 파일이 코드에 적용됐는지 확인.
 적용 안 됐으면 그 자리에서 FIX_NEEDED 회신 (executor 재투입).
-본 docs 가 회피 패턴의 단일 소스 — 13 항목과 별도로 grep 점검.
+`docs/pitfalls/INDEX.md` 가 회피 패턴의 단일 소스 (라우터) — 카테고리 디렉터리 전체를 grep 점검.
 executor (`dooray-cli-executor`) 는 phase 시작 직전 TOP 패턴 self-check grep 을 자체 수행한다 — code-reviewer 점검과 이중 방어.
 
 **code-reviewer에게 전달할 검사 항목:**
@@ -450,8 +450,8 @@ UPDATE_NEEDED 가 3곳 같이 잡혔는데 그중 1곳을 잘못 갱신했어도
    - 1-shot APPROVE + PASS + PASS 로 진행된 plan 은 회고 단계 skip
 
    회고가 트리거된 경우 team-lead 가 자문 후 필요 시 회고 commit (main 디렉터리에서):
-   - **critic** REVISE 지적 중 *반복 가능성* 있는 패턴 → `.claude/skills/_shared/common-pitfalls.md` 해당 섹션에 항목 추가
-   - **code-reviewer** FIX_NEEDED 지적 중 *반복 가능성* 있는 패턴 → `.claude/skills/_shared/code-review-pitfalls.md` 해당 카테고리에 항목 추가 (또는 새 카테고리 신설)
+   - **critic** REVISE 지적 중 *반복 가능성* 있는 패턴 → `docs/pitfalls/plan/` 또는 `docs/pitfalls/team/` 해당 카테고리 디렉터리에 새 패턴 파일 생성
+   - **code-reviewer** FIX_NEEDED 지적 중 *반복 가능성* 있는 패턴 → `docs/pitfalls/code-review/` 에 새 패턴 파일 생성 (또는 새 카테고리 디렉터리 신설)
    - **docs-verifier** UPDATE_NEEDED / VIOLATION 지적 중 *반복 가능성* 있는 항목 → planning SKILL 8단계 A항 docs 영향 표에 행 추가 또는 기존 행 보강
      - 별도 회고 docs 신설 금지 — 거울 구조 유지
    - **반복 가능성 판정 기준**: 다른 plan 에서 같은 카테고리 (예: 헬퍼 추출 / 새 resolver / spinner UX) 작업 시 또 발생할 수 있는가?
@@ -542,7 +542,7 @@ executor가 phase 실패 보고 시:
     → [docs-verifier 검증 (문서 부패 포함)] ←─ VIOLATION/UPDATE_NEEDED면 재투입 (한도 2회) → 추가 fix commit
     → [team-lead 일괄 push]  ← PR 브랜치에 phase 별 atomic commit + 필요 시 fix commit 누적
     → [PR 생성]  ← main에 별도 커밋 금지
-    → [review 회고]  ← critic/code-reviewer/docs-verifier 반복 패턴 → common-pitfalls / code-review-pitfalls / planning docs 영향 표 갱신
+    → [review 회고]  ← critic/code-reviewer/docs-verifier 반복 패턴 → docs/pitfalls/{plan,team,code-review}/ 새 패턴 파일 / planning docs 영향 표 갱신
     → [worktree 정리 + 팀 shutdown]
 ```
 
