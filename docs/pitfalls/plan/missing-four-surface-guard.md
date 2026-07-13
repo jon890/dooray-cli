@@ -9,7 +9,11 @@ related: []
 ---
 
 **증상**: 캐시 스키마에 신규 필드 추가 + 일부 read 경로에만 가드 + writer 누락.
-**왜**: 같은 불변식이 다른 표면에서 깨짐 (cache writer 드랍 / resolver 통과 / formatter 미반영 / config schema 미반영 등).
+**왜**: 같은 불변식이 다른 표면에서 깨짐.
+- cache writer 드랍
+- resolver 통과
+- formatter 미반영
+- config schema 미반영 등
 
 **4면 검사 체크리스트** (load-bearing 불변식인 경우 필수):
 1. **Schema / Type**: `src/api/types.ts` / `src/cache/types.ts` 에 정의
