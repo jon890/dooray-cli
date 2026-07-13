@@ -8,7 +8,8 @@ source: [2-5]
 related: []
 ---
 
-**증상**: phase 도중 task 범위 외 (pre-existing 에러 / 발견한 bug / ADR 위반 자체 변경) 를 자체 추가. 또는 `@ts-ignore` / `@ts-expect-error` 자체 추가.
+**증상**: phase 도중 task 범위 외 (pre-existing 에러 / 발견한 bug / ADR 위반 자체 변경) 를 자체 추가.
+또는 `@ts-ignore` / `@ts-expect-error` 자체 추가.
 **왜**: critic 게이트 우회 → 사후 평가 사이클 추가 + task 본문 / 성공 기준 어긋남.
 
 executor 프롬프트에:

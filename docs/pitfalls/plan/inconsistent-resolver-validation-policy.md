@@ -23,5 +23,6 @@ grep -nE "selectOne|mandatory|MandatoryGroups|SelectOneGroups" src/resolvers/tag
 # 신규 helper 가 위 정책 중 어느 것을 포함하는지 plan 본문에 명시
 ```
 
-**Why**: PR #68 (plan033) code-reviewer MEDIUM — `validateMandatoryCoverage` 가 mandatory 만 검증, selectOne 누락. `resolveTags` 는 둘 다 검증이라 post create 와 post edit 의 정책 비대칭.
+**Why**: PR #68 (plan033) code-reviewer MEDIUM — `validateMandatoryCoverage` 가 mandatory 만 검증, selectOne 누락.
+  `resolveTags` 는 둘 다 검증이라 post create 와 post edit 의 정책 비대칭.
   다른 helper 분리 시 (예: `validateUsersCoverage`, `validateWorkflowChange` 등) 동일 패턴 재발 가능.

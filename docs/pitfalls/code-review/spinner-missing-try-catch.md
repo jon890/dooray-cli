@@ -24,9 +24,11 @@ try {
 ```
 
 **검출**: `grep -A 20 "startSpinner" src/commands/` 결과에서 `try\s*\{` 가 같은 블록 내 없으면 의심.
-**Why**: PR #46 — `comment/get.ts` 의 `startSpinner` 후 `resolvePostInput` / `getPostComment` 가 try 없이 호출 → 에러 경로 spinner 잔존. 1-1 과 다른 패턴 (1-1 은 호출 위치, 1-2 는 cleanup 누락).
+**Why**: PR #46 — `comment/get.ts` 의 `startSpinner` 후 `resolvePostInput` / `getPostComment` 가 try 없이 호출 → 에러 경로 spinner 잔존.
+1-1 과 다른 패턴 (1-1 은 호출 위치, 1-2 는 cleanup 누락).
 
-**기존 spinner 블록에 새 헬퍼 호출 추가 / 위치 이동 시 (재발 패턴)**: spinner 블록 내부에 새 헬퍼 (`readBodyInput`, `resolveTemplate`, `getProjectTemplateDetail` 등) 호출을 추가하거나 spinner 전에 있던 호출을 spinner 후로 이동하는 경우, 그 새 위치도 동일하게 try/catch 보호가 필요하다. spinner 전에 있을 때는 안전했던 호출 (예: `readBodyInput` 의 파일 부재 throw) 이 spinner 후 위치로 이동하면 leak 경로가 생긴다.
+**기존 spinner 블록에 새 헬퍼 호출 추가 / 위치 이동 시 (재발 패턴)**: spinner 블록 내부에 새 헬퍼 (`readBodyInput`, `resolveTemplate`, `getProjectTemplateDetail` 등) 호출을 추가하거나 spinner 전에 있던 호출을 spinner 후로 이동하는 경우, 그 새 위치도 동일하게 try/catch 보호가 필요하다.
+spinner 전에 있을 때는 안전했던 호출 (예: `readBodyInput` 의 파일 부재 throw) 이 spinner 후 위치로 이동하면 leak 경로가 생긴다.
 
 ```ts
 // PR #64 — readBodyInput 을 template body fallback 로직 위해 spinner 후로 이동.

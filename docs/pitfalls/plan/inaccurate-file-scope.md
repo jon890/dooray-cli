@@ -16,4 +16,5 @@ git diff <base>..<target> --name-only -- <scope-dir>/
 ```
 
 **Self-check**: 파일 목록을 plan 에 전부 나열했고, 각 파일 처리 원칙이 서술됐는가?
-디렉터리 단위 정리 task (docs 일괄 backfill / lint 전 적용 등) 는 `ls <dir>/*.md` 결과를 plan 본문에 직접 인용하여 큰 파일 누락 회피 (plan034 PR #69 — `docs/guide-mvp-with-ai-agent.md` 878줄 누락이 critic REVISE 사유).
+디렉터리 단위 정리 task (docs 일괄 backfill / lint 전 적용 등) 는 `ls <dir>/*.md` 결과를 plan 본문에 직접 인용하여 큰 파일 누락 회피.
+(plan034 PR #69 — `docs/guide-mvp-with-ai-agent.md` 878줄 누락이 critic REVISE 사유)
