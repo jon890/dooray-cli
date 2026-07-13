@@ -1,0 +1,97 @@
+{
+  "name": "043-chore-pitfalls-docs-split",
+  "description": "monolithic pitfalls 문서 2개(.claude/skills/_shared/common-pitfalls.md 731줄 + code-review-pitfalls.md 332줄)를 docu-parser 구조(패턴 1개 = 파일 1개)로 분리해 docs/pitfalls/ 아래로 이전한다. 결정(2026-07-10): 위치는 docs/pitfalls/ (docs/adr.md 와 나란히 지식 단일 홈), 구조는 docs/pitfalls/{INDEX.md, plan/, team/, code-review/}. common-pitfalls 섹션1(1-1~1-16)→plan/(16), 섹션2(2-1~2-10)→team/(10), 섹션4(CLI1~25)→code-review/(25), code-review-pitfalls 13항목→code-review/(13). 섹션3(PR review)은 규칙만이라 INDEX 축적 규칙으로 흡수. 패턴 파일은 frontmatter(id/category/title/triggers/tool_catchable/source/related)+본문(증상/Good/검출/Self-check/Why). INDEX.md 는 라우터 표+축적 규칙+파일 형식. 마지막에 참조 5곳(dooray-cli-executor.md, planning/SKILL.md, build-with-teams/SKILL.md, review-fix/SKILL.md, docs/adr.md) 갱신 + 옛 2파일 삭제. 내용 무손실 이전 원칙(중복 후보는 표시만, dedup 은 후속). ADR monolith→docs/adr/ 분리는 별도 후속 task.",
+  "created_at": "2026-07-10T00:00:00Z",
+  "status": "completed",
+  "current_phase": 6,
+  "total_phases": 6,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "docs/pitfalls/ 스캐폴드 + INDEX.md (라우터 표 + 축적 규칙 + 파일 형식 규격)",
+      "file": "phase-01.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 2,
+      "title": "plan/ 이전 — common-pitfalls 섹션1 (1-1~1-16, 16파일)",
+      "file": "phase-02.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 3,
+      "title": "team/ 이전 — common-pitfalls 섹션2 (2-1~2-10, 10파일)",
+      "file": "phase-03.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 4,
+      "title": "code-review/ 이전 — common-pitfalls 섹션4 (CLI1~25, 25파일)",
+      "file": "phase-04.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 5,
+      "title": "code-review/ 이전 — code-review-pitfalls.md 13항목 + 카테고리 규칙",
+      "file": "phase-05.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 6,
+      "title": "참조 5곳 갱신 + 옛 2파일 삭제 + 최종 검증 (완료 마킹)",
+      "file": "phase-06.md",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    }
+  ],
+  "updated_at": "2026-07-10T00:00:00Z"
+}
