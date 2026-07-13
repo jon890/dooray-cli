@@ -383,7 +383,11 @@ dooray wiki page create <project> --title "..." [--parent <page-id>] [--body "..
 dooray wiki page edit <project> <page-id> --title "새 제목"                   # 제목만 (비대화형)
 dooray wiki page edit <project> <page-id> --body "..." | --body-file <path>  # 본문만 (비대화형)
 dooray wiki page edit <project> <page-id>                                     # $EDITOR (플래그 없을 때)
+dooray wiki page delete <project> <page-id>                                   # 삭제 (y/N 확인)
+dooray wiki page delete <project> <page-id> --yes                            # 확인 없이 삭제 (자동화용)
 ```
+
+하위 페이지가 있는 페이지를 삭제하면 하위 페이지는 상위 페이지로 재부착된다 (사라지지 않음).
 
 #### 위키 페이지 첨부파일
 

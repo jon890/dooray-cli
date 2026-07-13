@@ -87,6 +87,7 @@ dooray doctor                                 # 설정 검증
 | 위키 페이지 수정 (제목) | `dooray wiki page edit <project> <page-id> --title "..."` |
 | 위키 페이지 수정 (본문) | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` |
 | 위키 페이지 수정 (에디터) | `dooray wiki page edit <project> <page-id>` (플래그 없으면 $EDITOR 열림) |
+| 위키 페이지 삭제 | `dooray wiki page delete <project> <page-id>` (y/N 확인 기본, `--yes`로 자동화 시 생략. 하위 페이지는 상위 페이지로 재부착) |
 | 위키 페이지 첨부 목록 | `dooray wiki page file list <project> <page-id>` (general + inline 합산, type 컬럼) |
 | 위키 페이지 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` (multipart `type` 필드를 `file` 앞에 전송) |
 | 위키 페이지 첨부 다운로드 | `dooray wiki page file download <project> <page-id> --file-id <id> -o <dir>` |
@@ -133,10 +134,11 @@ CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI �
 
 | 작업 | 대체 경로 | 근거 |
 |---|---|---|
-| 위키 페이지 **삭제** | 웹 UI (`https://{tenant}.dooray.com/wiki/...`) | Dooray REST API 미제공 (댓글·첨부파일 삭제는 있지만 페이지 삭제 endpoint 없음) |
+| 위키 페이지 이동 (상위 페이지 변경) | 웹 UI (`https://{tenant}.dooray.com/wiki/...`) | Dooray REST API 미지원 |
 | 프로젝트 삭제 | 웹 UI (admin 페이지) | API 미지원 |
 
-위키 페이지를 잘못 만든 경우(테스트/중복) **soft delete(빈 제목·본문) 우회 금지** — 페이지가 트리에 남아 사용자 혼란 유발.
+위키 페이지를 잘못 만든 경우(테스트/중복)는 `dooray wiki page delete <project> <page-id>` 로 정리한다.
+공식 문서화된 endpoint 가 아니라 서버 정책이 바뀌면 동작이 달라질 수 있음에 유의한다.
 
 ---
 
