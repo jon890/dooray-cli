@@ -32,7 +32,7 @@
 
 - 1회성 지적은 PR reply 로 끝내고 파일을 만들지 않는다.
 - 주기적으로 prune·automate 패스를 돈다 — 도구(tsc/lint/test)로 자동 검출 가능하게 승격된 패턴은 해당 파일을 삭제하고 도구 설정으로 옮긴다.
-- PR review 로 발견한 code-review 패턴의 누적은 `review-fix` 6.5단계 절차를 따른다 — 처리 후 재발 가능성이 있으면 `code-review/` 에 새 패턴 파일을 만든다.
+- PR review 로 발견한 code-review 패턴의 누적은 `review-fix` 7단계 절차를 따른다 — 처리 후 재발 가능성이 있으면 `code-review/` 에 새 패턴 파일을 만든다.
 
 ## 호출 시점 (누가 언제 참조하는가)
 
