@@ -47,6 +47,7 @@ src/
     template.ts             # ensureTemplates + resolveTemplate (ADR-027, TTL 24h)
     post-tags.ts            # mergeTagIds pure helper — post edit 의 --tag/--tag-clear/--tag-remove 머지 (clear → remove → add → dedupe, Issue #66, ADR-019 확장)
     wiki-page-input.ts      # wiki page file 5 명령 입력 분기 (--id/--url/positional URL → {wikiId, pageId}, post-input.ts 패턴 mirror, ADR-020 확장)
+    messenger-channel.ts    # messenger channel-send --channel 분기: channelId(15+자리) 직접 / 그 외 GET channels title 매칭 (ADR-033)
 
   cache/
     store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크
@@ -91,6 +92,10 @@ src/
     config.ts               # dooray config set|get
     doctor.ts               # dooray doctor
     cache.ts                # dooray cache clear|refresh
+    messenger/              # dooray messenger (ADR-033)
+      index.ts              # messengerCommand 조립
+      send.ts               # 1:1 DM — direct-send (--to id/email + body, resolveMember id/email 공유)
+      channel-send.ts       # 대화방 — channels/{id}/logs (--channel id/이름 resolveMessengerChannel + body)
 
     project/
       list.ts

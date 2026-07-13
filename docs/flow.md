@@ -294,6 +294,23 @@ dooray wiki edit my-project <page-id>            # $EDITOR 수정
 dooray wiki page delete my-project <page-id>     # 페이지 삭제 (confirm 기본, --yes 로 생략)
 ```
 
+## 메신저 흐름 (Issue #88, ADR-033)
+
+빠른 알림·배포 요청을 CLI/에이전트가 메일보다 즉시성 있게 전송.
+
+```
+# 1:1 DM — 받는 사람은 organizationMemberId 또는 이메일 (이름 미지원)
+dooray messenger send --to user@example.com --body "배포 완료됐습니다"
+dooray messenger send --to <memberId> --body-file ./notice.md
+
+# 대화방 — channelId 또는 대화방 이름 (내가 속한 방)
+dooray messenger channel-send --channel "배포알림" --body "v1.2.3 배포"
+dooray messenger channel-send --channel <channelId> --body-file -   # stdin
+
+# body 미지정 시 $EDITOR 진입 (comment 와 동일)
+dooray messenger send --to <memberId>
+```
+
 ## 위키 페이지 첨부파일 흐름 (Issue #70, ADR-029)
 
 페이지 첨부파일을 CLI 로 관리.

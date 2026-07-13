@@ -186,6 +186,20 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - 하위 페이지: 삭제 시 조부모로 재부착 (실측) → orphan 없음, 사전 조회·차단 없음
 - 출력: `--json {pageId, status:"deleted"}` / `--quiet pageId`
 
+### messenger (Issue #88, ADR-033)
+
+- 2 명령: `messenger send` (1:1 DM) / `messenger channel-send` (대화방)
+- DM: `POST /messenger/v1/channels/direct-send` — body `{ text, organizationMemberId }` (대화방 생성 불요)
+- 채널: `POST /messenger/v1/channels/{channelId}/logs` — body `{ text }`
+- `--to` (DM): **id / 이메일만** — 이름 미지원 (messenger 는 project 스코프 없어 matchByName 불가)
+  - `resolveMember` 의 id/email 로직 공유 추출 재사용, 이름 입력 시 안내 에러
+- `--channel` (채널): channelId(15+자리) 또는 대화방 이름 (`resolveMessengerChannel`)
+  - 이름 매칭은 `GET /messenger/v1/channels` (내가 속한 방) title 대상 (정확 → 부분 → 모호+후보)
+  - direct 방(title 빈값)은 이름 매칭 불가 → raw channelId 사용
+- body: `--body` / `--body-file`(`-`=stdin) 또는 `$EDITOR` fallback (comment 일관)
+- 출력: `--json` = `res.result` raw (DM `{id}` / 채널 `{id, channelId}`) / `--quiet` = `id`
+- 전송은 API 토큰 소유자 명의. 본문 `text` plain 만 (mention/첨부/rich scope 밖)
+
 ### resolver
 
 - 일반 정책: 정확일치 → 이름 부분일치 → 모호 시 에러 + 후보 목록 출력 (멤버 · 워크플로우 · 태그 · 마일스톤 공통)
@@ -239,6 +253,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | Wiki 명령 (`wiki page create/edit`) 추가/수정              | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기)       |
 | Wiki page file 명령 (`wiki page file *`) 추가/수정         | **ADR-029** (multipart `type` 필드 순서 의존 + 307 redirect — ADR-015 재사용)                  |
 | `wiki page delete` 명령 (비공식 endpoint)                  | **ADR-032** (미문서화 DELETE endpoint + 하위 페이지 조부모 재부착 실측 + confirm 기본, Issue #87) |
+| `messenger send` / `channel-send` 명령                     | **ADR-033** (direct-send memberId 직접 + channel logs + `--to` id/email + `--channel` id/이름 lookup, Issue #88) |
 | member-group resolver (응답 shape 정규화 + 가드)           | **ADR-028** (nested array unwrap `flat()` + id 직접 입력 fallback + `match.ts` 가드, Issue #65 #76) |
 | project resolver (numeric 입력 fallback)                   | **ADR-030** (`PROJECT_ID_RE` 분기 + cache 우회 + 권한은 후속 API 4xx 위임, Issue #78)         |
 | file 명령군 `--json` 출력 (post file + wiki page file)     | **ADR-031** (8 명령 스키마 통일 + `download-all` 부분 실패 표현 + quiet 모드 일관, Issue #73)  |
