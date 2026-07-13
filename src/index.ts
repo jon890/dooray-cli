@@ -42,6 +42,7 @@ import { mailListCommand } from "./commands/mail/list.js";
 import { mailGetCommand } from "./commands/mail/get.js";
 import { mailSendCommand } from "./commands/mail/send.js";
 import { mailReplyCommand } from "./commands/mail/reply.js";
+import { messengerCommand } from "./commands/messenger/index.js";
 import { feedbackCommand } from "./commands/feedback.js";
 import { DoorayCliError } from "./utils/errors.js";
 import { sanitizeArgv } from "./utils/argv-sanitize.js";
@@ -140,6 +141,7 @@ program.addCommand(projectCommand);
 program.addCommand(postCommand);
 program.addCommand(wikiCommand);
 program.addCommand(mailCommand);
+program.addCommand(messengerCommand);
 program.addCommand(feedbackCommand);
 
 program.parseAsync().catch(async (err) => {
