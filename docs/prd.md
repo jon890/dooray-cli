@@ -45,6 +45,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray wiki page comment` — 페이지 댓글 목록·최신·조회·추가·수정·삭제 (post comment 패턴 mirror, mention/cc/file 부재 — WikiComment 시그니처 차이)
 - `dooray mail` — 목록·조회·검색·발송·답장 (v0.2.0)
 - `dooray feedback` — `gh` CLI 위임으로 GitHub 이슈 자동 생성 (`--last` 옵션으로 직전 명령 sanitized argv + 에러 자동 첨부, ADR-022/023)
+- `dooray messenger` — 1:1 다이렉트 메시지 (`send`) / 대화방 메시지 (`channel-send`) 전송 (`--to` id·email, `--channel` id·이름, ADR-033)
 
 ### 제외 (v1)
 
