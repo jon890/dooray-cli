@@ -233,7 +233,7 @@ team-lead가 `docs/` 하위 문서를 읽고 사용자와 논의.
 논의 결과를 task 생성 전에 docs에 반영. docs 변경사항 단독 커밋.
 
 **반영 대상의 단일 소스 — phase 파일 docs 목록 금지 (PR #84 회고)**:
-planning 결정 docs (adr.md / code-architecture.md / CLAUDE.md / data-schema.md / flow.md / prd.md) 를 반영할 때
+planning 결정 docs (adr/ / code-architecture.md / CLAUDE.md / data-schema.md / flow.md / prd.md) 를 반영할 때
 phase 파일의 "변경 파일" 목록을 따라가지 말고 **planning SKILL 8단계 A항 "변경 유형별 docs 영향 표" 의 해당 행** 을 단일 소스로 본다.
 
 - phase 파일이 일부 docs 를 빠뜨려도 영향 표 행에 표시된 모든 열을 반영해야 한다.
@@ -400,7 +400,7 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
    - 출처: planning SKILL C항 "역참조 규칙"
 
 9. **갱신 시점 분리 위반 없는가**
-   - planning 결정 docs (`adr.md` / `code-architecture.md` / `CLAUDE.md` / `data-schema.md` / `flow.md` / `prd.md`) 를 phase 안에서 변경하면 VIOLATION
+   - planning 결정 docs (`adr/` / `code-architecture.md` / `CLAUDE.md` / `data-schema.md` / `flow.md` / `prd.md`) 를 phase 안에서 변경하면 VIOLATION
    - 사용자 가이드 docs (`README.md` / `skills/dooray-cli/SKILL.md`) 는 phase 마지막에서만 변경 OK
 
 10. **`skills/dooray-cli/SKILL.md` (공개 스킬) dogfooding** — CLI 는 공개 스킬도 검증 대상

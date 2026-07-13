@@ -30,7 +30,7 @@ disallowedTools: Write, Edit
 |---|---|
 | `docs/prd.md` | 제품 목적·MVP 범위·우선순위 |
 | `docs/flow.md` | 사용자 흐름·명령 사용 패턴 |
-| `docs/adr.md` | 기술 의사결정·왜·대안 기각 |
+| `docs/adr/` (ADR 1개 = 파일 1개, 목록은 `docs/adr/INDEX.md`) | 기술 의사결정·왜·대안 기각 |
 | `docs/data-schema.md` | `~/.dooray/cache/` 구조·TTL·resolver 로직 |
 | `docs/code-architecture.md` | 디렉터리 트리·레이어·API 전략 |
 
@@ -101,13 +101,18 @@ node dist/index.js --help 2>/dev/null | grep -E "^  [a-z]+" | awk '{print "doora
 grep -oE "dooray [a-z]+( [a-z]+)*" docs/flow.md | sort -u
 
 # ADR Index 동기화 (docs-check skill 의 자동 검증)
-BODY=$(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u)
-INDEX=$(grep -oE '\[ADR-[0-9]+\]\(#adr-[0-9]+\)' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u)
+BODY=$(grep -hoE '^## ADR-[0-9]+' docs/adr/*-*.md | grep -oE 'ADR-[0-9]+' | sort -u)
+INDEX=$(grep -oE '\[ADR-[0-9]+\]\([0-9]+-[a-z0-9-]+\.md\)' docs/adr/INDEX.md | grep -oE 'ADR-[0-9]+' | sort -u)
 diff <(echo "$BODY") <(echo "$INDEX")  # 차이 0 이어야 함
+
+# INDEX 링크가 가리키는 파일이 실제 존재하는지
+grep -oE '\([0-9]+-[a-z0-9-]+\.md\)' docs/adr/INDEX.md | tr -d '()' | while read -r f; do
+  test -f "docs/adr/$f" || echo "MISSING FILE: $f"
+done
 
 # CLAUDE.md ADR 참조 표 vs 실제 ADR
 grep -oE 'ADR-0[0-9]+' CLAUDE.md | sort -u
-grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u
+grep -hoE '^## ADR-[0-9]+' docs/adr/*-*.md | grep -oE 'ADR-[0-9]+' | sort -u
 ```
 
 ## B. 과대화 (Bloat) — ADR 이 기능 명세서로 변질
@@ -115,14 +120,14 @@ grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u
 ADR 본문 줄 수 30 줄 이상이면 변질 우려. 검증:
 
 ```bash
-# 사전: 구분선 누락 검증 (awk 끝 매칭이 다음 ADR 까지 흘러가지 않도록)
-SEP=$(grep -cE "^---$" docs/adr.md)
-ADR=$(grep -cE "^<a id=\"adr-" docs/adr.md)
-[ "$SEP" -ne "$ADR" ] && echo "WARN: 구분선 ($SEP) ≠ ADR ($ADR) — 변질 검사 부정확"
+# 사전: 파일 수 == ADR 헤더 수 (파일 분리로 구분선 개념은 무의미 — 파일 경계가 대신)
+FILES=$(ls docs/adr/*-*.md | wc -l | tr -d ' ')
+ADRS=$(grep -hcE '^## ADR-[0-9]+' docs/adr/*-*.md | awk '{s+=$1} END{print s}')
+[ "$FILES" -ne "$ADRS" ] && echo "WARN: 파일 수 ($FILES) ≠ ADR 헤더 수 ($ADRS) — 변질 검사 부정확"
 
-for n in $(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE '[0-9]+'); do
-  size=$(awk "/<a id=\"adr-$n\"/,/^---$/" docs/adr.md | wc -l | tr -d ' ')
-  [ "$size" -gt 30 ] && echo "ADR-$n: $size lines (변질 우려)"
+for f in docs/adr/*-*.md; do
+  size=$(wc -l < "$f" | tr -d ' ')
+  [ "$size" -gt 30 ] && echo "$f: $size lines (변질 우려)"
 done
 ```
 
@@ -138,13 +143,12 @@ ADR 본문에 다음 패턴 발견 시 과대화:
 ADR 본문에 "왜" 가 빠지거나 "결정" 만 있으면 미래 AI 가 우회. 검증:
 
 ```bash
-# ADR 별 "결정"/"이유"/"대안"/"맥락" 키워드 등장 카운트
-for n in $(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE '[0-9]+'); do
-  body=$(awk "/<a id=\"adr-$n\"/,/^---$/" docs/adr.md)
-  has_why=$(echo "$body" | grep -cE "이유|맥락|왜|근거")
-  has_alt=$(echo "$body" | grep -cE "대안|기각|반려")
-  [ "$has_why" -eq 0 ] && echo "ADR-$n: 이유 누락"
-  [ "$has_alt" -eq 0 ] && echo "ADR-$n: 대안 기각 누락 (선택)"
+# ADR 파일별 "결정"/"이유"/"대안"/"맥락" 키워드 등장 카운트
+for f in docs/adr/*-*.md; do
+  has_why=$(grep -cE "이유|맥락|왜|근거" "$f")
+  has_alt=$(grep -cE "대안|기각|반려" "$f")
+  [ "$has_why" -eq 0 ] && echo "$f: 이유 누락"
+  [ "$has_alt" -eq 0 ] && echo "$f: 대안 기각 누락 (선택)"
 done
 ```
 
