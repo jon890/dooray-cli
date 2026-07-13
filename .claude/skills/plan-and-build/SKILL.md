@@ -25,7 +25,7 @@ description: AI 에이전트 하네스 기반 대규모 구현 자동화. 논의
 
 `docs/` 하위 문서들을 읽어 프로젝트 기획·아키텍처·설계 의도를 파악한다. 필요 시 여러 Explore 에이전트를 병렬로 사용.
 
-참조 문서: `docs/prd.md`, `docs/data-schema.md`, `docs/flow.md`, `docs/code-architecture.md`, `docs/adr.md`, `CLAUDE.md`
+참조 문서: `docs/prd.md`, `docs/data-schema.md`, `docs/flow.md`, `docs/code-architecture.md`, `docs/adr/`, `CLAUDE.md`
 
 ### 2. 논의
 

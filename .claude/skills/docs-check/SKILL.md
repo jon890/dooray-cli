@@ -26,7 +26,7 @@ AI 에이전트는 코드만큼 docs를 신뢰한다. 그러나 docs가 다음 �
 
 코드가 docs와 맞는가. 제거된 엔티티가 docs에 남아있지 않은가.
 
-- 제거된 함수/컴포넌트명이 flow.md·adr.md에 남아있음
+- 제거된 함수/컴포넌트명이 flow.md·adr/에 남아있음
 - DB 스키마와 data-schema.md 테이블/필드 불일치
 - 디렉터리/파일 경로가 실제와 다름
 - "제거 완료" ADR의 제거 대상이 여전히 코드에 존재
@@ -63,7 +63,7 @@ ADR이 "왜"를 담고 있는가. "결정 / 맥락 / 대안 기각" 구조가 �
 같은 내용이 여러 docs에 반복되는가.
 
 검출 대상:
-- 같은 필드 목록이 adr.md + data-schema.md 양쪽에
+- 같은 필드 목록이 adr/ + data-schema.md 양쪽에
 - 흐름 요약이 prd.md + flow.md 양쪽에
 - CLAUDE.md 스택 규칙이 code-architecture.md에 복사
 
@@ -157,12 +157,12 @@ legacy 경로는 6축 grep 명령이 docs-check skill 본문에 명시되지 않
 
 ```bash
 # cwd: <repo root>
-ls docs/*.md .claude/skills/*/SKILL.md .claude/skills/_shared/*.md
+ls docs/*.md docs/adr/*.md .claude/skills/*/SKILL.md .claude/skills/_shared/*.md
 ```
 
 ### 2. 각 문서에 6축 점검 수행
 
-- **adr.md**: E(자명성) 최우선 + B(bloat) + C(추론성) + A(제거 ADR의 dead reference)
+- **docs/adr/** (파일별): E(자명성) 최우선 + B(bloat) + C(추론성) + A(제거 ADR의 dead reference)
 - **flow.md**: A (언급 컴포넌트 존재 여부) + D (prd.md와 중복) + B (UI 목업·API 경로 나열)
 - **data-schema.md**: A (스키마 정합) + D (ADR과 중복)
 - **code-architecture.md**: A (디렉터리 실재) + B (코드 스니펫) + D (CLAUDE.md와 중복)
@@ -192,7 +192,7 @@ ls docs/*.md .claude/skills/*/SKILL.md .claude/skills/_shared/*.md
 각 발견 항목을 아래 포맷으로:
 
 ```markdown
-#### [축] docs/adr.md ADR-XXX — {한 줄 요약}
+#### [축] docs/adr/ ADR-XXX — {한 줄 요약}
 - **위치**: line N~M
 - **문제**: {예: 15줄 코드 블록, 컴포넌트 사용 예시 — bloat}
 - **근거**: {CLAUDE.md 규칙 / 실측 / 중복 문서}
@@ -254,7 +254,7 @@ ls docs/*.md .claude/skills/*/SKILL.md .claude/skills/_shared/*.md
 |---|---|
 | `prd.md` | 제품 목적 + MVP 범위 + 우선순위 |
 | `flow.md` | 사용자 흐름 + 화면/명령 전환 |
-| `adr.md` | 기술 결정 + 왜 + 대안 기각 |
+| `adr/` | 기술 결정 + 왜 + 대안 기각 |
 | `data-schema.md` | DB 테이블 + 관계 + 제약 |
 | `code-architecture.md` | 디렉터리 + 레이어 + API 전략 |
 
@@ -268,7 +268,7 @@ ADR 추가 전 아래를 **반드시 자문**:
 2. **[필수] 라이브러리 함정·실험 결과·대안 기각·정책·트레이드오프 중 하나에 해당**
 3. **[필수] 결정/맥락/대안 기각 3요소**: 하나라도 비면 추론성 부족
 4. **[필수] 구현 세부 제거**: 코드 스니펫 10줄 이상, 파일 경로 3개 이상 나열, 작업 내역 제거
-5. **[필수] 인덱스 동기화**: `docs/adr.md` 상단 ADR Index 카테고리 중 적합한 곳에 한 줄 (`[ADR-XXX](#adr-xxx) — 한 줄 요약`) 추가 + 본문 헤딩 위에 `<a id="adr-xxx"></a>` 앵커
+5. **[필수] 인덱스 동기화**: 새 파일 `docs/adr/NNN-slug.md` 생성 + `docs/adr/INDEX.md` 목록에 한 줄 (`[ADR-XXX](NNN-slug.md) — 한 줄 요약`) 추가
 6. **[권장] CLAUDE.md 상황별 참조 등록**: 코드 작업 중 반드시 확인해야 하는 ADR이라면 등록
 
 ### ADR Index 동기화 검증 (자동 검사)
@@ -278,34 +278,31 @@ ADR 본문에 새 ADR 이 추가됐는데 상단 Index 에 누락되면 AI 에�
 ```bash
 # cwd: <repo root>
 
-# 1) 본문에 정의된 ADR 번호 목록 (좌우 형식 일치를 위해 'ADR-NNN' 만 추출)
-BODY=$(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u)
+# 1) 각 파일에 정의된 ADR 번호 목록 (좌우 형식 일치를 위해 'ADR-NNN' 만 추출)
+BODY=$(grep -hoE '^## ADR-[0-9]+' docs/adr/*-*.md | grep -oE 'ADR-[0-9]+' | sort -u)
 
-# 2) Index 에 링크된 ADR 번호 목록
-INDEX=$(grep -oE '\[ADR-[0-9]+\]\(#adr-[0-9]+\)' docs/adr.md | grep -oE 'ADR-[0-9]+' | sort -u)
+# 2) INDEX.md 에 링크된 ADR 번호 목록
+INDEX=$(grep -oE '\[ADR-[0-9]+\]\([0-9]+-[a-z0-9-]+\.md\)' docs/adr/INDEX.md | grep -oE 'ADR-[0-9]+' | sort -u)
 
-# 3) 본문 ⊂ Index 검증
-diff <(echo "$BODY") <(echo "$INDEX") && echo "OK: ADR Index synced"
+# 3) 파일 ⊂ INDEX 검증
+diff <(echo "$BODY") <(echo "$INDEX") && echo "OK: ADR INDEX synced"
 
-# 4) anchor 누락 검증 — 모든 ADR 헤딩 직전에 <a id="adr-XXX"></a>
-#    bash 3.2 호환 위해 tr 로 소문자화 (${var,,} 는 bash 4+ 전용)
-for n in $BODY; do
-  lower=$(echo "$n" | tr '[:upper:]' '[:lower:]')
-  grep -B 1 "^## $n\." docs/adr.md | grep -q "<a id=\"$lower\"" \
-    || echo "MISSING anchor: $n"
+# 4) INDEX 링크가 가리키는 파일이 실제 존재하는지 (파일 분리 후 앵커 개념은 무의미 — 파일 존재로 대체)
+grep -oE '\([0-9]+-[a-z0-9-]+\.md\)' docs/adr/INDEX.md | tr -d '()' | while read -r f; do
+  test -f "docs/adr/$f" || echo "MISSING FILE: $f"
 done
 
-# 5) 본문 30 줄 초과 ADR — \"기능 명세서 변질\" 의심 (B 과대화 자동 검출)
+# 5) 파일 30 줄 초과 ADR — "기능 명세서 변질" 의심 (B 과대화 자동 검출)
 #    plan019~024 시점 6 ADR 이 261 줄까지 비대화한 사례 회피.
-#    awk 의 끝 매칭이 다음 --- 까지 흘러가지 않도록 구분선 누락 먼저 검증.
-SEP_COUNT=$(grep -cE "^---$" docs/adr.md)
-ADR_COUNT=$(grep -cE "^<a id=\"adr-" docs/adr.md)
-if [ "$SEP_COUNT" -ne "$ADR_COUNT" ]; then
-  echo "WARN: 구분선 ($SEP_COUNT) ≠ ADR ($ADR_COUNT) — ADR 사이 --- 누락. 변질 검사 부정확"
+#    파일 분리로 구분선 카운트는 불필요 — 파일 수 == ADR 헤더 수로 대체.
+FILES=$(ls docs/adr/*-*.md | wc -l | tr -d ' ')
+ADR_COUNT=$(grep -hcE '^## ADR-[0-9]+' docs/adr/*-*.md | awk '{s+=$1} END{print s}')
+if [ "$FILES" -ne "$ADR_COUNT" ]; then
+  echo "WARN: 파일 수 ($FILES) ≠ ADR 헤더 수 ($ADR_COUNT) — 변질 검사 부정확"
 fi
-for n in $(grep -oE '^## ADR-[0-9]+' docs/adr.md | grep -oE '[0-9]+'); do
-  size=$(awk "/<a id=\"adr-$n\"/,/^---$/" docs/adr.md | wc -l | tr -d ' ')
-  [ "$size" -gt 30 ] && echo "BLOAT: ADR-$n ($size lines, > 30) — 결정/맥락/대안 기각 외 기능 명세 의심. 슬림화 검토"
+for f in docs/adr/*-*.md; do
+  size=$(wc -l < "$f" | tr -d ' ')
+  [ "$size" -gt 30 ] && echo "BLOAT: $f ($size lines, > 30) — 결정/맥락/대안 기각 외 기능 명세 의심. 슬림화 검토"
 done
 ```
 

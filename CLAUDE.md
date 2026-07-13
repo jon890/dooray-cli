@@ -254,7 +254,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 
 - **전체 파일 읽기 금지** (200줄 초과 시) — offset+limit로 필요한 섹션만
 - **같은 파일 반복 읽기 금지** — 같은 세션 내에서는 기억해서 재사용
-- **대형 docs 파일** (`docs/adr.md` 등)은 grep으로 필요 섹션만 찾아 offset 지정
+- **대형 docs 파일** (`docs/adr/` 등)은 grep으로 필요 섹션만 찾아 offset 지정
 
 ## 조사/탐색 접근 방식
 
@@ -428,7 +428,7 @@ grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "123456789
 규칙:
 
 - 기능 **동작·사용법**만 기술한다.
-- "왜 이렇게 설계했는가" 는 `docs/adr.md` 단일 소스에만 둔다.
+- "왜 이렇게 설계했는가" 는 `docs/adr/` 단일 소스에만 둔다.
 - `... (ADR-027)` 같은 괄호 참조는 삭제한다.
 - 문장에 녹은 참조(예: "ADR-030 안내 확인")는 번호를 빼고 자연스럽게 재작성한다.
 - 적용 대상은 `README.md` 와 `skills/dooray-cli/SKILL.md` 뿐이다. 내부 문서(`CLAUDE.md` / `docs/*` / `tasks/*`)는 내부 참조를 유지한다.

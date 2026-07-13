@@ -64,7 +64,7 @@
 - [`docs/flow.md`](https://github.com/jon890/dooray-cli/blob/main/docs/flow.md) — 사용자 흐름
 - [`docs/data-schema.md`](https://github.com/jon890/dooray-cli/blob/main/docs/data-schema.md) — 데이터 스키마 설계
 - [`docs/code-architecture.md`](https://github.com/jon890/dooray-cli/blob/main/docs/code-architecture.md) — 코드 아키텍처
-- [`docs/adr.md`](https://github.com/jon890/dooray-cli/blob/main/docs/adr.md) — 기술적 결정 기록 (ADR)
+- [`docs/adr/`](https://github.com/jon890/dooray-cli/tree/main/docs/adr) — 기술적 결정 기록 (ADR, 파일 1개 = ADR 1개)
 
 **하네스 구조**
 - [`.claude/skills/planning/task-create.md`](https://github.com/jon890/dooray-cli/blob/main.claude/skills/planning/task-create.md) — Task/Phase 생성 가이드
@@ -335,7 +335,7 @@ docs/
   flow.md             # 주요 사용자 흐름
   data-schema.md      # config·cache 스키마 + 5개 Resolver 로직
   code-architecture.md # 디렉터리 구조·모듈 의존관계
-  adr.md              # 9개 기술 결정 (TypeScript·ky·tsup·캐시·postNumber 등)
+  adr/                # 기술 결정 (TypeScript·ky·tsup·캐시·postNumber 등, ADR 1개 = 파일 1개)
 ```
 
 **왜 주효했는가**:
@@ -377,7 +377,7 @@ docs/
 | 문서 | 내용 | 역할 |
 |------|------|------|
 | `docs/prd.md` | 한 줄 정의, 문제, 타겟, 범위 | 에이전트의 "왜" |
-| `docs/adr.md` | 기술 결정 + 이유 + 재검토 시점 | 에이전트의 "어떻게" |
+| `docs/adr/` | 기술 결정 + 이유 + 재검토 시점 | 에이전트의 "어떻게" |
 | `docs/code-architecture.md` | 디렉토리 구조, 모듈 의존 | 에이전트의 "어디에" |
 | `docs/data-schema.md` | config, 캐시, resolver 스키마 | 에이전트의 "무엇을" |
 | `docs/flow.md` | 사용자 흐름 | 에이전트의 "어떤 순서로" |
@@ -410,7 +410,7 @@ phases:
       - docs/prd.md (MVP 범위)
       - docs/code-architecture.md (디렉토리 구조)
       - docs/data-schema.md (캐시, config 스키마)
-      - docs/adr.md (기술 결정)
+      - docs/adr/ (기술 결정)
     completion:
       - pnpm run build 성공
       - dooray --help 출력 확인

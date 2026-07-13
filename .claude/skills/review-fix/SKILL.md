@@ -22,7 +22,7 @@ PR에 달린 코드 리뷰 댓글(주로 claude bot의 🔴/🟡 구조화 리�
 - 테스트: `pnpm test` (vitest)
 - HTTP: `ky` 전용 (axios/node-fetch 금지)
 - 커밋/PR 메시지: **`type(scope): description`** (예: `fix(commands): ...`, `refactor(api): ...`). 이모지 prefix 금지.
-- ADR 게이트: 새 라이브러리 함정·정책 변경은 `docs/adr.md` 갱신 필요 (CLAUDE.md 표 참조).
+- ADR 게이트: 새 라이브러리 함정·정책 변경은 `docs/adr/` 갱신 필요 (CLAUDE.md 표 참조).
 
 ---
 
@@ -255,7 +255,7 @@ claude bot 외에도 GitHub formal review, 인라인 코드 댓글(`gh api .../p
 1. 대상 파일을 **반드시 읽는다** — 리뷰 댓글의 라인 번호와 현재 파일이 다를 수 있다
 2. 변경 범위를 파악하고 최소한의 수정만 적용한다
 3. 리뷰가 제안하는 패턴이 프로젝트 컨벤션에 맞는지 확인한다 — `CLAUDE.md` 의 컨벤션 표 + 상황별 ADR 필수 참조 표를 따른다
-4. ADR 개정이 필요한 결정 (예: ky 옵션 변경, 캐시 구조 변경) 은 코드 수정과 별개로 `docs/adr.md` 도 함께 갱신
+4. ADR 개정이 필요한 결정 (예: ky 옵션 변경, 캐시 구조 변경) 은 코드 수정과 별개로 `docs/adr/` 도 함께 갱신
 
 ---
 
@@ -493,7 +493,7 @@ reply 까지 완료되면 이번 PR 의 리뷰에서 **재발 가능 패턴**을
 |---|---|
 | 라이브러리 / API / 타입 함정 (ky / vitest / commander / imapflow 등) | `docs/pitfalls/code-review/<slug>.md` 신규 파일 |
 | 일반 critic 시드 패턴 (수치 추측 / cwd 모호 / 눈으로 확인 등) | `docs/pitfalls/plan/<slug>.md` 신규 파일 |
-| 도메인 의사결정 / ADR 가치 | `docs/adr.md` 신규 ADR (ADR 작성 전 점검 통과 후) |
+| 도메인 의사결정 / ADR 가치 | `docs/adr/` 신규 ADR (ADR 작성 전 점검 통과 후) |
 | 명령 동작 / 사용법 변경 | `CLAUDE.md` 주의사항 표 |
 
 ### 작성 형식 (신규 패턴 파일 예시)
@@ -603,5 +603,5 @@ git push origin main
 - **다양한 리뷰 형식**: 🔴/🟡 마커 외에도 파싱 대상
   - GitHub formal review (Request Changes / Comment)
   - 인라인 코드 댓글, 일반 텍스트 코멘트
-- **ADR 갱신 필요한 결정**: CLAUDE.md 표에 명시된 영역이면 코드 수정과 함께 `docs/adr.md` 도 갱신
+- **ADR 갱신 필요한 결정**: CLAUDE.md 표에 명시된 영역이면 코드 수정과 함께 `docs/adr/` 도 갱신
   - 라이브러리 옵션 변경, 캐시 정책 변경, resolver 룰 변경 등
