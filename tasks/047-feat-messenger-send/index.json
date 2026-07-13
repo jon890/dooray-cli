@@ -2,8 +2,8 @@
   "name": "047-feat-messenger-send",
   "description": "Issue #88 — dooray messenger send(1:1 DM) + channel-send(대화방) 명령 추가. Dooray Messenger API 래핑. 설계 단일 소스: ADR-033 + CLAUDE.md '### messenger' 섹션. DM=POST /messenger/v1/channels/direct-send {text, organizationMemberId}, 채널=POST /messenger/v1/channels/{channelId}/logs {text}, 둘 다 응답 {result:{id}}(채널은 channelId 추가). --to id/email only(이름 미지원, resolveMember id/email 로직 공유 추출), --channel channelId(15+자리)/이름(resolveMessengerChannel — GET channels title 매칭). body --body/--body-file/-stdin + $EDITOR fallback. 출력 --json res.result raw / --quiet id. 전송은 토큰 소유자 명의, text plain 만. planning 결정 docs(ADR-033/CLAUDE.md/code-architecture/flow) 반영 완료 — phase 안 변경 금지. README/SKILL 만 마지막 phase.",
   "created_at": "2026-07-13T00:00:00Z",
-  "status": "pending",
-  "current_phase": 1,
+  "status": "in_progress",
+  "current_phase": 2,
   "total_phases": 3,
   "error_message": null,
   "blocked_reason": null,
@@ -12,22 +12,43 @@
       "number": 1,
       "title": "api types + client 메서드 + resolveMessengerChannel + --to id/email 공유 헬퍼 추출",
       "file": "phase-01.md",
-      "status": "pending",
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
     },
     {
       "number": 2,
       "title": "messenger 명령 (send/channel-send) + 등록 + body/confirm/출력",
       "file": "phase-02.md",
       "status": "pending",
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
     },
     {
       "number": 3,
       "title": "단위 테스트 + README/SKILL 갱신 + 완료 마킹",
       "file": "phase-03.md",
       "status": "pending",
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
     }
   ],
   "updated_at": "2026-07-13T00:00:00Z"

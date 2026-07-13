@@ -597,4 +597,32 @@ export interface TemplateDetail extends TemplateMeta {
 }
 
 export type TemplateListResponse = DoorayApiResponse<TemplateMeta[]> & { totalCount: number };
+
+// ─── Messenger (ADR-033) ─────────────────────────────────
+
+export interface DirectSendRequest {
+  text: string;
+  organizationMemberId: string;
+}
+
+export interface ChannelLogRequest {
+  text: string;
+}
+
+// direct-send 응답은 { id } 만, channel logs 응답은 { id, channelId } — 하나의 타입으로 흡수
+export interface MessengerSendResult {
+  id: string;
+  channelId?: string;
+}
+
+export type MessengerSendResponse = DoorayApiResponse<MessengerSendResult>;
+
+// 채널 목록 매칭에 필요한 필드만 (title 매칭용). direct/me 방은 title 빈값.
+export interface MessengerChannel {
+  id: string;
+  title: string;
+  type: string;
+}
+
+export type MessengerChannelListResponse = DoorayApiResponse<MessengerChannel[]>;
 export type TemplateDetailResponse = DoorayApiResponse<TemplateDetail>;

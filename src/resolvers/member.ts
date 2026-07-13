@@ -103,11 +103,17 @@ export async function buildMemberNameMap(
   return map;
 }
 
-export async function resolveMember(
+/**
+ * id(15+자리 numeric) / 이메일 입력을 organizationMemberId 로 해석.
+ * 어느 쪽에도 매칭 안 되면 null 반환 (=이름 입력 — 호출자가 matchByName 등으로 폴백).
+ * id/email 로 매칭됐으나 404·모호이면 여기서 throw (null 반환 아님).
+ *
+ * messenger `--to` (project 스코프 없어 matchByName 불가) 와 `resolveMember` 가 공유 (ADR-033).
+ */
+export async function resolveMemberByIdOrEmail(
   client: DoorayApiClient,
-  projectId: string,
   input: string,
-): Promise<string> {
+): Promise<string | null> {
   // 1. 15자리 이상 숫자 → organizationMemberId 직접 (getMemberDetail 로 존재 검증)
   if (MEMBER_ID_RE.test(input)) {
     try {
@@ -149,6 +155,17 @@ export async function resolveMember(
     }
     return hits[0]!.id;
   }
+
+  return null;
+}
+
+export async function resolveMember(
+  client: DoorayApiClient,
+  projectId: string,
+  input: string,
+): Promise<string> {
+  const byIdOrEmail = await resolveMemberByIdOrEmail(client, input);
+  if (byIdOrEmail !== null) return byIdOrEmail;
 
   // 3. 그 외 → 기존 matchByName
   const members = await ensureMembers(client, projectId);

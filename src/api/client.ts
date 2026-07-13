@@ -52,6 +52,10 @@ import type {
   UploadFileResponse,
   TemplateListResponse,
   TemplateDetailResponse,
+  DirectSendRequest,
+  ChannelLogRequest,
+  MessengerSendResponse,
+  MessengerChannelListResponse,
 } from "./types.js";
 
 export interface GetPostsParams {
@@ -915,6 +919,45 @@ export class DoorayApiClient {
           searchParams: { interpolation: String(interpolation) },
         })
         .json<TemplateDetailResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  // ─── Messenger (ADR-033) ────────────────────────────
+
+  async sendDirectMessage(
+    organizationMemberId: string,
+    text: string,
+  ): Promise<MessengerSendResponse> {
+    try {
+      return await this.api
+        .post("messenger/v1/channels/direct-send", {
+          json: { text, organizationMemberId } satisfies DirectSendRequest,
+        })
+        .json<MessengerSendResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async sendChannelMessage(channelId: string, text: string): Promise<MessengerSendResponse> {
+    try {
+      return await this.api
+        .post(`messenger/v1/channels/${channelId}/logs`, {
+          json: { text } satisfies ChannelLogRequest,
+        })
+        .json<MessengerSendResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async getMessengerChannels(): Promise<MessengerChannelListResponse> {
+    try {
+      return await this.api
+        .get("messenger/v1/channels")
+        .json<MessengerChannelListResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);
     }
