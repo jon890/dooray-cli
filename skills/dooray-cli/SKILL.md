@@ -105,6 +105,8 @@ dooray doctor                                 # 설정 검증
 | 메일 상세 | `dooray mail get <uid>` |
 | 메일 발송 | `dooray mail send --to "..." --subject "..." --body "..."` |
 | 메일 답장 | `dooray mail reply <uid> --body "..."` |
+| 메신저 1:1 다이렉트 메시지 | `dooray messenger send --to "<id\|email>" --body "..."` (`--to`는 id/이메일만, 이름 미지원) |
+| 메신저 대화방 메시지 | `dooray messenger channel-send --channel "<channelId\|이름>" --body "..."` (이름은 자신이 속한 방만 검색) |
 | 첨부파일 목록 | `dooray post file list <project> <number>` |
 | 첨부파일 다운로드 | `dooray post file download <project> <number> <file-id>` |
 | 전체 첨부파일 다운로드 | `dooray post file download-all <project> <number>` |
@@ -202,6 +204,22 @@ COMMENT_ID=$(dooray post comment add <project> <post-num> --body "스크린샷 �
 
 # 2. 그 댓글에 파일을 첨부 (post-level 업로드 + 댓글 본문 markdown 자동 추가)
 dooray post comment file upload <project> <post-num> "$COMMENT_ID" ./screenshot.png
+```
+
+### 시나리오 — 배포 알림 메신저 자동 전송
+
+CI/배포 스크립트가 완료 알림을 담당자 DM 또는 팀 대화방에 자동으로 보낼 때 사용.
+전송은 API 토큰 소유자 명의로 나가며, 본문은 plain text 만 지원한다.
+
+```bash
+# 담당자 DM (id 또는 이메일만 가능 — 이름 검색 미지원)
+dooray messenger send --to "user@example.com" --body "배포가 완료되었습니다 (v1.2.3)."
+
+# 팀 대화방 (channelId 또는 자신이 속한 대화방 이름)
+dooray messenger channel-send --channel "배포 알림방" --body-file ./release-note.md
+
+# --json 으로 log-id 확인 (자동화 파이프라인에서 후속 처리 시)
+dooray messenger send --to <memberId> --body "..." --json
 ```
 
 ### 위키 페이지 조회

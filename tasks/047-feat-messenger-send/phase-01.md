@@ -20,6 +20,7 @@ planning 결정 docs 는 반영 완료 — 이 phase 에서 ADR/CLAUDE.md/code-a
    - `sendChannelMessage(channelId, text)` → `.post("messenger/v1/channels/${channelId}/logs", { json: { text } })`.
    - `getMessengerChannels()` → `.get("messenger/v1/channels")`.
 3. **`--to` 공유 헬퍼 추출**: `src/resolvers/member.ts` 의 `resolveMember` 에서 **id 분기(getMemberDetail)+email 분기(searchMembers)** 를 `resolveMemberByIdOrEmail(client, input): Promise<string | null>` 로 추출 (id/email 이면 memberId, 아니면 null).
+   - **null 반환 의미**: 정규식 매칭(id 15+자리 / email 패턴)이 분기를 결정한다. 어느 쪽에도 매칭 안 되면 null 반환(=이름 입력). id/email 로 매칭됐으나 404·모호이면 헬퍼 내부에서 throw — null 반환 아님.
    - `resolveMember` 는 이 헬퍼 호출 후 null 이면 기존 matchByName 폴백 — **기존 동작·에러 메시지 byte 동일 보존** (기존 member 테스트 통과 확인).
 4. **`resolveMessengerChannel`** (`src/resolvers/messenger-channel.ts` 신규): 입력이 15+자리 numeric(`/^\d{15,}$/`) → 그대로 channelId. 그 외 → `getMessengerChannels()` 의 `title` 매칭.
    - `matchByName` 은 `name` 필드 기준(`NameRecord`)이므로 채널을 `{ name: title, ...ch }` 로 매핑해 넘기거나 title 기준 매칭 로직 사용. **title 빈값(direct/me 방)은 매칭 후보에서 제외** (member-group `code` 누락 가드 패턴 참조).
@@ -32,6 +33,7 @@ planning 결정 docs 는 반영 완료 — 이 phase 에서 ADR/CLAUDE.md/code-a
 ## 검증
 
 ```bash
+# cwd: .claude/worktrees/047-feat-messenger-send
 pnpm build && pnpm tsc --noEmit 2>&1 | grep "^src/" | wc -l   # 0
 pnpm test 2>&1 | grep -E "Tests "                              # 기존 member/resolver 테스트 통과
 ```
