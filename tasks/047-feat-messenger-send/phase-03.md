@@ -15,6 +15,7 @@ README/SKILL 은 코드 산출물 의존 → planning 이 아닌 이 마지막 p
 3. **skills/dooray-cli/SKILL.md** — messenger 자동화 시나리오 추가 (배포 알림 등 `--to`/`--channel` + `--body`). 내부 참조 번호 금지.
 4. **검증 grep** (README/SKILL 수정 후):
    ```bash
+   # cwd: .claude/worktrees/047-feat-messenger-send
    grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKILL.md   # 0건
    grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" README.md skills/ docs/ CLAUDE.md src/ 2>/dev/null | grep -vE "dooray\.com|gov-dooray\.com|dooray\.co\.kr|gov-dooray\.co\.kr|helpdesk\.dooray\.com|github\.com|npmjs\.com|example\.com|youtube\.com"   # 0건 (placeholder 만)
    ```
@@ -22,6 +23,7 @@ README/SKILL 은 코드 산출물 의존 → planning 이 아닌 이 마지막 p
 ## 검증
 
 ```bash
+# cwd: .claude/worktrees/047-feat-messenger-send
 pnpm build && pnpm test 2>&1 | grep -E "Test Files|Tests "
 pnpm tsc --noEmit 2>&1 | grep "^src/" | wc -l   # 0
 ```

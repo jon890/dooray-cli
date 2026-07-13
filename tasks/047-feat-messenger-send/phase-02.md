@@ -10,6 +10,7 @@ phase 1 의 client/resolver 위에 CLI 명령을 얹는다.
 1. **`src/commands/messenger/index.ts`** — `messengerCommand` (`new Command("messenger")`) 조립, `send`/`channel-send` 서브커맨드 addCommand. `src/index.ts` 에 top-level 등록 (mail/wiki 등록 지점 옆).
 2. **`src/commands/messenger/send.ts`** — `messenger send`.
    - `--to <id|email>` (필수, 단일값 — direct-send 는 1:1), `--body` / `--body-file` / `-y` 불요.
+   - 필수 옵션 처리: Commander `requiredOption` 대신 **수동 검증 + `DoorayCliError(msg, EXIT_PARAM_ERROR)`** (repo 정책 일관 — exit-code 통일).
    - `--to` 해석: `resolveMemberByIdOrEmail`; null 이면 `DoorayCliError` "id 또는 이메일을 사용하세요 (이름 미지원)".
    - body: `--body` / `--body-file`(`-`=stdin), 없으면 `$EDITOR` fallback (comment add 의 body 수집 패턴 재사용).
    - `sendDirectMessage(memberId, text)` → 출력.
@@ -28,10 +29,12 @@ phase 1 의 client/resolver 위에 CLI 명령을 얹는다.
 ## 검증
 
 ```bash
+# cwd: .claude/worktrees/047-feat-messenger-send
 pnpm build && pnpm tsc --noEmit 2>&1 | grep "^src/" | wc -l   # 0
-node dist/index.js messenger --help
-node dist/index.js messenger send --help          # --to/--body/--body-file 노출
-node dist/index.js messenger channel-send --help  # --channel/--body 노출
+node dist/index.js messenger --help | grep -q -- send && echo OK
+node dist/index.js messenger send --help | grep -q -- --to && echo OK           # --to 노출 assert
+node dist/index.js messenger send --help | grep -q -- --body-file && echo OK
+node dist/index.js messenger channel-send --help | grep -q -- --channel && echo OK  # --channel 노출 assert
 ```
 - 실전송 없음 (help/build/tsc). 실측은 사용자가 자기 계정으로.
 - index.json phase 2 completed, current_phase 3. commit.
