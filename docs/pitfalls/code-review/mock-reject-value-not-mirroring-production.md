@@ -8,7 +8,9 @@ source: [code-review 2-3, PR #63, plan029]
 related: [exitcode-mapping-mismatch]
 ---
 
-**증상**: `vi.fn().mockRejectedValue(new DoorayCliError("...", EXIT_PARAM_ERROR))` 같이 mock 을 만들 때, 실제 production path 의 에러 객체 (`toDoorayCliError` 가 부여하는 exitCode / 메시지 prefix) 와 다른 값을 사용. 테스트는 통과 (mock 이 그 값을 reject 하니까) 하지만 실제 코드 경로는 다른 exitCode 를 받음 → 분기/메시지 변환 코드가 실제로는 동작 안 함. 테스트가 자기 자신만 검증하고 production 검증 못함.
+**증상**: `vi.fn().mockRejectedValue(new DoorayCliError("...", EXIT_PARAM_ERROR))` 같이 mock 을 만들 때, 실제 production path 의 에러 객체 (`toDoorayCliError` 가 부여하는 exitCode / 메시지 prefix) 와 다른 값을 사용.
+테스트는 통과 (mock 이 그 값을 reject 하니까) 하지만 실제 코드 경로는 다른 exitCode 를 받음 → 분기/메시지 변환 코드가 실제로는 동작 안 함.
+테스트가 자기 자신만 검증하고 production 검증 못함.
 
 **Good**: API client 함수의 throw path 가 `toDoorayCliError` 를 통과한다면 mock 도 같은 함수가 만들 객체를 흉내내야 함:
 - HTTP 4xx (404 포함) → `new DoorayCliError("API 호출 실패: <메시지>", EXIT_API_ERROR)`

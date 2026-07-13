@@ -8,7 +8,8 @@ source: [code-review 2-1, PR #48, plan026]
 related: []
 ---
 
-**증상**: 헬퍼 `async function bail(...): Promise<never>` 를 catch 블록에서 `await bail(e)` 만 호출하고 끝냄 (`return` / `throw` 없음). bare `await Promise<never>` 는 런타임에는 throw 로 unwind 되지만 TypeScript control-flow 분석은 catch 블록을 never-returning 으로 못 잡고 `TS2366: Function lacks ending return statement and return type does not include 'undefined'` 발생.
+**증상**: 헬퍼 `async function bail(...): Promise<never>` 를 catch 블록에서 `await bail(e)` 만 호출하고 끝냄 (`return` / `throw` 없음).
+bare `await Promise<never>` 는 런타임에는 throw 로 unwind 되지만 TypeScript control-flow 분석은 catch 블록을 never-returning 으로 못 잡고 `TS2366: Function lacks ending return statement and return type does not include 'undefined'` 발생.
 
 **Good**: `return await bail(e)` 로 control flow 종결을 명시. async 시그니처를 유지하면서 호출자 패턴만 바꾸는 리팩토링에서 특히 주의.
 
