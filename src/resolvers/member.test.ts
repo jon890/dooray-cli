@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { resolveMember } from "./member.js";
+import { resolveMember, resolveMemberByIdOrEmail } from "./member.js";
 import type { DoorayApiClient } from "../api/client.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_API_ERROR } from "../utils/exit-codes.js";
@@ -108,5 +108,32 @@ describe("resolveMember 입력 자동 분기", () => {
     await expect(
       resolveMember(client, "proj", "홍길동"),
     ).resolves.toBeDefined();
+  });
+});
+
+describe("resolveMemberByIdOrEmail (messenger --to 공유 헬퍼, ADR-033)", () => {
+  it("15자리 이상 숫자 → getMemberDetail 호출 후 input 반환", async () => {
+    const id = "1234567890123456789";
+    const client = mockClient({
+      getMemberDetail: vi.fn().mockResolvedValue({ result: { id, name: "X" } }),
+    });
+    expect(await resolveMemberByIdOrEmail(client, id)).toBe(id);
+  });
+
+  it("이메일 형식 → searchMembers 1건 시 id 반환", async () => {
+    const client = mockClient({
+      searchMembers: vi.fn().mockResolvedValue({
+        result: [{ id: "9876543210987654321", name: "X" }],
+        totalCount: 1,
+      }),
+    });
+    expect(
+      await resolveMemberByIdOrEmail(client, "user@example.com"),
+    ).toBe("9876543210987654321");
+  });
+
+  it("id/email 어느 쪽에도 매칭 안 되는 입력(이름) → null 반환 (matchByName 호출 없음)", async () => {
+    const client = mockClient({});
+    expect(await resolveMemberByIdOrEmail(client, "홍길동")).toBeNull();
   });
 });

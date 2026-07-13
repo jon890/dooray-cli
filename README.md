@@ -519,6 +519,28 @@ dooray mail send --to "a@b.com" --subject "HTML 메일" --body "<h1>Hello</h1>" 
 dooray mail reply <uid> --body "답장 내용"
 ```
 
+### 메신저
+
+Dooray 메신저로 1:1 다이렉트 메시지 또는 대화방 메시지를 보낼 수 있습니다.
+전송은 API 토큰 소유자 명의로 나갑니다.
+
+```bash
+# 1:1 다이렉트 메시지 (받는 사람은 organizationMemberId 또는 이메일)
+dooray messenger send --to "user@example.com" --body "배포 완료했습니다."
+dooray messenger send --to <memberId> --body-file ./message.md
+
+# 대화방 메시지 (channelId 또는 대화방 이름)
+dooray messenger channel-send --channel "배포 알림방" --body "빌드 성공"
+dooray messenger channel-send --channel <channelId> --body-file -   # stdin
+
+# --body 없이 실행하면 $EDITOR 로 본문을 작성
+dooray messenger send --to "user@example.com"
+```
+
+- `--to`는 이름 검색을 지원하지 않습니다. organizationMemberId 또는 이메일만 입력하세요.
+- `--channel`은 채널 ID 또는 자신이 속한 대화방 이름(부분일치)으로 지정할 수 있습니다.
+  이름이 겹치는 대화방이 여러 개면 후보 목록이 함께 출력됩니다.
+
 ### 첨부파일
 
 업무에 파일을 첨부하거나, 첨부된 파일을 다운로드할 수 있습니다.
