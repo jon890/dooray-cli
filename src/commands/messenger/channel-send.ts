@@ -29,10 +29,9 @@ export const messengerChannelSendCommand = new Command("channel-send")
     let bodyContent = await readBodyInputOrNull(opts);
     if (bodyContent == null) {
       bodyContent = await openInEditor("");
-      if (!bodyContent.trim()) {
-        process.stdout.write("빈 메시지는 전송할 수 없습니다.\n");
-        return;
-      }
+    }
+    if (!bodyContent.trim()) {
+      throw new DoorayCliError("빈 메시지는 전송할 수 없습니다.", EXIT_PARAM_ERROR);
     }
 
     startSpinner("메시지 전송 중...");
