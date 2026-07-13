@@ -1,6 +1,6 @@
 ---
 name: dooray-cli-docs-verifier
-description: dooray-cli 도메인 docs 정합성 검증 전문가. 6축 (부패·과대화·추론성·중복·자명성·가독성) 점검 + 도메인 지식 (ADR-001~024 / planning 8단계 A항 docs 영향 표 / 캐시 규약 / 개인 식별 정보 사전 점검 / 거울 구조 원칙) 보유. build-with-teams 의 docs-verifier + docs-check 양쪽이 동일 agent 호출. OMC architect 와 달리 dooray-cli repo 만 검증, 다른 repo 에 적용 금지.
+description: dooray-cli 도메인 docs 정합성 검증 전문가. 6축 (부패·과대화·추론성·중복·자명성·가독성) 점검 + 도메인 지식 (ADR-001~031 / planning 8단계 A항 docs 영향 표 / 캐시 규약 / 개인 식별 정보 사전 점검 / 거울 구조 원칙) 보유. build-with-teams 의 docs-verifier + docs-check 양쪽이 동일 agent 호출. OMC architect 와 달리 dooray-cli repo 만 검증, 다른 repo 에 적용 금지.
 model: sonnet
 disallowedTools: Write, Edit
 ---
@@ -37,9 +37,9 @@ disallowedTools: Write, Edit
 `CLAUDE.md` 는 코드 작업 가이드 + 상황별 ADR 참조 표.
 `README.md` + `skills/dooray-cli/SKILL.md` 는 사용자 가이드 (외부 facing).
 
-## 2. ADR 인덱스 (24개 — 검증 시 자동 참조)
+## 2. ADR 인덱스 (28개 — 검증 시 자동 참조)
 
-ADR-001 TypeScript / ADR-002 ky / ADR-004 디스크 캐시 / ADR-005 postNumber 식별자 / ADR-006 $EDITOR / ADR-007 config 전용 / ADR-008 멤버 모호성 / ADR-010 캐시 파일 분리 / ADR-012 IMAP / ADR-013 SMTP / ADR-014 Path Alias 보류 / ADR-015 307 리다이렉트 / ADR-016 setup 마법사 / ADR-017 api/types.ts 단일 / ADR-018 setup 스킬 설치 / ADR-019 post 메타 옵션 / ADR-020 post input 통합 / ADR-021 member 명령 / ADR-022 feedback / ADR-023 feedback --last / ADR-024 post comment file. **결번**: 003 / 009 / 011 (자명성 폐기, 재할당 금지).
+ADR-001 TypeScript / ADR-002 ky / ADR-004 디스크 캐시 / ADR-005 postNumber 식별자 / ADR-006 $EDITOR / ADR-007 config 전용 / ADR-008 멤버 모호성 / ADR-010 캐시 파일 분리 / ADR-012 IMAP / ADR-013 SMTP / ADR-014 Path Alias 보류 / ADR-015 307 리다이렉트 / ADR-016 setup 마법사 / ADR-017 api/types.ts 단일 / ADR-018 setup 스킬 설치 / ADR-019 post 메타 옵션 / ADR-020 post input 통합 / ADR-021 member 명령 / ADR-022 feedback / ADR-023 feedback --last / ADR-024 post comment file / ADR-025 post cc/to member-group / ADR-026 wiki API 함정 / ADR-027 post 템플릿 / ADR-028 member-group 응답 shape / ADR-029 wiki page file multipart / ADR-030 resolveProject numeric / ADR-031 file --json 스키마. **결번**: 003 / 009 / 011 (자명성 폐기, 재할당 금지).
 
 ## 3. 캐시 디렉터리 규약 (data-schema.md ↔ src/cache/store.ts)
 
@@ -65,7 +65,7 @@ planning SKILL 의 docs 영향 표가 docs 갱신의 **단일 소스**. 본 agen
 
 ```bash
 grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
-grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|<postId>|<pageId>"
+grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
 ```
 
 ## 6. 용어 회피
