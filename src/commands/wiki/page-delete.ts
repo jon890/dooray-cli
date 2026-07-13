@@ -43,7 +43,10 @@ export const wikiPageDeleteCommand = new Command("delete")
         default: false,
       });
       if (!ok) {
-        process.stdout.write("취소되었습니다.\n");
+        // 취소는 삭제 미수행 — 머신 모드(--json/--quiet)에는 성공 출력을 내지 않는다 (파싱 오염 방지).
+        if (!globalOpts.json && !globalOpts.quiet) {
+          process.stdout.write("취소되었습니다.\n");
+        }
         return;
       }
     }
