@@ -609,7 +609,9 @@ ID는 본인 환경 값으로 채워 사용 — `dooray member get` / `project g
 ```
 - URL: `dooray://{orgId}/pages/{pageId}`
 - title: 페이지 상태 (`publish` 등) — 업무 링크의 workflow class 자리에 대응
-- 업무(task) 링크와 대칭 구조. `orgId` 동일, 경로만 `pages/{pageId}`
+- 업무(task) 링크와 대칭 구조
+  - `orgId` 동일
+  - 경로만 `pages/{pageId}` 로 차이
 
 ### 필요 ID 조회 명령
 
