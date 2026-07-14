@@ -508,16 +508,26 @@ export class DoorayApiClient {
   }
 
   async getAllWikiPages(wikiId: string, maxDepth?: number): Promise<WikiPage[]> {
+    // 한 레벨의 형제 자식 조회를 병렬화하되, 동시 요청 수를 상한으로 제한한다.
+    // 상한이 없으면 자식이 수백 개인 레벨에서 병렬 요청이 폭증해
+    // rate limit / 커넥션 고갈 위험이 있다. chunk 를 순서대로 처리해
+    // 레벨 내 페이지 순서는 그대로 보존한다.
+    const CONCURRENCY = 10;
     const all: WikiPage[] = [];
     let level = (await this.getWikiPages(wikiId)).result;
     let depth = 1;
     while (level.length > 0) {
       all.push(...level);
       if (maxDepth !== undefined && depth >= maxDepth) break;
-      const childBatches = await Promise.all(
-        level.map((p) => this.getWikiPages(wikiId, p.id).then((r) => r.result)),
-      );
-      level = childBatches.flat();
+      const next: WikiPage[] = [];
+      for (let i = 0; i < level.length; i += CONCURRENCY) {
+        const chunk = level.slice(i, i + CONCURRENCY);
+        const batches = await Promise.all(
+          chunk.map((p) => this.getWikiPages(wikiId, p.id).then((r) => r.result)),
+        );
+        next.push(...batches.flat());
+      }
+      level = next;
       depth++;
     }
     return all;
