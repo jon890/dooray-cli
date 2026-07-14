@@ -83,9 +83,9 @@ grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKI
 # 0건이어야 함
 ```
 
-## index.json 스키마 (레포 특화 — `run-phases.py` `validate_task` 강제)
+## index.json 스키마 (레포 특화 — `build-with-teams` 강제)
 
-`.claude/skills/plan-and-build/run-phases.py`가 아래 필드를 엄격히 강제한다.
+`build-with-teams` 워크플로우가 아래 필드를 엄격히 강제한다.
 코어 예시와 다른 점:
 
 - task 레벨 — `related_docs`/`depends_on` 대신 `updated_at`/`current_phase`/`error_message`/`blocked_reason` 필수
@@ -98,7 +98,7 @@ grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKI
   "name": "{NNN}-{task-name}",           // 디렉터리명과 일치
   "description": "무엇을 구현하는 task인지 한 줄 설명",
   "created_at": "2026-07-14T00:00:00Z",   // ISO 8601
-  "updated_at": "2026-07-14T00:00:00Z",   // run-phases.py 자동 갱신
+  "updated_at": "2026-07-14T00:00:00Z",   // team-lead 자동 갱신
   "status": "pending",                    // pending | running | completed | failed | blocked
   "current_phase": 0,                     // 0 = 미시작
   "total_phases": 3,                      // phases 배열 길이와 일치
@@ -186,6 +186,4 @@ gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefN
 
   task 폴더명 접두와 branch prefix 가 반드시 일치한다 (`032-fix-...` → `fix/032-fix-...`, `feat/032-fix-...` 는 오분류).
 - **PR 제목 형식**: `type(scope): description` (예: `feat(commands): add wiki search subcommand`). PR 본문에 commit 목록을 나열하지 않는다 — GitHub Commits 탭으로 충분.
-- **핸드오프**: 아래 둘 중 하나를 선택해 안내한다. 두 스킬 모두 `tasks/{NNN}-{task-name}` 디렉터리를 인자로 받는다.
-  - `/plan-and-build` — 백그라운드 `run-phases.py` 순차 실행
-  - `/build-with-teams` — Agent Teams 가시적 협업 (team-lead·critic·executor·docs-verifier)
+- **핸드오프**: `/build-with-teams` 로 안내한다. `tasks/{NNN}-{task-name}` 디렉터리를 인자로 받아 Agent Teams 가시적 협업(team-lead·critic·executor·docs-verifier)을 수행한다.

@@ -243,7 +243,7 @@ phase 파일의 "변경 파일" 목록을 따라가지 말고 **planning SKILL 8
 ### 4. task 파일 생성
 
 `tasks/{NNN}-{task-name}/` 디렉터리에 `index.json` + `phase-{N}.md` 생성.
-phase 프롬프트 규칙은 기존 `plan-and-build`와 동일:
+phase 프롬프트 규칙:
 
 - 원자적 단일 책임, 작업 항목 5개 이하
 - 자기완결적 (이전 대화 없이 독립 실행 가능)
@@ -545,17 +545,6 @@ executor가 phase 실패 보고 시:
     → [review 회고]  ← critic/code-reviewer/docs-verifier 반복 패턴 → docs/pitfalls/{plan,team,code-review}/ 새 패턴 파일 / planning docs 영향 표 갱신
     → [worktree 정리 + 팀 shutdown]
 ```
-
-## vs plan-and-build
-
-| | plan-and-build | build-with-teams |
-|---|---|---|
-| 실행 방식 | `run-phases.py` 백그라운드 | Claude Agent Teams 가시적 협업 |
-| 평가 단계 | 없음 | critic APPROVE 게이트 |
-| docs 검증 | 없음 | docs-verifier 자동 검증 |
-| 진행 상황 | 로그 파일 확인 | 에이전트 메시지로 실시간 확인 |
-| 실패 복구 | `--from-phase` 재시작 | team-lead 판단 → executor 재지시 |
-| 적합 규모 | 소·중 | 중·대 |
 
 ## dooray-cli 환경 가정 (프로젝트 변형)
 
