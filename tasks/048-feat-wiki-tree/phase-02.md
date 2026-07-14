@@ -29,6 +29,7 @@ export function formatWikiTree(pages: WikiPage[], opts: OutputOptions): void
 - 그 외(text) → 아래 트리 렌더.
 
 `printJson` / `printQuiet` 은 `./table.js` 에서 이미 export (재사용, 새로 만들지 않음).
+현재 `wiki.ts` 상단 import 는 `{ output, printJson }` 뿐 — `printQuiet` 를 import 목록에 추가한다.
 
 **순수 함수로 분리 (테스트 가능성 — phase-03 이 I/O 없이 검증)**:
 
@@ -74,7 +75,7 @@ export const wikiTreeCommand = new Command("tree")
     if (opts.depth !== undefined) {
       const parsed = Number(opts.depth);
       if (!Number.isInteger(parsed) || parsed < 1) {
-        throw new DoorayCliError("--depth 는 1 이상의 정수여야 합니다", EXIT_...);
+        throw new DoorayCliError("--depth 는 1 이상의 정수여야 합니다", EXIT_PARAM_ERROR);
       }
       maxDepth = parsed;
     }
@@ -127,7 +128,7 @@ export const wikiTreeCommand = new Command("tree")
 ## 검증
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/plan048
 pnpm tsc --noEmit
 # 0 에러
 
