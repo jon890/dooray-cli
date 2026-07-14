@@ -55,7 +55,8 @@ dooray wiki tree <project> --depth 2          # 손자까지만
 ## 검증
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/plan048
+# branch: feat/048-feat-wiki-tree
 
 # 내부 참조 0건 (외부 facing 문서)
 grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKILL.md 2>/dev/null

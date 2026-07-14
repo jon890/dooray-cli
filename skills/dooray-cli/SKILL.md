@@ -82,6 +82,7 @@ dooray doctor                                 # 설정 검증
 | 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` |
 | 위키 목록 | `dooray wiki list` |
 | 위키 페이지 목록 | `dooray wiki pages <project>` |
+| 위키 페이지 트리 | `dooray wiki tree <project>` (계층 트리, `--depth N` 상한, `--json` 은 flat) |
 | 위키 페이지 상세 | `dooray wiki page get <project> <page-id>` |
 | 위키 페이지 생성 | `dooray wiki page create <project> --title "..." [--parent <page-id>] [--body "..."]` (--parent 생략 시 위키 home 페이지 아래 생성) |
 | 위키 페이지 수정 (제목) | `dooray wiki page edit <project> <page-id> --title "..."` |
@@ -231,6 +232,9 @@ dooray wiki pages <project> --json
 
 # 2. 페이지 내용 조회
 dooray wiki page get <project> <pageId> --json
+
+# 3. 전체 계층을 트리로 훑기 (--json 은 flat 배열 — wiki pages 와 동일 스키마로 파싱)
+dooray wiki tree <project> --json
 ```
 
 ### 첨부파일 일괄 다운로드 후 실패 분리

@@ -108,7 +108,7 @@ async getAllWikiPages(wikiId: string, maxDepth?: number): Promise<WikiPage[]> {
 ## 검증
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/plan048
 pnpm tsc --noEmit
 # 0 에러
 

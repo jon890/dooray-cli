@@ -53,7 +53,7 @@ phase-01/02 산출물이 빌드·타입·테스트를 통과하는지 확인한�
 ## 검증
 
 ```bash
-# cwd: /Users/nhn/personal/dooray-cli
+# cwd: /Users/nhn/personal/dooray-cli/.claude/worktrees/plan048
 pnpm tsc --noEmit
 # 0 에러
 

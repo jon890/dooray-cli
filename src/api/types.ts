@@ -495,6 +495,7 @@ export interface WikiPage {
   root: boolean;
   creator: Creator;
   subject: string;
+  parentPageId?: string;
 }
 
 export type WikiPagesResponse = DoorayApiResponse<WikiPage[]>;

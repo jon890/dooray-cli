@@ -1,7 +1,7 @@
 ## ADR-034: wiki tree 레벨별 drill-down 재귀 조립 (flat list endpoint 부재)
 
 **결정**: `dooray wiki tree` 는 root 페이지부터 레벨별 재귀로 전체 페이지를 모아 트리를 그린다.
-- 클라이언트에 `getAllWikiPages(wikiId, maxDepth?)` 신설 — 레벨별 BFS + 같은 부모 형제는 `Promise.all` 병렬 조회.
+- 클라이언트에 `getAllWikiPages(wikiId, maxDepth?)` 신설 — 레벨별 BFS + 같은 부모 형제는 병렬 조회(동시 요청 상한 10).
 - `--depth N` 으로 재귀 상한 지정, 미지정 시 전체.
 - `--json` 은 flat 배열 (`parentPageId` 포함) — 기존 `wiki pages --json` 스키마와 동일. 트리는 text 출력에만 적용.
 
@@ -20,6 +20,8 @@
 - `--json` 을 children 중첩 트리로 — 기존 `wiki pages --json` flat 스키마와 어긋나 자동화 파싱 호환이 깨짐.
 
 **트레이드오프**: 대형 위키는 페이지 수만큼 호출이 발생한다.
-레벨별 `Promise.all` 병렬화로 완화하고, `--depth` 로 사용자가 범위를 좁힐 수 있게 한다.
+레벨 내 형제를 병렬 조회하되 동시 요청을 상한 10 으로 제한해 완화한다.
+상한 없는 `Promise.all` 은 자식이 수백 개인 레벨에서 병렬 요청이 폭증해 rate limit / 커넥션 고갈 위험이 있어 chunk 단위로 나눠 처리한다.
+`--depth` 로 사용자가 범위를 좁힐 수도 있다.
 
 > 페이지 create/edit 쪽 함정은 ADR-026 으로 분리 (읽기 drill-down 과 무관한 별 관심사).
