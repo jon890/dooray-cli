@@ -65,7 +65,7 @@ src/
   formatters/
     table.ts                # cli-table3 기반 테이블 출력
     post.ts                 # Post 전용 포맷 (workflow 이름 등)
-    wiki.ts                 # Wiki 전용 포맷
+    wiki.ts                 # Wiki 전용 포맷 (formatWikiTree — flat 배열 → parentPageId 로 트리 조립 후 ├─└─ 렌더, ADR-034)
     member.ts               # Member 상세/목록 포맷 (ADR-021)
     comment.ts              # PostComment 상세 포맷 (table/JSON/quiet, Issue #45)
     wiki-comment.ts         # WikiComment 전용 포맷 — page.id + creator.member 시그니처 차이 (post comment 와 mailUsers/files/mention 부재)
@@ -141,6 +141,7 @@ src/
     wiki/
       list.ts
       pages.ts
+      tree.ts               # 페이지 계층 트리 (root 부터 레벨별 재귀 drill-down, --depth 상한, ADR-034) — text 트리 / --json flat(parentPageId)
       page-get.ts
       page-create.ts
       page-edit.ts          # $EDITOR + 비대화형 플래그(--title/--body/--body-file)

@@ -288,6 +288,8 @@ dooray post workflow my-project 42 "review"     # 임의 상태로 (이름 또�
 
 ```
 dooray wiki list my-project                      # 위키 페이지 목록
+dooray wiki tree my-project                      # 페이지 계층 트리 (root 부터 재귀)
+dooray wiki tree my-project --depth 2            # 손자까지만
 dooray wiki get my-project <page-id>             # 페이지 조회
 dooray wiki create my-project --title "설계" --body-file design.md
 dooray wiki edit my-project <page-id>            # $EDITOR 수정

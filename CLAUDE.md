@@ -186,6 +186,17 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 - 하위 페이지: 삭제 시 조부모로 재부착 (실측) → orphan 없음, 사전 조회·차단 없음
 - 출력: `--json {pageId, status:"deleted"}` / `--quiet pageId`
 
+### wiki tree (Issue #101, ADR-034)
+
+- 1 명령: `dooray wiki tree <project>` — 페이지 계층 트리 (root 부터 재귀 drill-down)
+- **list endpoint 는 flat 전체 조회 미제공** — `GET .../pages` 는 root 만, `?parentPageId=X` 는 X 직속 자식만. root 응답엔 `parentPageId` 없음 (자식에만)
+- client: `getAllWikiPages(wikiId, maxDepth?)` — 레벨별 BFS + 형제 `Promise.all` 병렬, flat `WikiPage[]` 반환
+- `--depth N`: 재귀 상한 (미지정 시 전체)
+- 출력
+  - text: `formatWikiTree` — flat → `parentPageId` 로 트리 조립 후 `├─└─` 렌더
+  - `--json`: flat 배열 (`parentPageId` 포함, 기존 `wiki pages --json` 스키마)
+  - `--quiet`: id 목록
+
 ### messenger (Issue #88, ADR-033)
 
 - 2 명령: `messenger send` (1:1 DM) / `messenger channel-send` (대화방)
@@ -253,6 +264,7 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | Wiki 명령 (`wiki page create/edit`) 추가/수정              | **ADR-026** (parentPageId 자동 폴백 + `--title`→`subject` 매핑 + 수정 endpoint 3종 분기)       |
 | Wiki page file 명령 (`wiki page file *`) 추가/수정         | **ADR-029** (multipart `type` 필드 순서 의존 + 307 redirect — ADR-015 재사용)                  |
 | `wiki page delete` 명령 (비공식 endpoint)                  | **ADR-032** (미문서화 DELETE endpoint + 하위 페이지 조부모 재부착 실측 + confirm 기본, Issue #87) |
+| `wiki tree` 명령 (페이지 계층 트리)                        | **ADR-034** (list endpoint flat 미제공 → root 부터 레벨별 재귀 drill-down + `Promise.all` 병렬 + `--depth` 상한 + `--json` flat 유지, Issue #101) |
 | `messenger send` / `channel-send` 명령                     | **ADR-033** (direct-send memberId 직접 + channel logs + `--to` id/email + `--channel` id/이름 lookup, Issue #88) |
 | member-group resolver (응답 shape 정규화 + 가드)           | **ADR-028** (nested array unwrap `flat()` + id 직접 입력 fallback + `match.ts` 가드, Issue #65 #76) |
 | project resolver (numeric 입력 fallback)                   | **ADR-030** (`PROJECT_ID_RE` 분기 + cache 우회 + 권한은 후속 API 4xx 위임, Issue #78)         |
