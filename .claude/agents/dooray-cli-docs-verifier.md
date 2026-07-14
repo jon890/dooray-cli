@@ -55,9 +55,9 @@ ADR-001 TypeScript / ADR-002 ky / ADR-004 디스크 캐시 / ADR-005 postNumber 
 
 ## 4. 거울 구조 원칙 (planning 8단계 A항)
 
-planning SKILL 의 docs 영향 표가 docs 갱신의 **단일 소스**. 본 agent 의 검증 항목은 그 표의 거울 — 별도 체크 항목 추가 금지. 표 수정 시 본 agent 와 동기 검토.
+planning 오버레이의 "변경 유형별 docs 영향 표"가 docs 갱신의 **단일 소스**. 본 agent 의 검증 항목은 그 표의 거울 — 별도 체크 항목 추가 금지. 표 수정 시 본 agent 와 동기 검토.
 
-상세: `.claude/skills/planning/SKILL.md` "거울 구조 원칙" 섹션.
+상세: `.claude/planning-overlay.md` "검증" 섹션 (docs-verifier 흡수 원칙).
 
 ## 5. 개인 식별 정보 / 사내 식별자 노출 금지
 

@@ -4,7 +4,7 @@
 구현 세부는 코드에 있다.
 자명한 사항은 기록하지 않는다.
 
-ADR 작성 전 [`planning` 스킬의 8단계 ADR 작성 전 점검](../../.claude/skills/planning/SKILL.md) 통과를 확인한다.
+ADR 작성 전 [`planning` 오버레이의 ADR 작성 전 점검](../../.claude/planning-overlay.md) 통과를 확인한다.
 
 ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크로 찾는다.
 

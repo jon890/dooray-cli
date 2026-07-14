@@ -392,7 +392,7 @@ executor 완료 후 team-lead → docs-verifier에게 검증 요청.
 
 **dooray-cli 특화 docs-verifier 검사 항목 (CLI 변형 — 위 6 항목에 추가):**
 
-7. **planning docs 영향 표 100% 적용 검증** — `.claude/skills/planning/SKILL.md` 8단계 A항 "변경 유형별 docs 영향 표" 의 해당 행 식별 + 표시된 모든 docs 갱신 확인
+7. **planning docs 영향 표 100% 적용 검증** — `.claude/planning-overlay.md` "변경 유형별 docs 영향 표" 의 해당 행 식별 + 표시된 모든 docs 갱신 확인
    - 단일 항목 (✓ 표시) 이라도 누락이면 UPDATE_NEEDED
    - 이 표가 검증 항목의 단일 소스 — docs-verifier 는 **별도 체크리스트 보유 금지**, 표 거울만 본다
 

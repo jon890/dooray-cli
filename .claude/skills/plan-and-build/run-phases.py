@@ -119,7 +119,7 @@ def validate_task(task: dict, task_dir: Path) -> None:
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         print(
-            "\n  → .claude/skills/planning/task-create.md 참고\n",
+            "\n  → .claude/planning-overlay.md (index.json 스키마) 참고\n",
             file=sys.stderr,
         )
         sys.exit(1)

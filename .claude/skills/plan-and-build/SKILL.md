@@ -44,7 +44,7 @@ description: AI 에이전트 하네스 기반 대규모 구현 자동화. 논의
 
 ### 3. 구현 계획 초안
 
-`.claude/skills/planning/task-create.md`를 정확히 숙지한 후 다음을 포함한 초안 작성:
+`~/.claude/skills/planning/task-create.md`(공용 코어) + `.claude/planning-overlay.md`(레포 특화 index.json 스키마)를 정확히 숙지한 후 다음을 포함한 초안 작성:
 
 - phase별 분리 이유와 작업 목록
 - 성공 기준 (실행 가능한 명령어)
@@ -54,7 +54,7 @@ description: AI 에이전트 하네스 기반 대규모 구현 자동화. 논의
 
 ### 4. Task 생성
 
-`.claude/skills/planning/task-create.md` 형식에 따라 task와 phase 파일을 생성:
+`~/.claude/skills/planning/task-create.md` 형식 + `.claude/planning-overlay.md`의 index.json 스키마에 따라 task와 phase 파일을 생성:
 
 ```
 tasks/{NNN}-{task-name}/
