@@ -19,17 +19,6 @@ dooray wiki tree <project> --json
 ```
 
 
-### 첨부파일 일괄 다운로드 후 실패 분리
-
-```bash
-# --json 으로 구조화 출력 → jq 로 성공/실패 분리
-RESULT=$(dooray post file download-all <project> <number> -o ./ --json)
-echo "$RESULT" | jq -r '.failed[] | "\(.fileId): \(.error)"' >&2
-echo "$RESULT" | jq -r '.succeeded[].path'
-# exit code 1 이 설정되어 있으면 실패 있는 상태
-```
-
-
 ### 위키 페이지 첨부파일 — 스킬 파일 팀 공유
 
 **스킬 파일 팀 공유**: 팀 위키에 스킬 파일 (예: `SKILL.md`) 을 `wiki page file upload` 로 첨부 → 팀원이 `wiki page file download-all` 로 일괄 받아 `~/.claude/skills/` 에 그대로 설치.

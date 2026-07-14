@@ -132,8 +132,6 @@ dooray post edit --id "$POST_ID" --cc-group qa-team --dry-run --json \
 
 ---
 
----
-
 ## 동명이인 우회 — 이메일 / memberId 직접
 
 이름이 동일한 멤버가 여러 명이라 `--cc 홍길동` 이 모호로 실패할 때:
@@ -176,8 +174,6 @@ dooray post edit --id "$POST_ID" --cc-group qa-team
 
 ---
 
----
-
 ## 자식 업무 먼저 → 후속 부모 지정
 
 ```bash
@@ -189,9 +185,6 @@ dooray post edit --id "$CHILD_ID" --title "subtask A" --parent <project>/<parent
 ```
 
 **한계** (cmux-browser spike 결과): Dooray API 가 `unset-parent-post` 미제공 → CLI 로 parent 해제 불가. 필요 시 웹 UI 에서 처리.
-
----
-
 
 ---
 
@@ -208,6 +201,18 @@ dooray post edit --id "$POST_ID" --tag "분류: $CATEGORY"
 
 태그만 변경하는 시나리오에서 `--title` / `--body` 강제 없음.
 mandatory 그룹은 친절한 에러 메시지로 안내.
+
+---
+
+## 첨부파일 일괄 다운로드 후 실패 분리
+
+```bash
+# --json 으로 구조화 출력 → jq 로 성공/실패 분리
+RESULT=$(dooray post file download-all <project> <number> -o ./ --json)
+echo "$RESULT" | jq -r '.failed[] | "\(.fileId): \(.error)"' >&2
+echo "$RESULT" | jq -r '.succeeded[].path'
+# exit code 1 이 설정되어 있으면 실패 있는 상태
+```
 
 ---
 
