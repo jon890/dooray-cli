@@ -573,7 +573,7 @@ dooray post comment add P 1 --mention 홍길동 --mention-group 개발 --body ".
 - 멤버 먼저, 그룹 다음 순서 고정
 - interactive (`$EDITOR`) 모드의 `post edit` 는 mention/link-task 무시 + stderr 경고
 
-## Dooray 마크다운 링크 형식 (멤버·그룹·업무 멘션)
+## Dooray 마크다운 링크 형식 (멤버·그룹·업무·위키 페이지 멘션)
 
 댓글/본문 작성 시 다음 형식으로 마크업하면 Dooray 앱이 인식해 inline 멘션·navigation으로 렌더링한다.
 ID는 본인 환경 값으로 채워 사용 — `dooray member get` / `project groups` / `post get` 등으로 조회.
@@ -603,6 +603,14 @@ ID는 본인 환경 값으로 채워 사용 — `dooray member get` / `project g
 - title: workflow class — `registered` / `working` / `closed` / `backlog`
 - 클릭 시 외부 브라우저 안 열고 Dooray 앱 내부 navigation + workflow 상태 표시
 
+### 위키 페이지 링크
+```markdown
+[표시텍스트](dooray://{orgId}/pages/{pageId} "publish")
+```
+- URL: `dooray://{orgId}/pages/{pageId}`
+- title: 페이지 상태 (`publish` 등) — 업무 링크의 workflow class 자리에 대응
+- 업무(task) 링크와 대칭 구조. `orgId` 동일, 경로만 `pages/{pageId}`
+
 ### 필요 ID 조회 명령
 
 | ID | 조회 |
@@ -611,6 +619,7 @@ ID는 본인 환경 값으로 채워 사용 — `dooray member get` / `project g
 | `memberId` | `dooray member get <id>`, `dooray member search <name>`, `--email <addr>`, `--user-code <code>` 등으로 검색 |
 | `groupId` | `dooray project groups <project>` |
 | `postId` | `dooray post get <project> <number> --json` 의 `id` 필드 |
+| `pageId` | `dooray wiki page get <project> <page-id> --json` 의 `id` 필드 |
 
 ---
 
