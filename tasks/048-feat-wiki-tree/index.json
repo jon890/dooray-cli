@@ -1,0 +1,45 @@
+{
+  "name": "048-feat-wiki-tree",
+  "description": "wiki tree 신규 서브커맨드 — root 부터 레벨별 재귀 drill-down 으로 페이지 계층 트리 출력 (Issue #101, ADR-034)",
+  "created_at": "2026-07-14T00:00:00Z",
+  "updated_at": "2026-07-14T00:00:00Z",
+  "status": "pending",
+  "current_phase": 0,
+  "total_phases": 4,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "WikiPage 타입 확장 + client getAllWikiPages 재귀 조회",
+      "file": "phase-01.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Edit", "Grep", "Glob", "Bash"],
+      "model": "sonnet"
+    },
+    {
+      "number": 2,
+      "title": "formatWikiTree 포맷터 + wiki tree 커맨드 + index.ts 등록",
+      "file": "phase-02.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
+      "model": "sonnet"
+    },
+    {
+      "number": 3,
+      "title": "트리 조립 로직 단위 테스트 + 빌드/타입체크 검증",
+      "file": "phase-03.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Grep", "Glob", "Bash"],
+      "model": "sonnet"
+    },
+    {
+      "number": 4,
+      "title": "README + SKILL.md 사용자 가이드 갱신 + 최종 검증 + completed 마킹",
+      "file": "phase-04.md",
+      "status": "pending",
+      "allowedTools": ["Read", "Edit", "Grep", "Glob", "Bash"],
+      "model": "sonnet"
+    }
+  ]
+}
