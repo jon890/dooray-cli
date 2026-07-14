@@ -31,6 +31,7 @@ import { fileUploadCommand } from "./commands/post/file/upload.js";
 import { fileDeleteCommand } from "./commands/post/file/delete.js";
 import { wikiListCommand } from "./commands/wiki/list.js";
 import { wikiPagesCommand } from "./commands/wiki/pages.js";
+import { wikiTreeCommand } from "./commands/wiki/tree.js";
 import { wikiPageGetCommand } from "./commands/wiki/page-get.js";
 import { wikiPageCreateCommand } from "./commands/wiki/page-create.js";
 import { wikiPageEditCommand } from "./commands/wiki/page-edit.js";
@@ -114,6 +115,7 @@ postCommand.addCommand(fileCommand);
 const wikiCommand = new Command("wiki").description("위키 관련 명령");
 wikiCommand.addCommand(wikiListCommand);
 wikiCommand.addCommand(wikiPagesCommand);
+wikiCommand.addCommand(wikiTreeCommand);
 
 // wiki page 서브커맨드 그룹
 const wikiPageCommand = new Command("page").description("위키 페이지 관련 명령");
