@@ -31,6 +31,7 @@ import type {
   MilestoneListResponse,
   MemberGroupListResponse,
   WikiListResponse,
+  WikiPage,
   WikiPagesResponse,
   WikiPageResponse,
   CreateWikiPageRequest,
@@ -504,6 +505,22 @@ export class DoorayApiClient {
     } catch (e) {
       throw await toDoorayCliError(e);
     }
+  }
+
+  async getAllWikiPages(wikiId: string, maxDepth?: number): Promise<WikiPage[]> {
+    const all: WikiPage[] = [];
+    let level = (await this.getWikiPages(wikiId)).result;
+    let depth = 1;
+    while (level.length > 0) {
+      all.push(...level);
+      if (maxDepth !== undefined && depth >= maxDepth) break;
+      const childBatches = await Promise.all(
+        level.map((p) => this.getWikiPages(wikiId, p.id).then((r) => r.result)),
+      );
+      level = childBatches.flat();
+      depth++;
+    }
+    return all;
   }
 
   async getWikiPage(wikiId: string, pageId: string): Promise<WikiPageResponse> {
