@@ -117,7 +117,7 @@ grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKI
 }
 ```
 
-모든 필드 필수 — 생략하면 `run-phases.py`가 오류를 낸다.
+모든 필드 필수 — 생략하면 build-with-teams 가 task 를 읽지 못한다.
 
 검증 체크리스트:
 
