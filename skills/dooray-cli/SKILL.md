@@ -17,7 +17,7 @@ NHN Dooray REST API를 래핑한 CLI 도구다.
 | 설치, 초기 설정, 출력 모드, API 제약사항, 피드백 등록, 에러 핸들링, 캐시 | [common.md](references/common.md) |
 | 업무(post) 식별·생성·수정, 참조자/담당자 변경, 본문 attachment 보호, 부모 지정, 태그 자동화 | [post.md](references/post.md) |
 | 업무 댓글 추가/필터/단일 조회 | [comment.md](references/comment.md) |
-| 위키 페이지 조회(트리 포함), 첨부파일, 인라인 이미지, 위키 댓글 | [wiki.md](references/wiki.md) |
+| 위키 페이지 조회(트리 포함), 삭제, 첨부파일, 인라인 이미지, 위키 댓글 | [wiki.md](references/wiki.md) |
 | 그룹 멘션/cc 판단, 멘션·링크 자동 삽입, Dooray 마크다운 링크 형식 | [mention-link.md](references/mention-link.md) |
 | 워크플로우 판단 기준, 정형 task 자동화, 체이닝 시나리오 | [workflow.md](references/workflow.md) |
 

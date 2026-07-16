@@ -75,3 +75,21 @@ dooray wiki page comment list <project> <page-id> --latest 20
 dooray wiki page comment latest <project> <page-id>
 ```
 
+### 위키 페이지 삭제 — 잘못 만든/중복 페이지 정리
+
+**비공식 endpoint 주의**: `wiki page delete` 는 Dooray 가 공식 문서화하지 않은 endpoint 를 쓴다. 동작은 확인됐으나 향후 API 변경에 깨질 수 있으니, 자동화에서 대량 삭제 전 한 건으로 먼저 검증한다. `soft delete`(빈 제목·본문) 우회는 하지 않는다 — 페이지가 트리에 남아 혼란을 준다.
+
+```bash
+# project + page-id (positional 2개)
+dooray wiki page delete <project> <page-id>
+
+# Dooray Wiki URL 을 첫 인자로
+dooray wiki page delete https://<tenant>.dooray.com/wiki/...
+
+# --id 모드 (--project 로 wikiId 해석)
+dooray wiki page delete --id <pageId> --project <project>
+
+# 자동화 — 확인 프롬프트 없이 삭제
+dooray wiki page delete <project> <page-id> -y
+```
+
