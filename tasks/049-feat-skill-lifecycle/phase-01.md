@@ -1,6 +1,6 @@
 # Phase 01 — 버전 단일 원천과 레거시 스킬 상태 관리자 구현
 
-**Execution profile**: standard
+**Model**: sonnet
 **Status**: pending
 
 ---

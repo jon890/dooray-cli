@@ -1,6 +1,6 @@
 # Phase 02 — skill 명령·setup·doctor 통합과 사용자 문서·회귀 검증
 
-**Execution profile**: standard
+**Model**: sonnet
 **Status**: pending
 
 ---
