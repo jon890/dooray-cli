@@ -481,12 +481,6 @@ export async function inspectSkill(
 
   const packageMetadata = await readPackageMetadata(absoluteTarget);
   if (packageMetadata == null) {
-    if (isManagedSkillPath(absoluteTarget)) {
-      return statusOf(context, "corrupt", {
-        linkTarget,
-        managed: true,
-      });
-    }
     return statusOf(context, "unmanaged", { linkTarget });
   }
 
@@ -519,6 +513,16 @@ export async function installSkill(
       changed: false,
       backupPath: null,
     };
+  }
+
+  if (
+    (previous.status === "modified" || previous.status === "corrupt") &&
+    options.force !== true
+  ) {
+    throw new DoorayCliError(
+      `Claude Code 스킬 관리 저장소가 ${previous.status} 상태입니다. 내용을 확인한 뒤 dooray skill update --force로 복구하세요: ${previous.destination}`,
+      EXIT_PARAM_ERROR,
+    );
   }
 
   if (!previous.managed && options.force !== true) {

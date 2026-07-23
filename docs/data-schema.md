@@ -18,13 +18,13 @@
 
 ~/.local/share/dooray-cli/
   skills/
-    {packageVersion}-{contentDigest}/
+    {packageVersion}-{contentDigestHex}/
       SKILL.md
       references/...
       .dooray-skill.json            # 관리형 설치 매니페스트
 
 ~/.claude/skills/
-  dooray-cli -> ~/.local/share/dooray-cli/skills/{packageVersion}-{contentDigest}/
+  dooray-cli -> ~/.local/share/dooray-cli/skills/{packageVersion}-{contentDigestHex}/
 ```
 
 `templates/{projectId}.json` — `GET /project/v1/projects/{projectId}/templates` 응답의 id/templateName/메타만 보존 (body 는 미포함 — list 응답 자체가 body 제외).
@@ -60,6 +60,7 @@ interface DooraySkillManifest {
 7. 줄바꿈과 파일 내용을 정규화하지 않는다.
 
 저장 디렉터리 이름에는 전체 SHA-256을 사용한다.
+`contentDigestHex`는 매니페스트의 `contentDigest`에서 `sha256:` 접두사를 제거한 64자리 lowercase hex다.
 같은 버전과 해시의 디렉터리가 이미 있으면 매니페스트와 실제 콘텐츠를 검증한 뒤 재사용한다.
 새 설치는 같은 파일시스템의 임시 디렉터리에 완성한 후 `rename`하고, Claude Code 활성 링크도 임시 링크를 `rename`해 전환한다.
 

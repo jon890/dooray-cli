@@ -36,8 +36,13 @@ NHN Dooray REST API를 래핑한 CLI 도구다.
 npm install -g @bifos/dooray-cli
 dooray setup   # API endpoint, API key, 메일 설정까지 대화형 진행
 dooray skill status
+dooray skill install
 dooray post list <project> --json
 ```
+
+전역 npm 패키지를 갱신한 뒤에는 `dooray skill update`를 실행해 Claude Code 스킬을 현재 CLI 버전으로 맞춘다.
+스킬 활성 링크는 Node 설치 경로가 아니라 dooray-cli 관리 저장소를 가리킨다.
+`modified`, `corrupt`, `unmanaged` 상태는 내용을 확인한 뒤 `dooray skill update --force`로 백업 후 복구한다.
 
 ## 안전한 탐색 순서
 

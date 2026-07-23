@@ -77,7 +77,7 @@ dooray skill update --force  # 관리되지 않은 기존 파일을 백업한 �
   "source": "/package/skills/dooray-cli",
   "currentVersion": "0.14.1",
   "installedVersion": "0.14.1",
-  "linkTarget": "/home/user/.local/share/dooray-cli/skills/0.14.1-<digest>",
+  "linkTarget": "/home/user/.local/share/dooray-cli/skills/0.14.1-<64hex>",
   "managed": true
 }
 ```
@@ -111,7 +111,8 @@ dooray skill update --force  # 관리되지 않은 기존 파일을 백업한 �
 새 저장 디렉터리 전환에 실패하면 격리본을 복구하며, 성공하면 격리본을 보존한다.
 저장 디렉터리 격리와 활성 링크 백업은 서로 다른 단계이며, 어느 단계든 실패하면 사용자 콘텐츠를 삭제하지 않는다.
 
-스킬 본문은 `~/.local/share/dooray-cli/skills/<packageVersion>-<contentDigest>/`에 버전별로 보존한다.
+스킬 본문은 `~/.local/share/dooray-cli/skills/<packageVersion>-<contentDigestHex>/`에 버전별로 보존한다.
+`contentDigestHex`는 매니페스트 `contentDigest`의 `sha256:` 접두사를 제거한 64자리 lowercase hex다.
 `~/.claude/skills/dooray-cli`는 이 안정 저장소를 가리키므로 Node 버전별 npm 전역 경로가 바뀌어도 기존 설치가 끊어지지 않는다.
 자동 `postinstall`, 이전 버전 자동 삭제, 자동 롤백 명령은 제공하지 않는다.
 

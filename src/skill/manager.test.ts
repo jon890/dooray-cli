@@ -209,7 +209,7 @@ describe("inspectSkill", () => {
     });
   });
 
-  it("reports a package-shaped link with invalid metadata as corrupt", async () => {
+  it("reports a package-shaped link with invalid metadata as unmanaged", async () => {
     const root = await makeRoot();
     const context = await makeContext(root);
     const destination = await ensureDestinationParent(context);
@@ -225,9 +225,8 @@ describe("inspectSkill", () => {
     await fs.symlink(target, destination);
 
     await expect(inspectSkill(context)).resolves.toMatchObject({
-      status: "corrupt",
-      managed: true,
-      installedVersion: null,
+      status: "unmanaged",
+      managed: false,
       linkTarget: target,
     });
   });
@@ -432,6 +431,62 @@ describe("installSkill", () => {
       .resolves.toBe("# dooray-cli\n");
   });
 
+  it("refuses a modified active managed store unless force is set", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+
+    await installSkill(context);
+    const destination = await destinationOf(context);
+    const storePath = await expectedStorePath(context);
+    await fs.writeFile(path.join(storePath, "SKILL.md"), "modified\n");
+
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "modified",
+      managed: true,
+    });
+    await expect(installSkill(context)).rejects.toMatchObject({
+      exitCode: EXIT_PARAM_ERROR,
+    } satisfies Partial<DoorayCliError>);
+    await expect(fs.readlink(destination)).resolves.toBe(storePath);
+  });
+
+  it("refuses a corrupt active managed store unless force is set", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+
+    await installSkill(context);
+    const destination = await destinationOf(context);
+    const storePath = await expectedStorePath(context);
+    await fs.writeFile(path.join(storePath, MANIFEST_FILE_NAME), "{");
+
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "corrupt",
+      managed: true,
+    });
+    await expect(installSkill(context)).rejects.toMatchObject({
+      exitCode: EXIT_PARAM_ERROR,
+    } satisfies Partial<DoorayCliError>);
+    await expect(fs.readlink(destination)).resolves.toBe(storePath);
+  });
+
+  it("recovers a corrupt active managed store with force", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+
+    await installSkill(context);
+    const storePath = await expectedStorePath(context);
+    await fs.writeFile(path.join(storePath, MANIFEST_FILE_NAME), "{");
+
+    await expect(installSkill(context, { force: true })).resolves.toMatchObject({
+      previous: { status: "corrupt", managed: true },
+      current: { status: "current", managed: true },
+    });
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "current",
+      managed: true,
+    });
+  });
+
   it("restores quarantined store when force replacement fails", async () => {
     const root = await makeRoot();
     const context = await makeContext(root);
@@ -498,7 +553,7 @@ describe("installSkill", () => {
     });
   });
 
-  it("updates managed corrupt links", async () => {
+  it("refuses package-shaped links with invalid metadata unless force is set", async () => {
     const root = await makeRoot();
     const context = await makeContext(root);
     const destination = await ensureDestinationParent(context);
@@ -513,12 +568,60 @@ describe("installSkill", () => {
     await fs.writeFile(path.join(packageRoot, "package.json"), "{}");
     await fs.symlink(target, destination);
 
-    await expect(installSkill(context)).resolves.toMatchObject({
+    await expect(installSkill(context)).rejects.toMatchObject({
+      exitCode: EXIT_PARAM_ERROR,
+    } satisfies Partial<DoorayCliError>);
+    await expect(fs.readlink(destination)).resolves.toBe(target);
+
+    await expect(installSkill(context, { force: true })).resolves.toMatchObject({
       changed: true,
-      previous: { status: "corrupt", managed: true },
+      previous: { status: "unmanaged", managed: false },
       current: { status: "current" },
+      backupPath: expect.stringContaining(".backup-"),
+    });
+  });
+
+  it("keeps the active link in dataRoot store through source changes and updates", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+    const sourceSkill = path.join(context.packageRoot, "skills", "dooray-cli");
+
+    const installResult = await installSkill(context);
+    const destination = await destinationOf(context);
+    const firstStorePath = await fs.readlink(destination);
+
+    expect(installResult).toMatchObject({
+      previous: { status: "missing" },
+      current: { status: "current", managed: true },
+    });
+    expect(firstStorePath).toContain(path.join(root, "data", "skills"));
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "current",
+      managed: true,
+    });
+
+    await fs.writeFile(
+      path.join(sourceSkill, "SKILL.md"),
+      "# dooray-cli\nupdated\n",
+    );
+
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "outdated",
+      managed: true,
+    });
+
+    const updateResult = await installSkill(context);
+    const secondStorePath = await fs.readlink(destination);
+
+    expect(updateResult).toMatchObject({
+      previous: { status: "outdated", managed: true },
+      current: { status: "current", managed: true },
       backupPath: null,
     });
+    expect(secondStorePath).toContain(path.join(root, "data", "skills"));
+    expect(secondStorePath).not.toBe(firstStorePath);
+    await expect(fs.readFile(path.join(secondStorePath, "SKILL.md"), "utf8"))
+      .resolves.toBe("# dooray-cli\nupdated\n");
   });
 
   it("fails before touching an existing managed link when package source is missing", async () => {

@@ -13,6 +13,22 @@ interface OutputOptions {
   quiet?: boolean;
 }
 
+function statusHint(status: SkillStatus): string {
+  switch (status.status) {
+    case "current":
+      return "조치 없음";
+    case "missing":
+      return "dooray skill install";
+    case "outdated":
+    case "broken":
+      return "dooray skill update";
+    case "modified":
+    case "corrupt":
+    case "unmanaged":
+      return "내용 확인 후 dooray skill update --force";
+  }
+}
+
 function printStatus(status: SkillStatus, options: OutputOptions): void {
   if (options.json) {
     console.log(JSON.stringify(status, null, 2));
@@ -29,6 +45,7 @@ function printStatus(status: SkillStatus, options: OutputOptions): void {
   console.log(`설치 버전: ${status.installedVersion ?? "-"}`);
   console.log(`링크 대상: ${status.linkTarget ?? "-"}`);
   console.log(`설치 경로: ${status.destination}`);
+  console.log(`복구 방법: ${statusHint(status)}`);
 }
 
 function printInstallResult(
@@ -55,6 +72,7 @@ function printInstallResult(
   console.log(`현재 버전: ${result.current.currentVersion}`);
   console.log(`설치 버전: ${result.current.installedVersion ?? "-"}`);
   console.log(`링크 대상: ${result.current.linkTarget ?? "-"}`);
+  console.log(`복구 방법: ${statusHint(result.current)}`);
   if (result.backupPath != null) {
     console.log(`백업 경로: ${result.backupPath}`);
   }
@@ -79,7 +97,7 @@ function addInstallCommand(name: "install" | "update", description: string): voi
   const command = skillCommand
     .command(name)
     .description(description)
-    .option("--force", "관리되지 않은 기존 항목을 백업 후 교체")
+    .option("--force", "기존 항목 또는 손상된 관리 저장소를 백업 후 교체")
     .option("--json", "JSON 형식으로 출력")
     .option("--quiet", "상태 토큰만 출력")
     .action(async () => {

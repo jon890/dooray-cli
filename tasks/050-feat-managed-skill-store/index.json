@@ -2,9 +2,9 @@
   "name": "050-feat-managed-skill-store",
   "description": "task 049의 skill 명령 뒤에 버전·콘텐츠 해시별 관리형 저장소와 매니페스트를 추가해 Node 전역 경로 의존 제거 (ADR-035 2단계)",
   "created_at": "2026-07-23T02:43:04Z",
-  "updated_at": "2026-07-23T06:40:13Z",
-  "status": "running",
-  "current_phase": 1,
+  "updated_at": "2026-07-23T06:54:59Z",
+  "status": "completed",
+  "current_phase": 2,
   "total_phases": 2,
   "error_message": null,
   "blocked_reason": null,
@@ -21,7 +21,7 @@
       "number": 2,
       "title": "레거시 마이그레이션·명령 통합과 최종 회귀 검증",
       "file": "phase-02.md",
-      "status": "pending",
+      "status": "completed",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"],
       "model": "sonnet"
     }
