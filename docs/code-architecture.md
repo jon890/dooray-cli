@@ -185,7 +185,7 @@ editor/    → api/client (현재 데이터 fetch) + resolvers/member
 ```
 
 - `commands/setup.ts`는 config/store + api/client + @inquirer/prompts에 의존하고 스킬 파일시스템 처리는 `skill/manager.ts`에 위임
-- `skill/manager.ts`는 경로·현재 버전을 주입받아 명령 출력과 분리된 순수 상태 전이를 제공
+- `skill/manager.ts`는 경로·현재 버전을 주입받아 명령 출력과 분리된 순수 상태 전이를 제공한다. `SkillManagerContext.dataRoot?`가 없으면 `homeDir/.local/share/dooray-cli`를 사용한다.
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
 - `api/client`는 순수 HTTP 래퍼. 비즈니스 로직 없음
 - `resolvers/*`는 캐시 우선 조회, 만료 시 api/client 호출

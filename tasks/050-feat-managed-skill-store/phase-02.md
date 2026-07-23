@@ -18,6 +18,7 @@
 ### 1. `src/skill/manager.ts` — 최종 상태 전이와 활성 링크 교체
 
 task 049의 `SkillStatus` JSON 필드와 함수 시그니처를 유지한다.
+`SkillManagerContext`에는 phase 01의 optional `dataRoot?: string`만 추가한다.
 
 | 입력 | 최종 상태 | 기본 install/update |
 |---|---|---|
@@ -28,9 +29,17 @@ task 049의 `SkillStatus` JSON 필드와 함수 시그니처를 유지한다.
 | managed 링크 대상 없음 | `broken` | 새 store 준비 후 전환 |
 | 일반 파일·디렉터리·알 수 없는 링크 | `unmanaged` | 종료 코드 3, `--force`만 백업 후 전환 |
 
+관리 저장소의 분류 경계는 다음과 같이 고정한다.
+
+- manifest valid + 경로 version/digest 일치 + actual digest 불일치 → `modified`
+- manifest 누락·형식 오류·package 식별자 불일치·contentDigest 형식 오류·경로 version/digest 불일치 → `corrupt`
+- manifest·경로·actual digest가 유효하지만 현재 source version/digest와 다름 → `outdated`
+- 관리 루트 밖 링크는 npm package 메타데이터가 유효한 경우에만 legacy `outdated`, 그 외에는 `unmanaged`
+
 새 store를 완성한 뒤 destination과 같은 디렉터리에 임시 심볼릭 링크를 만들고 `rename`으로 활성화한다.
 force 백업·실패 복구는 task 049 계약을 그대로 사용한다.
 store 준비 실패 시 기존 활성 링크를 건드리지 않는다.
+같은 canonical store 충돌의 격리·복구는 phase 01 저장소 준비 정책을 따르며, 활성 링크 백업과 별도로 처리한다.
 
 ### 2. `src/commands/skill.ts`·`src/commands/setup.ts`·`src/commands/doctor.ts` — 최종 상태 표시
 
