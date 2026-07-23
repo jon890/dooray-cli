@@ -472,7 +472,7 @@ CLI가 자동 처리하므로 사용자는 신경 쓸 필요 없다.
 ## 메일 흐름
 
 ```
-dooray config set imap-username your@email.com         # 최초 1회 설정
+dooray config set imap-username user@example.com       # 최초 1회 설정
 dooray config set imap-password <app-password>
 
 dooray mail list                                        # 최근 메일 목록
@@ -480,6 +480,6 @@ dooray mail list --unread                               # 안읽은 메일만
 dooray mail list --search "키워드"                      # 제목 검색
 dooray mail get <uid>                                   # 메일 상세
 
-dooray mail send --to "a@b.com" --subject "제목" --body "본문"
+dooray mail send --to "recipient@example.com" --subject "제목" --body "본문"
 dooray mail reply <uid> --body "답장 내용"              # 스레드 유지
 ```

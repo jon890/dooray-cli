@@ -520,7 +520,7 @@ IMAP을 통해 Dooray 메일을 조회할 수 있습니다. 메일 설정은 `do
 
 ```bash
 # 수동 설정 (dooray setup 사용 시 불필요)
-dooray config set imap-username your@email.com
+dooray config set imap-username user@example.com
 dooray config set imap-password <IMAP_APP_PASSWORD>
 
 # 메일 조회
@@ -533,8 +533,8 @@ dooray mail get <uid> --json               # JSON 출력
 
 # 메일 발송
 dooray mail send --to "user@example.com" --subject "제목" --body "본문"
-dooray mail send --to "a@b.com" --cc "c@d.com" --subject "제목" --body-file ./content.md
-dooray mail send --to "a@b.com" --subject "HTML 메일" --body "<h1>Hello</h1>" --html
+dooray mail send --to "recipient@example.com" --cc "copy@example.com" --subject "제목" --body-file ./content.md
+dooray mail send --to "recipient@example.com" --subject "HTML 메일" --body "<h1>Hello</h1>" --html
 
 # 메일 답장 (스레드 유지)
 dooray mail reply <uid> --body "답장 내용"

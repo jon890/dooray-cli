@@ -18,7 +18,7 @@ describe("parseDoorayTaskUrl", () => {
     expect(parseDoorayTaskUrl("https://x.dooray.com/task/to/123/")).toBe("123");
   });
   it("dooray.com 도메인이 아니면 null", () => {
-    expect(parseDoorayTaskUrl("https://other.com/task/to/123")).toBeNull();
+    expect(parseDoorayTaskUrl("https://example.com/task/to/123")).toBeNull();
   });
   it("/task/to/ 경로가 아니면 null", () => {
     expect(parseDoorayTaskUrl("https://x.dooray.com/wiki/123")).toBeNull();
@@ -39,7 +39,7 @@ describe("parseDoorayTaskUrl", () => {
     expect(parseDoorayTaskUrl("https://x.dooray.com/task/123/456/")).toBe("456");
   });
   it("/task/<projectId>/<postId> 형도 dooray.com 도메인 외 reject", () => {
-    expect(parseDoorayTaskUrl("https://other.com/task/123/456")).toBeNull();
+    expect(parseDoorayTaskUrl("https://example.com/task/123/456")).toBeNull();
   });
 
   // Issue #83 — 브라우저 '프로젝트 업무 목록 → 업무 열기' URL
@@ -56,7 +56,7 @@ describe("parseDoorayTaskUrl", () => {
   });
 
   it("/project/tasks/<postId> dooray.com 도메인 외 reject", () => {
-    expect(parseDoorayTaskUrl("https://other.com/project/tasks/123")).toBeNull();
+    expect(parseDoorayTaskUrl("https://example.com/project/tasks/123")).toBeNull();
   });
 
   // Issue #83 — /task/{pid}/{id}?workflowIds= 회귀 (TASK_URL_ALT_RE 의 query 무시 확인)

@@ -44,8 +44,8 @@ describe("mergeUsers", () => {
     expect(mergeUsers(existing, additions, false).length).toBe(1);
   });
   it("emailUser dedupe — emailAddress 기준", () => {
-    const existing: CreatePostUser[] = [{ type: "emailUser", emailUser: { emailAddress: "a@b.com", name: "A" } }];
-    const additions: CreatePostUser[] = [{ type: "emailUser", emailUser: { emailAddress: "a@b.com", name: "A2" } }];
+    const existing: CreatePostUser[] = [{ type: "emailUser", emailUser: { emailAddress: "a@example.com", name: "A" } }];
+    const additions: CreatePostUser[] = [{ type: "emailUser", emailUser: { emailAddress: "a@example.com", name: "A2" } }];
     expect(mergeUsers(existing, additions, false).length).toBe(1);
   });
 });

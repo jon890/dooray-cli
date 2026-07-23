@@ -95,7 +95,7 @@ describe("resolvePostInput", () => {
 
   it("--url 형식 오류 → 에러", async () => {
     await expect(
-      resolvePostInput(makeClient({}), { urlOpt: "https://other.com/task/to/1" }),
+      resolvePostInput(makeClient({}), { urlOpt: "https://example.com/task/to/1" }),
     ).rejects.toBeInstanceOf(DoorayCliError);
   });
 
