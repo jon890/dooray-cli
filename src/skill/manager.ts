@@ -153,9 +153,10 @@ async function assertSourceAvailable(source: string): Promise<void> {
     if (!sourceStat.isDirectory() || !skillFileStat.isFile()) {
       throw new Error("invalid source shape");
     }
-  } catch {
+  } catch (error) {
+    const cause = error instanceof Error ? ` (${error.message})` : "";
     throw new DoorayCliError(
-      `패키지 스킬 파일을 찾을 수 없습니다: ${skillFile}`,
+      `패키지 스킬 파일을 찾을 수 없습니다: ${skillFile}${cause}`,
       1,
     );
   }
@@ -284,11 +285,17 @@ export async function installSkill(
     await renameWithRollback(tempPath, previous.destination, backupPath);
     const current = await inspectSkill(context);
     if (current.status !== "current") {
+      let recovery = "백업 없음, 새 링크 상태를 유지했습니다";
       if (backupPath != null) {
-        await fs.rename(backupPath, previous.destination).catch(() => {});
+        try {
+          await fs.rename(backupPath, previous.destination);
+          recovery = `백업 복구 완료: ${backupPath}`;
+        } catch {
+          recovery = `백업 복구 실패, 새 링크 유지 상태일 수 있음: ${previous.destination}`;
+        }
       }
       throw new DoorayCliError(
-        `Claude Code 스킬 설치 후 상태가 current가 아닙니다: ${current.status}`,
+        `Claude Code 스킬 설치 후 상태가 current가 아닙니다: ${current.status} (${recovery})`,
         1,
       );
     }

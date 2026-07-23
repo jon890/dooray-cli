@@ -9,7 +9,6 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 });
 
 import * as fs from "node:fs/promises";
-import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
@@ -30,7 +29,7 @@ afterEach(async () => {
 });
 
 async function makeRoot(): Promise<string> {
-  const root = await mkdtemp(path.join(tmpdir(), "dooray-skill-manager-"));
+  const root = await fs.mkdtemp(path.join(tmpdir(), "dooray-skill-manager-"));
   roots.push(root);
   return root;
 }
@@ -329,10 +328,19 @@ describe("installSkill", () => {
       force: true,
     });
 
-    await expect(installSkill(context)).rejects.toMatchObject({
+    let caughtError: unknown;
+    try {
+      await installSkill(context);
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toMatchObject({
       name: "DoorayCliError",
       exitCode: 1,
     } satisfies Partial<DoorayCliError>);
+    expect(caughtError).toBeInstanceOf(Error);
+    expect((caughtError as Error).message).toMatch(/ENOENT/);
 
     await expect(fs.readlink(destination)).resolves.toBe(previousTarget);
   });
