@@ -7,3 +7,6 @@
 | RETRO-0003 | 2026-07-23 | 049-feat-skill-lifecycle | 중단 에이전트 재사용으로 인한 작업공간 격리 위반 | 해결 | 승격 안 함 |
 | RETRO-0004 | 2026-07-23 | 049-feat-skill-lifecycle | 설치 후 상태를 성공으로 가정한 검증 누락 | 해결 | 승격 안 함 |
 | RETRO-0005 | 2026-07-23 | 049-feat-skill-lifecycle | 리뷰 답글의 셸 명령 치환 방지 | 해결 | 승격 안 함 |
+| RETRO-0006 | 2026-07-23 | 050-feat-managed-skill-store | 관리 저장소 복구·해시 계약의 구현 전 모호성 | 해결 | 승격 안 함 |
+| RETRO-0007 | 2026-07-23 | 050-feat-managed-skill-store | 관리 저장소 경계의 1단계 검토 누락 | 해결 | 승격 안 함 |
+| RETRO-0008 | 2026-07-23 | 050-feat-managed-skill-store | 저장 경로 digest 표기의 구현 불일치 | 해결 | 승격 안 함 |

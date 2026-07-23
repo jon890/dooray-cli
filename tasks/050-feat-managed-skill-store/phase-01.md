@@ -1,7 +1,7 @@
 # Phase 01 — 매니페스트·결정론적 해시·관리형 저장소 구현
 
 **Model**: sonnet
-**Status**: pending
+**Status**: completed
 
 ---
 
@@ -45,29 +45,39 @@ interface DooraySkillManifest {
 심볼릭 링크, 장치, 소켓 등 정규 파일이 아닌 항목은 `DoorayCliError`로 거부한다.
 
 상대 경로를 `/`로 정규화하고 코드 포인트 오름차순으로 정렬한다.
-각 파일에 대해 UTF-8 상대 경로 바이트 길이, 상대 경로 바이트, 콘텐츠 바이트 길이, 원본 콘텐츠 바이트를 경계 구분자와 함께 SHA-256에 반영한다.
+해시 입력은 UTF-8 바이트 `dooray-skill-content-v1\0`으로 시작한다.
+각 파일마다 경계 바이트 `0x01`, 상대 경로 UTF-8 바이트 길이의 unsigned 64-bit big-endian 정수, 상대 경로 바이트, 콘텐츠 바이트 길이의 unsigned 64-bit big-endian 정수, 원본 콘텐츠 바이트를 순서대로 SHA-256에 반영한다.
+길이는 `Buffer.byteLength`와 콘텐츠 `Buffer.length`로 계산한다.
 줄바꿈과 파일 내용을 변환하지 않는다.
 반환값은 `sha256:<64 lowercase hex>`다.
 
 ### 3. `src/skill/manager.ts` — 불변 저장소 준비
 
-기본 데이터 루트는 `~/.local/share/dooray-cli`이며 테스트에서는 context로 주입 가능해야 한다.
+`SkillManagerContext`에 optional `dataRoot?: string`을 추가한다.
+생략하면 `path.join(context.homeDir, ".local", "share", "dooray-cli")`를 사용하며 테스트에서는 임시 `dataRoot`를 주입한다.
+공개 함수 `inspectSkill(context)`와 `installSkill(context, options)` 시그니처 및 `SkillStatus` JSON 필드는 유지한다.
 저장 대상은 `skills/<packageVersion>-<64hex>/`다.
 
 현재 package source를 같은 `skills/` 아래 임시 디렉터리에 정규 파일 단위로 복사하고, 복사본 해시를 다시 계산해 source 해시와 같을 때만 매니페스트를 기록한다.
 완성된 임시 디렉터리를 `rename`해 최종 경로로 전환한다.
-최종 경로가 이미 있으면 매니페스트와 실제 해시가 모두 같은 경우만 재사용하고, 불일치하면 `corrupt` 오류로 중단한다.
+최종 경로가 이미 있으면 매니페스트·경로 version+digest·실제 해시가 모두 기대값과 같은 경우만 재사용한다.
+불일치하고 `--force`가 아니면 `DoorayCliError(EXIT_PARAM_ERROR)`로 실패하며 저장소와 활성 링크를 보존한다.
+`--force`이면 기존 최종 저장 디렉터리를 같은 `skills/` 아래 `.backup-<UTC timestamp>-<basename>`으로 `rename`한 뒤 staging을 최종 경로로 전환한다.
+staging 전환이 실패하면 격리본을 원래 최종 경로로 복구한다.
+저장 디렉터리 격리 경로와 활성 링크 백업 경로는 별도 개념으로 구현한다.
 
 ### 4. `src/skill/manifest.test.ts`·`src/skill/manager.test.ts` — 스키마·해시·저장 실패 테스트
 
 다음을 고정한다.
 
 - 파일 생성 순서가 달라도 같은 digest
+- `SKILL.md` 하나로 구성된 고정 fixture의 digest가 명시된 상수와 일치
 - 경로 또는 바이트가 바뀌면 다른 digest
 - manifest 제외로 자기참조 없음
 - symlink와 비정규 항목 거부
 - invalid JSON·누락 필드·잘못된 digest를 corrupt로 분류
 - staging 복사 실패·최종 경로 충돌 시 활성 링크 불변
+- 같은 canonical store가 modified/corrupt일 때 기본 거부, `--force` 격리·복구
 - 같은 version+digest 저장소 재사용
 
 운영 홈 환경변수를 바꾸지 않고 임시 context만 주입한다.

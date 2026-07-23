@@ -50,9 +50,12 @@ dooray skill status --json   # 자동화용 상태 확인
 ```
 
 Node 버전 관리자를 사용하면 전역 npm 설치 경로가 Node 버전별로 달라질 수 있습니다.
-`npm install -g @bifos/dooray-cli@latest` 후 스킬이 예전 경로를 가리키면 `dooray skill update`를 실행하세요.
+스킬은 npm 패키지 경로를 직접 가리키지 않고 관리 저장소를 거쳐 연결됩니다.
+절대 경로 `XDG_DATA_HOME`이 있으면 `$XDG_DATA_HOME/dooray-cli/skills/`를 사용하고, 없거나 상대 경로이면 `~/.local/share/dooray-cli/skills/`를 사용합니다.
+그래서 Node 버전 경로가 바뀌어도 Claude Code 활성 링크는 안정적으로 유지됩니다.
+다만 `npm install -g @bifos/dooray-cli@latest`로 CLI를 갱신한 뒤에는 새 스킬 파일을 반영하기 위해 `dooray skill update`를 명시적으로 실행하세요.
 기존 경로가 직접 만든 파일이나 디렉터리라면 기본 갱신은 중단됩니다.
-그 경우 내용을 확인한 뒤 `dooray skill update --force`를 사용하면 기존 항목을 백업하고 교체합니다.
+그 경우 내용을 확인한 뒤 `dooray skill update --force`를 사용하면 기존 항목을 `.backup-<timestamp>` 경로로 백업하고 교체합니다.
 
 ## 사용법 (Usage)
 

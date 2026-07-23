@@ -140,9 +140,10 @@ export const setupCommand = new Command("setup")
               await installClaudeSkill(createSkillManagerContext());
               console.log(chalk.green("  ✓ Claude Code 스킬 설치 완료"));
             } catch (err) {
+              const reason = err instanceof Error ? err.message : String(err);
               console.log(
                 chalk.yellow(
-                  `  ⚠ 스킬 설치 실패: ${err instanceof Error ? err.message : String(err)}`,
+                  `  ⚠ 스킬 설치 실패: ${reason}\n  필요하면 내용을 확인한 뒤 dooray skill update --force를 실행하세요.`,
                 ),
               );
             }

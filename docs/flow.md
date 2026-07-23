@@ -77,7 +77,7 @@ dooray skill update --force  # 관리되지 않은 기존 파일을 백업한 �
   "source": "/package/skills/dooray-cli",
   "currentVersion": "0.14.1",
   "installedVersion": "0.14.1",
-  "linkTarget": "/home/user/.local/share/dooray-cli/skills/0.14.1-<digest>",
+  "linkTarget": "/home/user/.local/share/dooray-cli/skills/0.14.1-<64hex>",
   "managed": true
 }
 ```
@@ -92,12 +92,28 @@ dooray skill update --force  # 관리되지 않은 기존 파일을 백업한 �
 - `modified`: 관리형 설치의 콘텐츠 해시가 매니페스트와 다름
 - `corrupt`: 관리형 매니페스트가 없거나 스키마 검증에 실패
 
+관리형 링크의 상세 판정은 다음과 같다.
+
+| 조건 | 상태 |
+|---|---|
+| 매니페스트가 유효하고 경로의 버전·digest, 실제 콘텐츠 digest, 현재 package source의 버전·digest가 모두 일치 | `current` |
+| 매니페스트와 경로·실제 콘텐츠가 유효하지만 현재 package source의 버전 또는 digest와 다름 | `outdated` |
+| 매니페스트가 유효하고 경로의 version+digest와 일치하지만 실제 콘텐츠 digest가 매니페스트와 다름 | `modified` |
+| 매니페스트 누락·형식 오류·package 식별자 불일치·경로의 version/digest 불일치 | `corrupt` |
+| 관리 루트 밖의 npm package 직접 링크 | package 메타데이터가 유효하면 `outdated`, 아니면 `unmanaged` |
+
 `install`과 `update`는 `current`에서 아무것도 바꾸지 않는다.
 기존 패키지 경로를 가리키는 `outdated`·`broken` 링크는 안전하게 교체한다.
 `unmanaged`·`modified`·`corrupt` 상태는 기본적으로 보존하고 종료 코드 3으로 실패한다.
 `--force`를 지정하면 기존 항목을 같은 디렉터리에 백업한 뒤 교체하며, 활성 링크 전환에 실패하면 백업을 복구한다.
 
-스킬 본문은 `~/.local/share/dooray-cli/skills/<packageVersion>-<contentDigest>/`에 버전별로 보존한다.
+같은 version+digest의 canonical 저장 디렉터리가 수정되거나 손상된 경우에는 활성 링크 전환보다 먼저 저장 디렉터리를 `.backup-<UTC timestamp>-<basename>`으로 격리한다.
+새 저장 디렉터리 전환에 실패하면 격리본을 복구하며, 성공하면 격리본을 보존한다.
+저장 디렉터리 격리와 활성 링크 백업은 서로 다른 단계이며, 어느 단계든 실패하면 사용자 콘텐츠를 삭제하지 않는다.
+
+스킬 본문은 `dataRoot/skills/<packageVersion>-<contentDigestHex>/`에 버전별로 보존한다.
+`dataRoot`는 절대 경로 `XDG_DATA_HOME`이 있으면 `$XDG_DATA_HOME/dooray-cli`, 없거나 상대 경로이면 `~/.local/share/dooray-cli`다.
+`contentDigestHex`는 매니페스트 `contentDigest`의 `sha256:` 접두사를 제거한 64자리 lowercase hex다.
 `~/.claude/skills/dooray-cli`는 이 안정 저장소를 가리키므로 Node 버전별 npm 전역 경로가 바뀌어도 기존 설치가 끊어지지 않는다.
 자동 `postinstall`, 이전 버전 자동 삭제, 자동 롤백 명령은 제공하지 않는다.
 

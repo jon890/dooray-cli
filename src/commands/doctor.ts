@@ -22,7 +22,7 @@ function formatSkillStatus(status: SkillStatus): string {
     case "broken":
       return chalk.yellow("⚠️ 링크 깨짐 — dooray skill update");
     case "corrupt":
-      return chalk.yellow("⚠️ 패키지 정보 손상 — dooray skill update");
+      return chalk.yellow("⚠️ 관리 저장소 정보 손상 — dooray skill update --force");
     case "unmanaged":
       return chalk.yellow(
         "⚠️ 관리되지 않는 항목 — dooray skill update --force",
