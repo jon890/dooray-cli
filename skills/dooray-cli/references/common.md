@@ -47,7 +47,8 @@ dooray skill status --quiet  # 상태 토큰만 출력
 | `modified` | 관리형 저장소 전환 뒤 사용자 수정이 감지된 상태 | 내용 확인 후 `dooray skill update --force` |
 
 `install`과 `update`는 같은 안전한 전환 로직을 사용한다.
-스킬은 npm 패키지 경로를 직접 가리키지 않고 `~/.local/share/dooray-cli/skills/` 아래 관리 저장소를 거쳐 연결된다.
+스킬은 npm 패키지 경로를 직접 가리키지 않고 관리 저장소를 거쳐 연결된다.
+절대 경로 `XDG_DATA_HOME`이 있으면 `$XDG_DATA_HOME/dooray-cli/skills/`를 사용하고, 없거나 상대 경로이면 `~/.local/share/dooray-cli/skills/`를 사용한다.
 Node 버전 관리자로 전역 npm 설치 경로가 바뀌어도 활성 링크는 관리 저장소를 계속 가리킨다.
 관리되지 않는 기존 항목, 수정된 관리 저장소, 손상된 manifest는 기본적으로 덮어쓰지 않는다.
 `--force`를 사용하면 기존 활성 항목을 `.backup-<timestamp>` 경로로 옮긴 뒤 현재 CLI 스킬 링크로 교체한다.

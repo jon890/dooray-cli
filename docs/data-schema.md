@@ -16,7 +16,8 @@
     member-groups/{projectId}.json  # 프로젝트별 멤버 그룹 캐시 (`--mention-group`)
     templates/{projectId}.json      # 프로젝트별 템플릿 목록 캐시 (ADR-027, TTL 24h)
 
-~/.local/share/dooray-cli/
+${XDG_DATA_HOME}/dooray-cli/              # XDG_DATA_HOME이 절대 경로일 때
+~/.local/share/dooray-cli/                # XDG_DATA_HOME이 없거나 상대 경로일 때
   skills/
     {packageVersion}-{contentDigestHex}/
       SKILL.md
@@ -24,7 +25,7 @@
       .dooray-skill.json            # 관리형 설치 매니페스트
 
 ~/.claude/skills/
-  dooray-cli -> ~/.local/share/dooray-cli/skills/{packageVersion}-{contentDigestHex}/
+  dooray-cli -> <dataRoot>/skills/{packageVersion}-{contentDigestHex}/
 ```
 
 `templates/{projectId}.json` — `GET /project/v1/projects/{projectId}/templates` 응답의 id/templateName/메타만 보존 (body 는 미포함 — list 응답 자체가 body 제외).
