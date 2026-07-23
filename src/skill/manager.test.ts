@@ -16,6 +16,11 @@ import {
   installSkill,
   type SkillManagerContext,
 } from "./manager.js";
+import {
+  MANIFEST_FILE_NAME,
+  computeSkillContentDigest,
+  getDigestHex,
+} from "./manifest.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
@@ -58,6 +63,7 @@ async function makeContext(root: string): Promise<SkillManagerContext> {
   const packageRoot = await makePackage(root, "1.2.3");
   return {
     homeDir: path.join(root, "home"),
+    dataRoot: path.join(root, "data"),
     packageRoot,
     currentVersion: "1.2.3",
   };
@@ -75,6 +81,17 @@ async function ensureDestinationParent(
   return destination;
 }
 
+async function expectedStorePath(context: SkillManagerContext): Promise<string> {
+  const digest = await computeSkillContentDigest(
+    path.join(context.packageRoot, "skills", "dooray-cli"),
+  );
+  return path.join(
+    context.dataRoot ?? context.homeDir,
+    "skills",
+    `${context.currentVersion}-${getDigestHex(digest)}`,
+  );
+}
+
 describe("inspectSkill", () => {
   it("reports missing destination as managed missing", async () => {
     const root = await makeRoot();
@@ -88,7 +105,7 @@ describe("inspectSkill", () => {
     });
   });
 
-  it("reports a link to the current package skill as current", async () => {
+  it("reports a direct link to the current package skill as outdated", async () => {
     const root = await makeRoot();
     const context = await makeContext(root);
     const destination = await ensureDestinationParent(context);
@@ -96,7 +113,7 @@ describe("inspectSkill", () => {
     await fs.symlink(source, destination);
 
     await expect(inspectSkill(context)).resolves.toMatchObject({
-      status: "current",
+      status: "outdated",
       managed: true,
       installedVersion: "1.2.3",
       linkTarget: source,
@@ -222,6 +239,8 @@ describe("installSkill", () => {
     const context = await makeContext(root);
 
     const result = await installSkill(context);
+    const destination = await destinationOf(context);
+    const linkTarget = await fs.readlink(destination);
 
     expect(result).toMatchObject({
       changed: true,
@@ -229,16 +248,27 @@ describe("installSkill", () => {
       previous: { status: "missing" },
       current: { status: "current" },
     });
+    expect(linkTarget).toContain(path.join(root, "data", "skills"));
   });
 
-  it("does not change an already current link", async () => {
+  it("uses homeDir/.local/share/dooray-cli when dataRoot is omitted", async () => {
     const root = await makeRoot();
     const context = await makeContext(root);
-    const destination = await ensureDestinationParent(context);
-    await fs.symlink(
-      path.join(context.packageRoot, "skills", "dooray-cli"),
-      destination,
+    delete context.dataRoot;
+
+    await installSkill(context);
+
+    await expect(fs.readlink(await destinationOf(context))).resolves.toContain(
+      path.join(root, "home", ".local", "share", "dooray-cli", "skills"),
     );
+  });
+
+  it("does not change an already current managed store link", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+    await installSkill(context);
+    const destination = await destinationOf(context);
+    const previousTarget = await fs.readlink(destination);
 
     const result = await installSkill(context);
 
@@ -248,6 +278,185 @@ describe("installSkill", () => {
       previous: { status: "current" },
       current: { status: "current" },
     });
+    await expect(fs.readlink(destination)).resolves.toBe(previousTarget);
+  });
+
+  it("reuses the same canonical store for the same version and digest", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+
+    await installSkill(context);
+    const storePath = await expectedStorePath(context);
+    const before = await fs.stat(storePath);
+    await installSkill(context);
+    const after = await fs.stat(storePath);
+
+    expect(after.ino).toBe(before.ino);
+    await expect(fs.readlink(await destinationOf(context))).resolves.toBe(
+      storePath,
+    );
+  });
+
+  it("writes manifest after staging copy and classifies invalid store manifest as corrupt", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+
+    await installSkill(context);
+    const storePath = await expectedStorePath(context);
+    const manifestPath = path.join(storePath, MANIFEST_FILE_NAME);
+
+    await expect(fs.readFile(manifestPath, "utf8")).resolves.toMatch(
+      /"contentDigest"/,
+    );
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "current",
+      managed: true,
+    });
+
+    await fs.writeFile(manifestPath, "{");
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "corrupt",
+      managed: true,
+    });
+
+    await fs.writeFile(manifestPath, JSON.stringify({ schemaVersion: 1 }));
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "corrupt",
+      managed: true,
+    });
+
+    await fs.writeFile(
+      manifestPath,
+      JSON.stringify({ contentDigest: "sha256:NO" }),
+    );
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "corrupt",
+      managed: true,
+    });
+
+    await fs.writeFile(
+      manifestPath,
+      JSON.stringify({
+        schemaVersion: 1,
+        skillName: "dooray-cli",
+        packageName: "@bifos/dooray-cli",
+        packageVersion: "1.2.3",
+        contentDigest: await computeSkillContentDigest(storePath),
+        installedAt: "2026-07-23",
+        managedBy: "@bifos/dooray-cli",
+      }),
+    );
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "corrupt",
+      managed: true,
+    });
+
+    await fs.writeFile(
+      manifestPath,
+      JSON.stringify({
+        schemaVersion: 1,
+        skillName: "dooray-cli",
+        packageName: "@bifos/dooray-cli",
+        packageVersion: "1.2.3",
+        contentDigest: await computeSkillContentDigest(storePath),
+        installedAt: "2026-99-99T00:00:00.000Z",
+        managedBy: "@bifos/dooray-cli",
+      }),
+    );
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "corrupt",
+      managed: true,
+    });
+  });
+
+  it("repairs a missing managed-store target without force", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+
+    await installSkill(context);
+    const destination = await destinationOf(context);
+    const storePath = await expectedStorePath(context);
+    await fs.rm(storePath, { recursive: true, force: true });
+
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "broken",
+      managed: true,
+    });
+    await expect(installSkill(context)).resolves.toMatchObject({
+      previous: { status: "broken", managed: true },
+      current: { status: "current" },
+    });
+    await expect(fs.readlink(destination)).resolves.toBe(storePath);
+  });
+
+  it("preserves active link when canonical store collision is modified", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+    const previousPackageRoot = await makePackage(root, "1.0.0");
+    const destination = await ensureDestinationParent(context);
+    const previousTarget = path.join(
+      previousPackageRoot,
+      "skills",
+      "dooray-cli",
+    );
+    await fs.symlink(previousTarget, destination);
+
+    await installSkill(context);
+    const storePath = await expectedStorePath(context);
+    await fs.writeFile(path.join(storePath, "SKILL.md"), "modified\n");
+    await fs.rm(destination, { force: true });
+    await fs.symlink(previousTarget, destination);
+
+    await expect(installSkill(context)).rejects.toMatchObject({
+      exitCode: EXIT_PARAM_ERROR,
+    } satisfies Partial<DoorayCliError>);
+    await expect(fs.readlink(destination)).resolves.toBe(previousTarget);
+  });
+
+  it("quarantines a modified canonical store with force", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+
+    await installSkill(context);
+    const storePath = await expectedStorePath(context);
+    await fs.writeFile(path.join(storePath, "SKILL.md"), "modified\n");
+
+    await expect(installSkill(context, { force: true })).resolves.toMatchObject({
+      current: { status: "current" },
+    });
+
+    const backups = (await fs.readdir(path.join(context.dataRoot ?? "", "skills")))
+      .filter((entry) => entry.startsWith(".backup-"));
+    expect(backups).toHaveLength(1);
+    await expect(fs.readFile(path.join(storePath, "SKILL.md"), "utf8"))
+      .resolves.toBe("# dooray-cli\n");
+  });
+
+  it("restores quarantined store when force replacement fails", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+
+    await installSkill(context);
+    const destination = await destinationOf(context);
+    const activeTarget = await fs.readlink(destination);
+    const storePath = await expectedStorePath(context);
+    await fs.writeFile(path.join(storePath, "SKILL.md"), "modified\n");
+
+    const actualFs =
+      await vi.importActual<typeof import("node:fs/promises")>(
+        "node:fs/promises",
+      );
+    vi.mocked(fs.rename)
+      .mockImplementationOnce(actualFs.rename)
+      .mockRejectedValueOnce(new Error("store rename failed"))
+      .mockImplementationOnce(actualFs.rename);
+
+    await expect(installSkill(context, { force: true })).rejects.toThrow(
+      "store rename failed",
+    );
+    await expect(fs.readlink(destination)).resolves.toBe(activeTarget);
+    await expect(fs.readFile(path.join(storePath, "SKILL.md"), "utf8"))
+      .resolves.toBe("modified\n");
   });
 
   it("updates managed outdated and broken links without deleting user files", async () => {
@@ -388,6 +597,7 @@ describe("installSkill", () => {
       );
 
     vi.mocked(fs.rename)
+      .mockImplementationOnce(actualFs.rename)
       .mockImplementationOnce(actualFs.rename)
       .mockRejectedValueOnce(new Error("rename failed"))
       .mockImplementationOnce(actualFs.rename);

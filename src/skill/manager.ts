@@ -1,5 +1,14 @@
 import * as fs from "node:fs/promises";
 import path from "node:path";
+import {
+  MANIFEST_FILE_NAME,
+  collectSkillContentFiles,
+  computeSkillContentDigest,
+  createDooraySkillManifest,
+  getDigestHex,
+  readDooraySkillManifest,
+  type DooraySkillManifest,
+} from "./manifest.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
@@ -16,6 +25,7 @@ export interface SkillManagerContext {
   homeDir: string;
   packageRoot: string;
   currentVersion: string;
+  dataRoot?: string;
 }
 
 export interface SkillStatus {
@@ -50,6 +60,27 @@ function getSource(context: SkillManagerContext): string {
 
 function getDestination(context: SkillManagerContext): string {
   return path.join(context.homeDir, ".claude", "skills", "dooray-cli");
+}
+
+function getDataRoot(context: SkillManagerContext): string {
+  return (
+    context.dataRoot ??
+    path.join(context.homeDir, ".local", "share", "dooray-cli")
+  );
+}
+
+function getStoreRoot(context: SkillManagerContext): string {
+  return path.join(getDataRoot(context), "skills");
+}
+
+function getStorePath(
+  context: SkillManagerContext,
+  contentDigest: `sha256:${string}`,
+): string {
+  return path.join(
+    getStoreRoot(context),
+    `${context.currentVersion}-${getDigestHex(contentDigest)}`,
+  );
 }
 
 function statusOf(
@@ -141,6 +172,180 @@ function utcTimestamp(): string {
   return new Date().toISOString().replace(/[:.]/g, "-");
 }
 
+function isInsideStoreRoot(context: SkillManagerContext, target: string): boolean {
+  const relative = path.relative(getStoreRoot(context), target);
+  return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
+}
+
+function parseStoreBasename(
+  basename: string,
+): { packageVersion: string; contentDigest: `sha256:${string}` } | null {
+  if (basename.length < 66 || basename[basename.length - 65] !== "-") {
+    return null;
+  }
+
+  const packageVersion = basename.slice(0, -65);
+  const digestHex = basename.slice(-64);
+  if (!/^[0-9a-f]{64}$/.test(digestHex) || packageVersion.length === 0) {
+    return null;
+  }
+
+  return {
+    packageVersion,
+    contentDigest: `sha256:${digestHex}`,
+  };
+}
+
+async function writeManifest(
+  storePath: string,
+  manifest: DooraySkillManifest,
+): Promise<void> {
+  await fs.writeFile(
+    path.join(storePath, MANIFEST_FILE_NAME),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+  );
+}
+
+async function copySkillContentFiles(source: string, destination: string): Promise<void> {
+  for (const relativePath of await collectSkillContentFiles(source)) {
+    const sourcePath = path.join(source, relativePath);
+    const destinationPath = path.join(destination, ...relativePath.split("/"));
+    await fs.mkdir(path.dirname(destinationPath), { recursive: true });
+    await fs.copyFile(sourcePath, destinationPath);
+  }
+}
+
+async function verifyStore(
+  storePath: string,
+  expectedManifest: DooraySkillManifest,
+): Promise<"valid" | "modified" | "corrupt"> {
+  const basename = parseStoreBasename(path.basename(storePath));
+  if (
+    basename == null ||
+    basename.packageVersion !== expectedManifest.packageVersion ||
+    basename.contentDigest !== expectedManifest.contentDigest
+  ) {
+    return "corrupt";
+  }
+
+  const manifest = await readDooraySkillManifest(
+    path.join(storePath, MANIFEST_FILE_NAME),
+  );
+  if (
+    manifest == null ||
+    manifest.packageVersion !== expectedManifest.packageVersion ||
+    manifest.contentDigest !== expectedManifest.contentDigest
+  ) {
+    return "corrupt";
+  }
+
+  const actualDigest = await computeSkillContentDigest(storePath).catch(() => null);
+  if (actualDigest !== expectedManifest.contentDigest) {
+    return "modified";
+  }
+
+  return "valid";
+}
+
+async function createStagedStore(
+  context: SkillManagerContext,
+  sourceDigest: `sha256:${string}`,
+): Promise<string> {
+  const storeRoot = getStoreRoot(context);
+  const stagingPath = path.join(
+    storeRoot,
+    `.tmp-${process.pid}-${Date.now()}-${getDigestHex(sourceDigest)}`,
+  );
+  await fs.mkdir(stagingPath, { recursive: true });
+
+  try {
+    await copySkillContentFiles(getSource(context), stagingPath);
+    const stagedDigest = await computeSkillContentDigest(stagingPath);
+    if (stagedDigest !== sourceDigest) {
+      throw new DoorayCliError(
+        `스킬 staging 해시가 source 해시와 다릅니다: ${stagedDigest}`,
+        1,
+      );
+    }
+    await writeManifest(
+      stagingPath,
+      createDooraySkillManifest(context.currentVersion, sourceDigest),
+    );
+    return stagingPath;
+  } catch (error) {
+    await fs.rm(stagingPath, { recursive: true, force: true }).catch(() => {});
+    throw error;
+  }
+}
+
+async function prepareStore(
+  context: SkillManagerContext,
+  options: { force?: boolean },
+): Promise<string> {
+  const sourceDigest = await computeSkillContentDigest(getSource(context));
+  const expectedManifest = createDooraySkillManifest(
+    context.currentVersion,
+    sourceDigest,
+  );
+  const storeRoot = getStoreRoot(context);
+  const storePath = getStorePath(context, sourceDigest);
+
+  await fs.mkdir(storeRoot, { recursive: true });
+
+  const existing = await fs
+    .lstat(storePath)
+    .then((stat) => stat)
+    .catch((error: unknown) => {
+      if (isNodeError(error, "ENOENT")) {
+        return null;
+      }
+      throw error;
+    });
+
+  if (existing != null) {
+    if (!existing.isDirectory()) {
+      throw new DoorayCliError(
+        `관리형 스킬 저장 경로가 디렉터리가 아닙니다: ${storePath}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+
+    const status = await verifyStore(storePath, expectedManifest);
+    if (status === "valid") {
+      return storePath;
+    }
+
+    if (options.force !== true) {
+      throw new DoorayCliError(
+        `관리형 스킬 저장소가 ${status} 상태입니다: ${storePath}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+  }
+
+  const stagingPath = await createStagedStore(context, sourceDigest);
+  let quarantinePath: string | null = null;
+
+  try {
+    if (existing != null) {
+      quarantinePath = path.join(
+        storeRoot,
+        `.backup-${utcTimestamp()}-${path.basename(storePath)}`,
+      );
+      await fs.rename(storePath, quarantinePath);
+    }
+
+    await fs.rename(stagingPath, storePath);
+    return storePath;
+  } catch (error) {
+    await fs.rm(stagingPath, { recursive: true, force: true }).catch(() => {});
+    if (quarantinePath != null) {
+      await fs.rename(quarantinePath, storePath).catch(() => {});
+    }
+    throw error;
+  }
+}
+
 async function assertSourceAvailable(source: string): Promise<void> {
   const skillFile = path.join(source, "SKILL.md");
 
@@ -208,12 +413,66 @@ export async function inspectSkill(
     }
     return statusOf(context, "broken", {
       linkTarget,
-      managed: isManagedSkillPath(absoluteTarget),
+      managed:
+        isManagedSkillPath(absoluteTarget) ||
+        isInsideStoreRoot(context, absoluteTarget),
+    });
+  }
+
+  const sourceDigest = await computeSkillContentDigest(source).catch(() => null);
+
+  if (isInsideStoreRoot(context, absoluteTarget)) {
+    const manifest = await readDooraySkillManifest(
+      path.join(absoluteTarget, MANIFEST_FILE_NAME),
+    );
+    if (manifest == null) {
+      return statusOf(context, "corrupt", { linkTarget, managed: true });
+    }
+
+    const basename = parseStoreBasename(path.basename(absoluteTarget));
+    if (
+      basename == null ||
+      basename.packageVersion !== manifest.packageVersion ||
+      basename.contentDigest !== manifest.contentDigest
+    ) {
+      return statusOf(context, "corrupt", {
+        installedVersion: manifest.packageVersion,
+        linkTarget,
+        managed: true,
+      });
+    }
+
+    const actualDigest = await computeSkillContentDigest(absoluteTarget).catch(
+      () => null,
+    );
+    if (actualDigest !== manifest.contentDigest) {
+      return statusOf(context, "modified", {
+        installedVersion: manifest.packageVersion,
+        linkTarget,
+        managed: true,
+      });
+    }
+
+    if (
+      manifest.packageVersion === context.currentVersion &&
+      sourceDigest === manifest.contentDigest
+    ) {
+      return statusOf(context, "current", {
+        installedVersion: manifest.packageVersion,
+        linkTarget,
+        managed: true,
+      });
+    }
+
+    return statusOf(context, "outdated", {
+      installedVersion: manifest.packageVersion,
+      linkTarget,
+      managed: true,
     });
   }
 
   if (await isSameEntry(absoluteTarget, source)) {
-    return statusOf(context, "current", {
+    return statusOf(context, "outdated", {
       installedVersion: context.currentVersion,
       linkTarget,
       managed: true,
@@ -269,13 +528,15 @@ export async function installSkill(
     );
   }
 
+  const storePath = await prepareStore(context, options);
+
   await fs.mkdir(path.dirname(previous.destination), { recursive: true });
 
   const tempPath = `${previous.destination}.tmp-${process.pid}-${Date.now()}`;
   let backupPath: string | null = null;
 
   try {
-    await fs.symlink(previous.source, tempPath);
+    await fs.symlink(storePath, tempPath);
 
     if (!previous.managed && options.force === true) {
       backupPath = `${previous.destination}.backup-${utcTimestamp()}`;
