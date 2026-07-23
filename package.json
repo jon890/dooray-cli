@@ -33,7 +33,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify:package": "node scripts/verify-package.mjs"
   },
   "license": "MIT",
   "dependencies": {

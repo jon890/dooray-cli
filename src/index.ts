@@ -4,6 +4,7 @@ import { configCommand } from "./commands/config.js";
 import { cacheCommand } from "./commands/cache.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { setupCommand } from "./commands/setup.js";
+import { skillCommand } from "./commands/skill.js";
 import { projectListCommand } from "./commands/project/list.js";
 import { projectMembersCommand } from "./commands/project/members.js";
 import { projectWorkflowsCommand } from "./commands/project/workflows.js";
@@ -50,13 +51,14 @@ import { sanitizeArgv } from "./utils/argv-sanitize.js";
 import { setQuiet } from "./utils/spinner.js";
 import { writeLastRun } from "./cache/last-run.js";
 import { getConfig } from "./config/store.js";
+import { CLI_VERSION } from "./version.js";
 
 const program = new Command();
 
 program
   .name("dooray")
   .description("Dooray REST API CLI")
-  .version("0.14.0")
+  .version(CLI_VERSION)
   .option("--json", "JSON 형식으로 출력")
   .option("--quiet", "ID만 출력")
   .option("--no-color", "색상 비활성화");
@@ -135,6 +137,7 @@ mailCommand.addCommand(mailSendCommand);
 mailCommand.addCommand(mailReplyCommand);
 
 program.addCommand(setupCommand);
+program.addCommand(skillCommand);
 program.addCommand(configCommand);
 program.addCommand(memberCommand);
 program.addCommand(cacheCommand);

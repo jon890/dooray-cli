@@ -35,6 +35,7 @@ NHN Dooray REST API를 래핑한 CLI 도구다.
 ```bash
 npm install -g @bifos/dooray-cli
 dooray setup   # API endpoint, API key, 메일 설정까지 대화형 진행
+dooray skill status
 dooray post list <project> --json
 ```
 
