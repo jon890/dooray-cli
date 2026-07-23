@@ -131,8 +131,8 @@ git rebase origin/main
 버전 변경:
 
 - `package.json`의 `version` 필드를 `<version>`으로 변경
-- `src/index.ts`의 `.version("x.y.z")`를 `<version>`으로 변경
-- 변경 후 다시 `pnpm run build`로 빌드 검증
+- `src/index.ts`는 직접 수정하지 않는다. CLI 버전은 빌드 시 `package.json.version`에서 주입된다.
+- 변경 후 다시 `pnpm run build`와 `pnpm verify:package`로 빌드 산출물 버전 일치를 검증
 
 ### 5. 커밋 & 푸시
 
@@ -140,7 +140,7 @@ git rebase origin/main
 # 커밋 직전 branch 재확인 (위 가드와 중복이지만 자기 방어)
 [ "$(git branch --show-current)" = "main" ] || { echo "STOP: not on main"; exit 1; }
 
-git add package.json src/index.ts
+git add package.json
 git commit -m "chore: bump version to v<version>"
 git push origin main
 ```

@@ -50,13 +50,14 @@ import { sanitizeArgv } from "./utils/argv-sanitize.js";
 import { setQuiet } from "./utils/spinner.js";
 import { writeLastRun } from "./cache/last-run.js";
 import { getConfig } from "./config/store.js";
+import { CLI_VERSION } from "./version.js";
 
 const program = new Command();
 
 program
   .name("dooray")
   .description("Dooray REST API CLI")
-  .version("0.14.0")
+  .version(CLI_VERSION)
   .option("--json", "JSON 형식으로 출력")
   .option("--quiet", "ID만 출력")
   .option("--no-color", "색상 비활성화");
