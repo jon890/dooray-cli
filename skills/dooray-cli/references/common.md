@@ -24,6 +24,35 @@ dooray config set api-key <YOUR_API_TOKEN>   # https://{org}.dooray.com/setting/
 dooray doctor                                 # 설정 검증
 ```
 
+## Claude Code 스킬 관리
+
+```bash
+dooray skill status          # 설치 상태 확인
+dooray skill install         # 최초 설치
+dooray skill update          # 현재 CLI 버전의 스킬로 갱신
+dooray skill status --json   # SkillStatus 객체 출력
+dooray skill status --quiet  # 상태 토큰만 출력
+```
+
+상태 토큰:
+
+| 상태 | 의미 | 복구 |
+|---|---|---|
+| `missing` | 설치 경로가 없음 | `dooray skill install` |
+| `current` | 현재 CLI 버전의 스킬 링크 | 조치 없음 |
+| `outdated` | 다른 버전의 dooray-cli 스킬 링크 | `dooray skill update` |
+| `broken` | 링크 대상이 사라짐 | `dooray skill update` |
+| `corrupt` | dooray-cli 패키지 형태지만 메타데이터를 읽을 수 없음 | `dooray skill update` |
+| `unmanaged` | 직접 만든 파일·디렉터리 또는 알 수 없는 링크 | 내용 확인 후 `dooray skill update --force` |
+| `modified` | 관리형 저장소 전환 뒤 사용자 수정이 감지된 상태 | 내용 확인 후 `dooray skill update --force` |
+
+`install`과 `update`는 같은 안전한 전환 로직을 사용한다.
+관리되지 않는 기존 항목은 기본적으로 덮어쓰지 않는다.
+`--force`를 사용하면 기존 항목을 `.backup-<timestamp>` 경로로 옮긴 뒤 현재 CLI 스킬 링크로 교체한다.
+
+Node 버전 관리자를 사용하면 전역 npm 설치 경로가 Node 버전별로 달라질 수 있다.
+CLI를 최신 버전으로 다시 설치한 뒤에도 스킬이 예전 경로를 가리키면 `dooray skill update`를 실행한다.
+
 ## 출력 모드
 
 | 플래그 | 설명 | 용도 |

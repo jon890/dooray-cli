@@ -38,6 +38,22 @@ dooray config set api-key <YOUR_API_TOKEN>
 dooray doctor
 ```
 
+## Claude Code 스킬 관리
+
+AI 에이전트용 스킬은 CLI와 별도로 상태를 확인하고 갱신할 수 있습니다.
+
+```bash
+dooray skill status          # 설치 상태 확인
+dooray skill install         # 최초 설치
+dooray skill update          # 현재 CLI 버전의 스킬로 갱신
+dooray skill status --json   # 자동화용 상태 확인
+```
+
+Node 버전 관리자를 사용하면 전역 npm 설치 경로가 Node 버전별로 달라질 수 있습니다.
+`npm install -g @bifos/dooray-cli@latest` 후 스킬이 예전 경로를 가리키면 `dooray skill update`를 실행하세요.
+기존 경로가 직접 만든 파일이나 디렉터리라면 기본 갱신은 중단됩니다.
+그 경우 내용을 확인한 뒤 `dooray skill update --force`를 사용하면 기존 항목을 백업하고 교체합니다.
+
 ## 사용법 (Usage)
 
 ### 프로젝트
@@ -636,8 +652,9 @@ dooray post list <project> --quiet | xargs -I{} dooray post done <project> {}
 Claude Code 등의 AI 에이전트에서 dooray-cli를 자동으로 활용할 수 있도록 의도→커맨드 매핑, 체이닝 예시, 에러 핸들링 가이드가 포함되어 있습니다.
 
 ```bash
-# 스킬 파일 복사 (Claude Code 예시)
-cp -r skills/dooray-cli ~/.claude/skills/
+# Claude Code 스킬 상태 확인과 설치
+dooray skill status
+dooray skill install
 ```
 
 ## 피드백 (GitHub Issue 등록)

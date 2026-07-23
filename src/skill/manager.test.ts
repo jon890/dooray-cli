@@ -313,6 +313,30 @@ describe("installSkill", () => {
     });
   });
 
+  it("fails before touching an existing managed link when package source is missing", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+    const previousPackageRoot = await makePackage(root, "1.0.0");
+    const destination = await ensureDestinationParent(context);
+    const previousTarget = path.join(
+      previousPackageRoot,
+      "skills",
+      "dooray-cli",
+    );
+    await fs.symlink(previousTarget, destination);
+    await fs.rm(path.join(context.packageRoot, "skills", "dooray-cli"), {
+      recursive: true,
+      force: true,
+    });
+
+    await expect(installSkill(context)).rejects.toMatchObject({
+      name: "DoorayCliError",
+      exitCode: 1,
+    } satisfies Partial<DoorayCliError>);
+
+    await expect(fs.readlink(destination)).resolves.toBe(previousTarget);
+  });
+
   it("refuses unmanaged entries unless force is set", async () => {
     const root = await makeRoot();
     const context = await makeContext(root);

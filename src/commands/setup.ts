@@ -2,6 +2,8 @@ import { Command } from "commander";
 import chalk from "chalk";
 import path from "path";
 import fs from "fs/promises";
+import { createSkillManagerContext } from "../skill/context.js";
+import { installSkill as installClaudeSkill } from "../skill/manager.js";
 import { getConfig, saveConfig } from "../config/store.js";
 import { DoorayApiClient } from "../api/client.js";
 import { ensureMe } from "../resolvers/me.js";
@@ -135,18 +137,7 @@ export const setupCommand = new Command("setup")
 
           if (installSkill) {
             try {
-              const skillSrc = path.resolve(__dirname, "../skills/dooray-cli");
-              const skillsDir = path.join(claudeDir, "skills");
-              const skillDst = path.join(skillsDir, "dooray-cli");
-
-              await fs.mkdir(skillsDir, { recursive: true });
-
-              await fs
-                .lstat(skillDst)
-                .then(() => fs.rm(skillDst, { recursive: true, force: true }))
-                .catch(() => {});
-
-              await fs.symlink(skillSrc, skillDst);
+              await installClaudeSkill(createSkillManagerContext());
               console.log(chalk.green("  ✓ Claude Code 스킬 설치 완료"));
             } catch (err) {
               console.log(

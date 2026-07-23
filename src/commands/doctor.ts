@@ -2,10 +2,35 @@ import { Command } from "commander";
 import chalk from "chalk";
 import path from "path";
 import fs from "fs/promises";
+import { createSkillManagerContext } from "../skill/context.js";
+import { inspectSkill, type SkillStatus } from "../skill/manager.js";
 import { getConfig, getConfigOrThrow } from "../config/store.js";
 import { getCacheStats } from "../cache/store.js";
 import { DoorayApiClient } from "../api/client.js";
 import { ensureMe } from "../resolvers/me.js";
+
+function formatSkillStatus(status: SkillStatus): string {
+  switch (status.status) {
+    case "current":
+      return chalk.green(`✅ 최신 (${status.currentVersion})`);
+    case "missing":
+      return chalk.red("❌ 미설치 — dooray skill install");
+    case "outdated":
+      return chalk.yellow(
+        `⚠️ 오래됨 (${status.installedVersion ?? "unknown"} → ${status.currentVersion}) — dooray skill update`,
+      );
+    case "broken":
+      return chalk.yellow("⚠️ 링크 깨짐 — dooray skill update");
+    case "corrupt":
+      return chalk.yellow("⚠️ 패키지 정보 손상 — dooray skill update");
+    case "unmanaged":
+      return chalk.yellow(
+        "⚠️ 관리되지 않는 항목 — dooray skill update --force",
+      );
+    case "modified":
+      return chalk.yellow("⚠️ 수정됨 — dooray skill update --force");
+  }
+}
 
 export const doctorCommand = new Command("doctor")
   .description("설정 및 환경 진단")
@@ -59,30 +84,10 @@ export const doctorCommand = new Command("doctor")
 
     if (claudeDirExists) {
       console.log(chalk.bold("\n🔧 Claude Code 스킬\n"));
-      const skillDst = path.join(claudeDir, "skills", "dooray-cli");
-      try {
-        const stat = await fs.lstat(skillDst);
-        if (stat.isSymbolicLink()) {
-          const target = await fs.readlink(skillDst);
-          const targetExists = await fs
-            .access(target)
-            .then(() => true)
-            .catch(() => false);
-          if (targetExists) {
-            console.log(`  dooray-cli: ${chalk.green("✅ 설치됨 (심볼릭 링크)")}`);
-          } else {
-            console.log(
-              `  dooray-cli: ${chalk.yellow("⚠️ 링크 깨짐 — dooray setup으로 재설치")}`,
-            );
-          }
-        } else {
-          console.log(`  dooray-cli: ${chalk.green("✅ 설치됨 (복사본)")}`);
-        }
-      } catch {
-        console.log(
-          `  dooray-cli: ${chalk.red("❌ 미설치 — dooray setup으로 설치")}`,
-        );
-      }
+      const skillStatus = await inspectSkill(createSkillManagerContext());
+      console.log(`  dooray-cli: ${formatSkillStatus(skillStatus)}`);
+      console.log(`  설치 경로:   ${skillStatus.destination}`);
+      console.log(`  링크 대상:   ${skillStatus.linkTarget ?? "-"}`);
     }
 
     // Summary

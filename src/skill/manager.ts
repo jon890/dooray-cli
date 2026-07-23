@@ -141,6 +141,26 @@ function utcTimestamp(): string {
   return new Date().toISOString().replace(/[:.]/g, "-");
 }
 
+async function assertSourceAvailable(source: string): Promise<void> {
+  const skillFile = path.join(source, "SKILL.md");
+
+  try {
+    const [sourceStat, skillFileStat] = await Promise.all([
+      fs.stat(source),
+      fs.stat(skillFile),
+    ]);
+
+    if (!sourceStat.isDirectory() || !skillFileStat.isFile()) {
+      throw new Error("invalid source shape");
+    }
+  } catch {
+    throw new DoorayCliError(
+      `패키지 스킬 파일을 찾을 수 없습니다: ${skillFile}`,
+      1,
+    );
+  }
+}
+
 async function renameWithRollback(
   from: string,
   to: string,
@@ -228,6 +248,8 @@ export async function installSkill(
   context: SkillManagerContext,
   options: { force?: boolean } = {},
 ): Promise<SkillInstallResult> {
+  await assertSourceAvailable(getSource(context));
+
   const previous = await inspectSkill(context);
 
   if (previous.status === "current") {
@@ -261,6 +283,15 @@ export async function installSkill(
 
     await renameWithRollback(tempPath, previous.destination, backupPath);
     const current = await inspectSkill(context);
+    if (current.status !== "current") {
+      if (backupPath != null) {
+        await fs.rename(backupPath, previous.destination).catch(() => {});
+      }
+      throw new DoorayCliError(
+        `Claude Code 스킬 설치 후 상태가 current가 아닙니다: ${current.status}`,
+        1,
+      );
+    }
 
     return {
       previous,
