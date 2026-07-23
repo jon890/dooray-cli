@@ -43,3 +43,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-032](032-wiki-page-delete.md) — wiki page delete 비공식(미문서화) DELETE endpoint (Issue #87)
 - [ADR-033](033-messenger-send.md) — messenger send / channel-send Dooray Messenger API 래핑 (Issue #88)
 - [ADR-034](034-wiki-tree-drill-down.md) — wiki tree 레벨별 drill-down 재귀 조립 (flat list endpoint 부재, Issue #101)
+- [ADR-035](035-managed-skill-lifecycle.md) — Claude Code 스킬 명시 갱신 + 버전·해시별 관리형 저장소

@@ -1,5 +1,7 @@
 ## ADR-018: `dooray setup` 에서 Claude Code 스킬 설치
 
+**상태**: ADR-035로 대체됨.
+
 **결정**: setup 마지막 단계에서 스킬 설치 여부를 물어보고 심볼릭 링크로 설치 (`~/.claude/skills/dooray-cli` → 패키지 내부 `skills/dooray-cli/`).
 idempotent 재실행 가능.
 npx 임시 경로 감지 시 경고 + skip (global install 전용).

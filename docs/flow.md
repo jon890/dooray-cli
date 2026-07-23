@@ -33,7 +33,7 @@ dooray setup
 3. API Key 입력 (마스킹, 발급 링크 안내)
 4. API 연결 테스트 → 실패 시 재입력 유도
 5. 메일 사용 여부 → Y: IMAP 계정·비밀번호 입력 / n: 건너뛰기
-6. Claude Code 스킬 설치 여부 → Y: `~/.claude/skills/dooray-cli` 심볼릭 링크 생성 / n: 건너뛰기
+6. Claude Code 스킬 설치 여부 → Y: `dooray skill install`과 같은 공용 설치 흐름 실행 / n: 건너뛰기
 7. 모든 입력 완료 후 config.json에 한 번에 저장 (Ctrl+C 시 저장 안 됨)
 
 재실행 시 기존 설정값이 기본값으로 표시된다.
@@ -54,6 +54,52 @@ dooray config set api-key <token>
 dooray config set base-url https://api.dooray.com
 dooray doctor
 ```
+
+## Claude Code 스킬 관리 흐름
+
+스킬 관리는 API·메일 설정과 독립적으로 실행한다.
+
+```bash
+dooray skill status          # 설치 상태와 CLI·스킬 버전 확인
+dooray skill install         # 미설치 상태에서 설치
+dooray skill update          # 현재 CLI 패키지에 포함된 스킬로 갱신
+dooray skill update --force  # 관리되지 않은 기존 파일을 백업한 뒤 교체
+```
+
+`status`는 상태 조회 자체가 성공하면 종료 코드 0을 반환한다.
+기본 출력은 사람이 읽는 설명, `--json`은 아래 구조, `--quiet`은 상태 토큰 하나를 출력한다.
+
+```json
+{
+  "schemaVersion": 1,
+  "status": "current",
+  "destination": "/home/user/.claude/skills/dooray-cli",
+  "source": "/package/skills/dooray-cli",
+  "currentVersion": "0.14.1",
+  "installedVersion": "0.14.1",
+  "linkTarget": "/home/user/.local/share/dooray-cli/skills/0.14.1-<digest>",
+  "managed": true
+}
+```
+
+상태 토큰은 다음과 같다.
+
+- `missing`: 설치되지 않음
+- `current`: 현재 CLI 패키지와 일치
+- `outdated`: 이전 패키지 또는 이전 관리 저장소를 가리킴
+- `broken`: 심볼릭 링크 대상이 없음
+- `unmanaged`: 사용자가 직접 만든 파일·디렉터리 또는 알 수 없는 링크
+- `modified`: 관리형 설치의 콘텐츠 해시가 매니페스트와 다름
+- `corrupt`: 관리형 매니페스트가 없거나 스키마 검증에 실패
+
+`install`과 `update`는 `current`에서 아무것도 바꾸지 않는다.
+기존 패키지 경로를 가리키는 `outdated`·`broken` 링크는 안전하게 교체한다.
+`unmanaged`·`modified`·`corrupt` 상태는 기본적으로 보존하고 종료 코드 3으로 실패한다.
+`--force`를 지정하면 기존 항목을 같은 디렉터리에 백업한 뒤 교체하며, 활성 링크 전환에 실패하면 백업을 복구한다.
+
+스킬 본문은 `~/.local/share/dooray-cli/skills/<packageVersion>-<contentDigest>/`에 버전별로 보존한다.
+`~/.claude/skills/dooray-cli`는 이 안정 저장소를 가리키므로 Node 버전별 npm 전역 경로가 바뀌어도 기존 설치가 끊어지지 않는다.
+자동 `postinstall`, 이전 버전 자동 삭제, 자동 롤백 명령은 제공하지 않는다.
 
 ## 일반 조회 흐름
 

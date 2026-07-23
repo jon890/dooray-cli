@@ -59,6 +59,10 @@ src/
     store.ts                # ~/.dooray/config.json CRUD
     types.ts                # Config 인터페이스
 
+  skill/
+    manager.ts              # 설치 상태 판정 + 안전한 install/update + 활성 링크 전환
+    manifest.ts             # 관리형 저장소 매니페스트 타입 가드 + 콘텐츠 SHA-256
+
   editor/
     index.ts                # $EDITOR 실행 + YAML frontmatter 직렬화·파싱
 
@@ -89,6 +93,7 @@ src/
 
   commands/
     setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)
+    skill.ts                # dooray skill status|install|update
     config.ts               # dooray config set|get
     doctor.ts               # dooray doctor
     cache.ts                # dooray cache clear|refresh
@@ -175,10 +180,13 @@ src/
 commands/* → resolvers/* → cache/store + api/client
 commands/* → formatters/*
 commands/* → utils/errors
+commands/setup|doctor|skill → skill/manager → skill/manifest
 editor/    → api/client (현재 데이터 fetch) + resolvers/member
 ```
 
-- `commands/setup.ts`는 config/store + api/client + @inquirer/prompts 의존 + fs(심볼릭 링크 생성)
+- `commands/setup.ts`는 config/store + api/client + @inquirer/prompts에 의존하고 스킬 파일시스템 처리는 `skill/manager.ts`에 위임
+- `skill/manager.ts`는 경로·현재 버전을 주입받아 명령 출력과 분리된 순수 상태 전이를 제공
+- `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
 - `api/client`는 순수 HTTP 래퍼. 비즈니스 로직 없음
 - `resolvers/*`는 캐시 우선 조회, 만료 시 api/client 호출
 - `commands/*`는 resolvers + api/client + formatters 조합
@@ -244,6 +252,9 @@ class DoorayApiClient {
 - 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 (ADR-020 도입 근거)
 
 ## 빌드·배포
+
+CLI 버전은 `package.json`을 단일 원천으로 삼고 `tsup` 빌드 시 번들에 주입한다.
+소스에 별도 버전 문자열을 두지 않으며, 빌드 검증에서 `dist/index.js --version`과 `package.json` 일치를 확인한다.
 
 ```json
 // package.json 핵심

@@ -15,10 +15,51 @@
     milestones/{projectId}.json     # 프로젝트별 마일스톤 캐시 (ADR-019)
     member-groups/{projectId}.json  # 프로젝트별 멤버 그룹 캐시 (`--mention-group`)
     templates/{projectId}.json      # 프로젝트별 템플릿 목록 캐시 (ADR-027, TTL 24h)
+
+~/.local/share/dooray-cli/
+  skills/
+    {packageVersion}-{contentDigest}/
+      SKILL.md
+      references/...
+      .dooray-skill.json            # 관리형 설치 매니페스트
+
+~/.claude/skills/
+  dooray-cli -> ~/.local/share/dooray-cli/skills/{packageVersion}-{contentDigest}/
 ```
 
 `templates/{projectId}.json` — `GET /project/v1/projects/{projectId}/templates` 응답의 id/templateName/메타만 보존 (body 는 미포함 — list 응답 자체가 body 제외).
 `--template <name|id>` 시 캐시에서 templateName 부분일치 후 단건 GET 으로 본문/interpolation 받음.
+
+---
+
+## Claude Code 스킬 매니페스트
+
+`.dooray-skill.json`은 설치된 스킬과 현재 CLI 패키지의 정합성을 판별하는 관리 메타데이터다.
+외부 파일이므로 읽을 때 반드시 모든 필드를 타입 가드로 검증한다.
+
+```typescript
+interface DooraySkillManifest {
+  schemaVersion: 1;
+  skillName: "dooray-cli";
+  packageName: "@bifos/dooray-cli";
+  packageVersion: string;
+  contentDigest: `sha256:${string}`;
+  installedAt: string; // ISO 8601
+  managedBy: "@bifos/dooray-cli";
+}
+```
+
+콘텐츠 해시는 다음 계약으로 계산한다.
+
+1. `.dooray-skill.json`을 제외한 `SKILL.md`와 `references/` 아래 정규 파일만 포함한다.
+2. 심볼릭 링크와 정규 파일이 아닌 항목은 거부한다.
+3. 상대 경로는 `/` 구분자로 정규화하고 코드 포인트 순으로 정렬한다.
+4. 각 파일의 UTF-8 상대 경로 길이·상대 경로·바이트 길이·원본 바이트를 SHA-256에 순서대로 반영한다.
+5. 줄바꿈을 정규화하지 않는다.
+
+저장 디렉터리 이름에는 전체 SHA-256을 사용한다.
+같은 버전과 해시의 디렉터리가 이미 있으면 매니페스트와 실제 콘텐츠를 검증한 뒤 재사용한다.
+새 설치는 같은 파일시스템의 임시 디렉터리에 완성한 후 `rename`하고, Claude Code 활성 링크도 임시 링크를 `rename`해 전환한다.
 
 ---
 

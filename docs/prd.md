@@ -26,6 +26,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 ### 포함
 
 - `dooray setup` — 대화형 초기 설정 마법사 (API endpoint·API key·메일 설정·Claude Code 스킬 설치)
+- `dooray skill` — Claude Code 스킬 설치 상태 조회·설치·갱신. Node 전역 설치 경로가 바뀌어도 명시적으로 최신 상태 복구
 - `dooray config` — API key·base URL·IMAP/SMTP 설정 (개별 수동 관리)
 - `dooray doctor` — 설정·연결 검증
 - `dooray cache` — 캐시 관리

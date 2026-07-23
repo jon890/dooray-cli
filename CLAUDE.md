@@ -271,7 +271,8 @@ bash scripts/benchmark.sh [project] [post-number] [wiki-page-id]
 | file 명령군 `--json` 출력 (post file + wiki page file)     | **ADR-031** (8 명령 스키마 통일 + `download-all` 부분 실패 표현 + quiet 모드 일관, Issue #73)  |
 | `post create --template` + `project templates` 명령        | **ADR-027** (interpolation 기본 true + 사용자 옵션 우선 override + `--field` 사용자 변수 제외) |
 | 파일 업로드/다운로드 (307 처리)                            | **ADR-015** (수동 redirect + Auth 헤더 재첨부)                                                 |
-| `dooray setup` 마법사 변경                                 | **ADR-016**, **ADR-018** (대화형 + 스킬 설치)                                                  |
+| `dooray setup` 마법사 변경                                 | **ADR-016**, **ADR-035** (대화형 + 스킬 설치 위임)                                             |
+| `dooray skill` 설치·진단·저장소 변경                       | **ADR-035** (명시 갱신 + 관리형 저장소 + 콘텐츠 해시)                                          |
 | 새 Commander.js 서브커맨드 추가                            | (ADR 없음 — 기존 `commands/*.ts` 패턴 참조)                                                    |
 | 새 출력 포맷 (table/json/quiet)                            | (ADR 없음 — 기존 `formatters/*.ts` 패턴 참조)                                                  |
 | 에러 처리·exitCode 정책                                    | (ADR 없음 — `src/utils/errors.ts` + `src/utils/exit-codes.ts` 직접 확인)                       |
