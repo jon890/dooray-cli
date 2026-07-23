@@ -6,3 +6,4 @@
 | RETRO-0002 | 2026-07-23 | 049-feat-skill-lifecycle | Commander 전역·하위 출력 옵션 충돌 | 해결 | 승격 안 함 |
 | RETRO-0003 | 2026-07-23 | 049-feat-skill-lifecycle | 중단 에이전트 재사용으로 인한 작업공간 격리 위반 | 해결 | 승격 안 함 |
 | RETRO-0004 | 2026-07-23 | 049-feat-skill-lifecycle | 설치 후 상태를 성공으로 가정한 검증 누락 | 해결 | 승격 안 함 |
+| RETRO-0005 | 2026-07-23 | 049-feat-skill-lifecycle | 리뷰 답글의 셸 명령 치환 방지 | 해결 | 승격 안 함 |
