@@ -1,6 +1,15 @@
-import { describe, expect, it, vi } from "vitest";
-import { authorizeMailLogout } from "./logout.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { clearMailCredentials } from "../../config/store.js";
+import { authorizeMailLogout, mailLogoutCommand } from "./logout.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
+
+vi.mock("../../config/store.js", () => ({
+  clearMailCredentials: vi.fn(),
+}));
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("authorizeMailLogout", () => {
   it("non-TTY 환경에서 --yes가 없으면 제거를 차단한다", async () => {
@@ -28,5 +37,24 @@ describe("authorizeMailLogout", () => {
       authorizeMailLogout(false, true, confirmRemoval),
     ).resolves.toBe(false);
     expect(confirmRemoval).toHaveBeenCalledOnce();
+  });
+});
+
+describe("mailLogoutCommand", () => {
+  it("제거 결과를 stderr에만 출력한다", async () => {
+    vi.mocked(clearMailCredentials).mockResolvedValueOnce(true);
+    const stdout = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation(() => true);
+    const stderr = vi
+      .spyOn(process.stderr, "write")
+      .mockImplementation(() => true);
+
+    await mailLogoutCommand.parseAsync(["node", "dooray", "--yes"]);
+
+    expect(stdout).not.toHaveBeenCalled();
+    expect(stderr).toHaveBeenCalledWith(
+      expect.stringContaining("메일 인증정보를 제거했습니다"),
+    );
   });
 });

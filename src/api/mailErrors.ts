@@ -25,6 +25,22 @@ function isAuthenticationFailure(error: unknown): boolean {
   );
 }
 
+function isConnectionFailure(error: unknown): boolean {
+  const code = getErrorField(error, "code");
+  return (
+    typeof code === "string" &&
+    [
+      "ECONNECTION",
+      "ECONNREFUSED",
+      "ECONNRESET",
+      "EHOSTUNREACH",
+      "ENETUNREACH",
+      "ESOCKET",
+      "ETIMEDOUT",
+    ].includes(code)
+  );
+}
+
 export function toMailConnectionError(
   protocol: MailProtocol,
   host: string,
@@ -42,8 +58,8 @@ export function toMailConnectionError(
 
   const reason =
     error instanceof Error && error.message ? `: ${error.message}` : "";
-  return new DoorayCliError(
-    `${protocol} 서버 연결에 실패했습니다 (${host}:${port})${reason}`,
-    EXIT_API_ERROR,
-  );
+  const message = isConnectionFailure(error)
+    ? `${protocol} 서버 연결에 실패했습니다 (${host}:${port})${reason}`
+    : `${protocol} 처리 중 오류가 발생했습니다${reason}`;
+  return new DoorayCliError(message, EXIT_API_ERROR);
 }

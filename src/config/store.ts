@@ -100,12 +100,7 @@ export function removeMailCredentials(config: Config): Config {
 
 export async function clearMailCredentials(): Promise<boolean> {
   const config = await getConfig();
-  if (!config) {
-    throw new DoorayCliError(
-      "설정 파일이 없습니다. 제거할 메일 인증정보가 없습니다.",
-      EXIT_CONFIG_ERROR,
-    );
-  }
+  if (!config) return false;
   const hadCredentials = !!(config.imapUsername || config.imapPassword);
   await saveConfig(removeMailCredentials(config));
   return hadCredentials;

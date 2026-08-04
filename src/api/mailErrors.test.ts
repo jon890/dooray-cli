@@ -49,12 +49,29 @@ describe("메일 연결 오류", () => {
       "IMAP",
       "imap.example.com",
       993,
-      new Error("certificate expired"),
+      Object.assign(new Error("connection refused"), {
+        code: "ECONNREFUSED",
+      }),
     );
 
     expect(error.exitCode).toBe(EXIT_API_ERROR);
     expect(error.message).toContain("imap.example.com:993");
-    expect(error.message).toContain("certificate expired");
+    expect(error.message).toContain("connection refused");
+  });
+
+  it("SMTP 메시지 오류를 서버 연결 실패로 오인하지 않는다", () => {
+    const error = toMailConnectionError(
+      "SMTP",
+      "smtp.example.com",
+      465,
+      Object.assign(new Error("Invalid recipient"), { code: "EENVELOPE" }),
+    );
+
+    expect(error.exitCode).toBe(EXIT_API_ERROR);
+    expect(error.message).toContain("SMTP 처리 중 오류");
+    expect(error.message).toContain("Invalid recipient");
+    expect(error.message).not.toContain("서버 연결에 실패");
+    expect(error.message).not.toContain("smtp.example.com:465");
   });
 });
 

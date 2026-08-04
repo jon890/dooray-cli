@@ -35,12 +35,12 @@ export const mailLogoutCommand = new Command("logout")
       },
     );
     if (!confirmed) {
-      process.stdout.write("취소되었습니다.\n");
+      process.stderr.write("취소되었습니다.\n");
       return;
     }
 
     const removed = await clearMailCredentials();
-    process.stdout.write(
+    process.stderr.write(
       removed
         ? chalk.green("✓ 메일 인증정보를 제거했습니다.\n")
         : "저장된 메일 인증정보가 없습니다.\n",
