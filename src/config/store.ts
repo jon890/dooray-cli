@@ -90,3 +90,18 @@ export async function saveConfig(config: Config): Promise<void> {
   await ensureDir();
   await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
 }
+
+export function removeMailCredentials(config: Config): Config {
+  const next = { ...config };
+  delete next.imapUsername;
+  delete next.imapPassword;
+  return next;
+}
+
+export async function clearMailCredentials(): Promise<boolean> {
+  const config = await getConfig();
+  if (!config) return false;
+  const hadCredentials = !!(config.imapUsername || config.imapPassword);
+  await saveConfig(removeMailCredentials(config));
+  return hadCredentials;
+}

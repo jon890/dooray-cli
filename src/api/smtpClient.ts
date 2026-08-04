@@ -3,6 +3,7 @@ import type { Config } from "../config/types.js";
 import { DEFAULTS } from "../config/types.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
+import { toMailConnectionError } from "./mailErrors.js";
 
 export interface SendMailOptions {
   to: string[];
@@ -68,7 +69,9 @@ export async function sendMail(
     mailOptions.text = opts.body;
   }
 
-  const info = await transporter.sendMail(mailOptions);
+  const info = await transporter.sendMail(mailOptions).catch((error: unknown) => {
+    throw toMailConnectionError("SMTP", smtp.host, smtp.port, error);
+  });
 
   return {
     messageId: info.messageId,

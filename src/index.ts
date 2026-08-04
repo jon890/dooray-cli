@@ -44,6 +44,7 @@ import { mailListCommand } from "./commands/mail/list.js";
 import { mailGetCommand } from "./commands/mail/get.js";
 import { mailSendCommand } from "./commands/mail/send.js";
 import { mailReplyCommand } from "./commands/mail/reply.js";
+import { mailLogoutCommand } from "./commands/mail/logout.js";
 import { messengerCommand } from "./commands/messenger/index.js";
 import { feedbackCommand } from "./commands/feedback.js";
 import { DoorayCliError } from "./utils/errors.js";
@@ -135,6 +136,7 @@ mailCommand.addCommand(mailListCommand);
 mailCommand.addCommand(mailGetCommand);
 mailCommand.addCommand(mailSendCommand);
 mailCommand.addCommand(mailReplyCommand);
+mailCommand.addCommand(mailLogoutCommand);
 
 program.addCommand(setupCommand);
 program.addCommand(skillCommand);
