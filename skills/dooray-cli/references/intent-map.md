@@ -67,6 +67,7 @@
 | 메일 상세 | `dooray mail get <uid>` |
 | 메일 발송 | `dooray mail send --to "..." --subject "..." --body "..."` |
 | 메일 답장 | `dooray mail reply <uid> --body "..."` |
+| 저장된 메일 인증정보 제거 | `dooray mail logout` (비대화형 환경: `--yes`) |
 | 메신저 1:1 다이렉트 메시지 | `dooray messenger send --to "<id\|email>" --body "..."` (`--to`는 id/이메일만, 이름 미지원) |
 | 메신저 대화방 메시지 | `dooray messenger channel-send --channel "<channelId\|이름>" --body "..."` (이름은 자신이 속한 방만 검색) |
 | 첨부파일 목록 | `dooray post file list <project> <number>` |
@@ -89,4 +90,3 @@
 | `dooray post edit --id <postId> --tag-remove <name>` | 특정 태그 제거 |
 
 > **제목 옵션 네이밍**: `post` 와 `wiki page` 모두 `--title` 표준. `post`의 `--subject`는 deprecated alias로 당분간 동작하되, 새 코드에서는 `--title` 사용을 권장.
-
