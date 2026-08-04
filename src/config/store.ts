@@ -90,3 +90,23 @@ export async function saveConfig(config: Config): Promise<void> {
   await ensureDir();
   await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
 }
+
+export function removeMailCredentials(config: Config): Config {
+  const next = { ...config };
+  delete next.imapUsername;
+  delete next.imapPassword;
+  return next;
+}
+
+export async function clearMailCredentials(): Promise<boolean> {
+  const config = await getConfig();
+  if (!config) {
+    throw new DoorayCliError(
+      "설정 파일이 없습니다. 제거할 메일 인증정보가 없습니다.",
+      EXIT_CONFIG_ERROR,
+    );
+  }
+  const hadCredentials = !!(config.imapUsername || config.imapPassword);
+  await saveConfig(removeMailCredentials(config));
+  return hadCredentials;
+}

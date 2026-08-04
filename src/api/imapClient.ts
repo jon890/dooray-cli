@@ -4,6 +4,7 @@ import type { Config } from "../config/types.js";
 import { DEFAULTS } from "../config/types.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
+import { toMailConnectionError } from "./mailErrors.js";
 
 export interface MailMessage {
   uid: number;
@@ -32,7 +33,7 @@ export function getImapConfigOrThrow(config: Config) {
   };
 }
 
-function createClient(config: Config): ImapFlow {
+export function createImapClient(config: Config): ImapFlow {
   const imap = getImapConfigOrThrow(config);
   return new ImapFlow({
     host: imap.host,
@@ -43,15 +44,42 @@ function createClient(config: Config): ImapFlow {
   });
 }
 
+export async function connectImapClient(
+  client: Pick<ImapFlow, "connect">,
+  config: Config,
+): Promise<void> {
+  const imap = getImapConfigOrThrow(config);
+  try {
+    await client.connect();
+  } catch (error) {
+    throw toMailConnectionError("IMAP", imap.host, imap.port, error);
+  }
+}
+
+export async function closeImapClient(
+  client: Pick<ImapFlow, "usable" | "logout" | "close">,
+): Promise<void> {
+  if (!client.usable) {
+    client.close();
+    return;
+  }
+
+  try {
+    await client.logout();
+  } catch {
+    client.close();
+  }
+}
+
 export async function listMails(
   config: Config,
   opts: { unread?: boolean; search?: string; limit?: number },
 ): Promise<MailMessage[]> {
-  const client = createClient(config);
+  const client = createImapClient(config);
   const limit = opts.limit ?? 20;
 
   try {
-    await client.connect();
+    await connectImapClient(client, config);
     const lock = await client.getMailboxLock("INBOX");
 
     try {
@@ -97,7 +125,7 @@ export async function listMails(
       lock.release();
     }
   } finally {
-    await client.logout();
+    await closeImapClient(client);
   }
 }
 
@@ -105,10 +133,10 @@ export async function getMail(
   config: Config,
   uid: number,
 ): Promise<MailMessage & { body: string }> {
-  const client = createClient(config);
+  const client = createImapClient(config);
 
   try {
-    await client.connect();
+    await connectImapClient(client, config);
     const lock = await client.getMailboxLock("INBOX");
 
     try {
@@ -151,6 +179,6 @@ export async function getMail(
       lock.release();
     }
   } finally {
-    await client.logout();
+    await closeImapClient(client);
   }
 }

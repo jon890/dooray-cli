@@ -538,6 +538,10 @@ dooray mail send --to "recipient@example.com" --subject "HTML 메일" --body "<h
 
 # 메일 답장 (스레드 유지)
 dooray mail reply <uid> --body "답장 내용"
+
+# 저장된 메일 사용자명·앱 비밀번호 제거
+dooray mail logout
+dooray mail logout --yes                   # 비대화형 환경
 ```
 
 ### 메신저

@@ -6,22 +6,18 @@ import { sendMail } from "../../api/smtpClient.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
-import { simpleParser } from "mailparser";
-import { ImapFlow } from "imapflow";
-import { getImapConfigOrThrow } from "../../api/imapClient.js";
+import {
+  closeImapClient,
+  connectImapClient,
+  createImapClient,
+  getImapConfigOrThrow,
+} from "../../api/imapClient.js";
 
 async function getMessageId(config: Parameters<typeof getImapConfigOrThrow>[0], uid: number): Promise<string | null> {
-  const imap = getImapConfigOrThrow(config);
-  const client = new ImapFlow({
-    host: imap.host,
-    port: imap.port,
-    secure: true,
-    auth: { user: imap.username, pass: imap.password },
-    logger: false,
-  });
+  const client = createImapClient(config);
 
   try {
-    await client.connect();
+    await connectImapClient(client, config);
     const lock = await client.getMailboxLock("INBOX");
     try {
       const msg = await client.fetchOne(String(uid), {
@@ -34,7 +30,7 @@ async function getMessageId(config: Parameters<typeof getImapConfigOrThrow>[0], 
       lock.release();
     }
   } finally {
-    await client.logout();
+    await closeImapClient(client);
   }
 }
 
