@@ -56,14 +56,6 @@ src/
 - 에러: `DoorayCliError(message, exitCode)` 로 통일
 - 출력: 데이터는 stdout, 스피너/에러는 stderr
 
-## 벤치마크
-
-```bash
-bash scripts/benchmark.sh <project> <post-number> [wiki-page-id]
-# project / post-number 는 필수 (BENCHMARK_PROJECT / BENCHMARK_POST_NUMBER 환경 변수로도 가능)
-# cold (캐시 없음, 3s) 와 warm (캐시 있음, 0.2s) 측정
-```
-
 ## 주의사항
 
 자기 규약 (CLAUDE.md "docs / ADR 작성 형식" 6가지 패턴) 자체 적용 — 한 bullet 다중 속성 압축 금지, sub-bullet 분리.
