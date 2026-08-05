@@ -83,7 +83,7 @@ pnpm test 2>&1 | tail -3
 # 기대: PASS
 
 # 7. 개인 식별 정보 사전 점검
-grep -rnE "<project>|<tenant>|@(nhn|<tenant>)\.com" .claude/agents/dooray-cli-executor.md
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" .claude/agents/dooray-cli-executor.md
 # 기대: 0건
 
 # 8. 한국어 표현 정책 위반 grep
