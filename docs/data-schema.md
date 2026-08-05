@@ -9,6 +9,8 @@
   cache/
     me.json                   # 내 정보 캐시
     projects.json             # 프로젝트 목록 캐시
+    projects-private.json     # 개인 프로젝트 목록 캐시
+    wikis.json                # 위키 목록 캐시 (projectId → wikiId 매핑)
     members/{projectId}.json       # 프로젝트별 멤버 캐시
     workflows/{projectId}.json      # 프로젝트별 워크플로우 캐시
     tags/{projectId}.json           # 프로젝트별 태그 캐시 (ADR-019)

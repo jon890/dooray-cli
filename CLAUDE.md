@@ -35,7 +35,7 @@ dooray                # 글로벌 링크 시
 - HTTP 클라이언트: `ky` 
 - 빌드: `tsup` (CJS 단일 번들, shebang 포함)
 - 패키지 매니저: `pnpm`
-- 캐시: `~/.dooray/cache/` 디렉토리에 파일별 분리 (me.json, projects.json, members/{projectId}.json, workflows/{projectId}.json, tags/{projectId}.json, templates/{projectId}.json)
+- 캐시: `~/.dooray/cache/` 에 파일별 분리 — 구조와 TTL 은 `docs/data-schema.md`
 - config: `~/.dooray/config.json` (env var 폴백 없음)
 - 에러: `DoorayCliError(message, exitCode)` 로 통일
 - 출력: 데이터는 stdout, 스피너/에러는 stderr
