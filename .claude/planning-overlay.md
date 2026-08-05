@@ -28,7 +28,7 @@
 ## docs 컨벤션
 
 5 핵심 docs — `docs/prd.md` / `docs/flow.md` / `docs/adr/`(ADR 1개 = 파일 1개, 목록은 `docs/adr/INDEX.md`) / `docs/data-schema.md` / `docs/code-architecture.md`.
-`CLAUDE.md` 는 코드 작업 가이드 + 상황별 ADR 참조 표. `README.md` + `skills/dooray-cli/SKILL.md` 는 외부 facing 사용자 가이드.
+`CLAUDE.md` 는 코드 작업 지침. `README.md` + `skills/dooray-cli/SKILL.md` 는 외부 facing 사용자 가이드.
 
 ### 변경 유형별 docs 영향 표 (필수 — 누락 0 화)
 
@@ -44,7 +44,7 @@
 | 의존성 추가 / 빌드 설정 | 빌드 명령 (해당 시) | ADR 작성 전 점검 후 ADR | 기술 스택 표 | — | — | — | — | — |
 
 **갱신 시점 분리**: planning 결정 docs(`adr/`·`code-architecture.md`·`CLAUDE.md`·`data-schema.md`·`flow.md`·`prd.md`)는 **task 생성 전 즉시 반영 + commit**.
-`README.md`·`skills/dooray-cli/SKILL.md`(사용자 가이드)는 코드 산출물에 의존하므로 **마지막 phase(N-1)**에서 갱신한다.
+`README.md` 와 `skills/dooray-cli/`(사용자 가이드)는 코드 산출물에 의존하므로 **마지막 phase** 에서 갱신한다.
 이 분리를 phase 작성 시 명시적으로 따른다.
 planning 결정 docs 를 phase 안에서 고치면 안 된다.
 
@@ -131,7 +131,7 @@ planning 결정 docs 를 phase 안에서 고치면 안 된다.
   - `docs/pitfalls/code-review/` — code-reviewer 의 코드 검사 회피
 - **docs-verifier 흡수 원칙**: docs-verifier(`.claude/agents/dooray-cli-docs-verifier.md`)의 반복 지적은 별도 회고 docs 를 신설하지 않는다.
   - 위 "변경 유형별 docs 영향 표"에 행 추가/보강으로 흡수한다.
-  - `build-with-teams/SKILL.md`의 docs-verifier 검증 항목 7~10 은 이 표를 거울처럼 참조한다 — 표 수정 시 그쪽도 자연스럽게 커버되는지 확인.
+  - 코어 `build-with-teams/SKILL.md` 의 docs-verifier 검증 단계가 이 표를 그대로 검증 기준으로 쓴다 — 표를 수정하면 그쪽 검증도 함께 달라지는지 확인한다.
 - **개인 식별 정보 노출 금지**: task 파일 제출 전 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션의 검증 grep 을 실행해 0건을 확인한다.
   - 코어 `verify-task.sh` 5 패턴에 더해 이 검사도 self-check 대상이다.
 

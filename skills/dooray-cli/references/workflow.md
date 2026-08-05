@@ -13,14 +13,6 @@
 
 ## 체이닝
 
-### 업무를 찾아 완료 처리
-
-```bash
-dooray post search <project> "graceful shutdown" --json
-# → [{ "number": 42, "subject": "graceful shutdown 구현", ... }]
-dooray post done <project> 42
-```
-
 ### 프로젝트를 찾아 업무 생성
 
 ```bash
@@ -31,13 +23,6 @@ dooray post create <project> \
   --title "주간보고 2026-W14" \
   --body "## 이번 주 성과\n- 항목1\n- 항목2" \
   --to "김철수"
-```
-
-### 업무 조회 후 댓글 추가
-
-```bash
-dooray post get <project> 42 --json
-dooray post comment add <project> 42 --body "진행 상황 업데이트: 80% 완료"
 ```
 
 ### 댓글에 스크린샷 첨부

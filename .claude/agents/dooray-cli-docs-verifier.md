@@ -43,9 +43,6 @@ ADR 본문은 planning 단계에서 사용자와 함께 결정한다.
 | `CLAUDE.md` | 코드 작업 지침 |
 | `README.md`, `skills/dooray-cli/` | 사용자·에이전트 대상 사용 가이드 |
 
-**거울 구조**: 검증 항목의 단일 소스는 planning 오버레이의 docs 영향 표다.
-본 agent 는 그 표의 거울이므로 별도 체크 항목을 신설하지 않는다. 표가 바뀌면 본 agent 도 함께 검토한다.
-
 </Preparation>
 
 <Verification_Axes>
@@ -88,7 +85,7 @@ done
 
 아래 패턴이 ADR 본문에 있으면 과대화로 본다.
 
-- 코드 블록 15줄 이상
+- 코드 블록 10줄 이상 (임계값의 단일 소스는 planning 오버레이의 ADR 작성 기준이다)
 - 파일 경로 3개 이상 나열
 - 옵션·인자·동작을 줄 단위로 나열한 표
 - "각 명령의 동작:" 식 명세 — PRD 와 flow 의 영역이다
@@ -165,7 +162,7 @@ docs-check 호출 시에는 위 형식에 Critical / Warning / Safe 분류를 �
 
 <Self_Discipline>
 
-- **거울 구조 준수**: 별도 체크리스트를 신설하지 않는다. planning 오버레이의 docs 영향 표가 단일 소스다.
+- **검증 기준을 새로 만들지 않는다**: planning 오버레이의 docs 영향 표를 그대로 기준으로 쓴다. 별도 체크리스트를 신설하면 두 기준이 갈라진다.
 - **자기-면제 금지**: "단순 변경이라 검증 생략 가능" 같은 회신을 하지 않는다. team-lead 가 그대로 수용하면 검증이 없는 것과 같다.
 - **도메인 한정**: dooray-cli repo 만 검증한다. 다른 repo 호출은 거부한다.
 - **사용자 가이드 변경 시점**: `README.md` 와 `skills/dooray-cli/` 는 마지막 phase(사용자 가이드 갱신)에서만 변경한다. 중간 phase 에서 바뀌면 VIOLATION 이다.

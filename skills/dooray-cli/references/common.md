@@ -56,8 +56,6 @@ CLI 를 새 버전으로 설치했으면 `dooray skill update` 를 직접 실행
 | `--json` | JSON 출력 (stdout) | 파싱, 체이닝 |
 | `--quiet` | ID만 출력 | 스크립팅 |
 
-**AI 에이전트는 `--json`을 사용하여 구조화된 데이터를 파싱하라.**
-
 ---
 
 ## 멤버 검색 (`member search`)
@@ -85,8 +83,6 @@ CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI �
 | 위키 페이지 이동 (상위 페이지 변경) | 웹 UI (`https://{tenant}.dooray.com/wiki/...`) | Dooray REST API 미지원 |
 | 프로젝트 삭제 | 웹 UI (admin 페이지) | API 미지원 |
 
-위키 페이지를 잘못 만든 경우(테스트/중복)는 `dooray wiki page delete <project> <page-id>` 로 정리한다.
-공식 문서화된 endpoint 가 아니라 서버 정책이 바뀌면 동작이 달라질 수 있음에 유의한다.
 
 ---
 
@@ -104,8 +100,6 @@ dooray feedback --last --title "에러 제목" --body "추가 설명" --dry-run 
 dooray feedback --last --title "에러 제목" --body "추가 설명"            # 실제 등록
 ```
 
-> **참고**: `--last` 모드는 `trackLastRun: true` (opt-in)가 설정된 경우에만 직전 실패 명령이 자동 기록됨.
-> argv는 시크릿 패턴(`--api-key`/`--token`/`Authorization`) 마스킹 후 저장.
 
 
 ## 에러 핸들링
@@ -136,12 +130,14 @@ AI agent 가 `member=me` 응답에 없는 프로젝트의 업무를 다뤄야 �
    - 사용자에게 "프로젝트 ID 가 필요합니다 — Dooray UI 의 프로젝트 URL 에서 확인 가능" 요청
    - 또는 `dooray project list --type private` 로 private 캐시 갱신 시도
 
-3. **권한 없는 projectId 입력 시**: resolver 는 통과하고 후속 API 가 4xx 를 낸다. 에러 메시지로 권한 부재를 확인해 사용자에게 보고한다.
+3. **권한 없는 projectId**: 4xx 로 실패한다. 에러 메시지를 사용자에게 그대로 보고한다.
 
 
 ## 캐시
 
-프로젝트, 멤버, 워크플로우, 위키 정보는 `~/.dooray/cache/`에 캐시된다.
+이름 기반 조회 대상(프로젝트·멤버·태그·템플릿 등)은 `~/.dooray/cache/` 에 캐시된다.
+전체 목록과 TTL 은 `docs/data-schema.md` 에 있다.
+
 캐시가 오래된 것 같으면:
 
 ```bash

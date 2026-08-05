@@ -97,7 +97,7 @@ dooray post get <project> 42                  # 업무 상세
 dooray post get <project> 42 --json           # JSON 출력
 ```
 
-#### 업무 식별 방식 (post 하위 16개 명령 공통)
+#### 업무 식별 방식 (post 하위 명령 공통)
 
 | 방식 | 예시 |
 |---|---|

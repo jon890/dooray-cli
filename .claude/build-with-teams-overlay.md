@@ -19,84 +19,22 @@ phase 완료 조건은 `pnpm tsc --noEmit && pnpm run build && pnpm test` 다.
 
 각 agent 의 동작은 그 파일이 단일 소스다.
 
-## index.json 스키마 (레포 특화 — 강제)
+## planning 오버레이가 단일 소스인 항목
 
-코어 예시와 다른 점:
+아래는 `.claude/planning-overlay.md` 가 정하고 이 워크플로가 그대로 따른다.
 
-- task 레벨 — `related_docs`/`depends_on` 대신 `updated_at`/`current_phase`/`error_message`/`blocked_reason` 필수
-- phase 레벨 — `model` 대신 `allowedTools` 필수
+| 항목 | planning 오버레이의 절 |
+| --- | --- |
+| `index.json` 스키마와 검증 체크리스트 | "index.json 스키마" |
+| task 디렉터리 이름과 번호 부여 | "plan 네이밍" |
+| 회피 패턴 self-check 경로 | "검증" |
+| docs-first 두 커밋 순서 | "branch / 커밋 / 핸드오프" |
 
-```jsonc
-{
-  "name": "{NNN}-{task-name}",           // 디렉터리명과 일치
-  "description": "무엇을 구현하는 task인지 한 줄 설명",
-  "created_at": "2026-07-14T00:00:00Z",   // ISO 8601
-  "updated_at": "2026-07-14T00:00:00Z",   // team-lead 자동 갱신
-  "status": "pending",                    // pending | running | completed | failed | blocked
-  "current_phase": 0,                     // 0 = 미시작
-  "total_phases": 3,                      // phases 배열 길이와 일치
-  "error_message": null,
-  "blocked_reason": null,
-  "phases": [
-    {
-      "number": 1,                        // 1부터 순차 증가
-      "title": "phase 제목",
-      "file": "phase-01.md",
-      "status": "pending",
-      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"],
-      "model": "sonnet"                   // (선택) haiku | sonnet | opus
-    }
-  ]
-}
-```
-
-모든 필드 필수 — 생략하면 build-with-teams 가 task 를 읽지 못한다.
-
-검증 체크리스트:
-
-- `total_phases` == `phases` 배열 길이
-- 모든 phase 에 `number`/`title`/`file`/`status`/`allowedTools` 존재
-- `number` 가 1부터 순차 증가
-- 각 `file` 이 실제 존재
-
-## common-pitfalls 경로
-
-critic/executor 는 task 파일 제출·실행 전 아래 경로를 self-check 한다:
-
-- `docs/pitfalls/plan/` — critic 의 plan 평가 회피
-- `docs/pitfalls/team/` — team 협업 회피
-- `docs/pitfalls/code-review/` — code-reviewer 의 코드 검사 회피
-
-라우터는 `docs/pitfalls/INDEX.md`.
-
-**docs-verifier 흡수 원칙**: docs-verifier 의 반복 지적은 별도 회고 docs 를 신설하지 않고 `.claude/planning-overlay.md` "변경 유형별 docs 영향 표"에 행 추가·보강으로 흡수한다.
-
-## 개인 식별 정보 / 사내 식별자 노출 금지
+## 개인 식별 정보 노출 금지
 
 phase 완료 전과 PR 생성 전에 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션의 검증 grep 을 실행해 0건을 확인한다.
 
-## plan 네이밍 (코어 기본값과 다름)
+## PR 본문
 
-**형식**: `tasks/{NNN}-{task-name}/` — 코어 기본값(`plan{N}-{slug}`)과 다르다. `plan` 접두어를 붙이지 않는다.
-
-- `NNN` = 3자리 zero-padded 순차 번호. Issue 연결은 `index.json`의 `description` 필드에 남긴다.
-- `task-name` = 케밥 케이스 요약에 카테고리 접두(`feat-`/`fix-`/`refactor-`/`chore-`/`docs-`)를 붙인다.
-
-**번호 충돌 방지**:
-
-```bash
-# cwd: <repo root>
-ls tasks/ | grep -E "^[0-9]{3}-" | sort
-gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
-```
-
-다음 가용 번호(가장 큰 번호 + 1) 사용. 번호 없는 레거시 폴더는 count 에서 제외.
-
-**서브넘버 규칙**: 동일 도메인 확장·동일 패턴 복제 후속 작업은 같은 번호에 서브넘버(`006-2-feat-...`). 다른 도메인·독립 실행이면 별도 번호.
-
-## 커밋 컨벤션
-
-- **task 파일 + planning docs**: main 브랜치 직접 commit — 별도 branch 분기 금지.
-- **커밋 순서 (docs-first, 2개 커밋으로 분리)**:
-  1. docs 최신화 커밋 + push (`docs(scope): ...`) — task 생성 전 필수
-  2. task 파일(`index.json` + `phase-*.md`) 커밋 + push — 실행 전 필수
+commit 목록을 나열하지 않는다 — GitHub 의 Commits 탭에 이미 있다.
+개요와 결정 근거, 검증 결과만 담는다.

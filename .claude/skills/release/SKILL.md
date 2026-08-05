@@ -71,9 +71,8 @@ git log ${LAST_TAG}..HEAD --grep="#[0-9]" --oneline
 
 신규 명령이나 옵션이 있으면 사용자 문서에 반영됐는지 확인한다.
 
-```bash
-grep -rnE "<신규 옵션|신규 명령>" README.md skills/
-```
+2단계에서 도출한 명령·옵션 문자열 **하나씩** `grep -rn '<그 문자열>' README.md skills/` 로 조회한다.
+히트가 0이면 누락이다. 플레이스홀더를 그대로 정규식에 넣으면 0건이 나와 통과로 오독된다.
 
 
 | 위치                              | 무엇을 확인                               |
@@ -139,10 +138,7 @@ git commit -m "chore: bump version to v{version}"
 git push origin main
 ```
 
-**복구 — 실수로 PR branch 에 bump commit 박았을 때**:
-
-- 해당 commit 이 main 의 linear 자식이면 (대부분의 경우): `git switch main && git merge {bump-sha} --ff-only && git push origin main`. force-push 불요
-- linear 아니면 `cherry-pick` 후 PR branch 의 commit 정리
+bump 커밋이 다른 branch 에 들어갔으면 main 으로 옮긴 뒤 진행한다.
 
 ### 7. Git Tag & GitHub Release
 
@@ -150,6 +146,8 @@ git push origin main
 git tag -a v{version} -m "v{version}"
 git push origin v{version}
 ```
+
+기존 태그를 force-update 하지 않는다. 새 태그만 만든다.
 
 릴리스 노트는 **2단계 분석 결과를 그대로 활용**해 작성한다 (Highlights / 신규 명령 / 신규 옵션 / 버그 수정 / **Closes** / Full Changelog 링크).
 
@@ -223,12 +221,4 @@ done
 - 후속 작업이 남은 이슈 (예: MVP만 구현되고 추가 옵션 후속)
 - 이슈 본문 범위와 구현 범위가 부분적으로만 일치
 → 이런 케이스는 close 대신 **comment**로 진행 상황만 기록 + 이슈 open 유지
-
-## 주의사항
-
-- **빌드 실패 시 릴리스하지 않는다**
-- **README/스킬 문서 동기화 누락 시**: 사용자에게 보고하고 보완 commit 후 진행 (사용자가 명시적으로 건너뛰기를 동의하지 않는 한)
-- **npm publish는 사용자가 직접 OTP를 입력해야 한다**
-- 이전 태그를 force-update하지 않는다 (새 태그만 생성)
-- **이슈 close는 publish 완료 후에만** — npm publish 실패하면 release는 미완성, close 보류
 

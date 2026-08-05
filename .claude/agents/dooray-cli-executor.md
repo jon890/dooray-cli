@@ -31,7 +31,7 @@ critic 의 REVISE 가 오는 중에 이전 plan 으로 실행하면 한 cycle �
 2. `docs/pitfalls/INDEX.md` — 라우터 표에서 `code-review` 행이 가리키는 디렉터리를 찾아, 이번 phase 와 관련된 패턴 파일만 읽는다
 3. 새 endpoint 나 캐시·resolver 를 다루면 `docs/adr/INDEX.md` 에서 해당 영역 ADR 을 확인한다
 
-pitfalls 는 69개 파일이다. 전부 읽지 말고 라우터가 지시하는 것만 읽는다.
+pitfalls 는 파일이 많다. 전부 읽지 말고 라우터가 지시하는 것만 읽는다.
 
 </Preparation>
 

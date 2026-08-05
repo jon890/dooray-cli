@@ -8,7 +8,7 @@ ADR 작성 전 [`planning` 오버레이의 ADR 작성 전 점검](../../.claude/
 
 ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크로 찾는다.
 
-상황별 코드 작업 시 참조할 ADR 은 [`CLAUDE.md` 상황별 ADR 필수 참조 표](../../CLAUDE.md) 에서 찾는다.
+아래 목록이 영역별 라우터다.
 
 ---
 
