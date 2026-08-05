@@ -61,11 +61,17 @@ planning 오버레이의 "변경 유형별 docs 영향 표"가 docs 갱신의 **
 
 ## 5. 개인 식별 정보 / 사내 식별자 노출 금지
 
-`README.md`/`docs/`/`skills/`/`CLAUDE.md` 에 사내 프로젝트 코드 (`tc-ocr`), NHN 도메인, 실제 19자리 ID, 사내 이메일, 실명 등 노출 금지. 검증 grep:
+사내 프로젝트 코드, 사내 도메인, 실제 19자리 ID, 사내 이메일, 실명 등 노출 금지.
+
+- 대상: `README.md` / `docs/` / `skills/` / `CLAUDE.md` / `.claude/` / `src/`
+- 금지 유형의 단일 소스는 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션 — 본 agent 본문에 사내 식별자를 나열하면 그 자체가 노출이다 (`.claude/` 도 public repo 에 포함된다).
+
+검증 grep — 공개 도메인 화이트리스트 밖을 검출한다:
 
 ```bash
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
-grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
+grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" README.md skills/ docs/ CLAUDE.md .claude/ src/ 2>/dev/null \
+  | grep -vE "dooray\.com|gov-dooray\.com|dooray\.co\.kr|gov-dooray\.co\.kr|helpdesk\.dooray\.com|github\.com|npmjs\.com|example\.com|youtube\.com|anthropic\.com|x\.com"
+grep -rnE "[0-9]{15,}" README.md skills/ docs/ .claude/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
 ```
 
 ## 6. 용어 회피

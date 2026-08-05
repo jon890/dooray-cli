@@ -4,16 +4,23 @@
 #   cold: 캐시 없이 전체 API 호출 커맨드 측정
 #   warm: 캐시 프라이밍 후 캐시만으로 응답 가능한 커맨드만 측정
 #
-# Usage: ./scripts/benchmark.sh [project] [post-number] [wiki-page-id]
-# Env:   BENCHMARK_THRESHOLD=3      (cold, default)
+# Usage: ./scripts/benchmark.sh <project> <post-number> [wiki-page-id]
+# Env:   BENCHMARK_PROJECT / BENCHMARK_POST_NUMBER  (인자 대신 사용 가능)
+#        BENCHMARK_THRESHOLD=3      (cold, default)
 #        BENCHMARK_THRESHOLD_WARM=0.2  (warm, default)
 #
 set -u
 
 CLI="node $(dirname "$0")/../dist/index.js"
-PROJECT="${1:-tc-ocr}"
-POST_NUMBER="${2:-172}"
+PROJECT="${1:-${BENCHMARK_PROJECT:-}}"
+POST_NUMBER="${2:-${BENCHMARK_POST_NUMBER:-}}"
 WIKI_PAGE_ID="${3:-}"
+
+if [ -z "$PROJECT" ] || [ -z "$POST_NUMBER" ]; then
+  echo "Usage: ./scripts/benchmark.sh <project> <post-number> [wiki-page-id]" >&2
+  echo "       (또는 BENCHMARK_PROJECT / BENCHMARK_POST_NUMBER 환경 변수)" >&2
+  exit 1
+fi
 THRESHOLD_COLD="${BENCHMARK_THRESHOLD:-3}"
 THRESHOLD_WARM="${BENCHMARK_THRESHOLD_WARM:-0.2}"
 CACHE_DIR="$HOME/.dooray/cache"

@@ -71,10 +71,14 @@ critic/executor 는 task 파일 제출·실행 전 아래 경로를 self-check �
 
 ## 개인 식별 정보 / 사내 식별자 노출 금지
 
+금지 유형과 검증 grep 의 단일 소스는 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션.
+사내 식별자를 여기에 나열하면 그 자체가 노출이므로, 공개 도메인 화이트리스트 외 검출 방식을 쓴다.
+
 ```bash
 # cwd: <repo root>
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
-grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
+grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" README.md skills/ docs/ CLAUDE.md .claude/ src/ 2>/dev/null \
+  | grep -vE "dooray\.com|gov-dooray\.com|dooray\.co\.kr|gov-dooray\.co\.kr|helpdesk\.dooray\.com|github\.com|npmjs\.com|example\.com|youtube\.com|anthropic\.com|x\.com"
+grep -rnE "[0-9]{15,}" README.md skills/ docs/ .claude/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
 ```
 
 ## plan 네이밍 (코어 기본값과 다름)
