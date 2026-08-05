@@ -6,7 +6,7 @@ import { wikiPageFileDownloadAllCommand } from "./download-all.js";
 import { wikiPageFileDeleteCommand } from "./delete.js";
 
 export const wikiPageFileCommand = new Command("file")
-  .description("위키 페이지 첨부파일 관련 명령 (Issue #70, ADR-029)");
+  .description("위키 페이지 첨부파일 관련 명령");
 
 wikiPageFileCommand.addCommand(wikiPageFileListCommand);
 wikiPageFileCommand.addCommand(wikiPageFileUploadCommand);

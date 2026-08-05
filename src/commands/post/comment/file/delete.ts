@@ -11,7 +11,7 @@ import { EXIT_API_ERROR } from "../../../../utils/exit-codes.js";
 import { removeFileReference } from "../../../../utils/comment-files.js";
 
 export const deleteCommentFileCommand = new Command("delete")
-  .description("댓글 첨부 파일 삭제 (댓글 본문 reference 제거 + 파일 삭제, ADR-024)")
+  .description("댓글 첨부 파일 삭제 (본문 reference 제거와 파일 삭제를 함께 수행)")
   .argument("[arg1]", "프로젝트 코드, Dooray URL, 또는 (`--id`/`--url` 모드일 때) 댓글 ID")
   .argument("[arg2]", "업무 번호 또는 (`--id`/`--url` 모드일 때) 파일 ID")
   .argument("[arg3]", "댓글 ID (positional 모드)")

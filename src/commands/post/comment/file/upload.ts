@@ -10,7 +10,7 @@ import { EXIT_API_ERROR } from "../../../../utils/exit-codes.js";
 import { appendFileReference } from "../../../../utils/comment-files.js";
 
 export const uploadCommentFileCommand = new Command("upload")
-  .description("댓글에 파일 업로드 (post-level 파일 업로드 + 댓글 reference 추가, ADR-024)")
+  .description("댓글에 파일 업로드 (본문에 reference 자동 추가)")
   .argument("[arg1]", "프로젝트 코드, Dooray URL, 또는 (`--id`/`--url` 모드일 때) 댓글 ID")
   .argument("[arg2]", "업무 번호 또는 (`--id`/`--url` 모드일 때) 파일 경로")
   .argument("[arg3]", "댓글 ID (positional 모드)")

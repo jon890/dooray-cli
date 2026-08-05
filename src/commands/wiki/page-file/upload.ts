@@ -11,7 +11,7 @@ import { printJson } from "../../../formatters/table.js";
 import { wikiInlineImageSnippet } from "../../../utils/wiki-snippet.js";
 
 export const wikiPageFileUploadCommand = new Command("upload")
-  .description("위키 페이지 첨부파일 업로드 (multipart type 순서 강제, ADR-029)")
+  .description("위키 페이지 첨부파일 업로드")
   .argument("[arg1]", "프로젝트 코드, Dooray Wiki URL, 또는 (`--id`/`--url` 모드일 때) 파일 경로")
   .argument("[arg2]", "page-id 또는 (`--id`/`--url` 모드일 때) 파일 경로")
   .argument("[arg3]", "파일 경로 (positional 3개 모드)")
