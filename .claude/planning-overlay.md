@@ -75,13 +75,10 @@ planning 결정 docs 를 phase 안에서 고치면 안 된다.
 
 ### 공개 문서 내부 참조 제거 (필수 — README / SKILL 갱신 시)
 
-`README.md`·`skills/dooray-cli/SKILL.md`는 외부 facing 이라 `ADR-NNN`·`Issue #NN`·`task NNN` 같은 내부 참조를 남기지 않는다. 문장에 녹은 참조도 번호를 빼고 재작성.
+`README.md` 와 `skills/` 는 사용자·에이전트 대상이라 `ADR-NNN`, `Issue #NN`, `task NNN` 같은 내부 참조를 남기지 않는다.
+문장에 녹은 참조도 번호를 빼고 재작성한다.
 
-```bash
-# cwd: <repo root>
-grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKILL.md 2>/dev/null
-# 0건이어야 함
-```
+검증 grep 은 `CLAUDE.md` "공개 문서 — 내부 참조 번호 제외" 섹션에 있다.
 
 ## index.json 스키마 (레포 특화 — `build-with-teams` 강제)
 
@@ -135,18 +132,8 @@ grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKI
 - **docs-verifier 흡수 원칙**: docs-verifier(`.claude/agents/dooray-cli-docs-verifier.md`)의 반복 지적은 별도 회고 docs 를 신설하지 않는다.
   - 위 "변경 유형별 docs 영향 표"에 행 추가/보강으로 흡수한다.
   - `build-with-teams/SKILL.md`의 docs-verifier 검증 항목 7~10 은 이 표를 거울처럼 참조한다 — 표 수정 시 그쪽도 자연스럽게 커버되는지 확인.
-- **개인 식별 정보 / 사내 식별자 노출 금지**: 사내 프로젝트 코드·사내 도메인·실제 19자리 ID·사내 이메일·실명 노출 금지.
-  - 대상: `README.md` / `docs/` / `skills/` / `CLAUDE.md` / `.claude/` / `src/`
-  - 금지 유형과 검증 grep 의 단일 소스는 `CLAUDE.md` 해당 섹션 — 사내 식별자를 여기에 나열하면 그 자체가 노출이다.
-
-```bash
-# cwd: <repo root>
-grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" README.md skills/ docs/ CLAUDE.md .claude/ src/ 2>/dev/null \
-  | grep -vE "dooray\.com|gov-dooray\.com|dooray\.co\.kr|gov-dooray\.co\.kr|helpdesk\.dooray\.com|github\.com|npmjs\.com|example\.com|youtube\.com|anthropic\.com|x\.com"
-grep -rnE "[0-9]{15,}" README.md skills/ docs/ .claude/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
-```
-
-- 코어 `verify-task.sh` 5 패턴에 추가로 위 두 grep 도 self-check 대상.
+- **개인 식별 정보 노출 금지**: task 파일 제출 전 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션의 검증 grep 을 실행해 0건을 확인한다.
+  - 코어 `verify-task.sh` 5 패턴에 더해 이 검사도 self-check 대상이다.
 
 ## plan 네이밍
 

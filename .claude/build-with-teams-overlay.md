@@ -2,20 +2,22 @@
 
 공용 코어(`~/.claude/skills/build-with-teams`)에 dooray-cli 특화를 주입한다.
 
-## 통합 검증 명령
+## 검증 명령
 
-`CLAUDE.md` "빌드 & 실행" 섹션이 단일 소스. 요약:
+phase 완료 조건은 `pnpm tsc --noEmit && pnpm run build && pnpm test` 다.
+개별 명령의 역할은 `CLAUDE.md` "빌드 & 실행" 이 단일 소스다.
 
-- **패키지 매니저**: `pnpm`
-- **통합 검증**: `pnpm run build && pnpm test` (테스트 없으면 `pnpm run build` 단독)
-- **타입 체크 전용**: `pnpm tsc --noEmit` (런타임 번들에는 미사용)
-- **마이그레이션 도구**: 없음 — `~/.dooray/cache/` 파일 기반 캐시. schema 변경은 `src/cache/`로 처리
-- **worktree 직후 setup**: `pnpm install`
+코어가 묻는 항목의 답은 이렇다.
+
+- worktree 를 만든 직후 `pnpm install` 을 실행한다
+- 마이그레이션 도구는 없다 — `~/.dooray/cache/` 파일 기반이므로 스키마 변경은 `src/cache/` 에서 처리한다
 
 ## 에이전트 이름
 
-- **executor**: `dooray-cli-executor` (project-local, `.claude/agents/dooray-cli-executor.md`) — phase 시작 직전 TOP 패턴 self-check grep 자체 수행
-- **docs-verifier**: `dooray-cli-docs-verifier` (project-local, `.claude/agents/dooray-cli-docs-verifier.md`) — ADR·docs 영향 표·개인 식별 정보 사전 점검 등 도메인 지식 내장
+- **executor**: `dooray-cli-executor` (`.claude/agents/dooray-cli-executor.md`)
+- **docs-verifier**: `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`)
+
+각 agent 의 동작은 그 파일이 단일 소스다.
 
 ## index.json 스키마 (레포 특화 — 강제)
 
@@ -71,15 +73,7 @@ critic/executor 는 task 파일 제출·실행 전 아래 경로를 self-check �
 
 ## 개인 식별 정보 / 사내 식별자 노출 금지
 
-금지 유형과 검증 grep 의 단일 소스는 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션.
-사내 식별자를 여기에 나열하면 그 자체가 노출이므로, 공개 도메인 화이트리스트 외 검출 방식을 쓴다.
-
-```bash
-# cwd: <repo root>
-grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" README.md skills/ docs/ CLAUDE.md .claude/ src/ 2>/dev/null \
-  | grep -vE "dooray\.com|gov-dooray\.com|dooray\.co\.kr|gov-dooray\.co\.kr|helpdesk\.dooray\.com|github\.com|npmjs\.com|example\.com|youtube\.com|anthropic\.com|x\.com"
-grep -rnE "[0-9]{15,}" README.md skills/ docs/ .claude/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
-```
+phase 완료 전과 PR 생성 전에 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션의 검증 grep 을 실행해 0건을 확인한다.
 
 ## plan 네이밍 (코어 기본값과 다름)
 

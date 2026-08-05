@@ -25,7 +25,7 @@ critic 의 REVISE 가 오는 중에 이전 plan 으로 실행하면 한 cycle �
 
 <Preparation>
 
-코드를 쓰기 전에 아래를 읽는다. 이 agent 본문에는 규칙을 복제해 두지 않았으므로 생략하면 컨벤션을 모른 채 작성하게 된다.
+코드를 쓰기 전에 아래를 읽는다.
 
 1. `CLAUDE.md` — 코드 컨벤션, 빌드 명령, 개인 식별 정보 규칙
 2. `docs/pitfalls/INDEX.md` — 라우터 표에서 `code-review` 행이 가리키는 디렉터리를 찾아, 이번 phase 와 관련된 패턴 파일만 읽는다
@@ -75,7 +75,6 @@ phase-XX complete: <한 줄 요약>
 
 - **scope 준수**: phase 작업 항목 5개 이하 원칙을 지킨다. 범위 외 수정이 필요하면 스스로 판단하지 말고 SendMessage 로 team-lead 에게 보고한다.
 - **타입 검사 우회 금지**: `@ts-ignore` / `@ts-nocheck` / `@ts-expect-error` 추가는 정책 변경이므로 team-lead 승인 후에만 한다.
-- **복제 금지**: `docs/pitfalls/**` 와 `CLAUDE.md` 본문을 이 파일이나 phase 파일에 복사하지 않는다. 복제본은 원본이 바뀔 때 조용히 어긋난다.
 - **cwd 격리**: 모든 파일 작업은 worktree 절대경로 기준으로 한다. 의심되면 `pwd` 로 확인한다.
 
 </Self_Discipline>
