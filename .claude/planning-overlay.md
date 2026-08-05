@@ -59,7 +59,7 @@ planning 결정 docs 를 phase 안에서 고치면 안 된다.
 **유지 적격**(3개 모두 NO):
 
 - 라이브러리 고유 함정 (ky retry 정책, imapflow UID 처리 등)
-- 실험 결과 (벤치마크 cold/warm 수치)
+- 실험 결과 (캐시 cold/warm 응답 시간 등 실측 수치)
 - 대안 기각 근거
 - 정책·규칙
 - 비용·성능 트레이드오프
