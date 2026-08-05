@@ -69,6 +69,22 @@ CLI를 최신 버전으로 다시 설치한 뒤에는 `dooray skill update`를 �
 
 ---
 
+## 멤버 검색 (`member search`)
+
+organization 전체를 검색한다. 프로젝트 멤버 목록(`project members`)과 달리 프로젝트 범위에 묶이지 않는다.
+
+| 옵션 | 동작 |
+| --- | --- |
+| (기본) | 이름으로 검색 |
+| `--email <email>` | 외부 이메일 exact 매칭. 콤마로 여러 개 |
+| `--user-code <code>` | 사번 like 검색 |
+| `--user-code-exact <code>` | 사번 exact 매칭 |
+| `--page <n>` / `--size <n>` | 페이지 번호와 크기. 기본 0 과 20, 최대 100 |
+
+`--to` 와 `--cc` 에 넣을 organizationMemberId 를 찾을 때 쓴다.
+
+---
+
 ## 제약사항 (Dooray API 한계)
 
 CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI 사용을 안내할 것.
