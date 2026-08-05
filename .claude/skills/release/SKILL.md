@@ -2,19 +2,9 @@
 name: release
 description: dooray-cli 새 버전 릴리스 자동화 — 빌드 검증, 버전 범프, git tag, GitHub Release, npm publish, 해결된 이슈 자동 close 순으로 진행. "/release", "릴리스", "버전 범프", "npm publish", "새 버전 배포" 같은 요청 시 반드시 이 스킬 사용.
 ---
-
-# /release — dooray-cli Release
+# release
 
 dooray-cli의 새 버전을 릴리스한다.
-
-## 사용법
-
-```
-/release <version> [--notes "릴리스 노트"]
-```
-
-- `<version>`: semver 버전 (예: `0.4.0`, `0.3.2`)
-- `--notes`: 릴리스 노트 (생략 시 git log에서 자동 생성)
 
 ## 릴리스 절차
 
@@ -49,6 +39,7 @@ git log ${LAST_TAG}..HEAD --pretty=format:"%s" | sort
 ```
 
 다음을 도출:
+
 - **신규 명령** (`feat(commands)` 등) — 사용자에게 노출되는 새 명령/서브커맨드
 - **신규 옵션** (`feat(...)` 메시지에 `--xxx` 등장) — 기존 명령에 추가된 플래그
 - **버그 수정** / **리팩토링** / **문서/인프라**
@@ -65,10 +56,12 @@ git log ${LAST_TAG}..HEAD --grep="#[0-9]" --oneline
 ```
 
 각 열린 이슈에 대해 "이번 릴리스로 해결되었는가?" 판단:
+
 - 이슈 제목/본문 ↔ 이번 릴리스의 신규 명령/옵션 매핑
 - 후속 이슈(`feat(... ) follow-up`)는 release 시점에 close하지 않음 — 별도 task가 필요
 
 **결과를 사용자에게 제시**하고 close 대상 이슈 목록을 확정. 이 목록은:
+
 - GitHub Release 노트 하단에 `Closes #N, #M` 으로 기록
 - 10단계에서 release publish 후 자동 close
 
@@ -82,15 +75,18 @@ git log ${LAST_TAG}..HEAD --grep="#[0-9]" --oneline
 grep -rnE "<신규 옵션|신규 명령>" README.md skills/
 ```
 
-| 위치 | 무엇을 확인 |
-| --- | --- |
-| `README.md` | "사용법" 섹션에 등장하는지. 새 명령은 알맞은 카테고리에 넣는다 |
-| `skills/dooray-cli/SKILL.md` | 의도별 커맨드 표와 공통 규칙에 반영됐는지 |
-| `skills/dooray-cli/references/` | 해당 명령군 reference 에 동작과 함정이 들어갔는지 |
+
+| 위치                              | 무엇을 확인                               |
+| ------------------------------- | ------------------------------------ |
+| `README.md`                     | "사용법" 섹션에 등장하는지. 새 명령은 알맞은 카테고리에 넣는다 |
+| `skills/dooray-cli/SKILL.md`    | 의도별 커맨드 표와 공통 규칙에 반영됐는지              |
+| `skills/dooray-cli/references/` | 해당 명령군 reference 에 동작과 함정이 들어갔는지     |
+
 
 **누락 발견 시**:
+
 - 사용자에게 누락 항목을 보고하고, 어느 위치에 어떤 문장으로 추가할지 제안
-- 보완 commit을 별도로 작성한 후 다음 단계 진행 (`docs(readme): document <feature>` 또는 `docs(skill): add <feature> to dooray-cli SKILL.md`)
+- 보완 commit을 별도로 작성한 후 다음 단계 진행 (`docs(readme): document {feature}` 또는 `docs(skill): add {feature} to dooray-cli SKILL.md`)
 - 보완을 건너뛰면 사용자가 명시적으로 동의했을 때만 (예: "이번 릴리스는 인프라만, 기능 추가 없음")
 
 **버그 수정/리팩토링만 있는 릴리스**라면 본 단계는 통과 가능 — 사용자에게 그 사실을 명시하고 진행.
@@ -101,6 +97,7 @@ grep -rnE "<신규 옵션|신규 명령>" README.md skills/
 grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실행 시점과 후속 처리만 정의.
 
 **히트가 있으면**:
+
 - 사용자에게 즉시 보고 + 위치 노출
 - CLAUDE.md 개인 식별 정보 섹션의 placeholder 가이드 (`<project>` / `<tenant>` / `<postId>` 등) 또는 dummy 패턴으로 교체 후 보완 commit
 - 보완 commit 후 grep 재실행 → 0건 확인 후 다음 단계 진행
@@ -127,7 +124,7 @@ git rebase origin/main
 
 버전 변경:
 
-- `package.json`의 `version` 필드를 `<version>`으로 변경
+- `package.json`의 `version` 필드를 `{version}`으로 변경
 - `src/index.ts`는 직접 수정하지 않는다. CLI 버전은 빌드 시 `package.json.version`에서 주입된다.
 - 변경 후 다시 `pnpm run build`와 `pnpm verify:package`로 빌드 산출물 버전 일치를 검증
 
@@ -138,47 +135,49 @@ git rebase origin/main
 [ "$(git branch --show-current)" = "main" ] || { echo "STOP: not on main"; exit 1; }
 
 git add package.json
-git commit -m "chore: bump version to v<version>"
+git commit -m "chore: bump version to v{version}"
 git push origin main
 ```
 
 **복구 — 실수로 PR branch 에 bump commit 박았을 때**:
-- 해당 commit 이 main 의 linear 자식이면 (대부분의 경우): `git switch main && git merge <bump-sha> --ff-only && git push origin main`. force-push 불요
+
+- 해당 commit 이 main 의 linear 자식이면 (대부분의 경우): `git switch main && git merge {bump-sha} --ff-only && git push origin main`. force-push 불요
 - linear 아니면 `cherry-pick` 후 PR branch 의 commit 정리
 
 ### 7. Git Tag & GitHub Release
 
 ```bash
-git tag -a v<version> -m "v<version>"
-git push origin v<version>
+git tag -a v{version} -m "v{version}"
+git push origin v{version}
 ```
 
 릴리스 노트는 **2단계 분석 결과를 그대로 활용**해 작성한다 (Highlights / 신규 명령 / 신규 옵션 / 버그 수정 / **Closes** / Full Changelog 링크).
 
-**전달 방식: `--notes-file <path>` 필수** — 인라인 `--notes "..."` 또는 quoted heredoc 금지.
+**전달 방식: `--notes-file {path}` 필수** — 인라인 `--notes "..."` 또는 quoted heredoc 금지.
 
 ```bash
 # 1. 임시 파일에 본문 작성 (Write 도구 / cat / EDITOR 어느 쪽이든 OK)
-#    → /tmp/release-v<version>-notes.md
+#    → /tmp/release-v{version}-notes.md
 
 # 2. 파일 경로로 전달
-gh release create v<version> --title "v<version> — <요약>" --notes-file /tmp/release-v<version>-notes.md
+gh release create v{version} --title "v{version} — {요약}" --notes-file /tmp/release-v{version}-notes.md
 ```
 
 **Why** (글로벌 `~/.claude/rules/markdown-readability.md` "Markdown 작성 함정" 표):
 
-- quoted heredoc (`<<'EOF'`) 안에서는 `` ` ``·`$`·`\` 모두 이미 비활성화 → escape 불요
-- 그런데 "안전하게" `` \` `` / `\$` 박으면 backslash 가 리터럴로 본문에 남아 markdown 깨짐 (v0.10.0 release 사고 — backtick 66개가 `\``로 출력)
-- `--notes-file` 은 파일 경로 전달이라 shell quoting / escape 함정 자체 회피
+- quoted heredoc 안에서는 backtick 과 달러 기호, backslash 가 이미 비활성화되므로 escape 가 필요 없다
+- 그런데 "안전하게" backslash 를 덧붙이면 그것이 본문에 리터럴로 남아 markdown 이 깨진다
+  - v0.10.0 릴리스에서 backtick 66개가 escape 된 형태로 출력되는 사고가 있었다
+- `--notes-file` 은 파일 경로만 넘기므로 shell quoting 과 escape 함정을 아예 피한다
 
 **자가 점검** — release create / edit 직후:
 
 ```bash
-gh release view v<version> --json body -q .body | tr -cd '\\' | wc -c
+gh release view v{version} --json body -q .body | tr -cd '\\' | wc -c
 # 기대: 0 (backslash 잔재 없음)
 ```
 
-0 이 아니면 `--notes-file` 로 즉시 `gh release edit v<version> --notes-file <path>` 재발행.
+0 이 아니면 `--notes-file` 로 즉시 `gh release edit v{version} --notes-file {path}` 재발행.
 
 릴리스 노트 본문 마지막에 close 대상 이슈를 적는다. 10단계에서 이 목록을 그대로 쓴다.
 
@@ -186,7 +185,7 @@ gh release view v<version> --json body -q .body | tr -cd '\\' | wc -c
 ## Closes
 
 이번 릴리스로 해결된 이슈 (release publish 후 자동 close):
-- #<번호> <이슈 제목>
+- #{번호} {이슈 제목}
 ```
 
 `--generate-notes` 는 쓰지 않는다 — 2단계에서 판단한 Closes 목록과 신규 명령·옵션 분류가 빠진다.
@@ -196,14 +195,14 @@ gh release view v<version> --json body -q .body | tr -cd '\\' | wc -c
 npm publish는 2FA OTP가 필요하므로 사용자에게 직접 실행을 요청한다:
 
 ```
-npm publish --access public --otp=<code>
+npm publish --access public --otp={code}
 ```
 
 사용자에게 위 명령을 안내하고, 완료 후 결과를 확인한다.
 
 ### 9. 최종 확인
 
-- `https://github.com/jon890/dooray-cli/releases/tag/v<version>` 릴리스 확인
+- `https://github.com/jon890/dooray-cli/releases/tag/v{version}` 릴리스 확인
 - `https://www.npmjs.com/package/@bifos/dooray-cli` 버전 확인 (반영에 수 분 소요)
 
 ### 10. 해결된 이슈 close
@@ -211,15 +210,16 @@ npm publish --access public --otp=<code>
 2단계에서 식별한 close 대상 이슈를 일괄 close. release publish 완료 후에만 실행 (publish 실패 시 close 금지).
 
 ```bash
-RELEASE_URL="https://github.com/jon890/dooray-cli/releases/tag/v<version>"
-for n in <이슈번호 목록>; do
-  gh issue close $n --comment "v<version>에서 구현 완료되어 close합니다. ${RELEASE_URL}"
+RELEASE_URL="https://github.com/jon890/dooray-cli/releases/tag/v{version}"
+for n in {이슈번호 목록}; do
+  gh issue close $n --comment "v{version}에서 구현 완료되어 close합니다. ${RELEASE_URL}"
 done
 ```
 
 각 close에 release 링크 코멘트 첨부 — 이슈에서 release notes로 즉시 이동 가능.
 
 **close 금지 케이스**:
+
 - 후속 작업이 남은 이슈 (예: MVP만 구현되고 추가 옵션 후속)
 - 이슈 본문 범위와 구현 범위가 부분적으로만 일치
 → 이런 케이스는 close 대신 **comment**로 진행 상황만 기록 + 이슈 open 유지
@@ -231,3 +231,4 @@ done
 - **npm publish는 사용자가 직접 OTP를 입력해야 한다**
 - 이전 태그를 force-update하지 않는다 (새 태그만 생성)
 - **이슈 close는 publish 완료 후에만** — npm publish 실패하면 release는 미완성, close 보류
+
