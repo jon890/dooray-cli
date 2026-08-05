@@ -6,8 +6,8 @@
 
 자연어 요청을 커맨드로 변환할 때 아래 표를 참고한다.
 
-> **공통 (post 하위 16개 명령)**: 아래 명령은 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL 을 직접 받는다.
-> `post get`/`edit`/`done`/`workflow`, `post comment list`/`add`/`edit`/`delete`, `post file list`/`upload`/`download`/`download-all`/`delete`, `post comment file list`/`upload`/`download`/`delete`.
+> **공통 입력 형식**: 아래 명령은 `<project> <number>` 외에도 `--id <postId>`, `--url <url>`, 또는 첫 인자에 Dooray URL 을 직접 받는다.
+> `post get`/`edit`/`done`/`workflow`, `post comment` 전체(`list`/`latest`/`get`/`add`/`edit`/`delete`), `post file` 전체(`list`/`download`/`download-all`/`upload`/`delete`), `post comment file` 전체(`list`/`upload`/`download`/`delete`).
 >
 > 지원 URL 형식 3종 (positional 첫 인자 / `--url` 공통):
 > - `https://*.dooray.com/task/to/<postId>`
@@ -40,7 +40,7 @@
 | 단일 댓글 조회 | `dooray post comment get <project> <number> <comment-id>` — 본문·메타·attachments 직접 fetch. `--id`/`--url` + `--comment-id` 모드 지원 |
 | 댓글 추가 | `dooray post comment add <project> <number> --body "..."` 또는 `--body-file <path>` |
 | 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` 또는 `--body-file <path>` |
-| 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` |
+| 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` (확인 없이 즉시) |
 | 위키 목록 | `dooray wiki list` |
 | 위키 페이지 목록 | `dooray wiki pages <project>` |
 | 위키 페이지 트리 | `dooray wiki tree <project>` (계층 트리, `--depth N` 상한, `--json` 은 flat) |
@@ -49,7 +49,7 @@
 | 위키 페이지 수정 (제목) | `dooray wiki page edit <project> <page-id> --title "..."` |
 | 위키 페이지 수정 (본문) | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` |
 | 위키 페이지 수정 (에디터) | `dooray wiki page edit <project> <page-id>` (플래그 없으면 $EDITOR 열림) |
-| 위키 페이지 삭제 | `dooray wiki page delete <project> <page-id>` (y/N 확인 기본, `--yes`로 자동화 시 생략. 하위 페이지는 상위 페이지로 재부착) |
+| 위키 페이지 삭제 | `dooray wiki page delete <project> <page-id>` (y/N 확인 기본, `--yes` 로 생략. 하위 페이지는 삭제한 페이지의 부모 아래로 재부착되어 orphan 이 생기지 않음) |
 | 위키 페이지 첨부 목록 | `dooray wiki page file list <project> <page-id>` (general + inline 합산, type 컬럼) |
 | 위키 페이지 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` (multipart `type` 필드를 `file` 앞에 전송) |
 | 위키 페이지 첨부 다운로드 | `dooray wiki page file download <project> <page-id> --file-id <id> -o <dir>` |
@@ -74,7 +74,7 @@
 | 첨부파일 다운로드 | `dooray post file download <project> <number> <file-id>` |
 | 전체 첨부파일 다운로드 | `dooray post file download-all <project> <number>` |
 | 첨부파일 업로드 | `dooray post file upload <project> <number> <file-path>` |
-| 첨부파일 삭제 | `dooray post file delete <project> <number> <file-id>` |
+| 첨부파일 삭제 | `dooray post file delete <project> <number> <file-id>` (확인 없이 즉시) |
 | file 명령군 자동화 파싱 | `dooray post file <verb> ... --json` — `download` = `{outputPath,fileName,size}`, `download-all` = `{count,succeeded,failed}` (부분 실패 시 exit 1), `delete` = `{fileId,status}`, `upload` = `res.result` raw |
 | 댓글 첨부 목록 | `dooray post comment file list <project> <number> <comment-id>` |
 | 댓글 파일 업로드 | `dooray post comment file upload <project> <number> <comment-id> <path>` |

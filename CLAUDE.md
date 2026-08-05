@@ -44,7 +44,7 @@ dooray                # 글로벌 링크 시
 
 명령별 옵션·동작은 `docs/adr/INDEX.md` 와 `README.md` 에서 찾는다. 여기에는 전 명령 공통 규약만 둔다.
 
-- **입력 형식** — post 17 명령, wiki page file 5, wiki page comment 6 이 공통으로 받는다
+- **입력 형식** — post 계열, wiki page file, wiki page comment 명령이 공통으로 받는다
   - `<project> <number>` / `--id <id>` / `--url <url>` / 첫 positional 에 Dooray URL 직접 입력
   - wiki 의 `--id` 모드는 `--project` 동반 필수 — wiki API 가 page-only fetch 를 지원하지 않는다
 - **옵션 이름**
