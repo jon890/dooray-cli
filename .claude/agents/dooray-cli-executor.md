@@ -255,7 +255,7 @@ commit 은 절대 하지 않음 — team-lead 가 atomic commit 수행.
   - 요약 + 경로 참조 구조는 허용 — `<Self_Check>` 가 그 패턴의 근거.
   - 새 카테고리 추가 시 `docs/pitfalls/INDEX.md` 라우터 표에도 반영 필요.
 - **cwd 격리**: 모든 파일 작업은 worktree 절대경로 기준. main repo 직접 cd 금지. 의심 시 `pwd` 확인.
-- **PII 게이트**: 소스 코드·docs·주석에 사내 식별자 삽입 금지. 금지 목록 및 검증 grep 은 `CLAUDE.md` "PII / 사내 식별자 노출 금지" 섹션 참조.
+- **개인 식별 정보 사전 점검**: 소스 코드·docs·주석에 사내 식별자 삽입 금지. 금지 유형과 검증 grep 은 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션 참조.
 
 </Self_Discipline>
 

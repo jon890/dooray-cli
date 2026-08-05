@@ -36,11 +36,11 @@
 
 | 변경 유형 | CLAUDE.md | adr/ | code-architecture.md | prd.md | flow.md | data-schema.md | README.md | skills/dooray-cli/SKILL.md |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 신규 CLI 명령 (소) | 주의사항 1줄 | — | 디렉터리 트리 + 필요 시 utils 추가 | MVP 범위 한 줄 | 사용자 흐름 섹션 | (캐시 도입 시) | 사용 예 섹션 | 빠른 참조 표 + 자동화 시나리오 |
-| 신규 ADR 동반 변경 | 주의사항 + ADR 참조 표 행 | ADR 본문 | 해당 영역 ADR-NNN 역참조 | (사용자 facing 시) | (사용자 흐름 변경 시) | (스키마 결정 시) | 사용 예 (해당 명령) | 시나리오 (해당 명령) |
+| 신규 CLI 명령 (소) | — (명령별 스펙은 CLAUDE.md 에 쌓지 않는다) | — | 디렉터리 트리 + 필요 시 utils 추가 | MVP 범위 한 줄 | 사용자 흐름 섹션 | (캐시 도입 시) | 사용 예 섹션 | 빠른 참조 표 + 자동화 시나리오 |
+| 신규 ADR 동반 변경 | ADR 참조 표 행 | ADR 본문 | 해당 영역 ADR-NNN 역참조 | (사용자 facing 시) | (사용자 흐름 변경 시) | (스키마 결정 시) | 사용 예 (해당 명령) | 시나리오 (해당 명령) |
 | 캐시 schema / TTL 변경 | 캐시 규약 행 | ADR 갱신 (ADR-004/010) | utils/cache 섹션 | — | — | 캐시 디렉터리 + 스키마 본문 | — | — |
 | 새 API 호출 패턴 (재시도/redirect 등) | — | 정책 결정 ADR | api/ 섹션 + ADR-NNN 역참조 | — | — | — | — | — |
-| 기존 resolver 입력 형식 확대 | 주의사항 resolver 설명 1줄 갱신 | — | resolver 주석 1줄 갱신 | — | 사용 예 (자동 분기 시나리오) | — | 사용 예 | 빠른 참조 표 |
+| 기존 resolver 입력 형식 확대 | 공통 규약의 resolver 줄 (규약이 바뀔 때만) | — | resolver 주석 1줄 갱신 | — | 사용 예 (자동 분기 시나리오) | — | 사용 예 | 빠른 참조 표 |
 | 의존성 추가 / 빌드 설정 | 빌드 명령 (해당 시) | ADR 작성 전 점검 후 ADR | 기술 스택 표 | — | — | — | — | — |
 
 **갱신 시점 분리**: planning 결정 docs(`adr/`·`code-architecture.md`·`CLAUDE.md`·`data-schema.md`·`flow.md`·`prd.md`)는 **task 생성 전 즉시 반영 + commit**.

@@ -56,185 +56,25 @@ src/
 - 에러: `DoorayCliError(message, exitCode)` 로 통일
 - 출력: 데이터는 stdout, 스피너/에러는 stderr
 
-## 주의사항
+## 명령 공통 규약
 
-자기 규약 (CLAUDE.md "docs / ADR 작성 형식" 6가지 패턴) 자체 적용 — 한 bullet 다중 속성 압축 금지, sub-bullet 분리.
+명령별 옵션·동작의 단일 소스는 `docs/adr/` 와 `README.md` 다.
+아래 "상황별 ADR 필수 참조" 표에서 영역별로 찾는다.
+여기에는 그 표로 라우팅되지 않는 전 명령 공통 규약만 둔다.
 
-### 공통 — 명령 입력 통합
+- **입력 형식** — post 17 명령, wiki page file 5, wiki page comment 6 이 공통으로 받는다
+  - `<project> <number>` / `--id <id>` / `--url <url>` / 첫 positional 에 Dooray URL 직접 입력
+  - wiki 의 `--id` 모드는 `--project` 동반 필수 — wiki API 가 page-only fetch 를 지원하지 않는다
+- **옵션 이름**
+  - 제목은 post·wiki 모두 `--title` (`--subject` 는 deprecated alias — stderr 경고 후 동작)
+  - 본문은 `--body` / `--body-file` (`-` = stdin), 둘 다 없으면 `$EDITOR` fallback
+- **resolver 매칭**: 정확일치 → 이름 부분일치 → 모호하면 에러와 후보 목록 출력
+- **출력**: 데이터는 stdout, 스피너·에러는 stderr. `--json` 은 raw 유지, `--quiet` 은 식별자만
+- **파괴적 명령**: confirm 기본. non-TTY 는 abort, `--yes` 또는 `--no-confirm` 으로 생략
+- **post 목록 정렬**: 최신순 (`-createdAt`)
+- **interactive 모드**: non-interactive 전용 옵션은 무시하고 경고를 낸다
 
-- post 17 명령 input 통합 (ADR-020)
-  - 대상: `get` / `edit` / `done` / `workflow` + comment 5 + file 5 + comment file 4
-  - 입력 형식: `<project> <post-number>` / `--id <postId>` / `--url <url>` / 첫 positional 에 Dooray URL 직접 입력
-  - 분기 헬퍼: post / comment / file 13 = `resolvePostInput` / comment file 4 = `resolveCommentFileInput` (`resolvePostInput` 위임 + comment-id 분기)
-  - 입력 토큰 타입 판별 (`classifyPostInputToken`, ADR-020 보강): postId (15+자리) / postNumber / url / project
-    - 진입점이 기대 타입과 불일치하면 타입별 안내 에러 (예: positional 에 postId → `--id` 안내, #82)
-- wiki page file 5 + comment 6 명령 input 통합
-  - 분기 헬퍼: `resolveWikiPageInput` (`resolveProject` + URL `/wiki/<wikiId>/<pageId>` parser)
-  - `--id <pageId>` 모드는 `--project <code>` 동반 필수 (wiki API 가 page-only fetch 미지원)
-
-### 공통 — 옵션 / 출력 표준
-
-- 제목 옵션 이름 통일: post · wiki 모두 `--title` (Issue #8)
-- 본문 옵션 통일: `--body` / `--body-file` (`-` = stdin)
-- post 목록 정렬: 최신순 (`-createdAt`)
-- `--subject` 는 deprecated alias — stderr 경고 후 동작
-
-### post create
-
-- 필수: `--title` (또는 `--subject` alias)
-- 메타데이터 옵션 (ADR-019): `--tag` (반복) / `--parent` (`code/number` 또는 raw postId) / `--workflow` / `--milestone`
-- mandatory-tag 그룹: 클라이언트가 사전 검증
-- 참조자 / 담당자 그룹 (ADR-025): `--cc-group` / `--to-group` (멤버는 본문에서 명시)
-- mention / link-task / dry-run: 4 명령 (create + edit + comment add/edit) 공통
-- 템플릿 (`--template <name|id>`, ADR-027)
-  - lookup: `GET .../templates` (resolver matchByName 부분일치)
-  - 본문 채움: `GET .../templates/{id}?interpolation=true` → 시스템 매크로 (`${year}` 등) 치환된 본문/users/tags
-  - override: 사용자 옵션 (`--title`/`--body`/`--tag`/`--to`/`--cc`) 명시 입력 시 템플릿 값 덮어씀
-  - `--field key=value` 사용자 정의 변수: 본 scope 외 (별도 후속)
-  - 목록 조회 명령: `dooray project templates <project>`
-  - 캐시 TTL: 24h (tag/workflow 와 동일 패턴)
-
-### post edit
-
-- non-interactive 트리거: `--title` / `--body` / `--body-file` 중 하나라도 있으면 $EDITOR 미진입. tag 옵션도 트리거에 포함 (`--tag` / `--tag-clear` / `--tag-remove`)
-- 본문 full-replace 시 attachment 보호
-  - 새 본문에 기존 attachment markdown (`![](/files/<id>)`) 누락 시 (y/N) confirm
-  - non-TTY: abort. `--no-confirm` 으로 우회
-- tag 옵션 (Issue #66, ADR-019 확장)
-  - 지원: `--tag` (반복) / `--tag-clear` / `--tag-remove` (반복)
-  - mandatory 검증 동일 적용
-  - `--title`/`--body` 없이 단독 호출 가능 — 기존 본문은 자동 재전송
-  - 머지 로직: `src/resolvers/post-tags.ts` `mergeTagIds` (clear → remove → add → dedupe)
-  - interactive 분기 자체 발생 안 함 (cc/parent 와 달리 nonInteractive 조건에 포함)
-- 참조자 / 담당자 변경 옵션 6개 (ADR-025)
-  - 멤버: `--cc <name>` (반복) + `--cc-clear` / 동일 `--to` 3개
-  - 그룹: `--cc-group <code>` (반복) — `type: "group"` + `projectMemberGroupId` 로 전송
-  - 기본: append (기존 유지 + dedupe). `--*-clear` 는 기존 비우고 신규만
-  - interactive 모드: 6 옵션 무시 + 경고
-- `--parent <ref>` 옵션
-  - endpoint: `client.setPostParent` (`POST .../set-parent-post` dedicated, `updatePost` full payload 아님)
-  - parent 해제 (top-level 화): Dooray 가 `unset-parent-post` 미제공 → **웹 UI 에서 처리**
-  - interactive 모드 무시 + 경고
-- mention / link-task / dry-run: post create 와 동일 4 명령 공통. interactive 모드는 무시 + 경고
-
-### post comment
-
-- `comment edit` 본문 full-replace + attachment confirm 동작 — `post edit` 와 동일
-- `comment add` / `comment edit`: `--title`/`--body` 또는 $EDITOR fallback
-- mention / link-task / dry-run: post create/edit 와 동일 4 명령 공통
-- `comment list` table 출력 — Creator 컬럼을 project 멤버 캐시로 enrich (`--json` 은 raw 유지)
-- `post comment file *` 4 명령 (list/upload/download/delete, ADR-024)
-  - Dooray 가 댓글 전용 file endpoint 미지원 → 내부적으로 post-level files API + 댓글 본문 PUT 합성
-  - 본문 마크업: `![filename](/files/<id>)` markdown reference
-  - `delete`: markdown 제거 + 파일 삭제 둘 다 수행 (atomic 보장 없음)
-  - 부분 성공: stderr 안내 + non-zero exit
-
-### wiki page file (Issue #70, ADR-029)
-
-- 5 명령: `list` / `upload` / `download` / `download-all` / `delete`
-- post file 명령군 mirror — `<project> <page-id>` + `--id` + `--url` + positional URL
-- upload
-  - `--type general|inline_image` flag (기본 `general`)
-  - **multipart 필드 순서 의존**: `type` 필드를 `file` 보다 먼저 append 해야 정상 동작 (ADR-029, Dooray 서버 검증)
-  - inline_image 일 때: 본문 markdown 자동 삽입 안 함 — stdout 에 `attachFileId` + 사용자 직접 박을 snippet 안내
-    - `--json` 출력에 `markdownSnippet` 필드 포함 (자동화용, ADR-031 보강, Issue #81). `--quiet` 은 id 만
-- list: 별도 endpoint 부재 → `getWikiPage` 의 `result.files[]` (general) + `result.images[]` (inline) 합성
-- delete: confirm 없이 즉시 (post file delete mirror)
-
-### file 명령군 `--json` / `--quiet` 출력 (Issue #73, ADR-031)
-
-`post file` + `wiki page file` 동의 4 명령 (`upload` / `download` / `download-all` / `delete`) 의 출력 스키마 통일 — 두 명령군이 mirror.
-
-- `upload`: `--json` = `res.result` raw / `--quiet` = `id` 만
-  - wiki page file 의 inline_image 업로드는 `--json` 에 `markdownSnippet` 필드 추가 (ADR-031 보강, Issue #81)
-- `download`: `--json` = `{ outputPath, fileName, size }` / `--quiet` = `outputPath` 만
-- `download-all`: `--json` = `{ count, succeeded: [{path, fileName}], failed: [{fileId, error}] }` / 부분 실패 시 exit 1
-- `delete`: `--json` = `{ fileId, status: "deleted" }` / `--quiet` = `fileId` 만
-- 자동화 스크립트가 두 명령군을 동일 parse 코드로 처리 가능
-
-### wiki page comment (task 036)
-
-- 6 명령: `list` / `latest` / `get` / `add` / `edit` / `delete`
-- post comment 패턴 mirror — `resolveWikiPageInput` 재사용
-- post comment 대비 시그니처 축소 — wiki API 미지원
-  - mention / mention-group 없음
-  - cc / 받는 사람 없음
-  - 첨부 파일 없음 (댓글 전용 endpoint 부재)
-- `add` / `edit`: `--body` / `--body-file` 또는 `$EDITOR` fallback
-- 타입 / 포맷터
-  - `WikiComment` 타입 신설 — `page.id` + `creator.member` 시그니처 (PostComment 와 분리)
-  - `formatters/wiki-comment.ts` 전용 포맷
-- request body: `{ body: { content } }` 만 (mimeType 미전송 — wiki API 스펙)
-- delete: confirm 없이 즉시
-
-### wiki page delete (Issue #87, ADR-032)
-
-- 1 명령: `dooray wiki page delete`
-- **비공식(미문서화) endpoint** — `DELETE /wiki/v1/wikis/{wikiId}/pages/{pageId}`. 도움말·client 주석에 비공식 표기
-- 입력: `resolveWikiPageInput` 재사용 (`<project> <page-id>` / `--id`+`--project` / `--url` / positional URL)
-- client: `deleteWikiPage(wikiId, pageId)` — plain `.delete()` (파일 API 307 처리 불요)
-- 파괴적 → confirm 기본
-  - non-TTY: abort
-  - `--yes` / `-y` 로 생략
-- 하위 페이지: 삭제 시 조부모로 재부착 (실측) → orphan 없음, 사전 조회·차단 없음
-- 출력: `--json {pageId, status:"deleted"}` / `--quiet pageId`
-
-### wiki tree (Issue #101, ADR-034)
-
-- 1 명령: `dooray wiki tree <project>` — 페이지 계층 트리 (root 부터 재귀 drill-down)
-- **list endpoint 는 flat 전체 조회 미제공** — `GET .../pages` 는 root 만, `?parentPageId=X` 는 X 직속 자식만. root 응답엔 `parentPageId` 없음 (자식에만)
-- client: `getAllWikiPages(wikiId, maxDepth?)` — 레벨별 BFS + 형제 병렬 조회(동시 상한 10, chunk 단위), flat `WikiPage[]` 반환
-- `--depth N`: 재귀 상한 (미지정 시 전체)
-- 출력
-  - text: `formatWikiTree` — flat → `parentPageId` 로 트리 조립 후 `├─└─` 렌더
-  - `--json`: flat 배열 (`parentPageId` 포함, 기존 `wiki pages --json` 스키마)
-  - `--quiet`: id 목록
-
-### messenger (Issue #88, ADR-033)
-
-- 2 명령: `messenger send` (1:1 DM) / `messenger channel-send` (대화방)
-- DM: `POST /messenger/v1/channels/direct-send` — body `{ text, organizationMemberId }` (대화방 생성 불요)
-- 채널: `POST /messenger/v1/channels/{channelId}/logs` — body `{ text }`
-- `--to` (DM): **id / 이메일만** — 이름 미지원 (messenger 는 project 스코프 없어 matchByName 불가)
-  - `resolveMember` 의 id/email 로직 공유 추출 재사용, 이름 입력 시 안내 에러
-- `--channel` (채널): channelId(15+자리) 또는 대화방 이름 (`resolveMessengerChannel`)
-  - 이름 매칭은 `GET /messenger/v1/channels` (내가 속한 방) title 대상 (정확 → 부분 → 모호+후보)
-  - direct 방(title 빈값)은 이름 매칭 불가 → raw channelId 사용
-- body: `--body` / `--body-file`(`-`=stdin) 또는 `$EDITOR` fallback (comment 일관)
-- 출력: `--json` = `res.result` raw (DM `{id}` / 채널 `{id, channelId}`) / `--quiet` = `id`
-- 전송은 API 토큰 소유자 명의. 본문 `text` plain 만 (mention/첨부/rich scope 밖)
-
-### resolver
-
-- 일반 정책: 정확일치 → 이름 부분일치 → 모호 시 에러 + 후보 목록 출력 (멤버 · 워크플로우 · 태그 · 마일스톤 공통)
-- project resolver (`resolveProject`) — numeric 입력 cache 우회 fallback (ADR-030, Issue #78)
-  - 입력 형식 자동 분기: numeric 15+자리 → 그대로 projectId 반환 (cache 우회) / 그 외 → cache 매칭 (code + id)
-  - 권한 검증: 후속 API 호출 (getPosts 등) 의 4xx 에 위임 — `member=me` 응답 외 프로젝트도 자동화 가능
-  - 13 호출자 (post create/list/search, member/list, project/templates·tags·groups·members·workflows, post-input, postRef, wiki) 자동 혜택
-  - wiki resolver freshness — numeric 우회 시 cache 갱신 누락. 사용자에게 `dooray cache refresh` 안내
-- member resolver (`resolveMember`) 입력 형식 자동 분기
-  - 15자리 이상 숫자: `getMemberDetail` 로 organizationMemberId 검증
-  - 이메일 (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`): `searchMembers({externalEmailAddresses})` exact
-  - 그 외: matchByName
-  - 적용 옵션: `--to` / `--cc` / `--mention` 모두 동일
-- group resolver (`resolveMemberGroup`) — 응답 shape 정규화 + id 직접 입력 fallback (ADR-028, Issue #65, #76)
-  - 응답 정규화: `fetchAllMemberGroups` 가 `res.result.flat()` 로 nested array (`[[g1, g2]]`) 평면화 (Dooray API 실측 shape 대응, 2026-05-22)
-  - 입력 형식 자동 분기: numeric 15+자리 → id 직접 매칭 (response shape 가 다시 변할 robustness) / 그 외 → code matchByName (부분일치)
-  - `code` 누락 그룹 가드 유지: 개별 누락 가능성 대비 — `match.ts` 의 `!!i.name && i.name.includes`
-  - not-found 안내: `options.helpHint` 로 "전체 목록은 dooray project groups <project>" + "id 직접 입력 가능 (15+자리 numeric)" AI 친화 출력
-  - 적용 옵션: `--cc-group` / `--to-group` / `--mention-group` 모두 동일 (5 호출자 통합)
-
-### member 명령
-
-- `dooray member get/list` 로 표시명 조회
-- `post comment list` table 의 Creator 컬럼: project 멤버 캐시로 enrich (ADR-021)
-- `--json` 출력: raw 유지 (enrich 미적용)
-
-### feedback (ADR-022/023)
-
-- GitHub issue 생성: `gh` CLI 에 위임. baseUrl / 시크릿은 자동 메타에 미포함
-- `--last`: 직전 명령의 sanitized argv + 에러를 본문 상단에 자동 첨부 (opt-in)
-- 사전 활성화: `dooray config set track-last-run true`
+자기 규약 적용 — 아래 "docs / ADR 작성 형식" 6가지 패턴을 CLAUDE.md 자신에게도 적용한다.
 
 ## 상황별 ADR 필수 참조
 
@@ -258,6 +98,7 @@ src/
 | Wiki page file 명령 (`wiki page file *`) 추가/수정         | **ADR-029** (multipart `type` 필드 순서 의존 + 307 redirect — ADR-015 재사용)                  |
 | `wiki page delete` 명령 (비공식 endpoint)                  | **ADR-032** (미문서화 DELETE endpoint + 하위 페이지 조부모 재부착 실측 + confirm 기본, Issue #87) |
 | `wiki tree` 명령 (페이지 계층 트리)                        | **ADR-034** (list endpoint flat 미제공 → root 부터 레벨별 재귀 drill-down + 형제 병렬 조회(동시 상한 10) + `--depth` 상한 + `--json` flat 유지, Issue #101) |
+| `wiki page comment` 6 명령                                 | (ADR 없음 — `src/commands/wiki/page-comment/`. post comment 패턴 mirror 이며 wiki API 가 mention·참조자·첨부를 지원하지 않아 시그니처가 축소됨) |
 | `messenger send` / `channel-send` 명령                     | **ADR-033** (direct-send memberId 직접 + channel logs + `--to` id/email + `--channel` id/이름 lookup, Issue #88) |
 | member-group resolver (응답 shape 정규화 + 가드)           | **ADR-028** (nested array unwrap `flat()` + id 직접 입력 fallback + `match.ts` 가드, Issue #65 #76) |
 | project resolver (numeric 입력 fallback)                   | **ADR-030** (`PROJECT_ID_RE` 분기 + cache 우회 + 권한은 후속 API 4xx 위임, Issue #78)         |
