@@ -5,9 +5,9 @@ import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
 
 describe("parseWikiCommentArgs (wiki page comment)", () => {
   it("positional 3개 → projectArg / pageIdArg / commentId", () => {
-    const result = parseWikiCommentArgs("myproject", "4071828729722696495", "comment-123", {});
+    const result = parseWikiCommentArgs("myproject", "9876543210987654321", "comment-123", {});
     expect(result.projectArg).toBe("myproject");
-    expect(result.pageIdArg).toBe("4071828729722696495");
+    expect(result.pageIdArg).toBe("9876543210987654321");
     expect(result.commentId).toBe("comment-123");
     expect(result.idOpt).toBeUndefined();
     expect(result.urlOpt).toBeUndefined();
@@ -26,11 +26,11 @@ describe("parseWikiCommentArgs (wiki page comment)", () => {
 
   it("--id + --project + --comment-id → idOpt + projectOpt + commentId", () => {
     const result = parseWikiCommentArgs(undefined, undefined, undefined, {
-      id: "4071828729722696495",
+      id: "9876543210987654321",
       project: "myproject",
       commentId: "comment-123",
     });
-    expect(result.idOpt).toBe("4071828729722696495");
+    expect(result.idOpt).toBe("9876543210987654321");
     expect(result.projectOpt).toBe("myproject");
     expect(result.commentId).toBe("comment-123");
     expect(result.projectArg).toBeUndefined();
@@ -39,7 +39,7 @@ describe("parseWikiCommentArgs (wiki page comment)", () => {
   it("positional + --url 동시 → DoorayCliError (EXIT_PARAM_ERROR)", () => {
     const err = (() => {
       try {
-        parseWikiCommentArgs("myproject", "4071828729722696495", "comment-123", {
+        parseWikiCommentArgs("myproject", "9876543210987654321", "comment-123", {
           url: "https://example.dooray.com/wiki/123/456",
         });
       } catch (e) {
@@ -67,7 +67,7 @@ describe("parseWikiCommentArgs (wiki page comment)", () => {
   it("positional 3개 + --comment-id 동시 → DoorayCliError (EXIT_PARAM_ERROR)", () => {
     const err = (() => {
       try {
-        parseWikiCommentArgs("myproject", "4071828729722696495", "comment-A", {
+        parseWikiCommentArgs("myproject", "9876543210987654321", "comment-A", {
           commentId: "comment-B",
         });
       } catch (e) {

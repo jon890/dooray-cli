@@ -57,8 +57,8 @@ import { parseDoorayTaskUrl, isLikelyDoorayUrl } from "./dooray-url.js";
 
 describe("parseDoorayTaskUrl", () => {
   it("정상 URL에서 postId 추출", () => {
-    expect(parseDoorayTaskUrl("https://nhnent.dooray.com/task/to/4319587406666362045"))
-      .toBe("4319587406666362045");
+    expect(parseDoorayTaskUrl("https://<tenant>.dooray.com/task/to/1234567890123456789"))
+      .toBe("1234567890123456789");
   });
   it("query string 무시", () => {
     expect(parseDoorayTaskUrl("https://x.dooray.com/task/to/123?projectScope=from_to_cc"))
@@ -72,13 +72,13 @@ describe("parseDoorayTaskUrl", () => {
     expect(parseDoorayTaskUrl("https://x.dooray.com/task/to/123/")).toBe("123");
   });
   it("dooray.com 도메인이 아니면 null", () => {
-    expect(parseDoorayTaskUrl("https://other.com/task/to/123")).toBeNull();
+    expect(parseDoorayTaskUrl("https://other.example.com/task/to/123")).toBeNull();
   });
   it("/task/to/ 경로가 아니면 null", () => {
     expect(parseDoorayTaskUrl("https://x.dooray.com/wiki/123")).toBeNull();
   });
   it("URL 형식이 아니면 null", () => {
-    expect(parseDoorayTaskUrl("tc-ocr/337")).toBeNull();
+    expect(parseDoorayTaskUrl("<project>/337")).toBeNull();
     expect(parseDoorayTaskUrl("12345")).toBeNull();
   });
 });
@@ -89,7 +89,7 @@ describe("isLikelyDoorayUrl", () => {
     expect(isLikelyDoorayUrl("http://x.com")).toBe(true);
   });
   it("URL 아니면 false", () => {
-    expect(isLikelyDoorayUrl("tc-ocr")).toBe(false);
+    expect(isLikelyDoorayUrl("<project>")).toBe(false);
     expect(isLikelyDoorayUrl("12345")).toBe(false);
   });
 });
@@ -135,9 +135,9 @@ export interface ResolvedPostInput {
 
 const INPUT_HELP =
   "업무를 식별할 정보가 부족합니다. 다음 중 하나를 입력하세요:\n" +
-  "  - <project> <post-number>     예: tc-ocr 337\n" +
-  "  - --id <postId>                예: --id 4319587406666362045\n" +
-  "  - <Dooray URL>                 예: https://x.dooray.com/task/to/4319587406666362045";
+  "  - <project> <post-number>     예: <project> 337\n" +
+  "  - --id <postId>                예: --id 1234567890123456789\n" +
+  "  - <Dooray URL>                 예: https://x.dooray.com/task/to/1234567890123456789";
 
 async function resolveByPostId(
   client: DoorayApiClient,
@@ -181,7 +181,7 @@ export async function resolvePostInput(
     const postId = parseDoorayTaskUrl(urlOpt);
     if (!postId) {
       throw new DoorayCliError(
-        `--url 형식이 올바르지 않습니다: "${urlOpt}"\n예: https://x.dooray.com/task/to/4319587406666362045`,
+        `--url 형식이 올바르지 않습니다: "${urlOpt}"\n예: https://x.dooray.com/task/to/1234567890123456789`,
         EXIT_PARAM_ERROR,
       );
     }
@@ -198,7 +198,7 @@ export async function resolvePostInput(
     const postId = parseDoorayTaskUrl(projectArg);
     if (!postId) {
       throw new DoorayCliError(
-        `Dooray URL 형식이 올바르지 않습니다: "${projectArg}"\n예: https://x.dooray.com/task/to/4319587406666362045`,
+        `Dooray URL 형식이 올바르지 않습니다: "${projectArg}"\n예: https://x.dooray.com/task/to/1234567890123456789`,
         EXIT_PARAM_ERROR,
       );
     }
@@ -260,24 +260,24 @@ describe("resolvePostInput", () => {
 
   it("--id + positional 동시 → 에러", async () => {
     await expect(
-      resolvePostInput(makeClient({}), { idOpt: "1", projectArg: "tc-ocr" }),
+      resolvePostInput(makeClient({}), { idOpt: "1", projectArg: "<project>" }),
     ).rejects.toBeInstanceOf(DoorayCliError);
   });
 
   it("--url 단독 → standalone 호출", async () => {
     const c = makeClient({
-      standalone: { id: "999", projectId: "p1", projectCode: "tc-ocr", number: 337 },
+      standalone: { id: "999", projectId: "p1", projectCode: "<project>", number: 337 },
     });
     const out = await resolvePostInput(c, {
       urlOpt: "https://x.dooray.com/task/to/999",
     });
-    expect(out).toEqual({ projectId: "p1", projectCode: "tc-ocr", postId: "999", postNumber: 337 });
+    expect(out).toEqual({ projectId: "p1", projectCode: "<project>", postId: "999", postNumber: 337 });
     expect(c.getPostStandalone).toHaveBeenCalledWith("999");
   });
 
   it("--id 단독 → standalone 호출", async () => {
     const c = makeClient({
-      standalone: { id: "999", projectId: "p1", projectCode: "tc-ocr", number: 337 },
+      standalone: { id: "999", projectId: "p1", projectCode: "<project>", number: 337 },
     });
     const out = await resolvePostInput(c, { idOpt: "999" });
     expect(out.postId).toBe("999");
@@ -286,7 +286,7 @@ describe("resolvePostInput", () => {
 
   it("positional 1개가 URL이면 standalone", async () => {
     const c = makeClient({
-      standalone: { id: "999", projectId: "p1", projectCode: "tc-ocr", number: 337 },
+      standalone: { id: "999", projectId: "p1", projectCode: "<project>", number: 337 },
     });
     const out = await resolvePostInput(c, {
       projectArg: "https://x.dooray.com/task/to/999",
@@ -296,7 +296,7 @@ describe("resolvePostInput", () => {
 
   it("--url 형식 오류 → 에러", async () => {
     await expect(
-      resolvePostInput(makeClient({}), { urlOpt: "https://other.com/task/to/1" }),
+      resolvePostInput(makeClient({}), { urlOpt: "https://other.example.com/task/to/1" }),
     ).rejects.toBeInstanceOf(DoorayCliError);
   });
 

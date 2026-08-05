@@ -53,7 +53,7 @@ Body:
 **시나리오 B — sanitization 회귀 가드**:
 ```bash
 # 본문에 baseUrl/apiKey 절대 포함 안 되는지
-node dist/index.js feedback --title T --body B --dry-run | grep -E "baseUrl|apiKey|password|api\.dooray\.com|nhnent" && echo "FAIL: 시크릿 누출" || echo "OK: 시크릿 미포함"
+node dist/index.js feedback --title T --body B --dry-run | grep -E "baseUrl|apiKey|password|api\.dooray\.com|<tenant>" && echo "FAIL: 시크릿 누출" || echo "OK: 시크릿 미포함"
 # 기대: "OK: 시크릿 미포함"
 ```
 

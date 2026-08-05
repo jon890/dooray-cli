@@ -95,7 +95,7 @@ pnpm test 2>&1 | tail -3
 # 기대: 0건 / PASS
 
 # 7. 개인 식별 정보 사전 점검
-grep -rnE "tc-ocr|nhnent|@(nhn|nhnent)\.com" .claude/skills/build-with-teams/SKILL.md tasks/037-chore-custom-executor-agent/
+grep -rnE "<project>|<tenant>|@(nhn|<tenant>)\.com" .claude/skills/build-with-teams/SKILL.md tasks/037-chore-custom-executor-agent/
 # 기대: 0건
 ```
 

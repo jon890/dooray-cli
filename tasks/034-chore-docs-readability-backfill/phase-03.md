@@ -87,7 +87,7 @@ EOF
 ### 개인 식별 정보 자체 점검 (release skill 룰 답습)
 
 ```bash
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ 2>/dev/null
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/ 2>/dev/null
 # 기대: 0건
 grep -rnE "[0-9]{15,}" README.md skills/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|<postId>|<pageId>"
 # 기대: 0건

@@ -63,7 +63,7 @@ grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKI
 # 0건
 
 # 개인/사내 식별자 0건
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ 2>/dev/null
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/ 2>/dev/null
 grep -rnE "[0-9]{15,}" README.md skills/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
 # 각각 0건
 

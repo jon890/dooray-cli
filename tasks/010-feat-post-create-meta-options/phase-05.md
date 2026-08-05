@@ -2,12 +2,12 @@
 
 ## 컨텍스트
 
-본 phase는 코드 변경 없이 검증만. Issue #18 차단 케이스(mandatory-tag 정책 프로젝트 `tc-ocr`)에서 실제로 동작하는지 확인.
+본 phase는 코드 변경 없이 검증만. Issue #18 차단 케이스(mandatory-tag 정책 프로젝트 `<project>`)에서 실제로 동작하는지 확인.
 
 ### 먼저 읽을 파일
 
 - `tasks/010-feat-post-create-meta-options/index.json` — phase 1-4 완료 상태 확인
-- 이슈 본문 차단 케이스: `tc-ocr` 프로젝트, 0/1/2 그룹 mandatory-tag 정책
+- 이슈 본문 차단 케이스: `<project>` 프로젝트, 0/1/2 그룹 mandatory-tag 정책
 
 ## 작업 목록 (5개 — 마지막 task 완료 처리 포함)
 
@@ -45,14 +45,14 @@ node dist/index.js doctor
 
 ```bash
 # 캐시 워밍 (선택)
-node dist/index.js project show tc-ocr
+node dist/index.js project show <project>
 
 # 태그 누락 케이스 — 친절한 에러 기대
-node dist/index.js post create tc-ocr --title "[TEST] CLI mandatory 검증" --body "test"
+node dist/index.js post create <project> --title "[TEST] CLI mandatory 검증" --body "test"
 # 기대 stderr: "필수 태그 그룹이 누락되었습니다 ..."
 
 # 정상 케이스
-node dist/index.js post create tc-ocr \
+node dist/index.js post create <project> \
   --title "[TEST] CLI mandatory 검증" \
   --body "test" \
   --tag "0: ..." --tag "1: ..." --tag "2: ..."
@@ -61,17 +61,17 @@ node dist/index.js post create tc-ocr \
 
 **시나리오 B — `--parent` `code/number` 형식**:
 ```bash
-node dist/index.js post create tc-ocr \
+node dist/index.js post create <project> \
   --title "[TEST] parent 검증" \
   --body "test" \
   --tag "0: ..." --tag "1: ..." --tag "2: ..." \
-  --parent tc-ocr/337
+  --parent <project>/337
 ```
 기대: 정상 생성.
 
 **시나리오 C — workflow 이름 부분일치 + 실패 시 warn**:
 ```bash
-node dist/index.js post create tc-ocr \
+node dist/index.js post create <project> \
   --title "[TEST] workflow 검증" \
   --body "test" \
   --tag "0: ..." --tag "1: ..." --tag "2: ..." \
@@ -81,7 +81,7 @@ node dist/index.js post create tc-ocr \
 
 **시나리오 D — 모호 매칭**:
 ```bash
-node dist/index.js post create tc-ocr \
+node dist/index.js post create <project> \
   --title "[TEST] 모호" --body "test" --tag "Dev"
 ```
 다중 매칭이면 후보 목록 + exit non-zero.

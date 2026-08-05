@@ -434,15 +434,30 @@ CLAUDE.md 자체도 public repo 에 포함되므로 사내 식별자를 블랙�
 
 ```bash
 # cwd: <repo root>
+# 검사 대상 — .claude/ 와 tasks/ 도 git 추적 대상이므로 포함한다
+# 배열로 둔다: zsh 는 문자열 변수를 단어 분할하지 않아 "a b c" 가 한 경로로 취급된다
+SCAN=(README.md skills/ docs/ CLAUDE.md .claude/ scripts/ tasks/ src/)
+# 허용 dummy ID + 공개 helpdesk 페이지 ID
+OK_IDS="1234567890123456789|9876543210987654321|2939987647631384419"
+OK_IDS="$OK_IDS|1111222233334444555|2222333344445555666|3333444455556666777"
+OK_IDS="$OK_IDS|4444555566667777888|9999888877776666555|9999999999999999999"
+OK_IDS="$OK_IDS|1111111111111111111|2222222222222222222|123456789012345"
+
 # 1) 공개 도메인 화이트리스트 밖의 URL/이메일 도메인 (사내 도메인 가능성) — 사내 도메인은 여기 명시하지 않는다
 #    https:// 또는 @ prefix 를 요구해 코드의 property 접근(.com/.net) false positive 를 배제
-grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" README.md skills/ docs/ CLAUDE.md .claude/ scripts/ src/ 2>/dev/null \
+grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" $SCAN 2>/dev/null \
   | grep -vE "dooray\.com|gov-dooray\.com|dooray\.co\.kr|gov-dooray\.co\.kr|helpdesk\.dooray\.com|github\.com|npmjs\.com|example\.com|youtube\.com|anthropic\.com|x\.com"
 # 0건이어야 함 (남으면 사내/미허용 도메인 가능성 — placeholder 또는 화이트리스트 검토)
 
-# 2) 19자리 numeric (dummy + 공개 helpdesk 페이지 ID 예외)
-grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
+# 2) 19자리 numeric
+grep -rnE "[0-9]{15,}" $SCAN 2>/dev/null | grep -vE "$OK_IDS|<postId>|<pageId>"
 # 0건이어야 함 (남으면 실제값 가능성 — 검토 후 placeholder 또는 dummy로 교체)
+
+# 3) 사내 프로젝트 코드 — 화이트리스트 방식으로는 잡히지 않는다 (임의 문자열)
+#    CLI 예시의 project 자리 값을 뽑아 placeholder 인지 눈으로 확인한다
+grep -rohE "(post (create|list|get|search)|project (show|members|groups|tags|templates|workflows)|wiki (pages|tree)) [A-Za-z][A-Za-z0-9_-]{2,}" $SCAN 2>/dev/null \
+  | awk '{print $NF}' | sort -u
+# my-project / testproj / NONEXIST / <project> 만 남아야 함
 ```
 
 **자동화**: `/release` 스킬 Step 3(문서 동기화)에 개인 식별 정보 사전 점검 통합 — release 전 자동 검증.

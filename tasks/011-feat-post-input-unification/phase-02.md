@@ -135,7 +135,7 @@ action 의사 코드:
 - [ ] 4개 명령 `--help`에 `--id`, `--url` 옵션 노출
 - [ ] `grep -c "resolvePostInput" src/commands/post/{get,edit,done,workflow}.ts` → 4
 - [ ] `grep -c "resolveProject\|resolvePost\b" src/commands/post/{get,edit,done}.ts` → 0 (삭제됨, workflow.ts는 별개로 검토)
-- [ ] 기존 호출 (`dooray post get tc-ocr 337`) 동작 (수동 검증은 phase 5)
+- [ ] 기존 호출 (`dooray post get <project> 337`) 동작 (수동 검증은 phase 5)
 
 ## 주의사항
 

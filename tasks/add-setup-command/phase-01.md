@@ -28,7 +28,7 @@ dooray-cli는 TypeScript + Commander.js 기반 Dooray REST API CLI 도구이다.
     "금융 클라우드": "https://api.dooray.co.kr",
   } as const;
   ```
-- [ ] DEFAULTS에 `tenantName: "nhnent"` 추가
+- [ ] DEFAULTS에 `tenantName: "<tenant>"` 추가
 - [ ] `src/config/store.ts`의 `setConfigValue`에 `tenant-name` 키 추가
 - [ ] `pnpm run build` 실행하여 빌드 성공 확인
 - [ ] `@inquirer/prompts`가 tsup 번들에서 정상 import되는지 확인. 만약 CJS 호환 문제가 있으면 tsup의 `external` 설정에 추가하거나 다른 방법으로 해결

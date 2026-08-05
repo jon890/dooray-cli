@@ -248,7 +248,7 @@ export interface ResolvedWikiPageInput {
 
 const INPUT_HELP =
   "위키 페이지를 식별할 정보가 부족합니다. 다음 중 하나를 입력하세요:\n" +
-  "  - <project> <page-id>          예: my-project 4071828729722696495\n" +
+  "  - <project> <page-id>          예: my-project 9876543210987654321\n" +
   "  - --id <page-id> --project <project>   (또는 --url)\n" +
   "  - <Dooray URL>                 예: https://x.dooray.com/wiki/<wikiId>/<pageId>";
 

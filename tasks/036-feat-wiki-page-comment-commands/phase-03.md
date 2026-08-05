@@ -132,7 +132,7 @@ node dist/index.js wiki page comment list "https://<tenant>.dooray.com/wiki/<wik
 
 ```bash
 # 개인 식별 정보 사전 점검
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/ docs/ CLAUDE.md 2>/dev/null
 # 기대: 0건
 
 grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | \

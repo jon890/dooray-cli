@@ -130,7 +130,7 @@ grep -c '"status": "completed"' tasks/022-feat-mention-link-first-class/index.js
 # 기대: 4
 
 # 5. 개인 식별 정보 grep 0건
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ CLAUDE.md tasks/022-feat-mention-link-first-class/ 2>/dev/null
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/ CLAUDE.md tasks/022-feat-mention-link-first-class/ 2>/dev/null
 # 기대: 0건
 ```
 

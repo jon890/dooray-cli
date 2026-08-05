@@ -78,7 +78,7 @@ grep -nE "^\s*-\s+.*\. .*\." .claude/skills/_shared/code-review-pitfalls.md | he
 # 1줄에 2 문장 압축 있으면 sub-bullet 분리
 
 # 6. 개인 식별 정보 사전 점검
-grep -rnE "tc-ocr|nhnent|@(nhn|nhnent)\.com" .claude/skills/_shared/code-review-pitfalls.md .claude/skills/_shared/common-pitfalls.md
+grep -rnE "<project>|<tenant>|@(nhn|<tenant>)\.com" .claude/skills/_shared/code-review-pitfalls.md .claude/skills/_shared/common-pitfalls.md
 # 기대: 0건
 ```
 

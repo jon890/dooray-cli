@@ -245,7 +245,7 @@ export async function resolvePostRef(client: DoorayApiClient, ref: string): Prom
     const num = Number(numStr);
     if (!code || !Number.isFinite(num) || num <= 0) {
       throw new DoorayCliError(
-        `--parent 형식이 올바르지 않습니다: "${ref}" (예: "tc-ocr/337" 또는 raw postId)`,
+        `--parent 형식이 올바르지 않습니다: "${ref}" (예: "<project>/337" 또는 raw postId)`,
         EXIT_PARAM_ERROR,
       );
     }

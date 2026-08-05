@@ -51,7 +51,7 @@ tasks/041-feat-post-input-type-classifier/index.json   (완료 마킹)
 - 개인 식별 정보 grep 통과 — README/SKILL 예시에 placeholder 사용
   ```bash
   # cwd: <repo root>
-  grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ 2>/dev/null
+  grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/ 2>/dev/null
   # 0건이어야 함
   grep -rnE "[0-9]{15,}" README.md skills/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|<postId>|<pageId>"
   # 0건이어야 함

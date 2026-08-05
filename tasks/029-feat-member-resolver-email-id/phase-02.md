@@ -93,7 +93,7 @@ grep -c '"status": "completed"' tasks/029-feat-member-resolver-email-id/index.js
 # 기대: 3
 
 # 5. 개인 식별 정보 grep 0건 (CLAUDE.md release 게이트)
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ tasks/029-feat-member-resolver-email-id/ 2>/dev/null | grep -vE "사내 Dooray|NHN 도메인"
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/ tasks/029-feat-member-resolver-email-id/ 2>/dev/null | grep -vE "사내 Dooray|NHN 도메인"
 # 기대: 0건 (exit 1)
 ```
 

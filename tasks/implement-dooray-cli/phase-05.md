@@ -51,7 +51,7 @@ Post 읽기 커맨드(list, search, get)와 $EDITOR 기반 수정(edit) 커맨�
     priority: normal
     due_date: 2026-04-30T18:00:00+09:00
     to:
-      - kim@nhnent.com
+      - user@example.com
     cc: []
     ---
     본문 마크다운...

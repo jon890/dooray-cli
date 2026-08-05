@@ -71,31 +71,31 @@ grep -c "^## ADR-020" docs/adr.md
 
 **시나리오 A — 기존 호환** (positional 2개):
 ```bash
-node dist/index.js post get tc-ocr 337
+node dist/index.js post get <project> 337
 ```
 → 기존과 동일 동작.
 
 **시나리오 B — `--id` 모드**:
 ```bash
-node dist/index.js post get --id 4319587406666362045
-node dist/index.js post comment list --id 4319587406666362045
+node dist/index.js post get --id 1234567890123456789
+node dist/index.js post comment list --id 1234567890123456789
 ```
 
 **시나리오 C — URL 첫 positional**:
 ```bash
-node dist/index.js post get https://nhnent.dooray.com/task/to/4319587406666362045
+node dist/index.js post get https://<tenant>.dooray.com/task/to/1234567890123456789
 ```
 
 **시나리오 D — sub-id 옵션**:
 ```bash
 # comment edit
-node dist/index.js post comment edit --id 4319587406666362045 --comment-id <id> --body "test"
+node dist/index.js post comment edit --id 1234567890123456789 --comment-id <id> --body "test"
 
 # file upload
-node dist/index.js post file upload --id 4319587406666362045 --file ./test.txt
+node dist/index.js post file upload --id 1234567890123456789 --file ./test.txt
 
 # file download
-node dist/index.js post file download --id 4319587406666362045 --file-id <id>
+node dist/index.js post file download --id 1234567890123456789 --file-id <id>
 ```
 
 **시나리오 E — 충돌 에러**:
@@ -103,7 +103,7 @@ node dist/index.js post file download --id 4319587406666362045 --file-id <id>
 node dist/index.js post get --id 1 --url https://x.dooray.com/task/to/2
 # stderr: "--id와 --url은 동시에 사용할 수 없습니다."
 
-node dist/index.js post get --id 1 tc-ocr 337
+node dist/index.js post get --id 1 <project> 337
 # stderr: "--id/--url과 positional 인자(<project> <post-number>)는 동시에 사용할 수 없습니다."
 
 node dist/index.js post get

@@ -18,7 +18,7 @@ API 연결 테스트 패턴은 `src/commands/doctor.ts`를 참고하라.
 
 ### 1. 테넌트명 입력
 - `@inquirer/prompts`의 `input` 사용
-- 기본값: 기존 config의 `tenantName` 또는 `"nhnent"`
+- 기본값: 기존 config의 `tenantName` 또는 `"<tenant>"`
 - 안내 메시지: "Dooray 접속 URL에서 확인 가능: https://{tenant}.dooray.com"
 
 ### 2. API Endpoint 선택

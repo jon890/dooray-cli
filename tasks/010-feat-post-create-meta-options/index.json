@@ -1,6 +1,6 @@
 {
   "name": "010-feat-post-create-meta-options",
-  "description": "Issue #18 — post create에 --tag/--parent/--workflow/--milestone 옵션 추가. mandatory-tag 정책 프로젝트(예: tc-ocr)에서 CLI 사용 가능하게 함. 매칭 정책(정확→부분→모호 에러) 전체 resolver에 통일. ADR-019.",
+  "description": "Issue #18 — post create에 --tag/--parent/--workflow/--milestone 옵션 추가. mandatory-tag 정책 프로젝트(예: <project>)에서 CLI 사용 가능하게 함. 매칭 정책(정확→부분→모호 에러) 전체 resolver에 통일. ADR-019.",
   "created_at": "2026-04-27T00:00:00Z",
   "status": "completed",
   "current_phase": 5,

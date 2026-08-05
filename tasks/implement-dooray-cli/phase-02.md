@@ -50,7 +50,7 @@
 
 1. `npm run build` 성공
 2. `node dist/index.js config set api-key test-key-123` 실행 후 `~/.dooray/config.json`에 apiKey 저장됨
-3. `node dist/index.js config set base-url https://nhnent.dooray.com` 실행 후 baseUrl 저장됨
+3. `node dist/index.js config set base-url https://<tenant>.dooray.com` 실행 후 baseUrl 저장됨
 4. `node dist/index.js config get` 실행 시 설정 출력 (apiKey 마스킹)
 5. `node dist/index.js doctor` 실행 시 설정 상태 출력
 6. `node dist/index.js cache clear` 실행 시 캐시 삭제
