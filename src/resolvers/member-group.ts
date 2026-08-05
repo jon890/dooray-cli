@@ -85,7 +85,7 @@ export async function resolveMemberGroup(
   const match = matchByName(adapter, input, "그룹", (g) => `${g.code} (${g.id})`, {
     helpHint:
       "전체 목록: `dooray project groups <project>` / " +
-      "id 직접 입력도 가능 (15+자리 numeric — code 누락 그룹도 매칭, ADR-028)",
+      "id 직접 입력도 가능 (15+자리 numeric — code 누락 그룹도 매칭)",
   });
   return { id: match.id, code: match.code };
 }

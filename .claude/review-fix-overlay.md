@@ -26,4 +26,4 @@ conflict 해결 시 코어의 "merge 또는 rebase" 분기에서 **`git merge or
 재현 가능한 code-review 패턴은 `docs/pitfalls/code-review/` 에 새 파일 1개로 누적한다.
 
 - 형식·게이트 기준(재발성·심각도·도구로 못 잡음·추상화 가능)은 `docs/pitfalls/INDEX.md` 를 따른다.
-- 도메인 의사결정(ADR 급)은 `docs/adr/` 신규 ADR — `CLAUDE.md` "상황별 ADR 필수 참조" 표에도 행을 추가한다.
+- 도메인 의사결정(ADR 급)은 `docs/adr/` 신규 ADR — `docs/adr/INDEX.md` 에도 행을 추가한다.

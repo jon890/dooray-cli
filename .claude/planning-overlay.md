@@ -28,7 +28,7 @@
 ## docs 컨벤션
 
 5 핵심 docs — `docs/prd.md` / `docs/flow.md` / `docs/adr/`(ADR 1개 = 파일 1개, 목록은 `docs/adr/INDEX.md`) / `docs/data-schema.md` / `docs/code-architecture.md`.
-`CLAUDE.md` 는 코드 작업 가이드 + 상황별 ADR 참조 표. `README.md` + `skills/dooray-cli/SKILL.md` 는 외부 facing 사용자 가이드.
+`CLAUDE.md` 는 코드 작업 지침. `README.md` + `skills/dooray-cli/SKILL.md` 는 외부 facing 사용자 가이드.
 
 ### 변경 유형별 docs 영향 표 (필수 — 누락 0 화)
 
@@ -44,7 +44,7 @@
 | 의존성 추가 / 빌드 설정 | 빌드 명령 (해당 시) | ADR 작성 전 점검 후 ADR | 기술 스택 표 | — | — | — | — | — |
 
 **갱신 시점 분리**: planning 결정 docs(`adr/`·`code-architecture.md`·`CLAUDE.md`·`data-schema.md`·`flow.md`·`prd.md`)는 **task 생성 전 즉시 반영 + commit**.
-`README.md`·`skills/dooray-cli/SKILL.md`(사용자 가이드)는 코드 산출물에 의존하므로 **마지막 phase(N-1)**에서 갱신한다.
+`README.md` 와 `skills/dooray-cli/`(사용자 가이드)는 코드 산출물에 의존하므로 **마지막 phase** 에서 갱신한다.
 이 분리를 phase 작성 시 명시적으로 따른다.
 planning 결정 docs 를 phase 안에서 고치면 안 된다.
 
@@ -75,13 +75,10 @@ planning 결정 docs 를 phase 안에서 고치면 안 된다.
 
 ### 공개 문서 내부 참조 제거 (필수 — README / SKILL 갱신 시)
 
-`README.md`·`skills/dooray-cli/SKILL.md`는 외부 facing 이라 `ADR-NNN`·`Issue #NN`·`task NNN` 같은 내부 참조를 남기지 않는다. 문장에 녹은 참조도 번호를 빼고 재작성.
+`README.md` 와 `skills/` 는 사용자·에이전트 대상이라 `ADR-NNN`, `Issue #NN`, `task NNN` 같은 내부 참조를 남기지 않는다.
+문장에 녹은 참조도 번호를 빼고 재작성한다.
 
-```bash
-# cwd: <repo root>
-grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKILL.md 2>/dev/null
-# 0건이어야 함
-```
+검증 grep 은 `CLAUDE.md` "공개 문서(README · 공개 SKILL) — 내부 참조 번호 제외" 섹션에 있다.
 
 ## index.json 스키마 (레포 특화 — `build-with-teams` 강제)
 
@@ -134,19 +131,9 @@ grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKI
   - `docs/pitfalls/code-review/` — code-reviewer 의 코드 검사 회피
 - **docs-verifier 흡수 원칙**: docs-verifier(`.claude/agents/dooray-cli-docs-verifier.md`)의 반복 지적은 별도 회고 docs 를 신설하지 않는다.
   - 위 "변경 유형별 docs 영향 표"에 행 추가/보강으로 흡수한다.
-  - `build-with-teams/SKILL.md`의 docs-verifier 검증 항목 7~10 은 이 표를 거울처럼 참조한다 — 표 수정 시 그쪽도 자연스럽게 커버되는지 확인.
-- **개인 식별 정보 / 사내 식별자 노출 금지**: 사내 프로젝트 코드·사내 도메인·실제 19자리 ID·사내 이메일·실명 노출 금지.
-  - 대상: `README.md` / `docs/` / `skills/` / `CLAUDE.md` / `.claude/` / `src/`
-  - 금지 유형과 검증 grep 의 단일 소스는 `CLAUDE.md` 해당 섹션 — 사내 식별자를 여기에 나열하면 그 자체가 노출이다.
-
-```bash
-# cwd: <repo root>
-grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" README.md skills/ docs/ CLAUDE.md .claude/ src/ 2>/dev/null \
-  | grep -vE "dooray\.com|gov-dooray\.com|dooray\.co\.kr|gov-dooray\.co\.kr|helpdesk\.dooray\.com|github\.com|npmjs\.com|example\.com|youtube\.com|anthropic\.com|x\.com"
-grep -rnE "[0-9]{15,}" README.md skills/ docs/ .claude/ 2>/dev/null | grep -vE "1234567890123456789|9876543210987654321|2939987647631384419|<postId>|<pageId>"
-```
-
-- 코어 `verify-task.sh` 5 패턴에 추가로 위 두 grep 도 self-check 대상.
+  - 코어 `build-with-teams/SKILL.md` 의 docs-verifier 검증 단계가 이 표를 그대로 검증 기준으로 쓴다 — 표를 수정하면 그쪽 검증도 함께 달라지는지 확인한다.
+- **개인 식별 정보 노출 금지**: task 파일 제출 전 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션의 검증 grep 을 실행해 0건을 확인한다.
+  - 코어 planning 스킬의 task 자가 점검 항목에 더해 이 검사도 수행한다.
 
 ## plan 네이밍
 
@@ -154,7 +141,6 @@ grep -rnE "[0-9]{15,}" README.md skills/ docs/ .claude/ 2>/dev/null | grep -vE "
 
 - `NNN` = 3자리 zero-padded 순차 번호. Issue 연결은 폴더명이 아니라 `index.json`의 `description` 필드에 남긴다.
 - `task-name` = 케밥 케이스 간결 요약이며 카테고리 접두(`feat-`/`fix-`/`refactor-`/`chore-`/`docs-`)로 시작한다.
-  - 이 접두는 아래 branch prefix 와 반드시 일치해야 한다.
 - `index.json`의 `name` 필드는 폴더명과 **동일**하게 설정.
 
 ### 번호 충돌 방지 (필수)
@@ -177,16 +163,4 @@ gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefN
 - **커밋 순서 (docs-first, 2개 커밋으로 분리)**:
   1. docs 최신화 커밋 + push (`docs(scope): ...`) — task 생성 전 필수, 건너뛰기 금지
   2. task 파일(`index.json` + `phase-*.md`) 커밋 + push — 실행 전 필수
-- **실제 코드 구현 시점의 branch**(task 실행 단계, planning 범위 밖): 카테고리별 5 prefix.
-
-  | 카테고리 | branch prefix | 예시 |
-  |---|---|---|
-  | 신규 기능 task | `feat/{NNN}-{slug}` | `feat/033-feat-post-edit-tag-options` |
-  | 버그 수정 task | `fix/{NNN}-{slug}` | `fix/032-fix-member-group-resolver-guard` |
-  | 리팩토링 task | `refactor/{NNN}-{slug}` | `refactor/028-refactor-client-throw-await` |
-  | 메타 작업 (task 폴더 없음) | `chore/{topic}` | `chore/replace-foreign-terms` |
-  | docs 단독 (task 폴더 없음) | `docs/{topic}` | `docs/readability-6-patterns` |
-
-  task 폴더명 접두와 branch prefix 가 반드시 일치한다 (`032-fix-...` → `fix/032-fix-...`, `feat/032-fix-...` 는 오분류).
-- **PR 제목 형식**: `type(scope): description` (예: `feat(commands): add wiki search subcommand`). PR 본문에 commit 목록을 나열하지 않는다 — GitHub Commits 탭으로 충분.
 - **핸드오프**: `/build-with-teams` 로 안내한다. `tasks/{NNN}-{task-name}` 디렉터리를 인자로 받아 Agent Teams 가시적 협업(team-lead·critic·executor·docs-verifier)을 수행한다.

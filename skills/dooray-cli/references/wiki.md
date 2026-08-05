@@ -1,95 +1,53 @@
 # wiki
 
-위키 페이지 조회(트리 포함), 첨부파일 다운로드/공유, 인라인 이미지 업로드, 댓글 누적 시나리오를 다룬다.
+## 페이지 계층 훑기
 
-## 체이닝 예시 — 위키
-
-### 위키 페이지 조회
+`wiki tree --json` 은 flat 배열이고 `wiki pages --json` 과 같은 스키마다.
+`parentPageId` 로 계층을 조립하므로 두 명령의 파싱 코드를 공유할 수 있다.
+`wiki pages` 는 root 만 주고, 전체 계층이 필요하면 `wiki tree` 를 쓴다.
 
 ```bash
-# 1. 위키 페이지 목록
-dooray wiki pages <project> --json
-# → [{ "id": "<pageId>", "subject": "설계 문서", ... }]
-
-# 2. 페이지 내용 조회
-dooray wiki page get <project> <pageId> --json
-
-# 3. 전체 계층을 트리로 훑기 (--json 은 flat 배열 — wiki pages 와 동일 스키마로 파싱)
 dooray wiki tree <project> --json
+dooray wiki tree <project> --depth 2        # 깊이 상한
 ```
 
+## 인라인 이미지는 본문에 자동 삽입되지 않는다
 
-### 위키 페이지 첨부파일 — 스킬 파일 팀 공유
-
-**스킬 파일 팀 공유**: 팀 위키에 스킬 파일 (예: `SKILL.md`) 을 `wiki page file upload` 로 첨부 → 팀원이 `wiki page file download-all` 로 일괄 받아 `~/.claude/skills/` 에 그대로 설치.
-
-```bash
-# 업로드 (일반 첨부)
-dooray wiki page file upload <project> <page-id> --file ~/.claude/skills/my-skill/SKILL.md
-
-# 팀원 쪽에서 일괄 다운로드
-dooray wiki page file download-all <project> <page-id> -o ~/.claude/skills/my-skill/
-
-# 첨부 목록 확인 (type 컬럼: general / inline_image)
-dooray wiki page file list <project> <page-id>
-```
-
-
-### 위키 페이지 인라인 이미지 업로드 후 본문 자동 삽입
-
-`--type inline_image` 로 업로드 시 `--json` 응답에 `markdownSnippet` 필드가 포함됩니다.
-jq 로 추출해 본문에 바로 삽입하는 자동화가 가능합니다.
+`--type inline_image` 로 올려도 본문은 바뀌지 않는다.
+`--json` 의 `markdownSnippet` 을 받아 본문에 직접 넣어야 화면에 보인다.
 
 ```bash
-# 1. 인라인 이미지 업로드 — --json 으로 markdownSnippet 추출
 SNIPPET=$(dooray wiki page file upload <project> <page-id> \
-  --file ./diagram.png --type inline_image --json \
-  | jq -r '.markdownSnippet')
-# SNIPPET = "![diagram.png](/wikis/<wikiId>/files/<attachFileId>)"
+  --file ./diagram.png --type inline_image --json | jq -r '.markdownSnippet')
+# → "![diagram.png](/wikis/<wikiId>/files/<attachFileId>)"
 
-# 2. 기존 본문 조회
 CURRENT_BODY=$(dooray wiki page get <project> <page-id> --json | jq -r '.body.content')
-
-# 3. snippet 을 본문 끝에 추가해 업데이트
-NEW_BODY="${CURRENT_BODY}
+dooray wiki page edit <project> <page-id> --body "${CURRENT_BODY}
 
 ${SNIPPET}"
-dooray wiki page edit <project> <page-id> --body "$NEW_BODY"
 ```
 
-**참고**: `general` 타입은 `markdownSnippet` 없음. `--quiet` 은 id 만 출력 (snippet 미포함).
+기존 본문을 먼저 받아 뒤에 이어 붙인다 — `--body` 는 전체 교체이므로 snippet 만 넣으면 본문이 사라진다.
 
-
-### 위키 페이지 댓글 — 회의록 결정사항 자동 누적
-
-**회의록 결정사항 자동 누적**: 회의록 위키 페이지에 자동화 봇이 `wiki page comment add` 로 결정사항을 댓글로 누적, `wiki page comment list --latest 20` 으로 최근 토론 흐름 추적.
+## 첨부 일괄 내려받기
 
 ```bash
-# 결정사항 댓글 추가
-dooray wiki page comment add <project> <page-id> --body "결정: 배포일 2026-06-01 확정"
-
-# 최근 20개 토론 흐름 조회
-dooray wiki page comment list <project> <page-id> --latest 20
-
-# 최신 댓글 1건 shortcut
-dooray wiki page comment latest <project> <page-id>
+dooray wiki page file download-all <project> <page-id> -o <dir>
+dooray wiki page file list <project> <page-id>   # type 컬럼으로 general 과 inline_image 구분
 ```
 
-### 위키 페이지 삭제 — 잘못 만든/중복 페이지 정리
+`list` 는 general 첨부와 inline 이미지를 합쳐 보여준다.
 
-**비공식 endpoint 주의**: `wiki page delete` 는 Dooray 가 공식 문서화하지 않은 endpoint 를 쓴다. 동작은 확인됐으나 향후 API 변경에 깨질 수 있으니, 자동화에서 대량 삭제 전 한 건으로 먼저 검증한다. `soft delete`(빈 제목·본문) 우회는 하지 않는다 — 페이지가 트리에 남아 혼란을 준다.
+## 페이지 삭제
 
-```bash
-# project + page-id (positional 2개)
-dooray wiki page delete <project> <page-id>
+`wiki page delete` 는 Dooray 가 공식 문서화하지 않은 endpoint 를 쓴다.
+동작은 확인했지만 서버 정책이 바뀌면 깨질 수 있으니, 대량 삭제 전에 한 건으로 먼저 확인한다.
 
-# Dooray Wiki URL 을 첫 인자로
-dooray wiki page delete https://<tenant>.dooray.com/wiki/...
+빈 제목·본문으로 덮는 soft delete 우회는 쓰지 않는다 — 페이지가 트리에 남아 혼란을 준다.
 
-# --id 모드 (--project 로 wikiId 해석)
-dooray wiki page delete --id <pageId> --project <project>
+하위 페이지가 있는 페이지를 지우면 하위는 삭제한 페이지의 부모 아래로 재부착된다. orphan 은 생기지 않는다.
 
-# 자동화 — 확인 프롬프트 없이 삭제
-dooray wiki page delete <project> <page-id> -y
-```
+## 위키 페이지 이동은 불가능하다
 
+`parentPageId` 를 바꾸는 이동은 API 로 할 수 없다. 수정 요청이 `parentPageId` 를 무시하고 전용 endpoint 도 없다.
+사용자가 이동을 요청하면 웹 UI 를 안내한다.
