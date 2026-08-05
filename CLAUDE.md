@@ -49,7 +49,8 @@ dooray                # 글로벌 링크 시
   - wiki 의 `--id` 모드는 `--project` 동반 필수 — wiki API 가 page-only fetch 를 지원하지 않는다
 - **옵션 이름**
   - 제목은 post·wiki 모두 `--title` (`--subject` 는 deprecated alias — stderr 경고 후 동작)
-  - 본문은 `--body` / `--body-file`. `edit` 와 `comment add`/`edit` 는 둘 다 없으면 `$EDITOR` 로 열리지만 `create` 계열은 fallback 이 없다
+  - 본문은 `--body` / `--body-file` (둘 다 `-` 로 stdin 을 받는다)
+  - `post edit`, `wiki page edit`, `post`·`wiki page` 의 `comment add`/`edit` 는 둘 다 없으면 `$EDITOR` 가 열린다. `create` 계열은 fallback 없이 에러가 된다
 - **resolver 매칭**: 정확일치 → 이름 부분일치 → 모호하면 에러와 후보 목록 출력
 - **출력**: `--json` 은 raw 유지, `--quiet` 은 식별자만
 - **파괴적 명령**: 새로 만들 때는 confirm 을 기본으로 하고 `--yes` 를 붙인다. non-TTY 는 abort
