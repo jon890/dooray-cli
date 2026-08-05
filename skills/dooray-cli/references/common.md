@@ -1,7 +1,5 @@
 # common
 
-설치, 초기 설정, 출력 모드, Dooray API 제약사항, 피드백 등록, 에러 핸들링, 캐시, projectId 직접 입력을 다룬다.
-
 ## 설치
 
 ```bash
@@ -46,16 +44,9 @@ dooray skill status --quiet  # 상태 토큰만 출력
 | `unmanaged` | 직접 만든 파일·디렉터리 또는 알 수 없는 링크 | 내용 확인 후 `dooray skill update --force` |
 | `modified` | 관리형 저장소 전환 뒤 사용자 수정이 감지된 상태 | 내용 확인 후 `dooray skill update --force` |
 
-`install`과 `update`는 같은 안전한 전환 로직을 사용한다.
-스킬은 npm 패키지 경로를 직접 가리키지 않고 관리 저장소를 거쳐 연결된다.
-절대 경로 `XDG_DATA_HOME`이 있으면 `$XDG_DATA_HOME/dooray-cli/skills/`를 사용하고, 없거나 상대 경로이면 `~/.local/share/dooray-cli/skills/`를 사용한다.
-Node 버전 관리자로 전역 npm 설치 경로가 바뀌어도 활성 링크는 관리 저장소를 계속 가리킨다.
-관리되지 않는 기존 항목, 수정된 관리 저장소, 손상된 manifest는 기본적으로 덮어쓰지 않는다.
-`--force`를 사용하면 기존 활성 항목을 `.backup-<timestamp>` 경로로 옮긴 뒤 현재 CLI 스킬 링크로 교체한다.
-같은 관리 저장소 경로가 수정되었거나 손상되었으면 별도 격리 백업을 만든 뒤 새 저장소로 복구한다.
+`--force` 는 기존 항목을 `.backup-<timestamp>` 로 옮긴 뒤 교체한다. 내용을 확인한 다음에만 쓴다.
 
-Node 버전 관리자를 사용하면 전역 npm 설치 경로가 Node 버전별로 달라질 수 있다.
-CLI를 최신 버전으로 다시 설치한 뒤에는 `dooray skill update`를 명시적으로 실행해 새 스킬 파일을 반영한다.
+CLI 를 새 버전으로 설치했으면 `dooray skill update` 를 직접 실행해야 스킬 파일이 갱신된다.
 
 ## 출력 모드
 
@@ -145,9 +136,7 @@ AI agent 가 `member=me` 응답에 없는 프로젝트의 업무를 다뤄야 �
    - 사용자에게 "프로젝트 ID 가 필요합니다 — Dooray UI 의 프로젝트 URL 에서 확인 가능" 요청
    - 또는 `dooray project list --type private` 로 private 캐시 갱신 시도
 
-3. **권한 없는 projectId 입력 시**: resolver 통과 후 후속 API 4xx 발생 — 에러 메시지에서 권한 부재 확인 후 사용자에게 보고
-
-권한 검증이 resolver 단보다 한 단계 지연되는 trade-off — AI 친화적 자동화 우선.
+3. **권한 없는 projectId 입력 시**: resolver 는 통과하고 후속 API 가 4xx 를 낸다. 에러 메시지로 권한 부재를 확인해 사용자에게 보고한다.
 
 
 ## 캐시

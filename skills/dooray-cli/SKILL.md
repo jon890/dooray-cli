@@ -105,7 +105,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 업무 목록 | `dooray post list <project>` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` — projectId(15자리 이상 numeric) 를 넣으면 캐시를 우회한다 |
 | 업무 상세 | `dooray post get <project> <number>` 또는 `dooray post get --id <postId>` |
-| 업무 생성 | `dooray post create <project> --title "..." [--body "..." \| --body-file <path>]` |
+| 업무 생성 | `dooray post create <project> --title "..." [--body "..." \| --body-file <path>]` — 담당자는 `--to <name\|email>`, 참조자는 `--cc`, 둘 다 여러 명 가능 |
 | 템플릿으로 생성 | `dooray post create <project> --template <name\|id>` — 본문·담당자·태그가 채워지고 사용자 옵션이 우선한다 |
 | 제목·본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` |
 | 완료 처리 | `dooray post done <project> <number>` |

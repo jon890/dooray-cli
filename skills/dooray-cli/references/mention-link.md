@@ -1,104 +1,80 @@
 # mention-link
 
-그룹 멘션/cc 의사결정, 멘션·링크 자동 삽입, Dooray 마크다운 링크 형식(멤버/그룹/업무/위키 페이지)을 다룬다.
+## 멘션·링크 옵션
 
-## 그룹 멘션 / cc 시 AI agent 동선
+`post create`, `post edit`, `post comment add`, `post comment edit` 이 모두 지원한다.
 
-자연어 그룹명을 사용자가 지칭했을 때 AI agent 의 의사결정 순서:
-
-1. **사용자가 명확한 code 를 줬으면 바로 시도**
-   ```bash
-   dooray post create <project> --mention-group "<code>"
-   ```
-   부분일치 가능 (예: "AI-Data" → "AI-Data파트" 매칭).
-
-2. **부분일치 모호 / 매칭 실패 시 후보 탐색**
-   ```bash
-   dooray project groups <project>
-   ```
-   ID + Code 표 출력.
-   AI agent 가 자연어 의도와 가장 가까운 code 선택 후 재시도.
-
-3. **모든 컬럼이 빈값일 때 (response shape 이상) 회피**
-   - 최근 수정 이후 거의 발생 안 함 (`fetchAllMemberGroups` 가 nested array 정규화)
-   - 만약 발생 시: 사용자에게 그룹 id (UI 의 그룹 URL 에서 19자리 numeric) 확인 요청
-   - `--cc-group <id>` / `--mention-group <id>` 직접 입력
-   - 또는 그룹 멤버를 개별 `--cc <member>` / `--mention <member>` 로 지정
-
-4. **모호한 자연어 매핑은 사용자에게 확인**
-   - 후보가 여러 개일 때 임의 선택 금지 — 사용자에게 선택지 제시
-   - 예: "AI-Data파트 / AI-Data실험팀 — 어느 그룹인가요?"
-
-순서 고정 — 멤버 먼저, 그룹 다음 (기존 정책 유지).
-
-
-## 멘션·링크 자동 삽입 (first-class)
-
-`post create`, `post edit`, `post comment add`, `post comment edit` 모두 지원:
-
-- `--mention <name>` (반복) — 이름으로 멤버 resolve 후 dooray:// markdown prepend
-- `--mention-group <code>` (반복) — 그룹 코드로 resolve
-- `--link-task <project>/<number>` (반복) — 다른 업무 link 를 본문 끝에 append. 19자리 postId 도 가능
-- `--dry-run` — API 호출 없이 합성 결과만 stdout. CI / 자동화 검증용
+| 옵션 | 동작 |
+| --- | --- |
+| `--mention <name>` | 이름으로 멤버를 찾아 본문 앞에 멘션을 붙인다 (반복 가능) |
+| `--mention-group <code>` | 그룹 코드로 찾아 멘션을 붙인다 (반복 가능) |
+| `--link-task <ref>` | 다른 업무 링크를 본문 끝에 붙인다. `<project>/<number>` 또는 postId (반복 가능) |
+| `--dry-run` | API 를 호출하지 않고 합성된 본문만 stdout 에 출력한다 |
 
 ```bash
-dooray post comment add P 1 --mention 홍길동 --mention-group 개발 --body "..."
-# 결과 본문: [@홍길동](dooray://orgId/members/m1 "member") [@P/개발](dooray://orgId/member-groups/g1) ...
+dooray post comment add <project> 1 --mention 홍길동 --mention-group 개발 --body "..."
+# 본문 앞에: [@홍길동](dooray://<orgId>/members/<memberId> "member") [@<project>/개발](dooray://<orgId>/member-groups/<groupId>)
 ```
 
-- 이름 부분일치 지원 (모호하면 에러 + 후보 목록 출력)
-- 멤버 먼저, 그룹 다음 순서 고정
-- interactive (`$EDITOR`) 모드의 `post edit` 는 mention/link-task 무시 + stderr 경고
+멘션 순서는 멤버가 먼저, 그룹이 다음으로 고정이다.
+`$EDITOR` 로 여는 interactive 모드의 `post edit` 는 이 옵션들을 무시하고 경고만 낸다.
 
+쓰기 전에 `--dry-run` 으로 합성 결과를 확인하면 잘못된 멤버를 멘션하는 일을 막을 수 있다.
 
-## Dooray 마크다운 링크 형식 (멤버·그룹·업무·위키 페이지 멘션)
+## 그룹을 못 찾을 때
 
-댓글/본문 작성 시 다음 형식으로 마크업하면 Dooray 앱이 인식해 inline 멘션·navigation으로 렌더링한다.
-ID는 본인 환경 값으로 채워 사용 — `dooray member get` / `project groups` / `post get` 등으로 조회.
+`--mention-group` 과 `--cc-group` 은 code 부분일치로 찾는다 ("AI-Data" → "AI-Data파트").
+실패하거나 후보가 여러 개면 `dooray project groups <project>` 로 ID 와 Code 를 확인한다.
 
-### 멤버 멘션
+후보가 여러 개일 때 임의로 고르지 않고 사용자에게 어느 그룹인지 묻는다.
+code 로 못 찾으면 15자리 이상 numeric ID 를 직접 넣을 수도 있다.
+
+## Dooray 마크다운 링크 형식
+
+CLI 옵션(`--mention` 등)을 쓰면 아래 markdown 을 자동으로 만들어 주므로 직접 조립할 필요가 없다.
+본문을 손으로 쓸 때만 이 형식을 쓴다. Dooray 앱이 inline 멘션과 내부 이동으로 렌더링한다.
+
+### 멤버
+
 ```markdown
 [@본인이름](dooray://{orgId}/members/{memberId} "me")
 [@타인이름](dooray://{orgId}/members/{memberId} "member")
 ```
-- title 속성: 본인은 `"me"`, 타인은 `"member"`
-- URL: `dooray://{orgId}/members/{memberId}`
 
-### 그룹 멘션 (member-group)
+title 은 본인이면 `"me"`, 그 외에는 `"member"` 다.
+
+### 그룹
+
 ```markdown
 [@projectCode/그룹명](dooray://{orgId}/member-groups/{groupId})
 ```
-- **`projects/{projectId}/` 경로 포함하지 않음** (직관과 반대 — 흔한 실수)
-- title 속성 **없음**
-- URL: `dooray://{orgId}/member-groups/{groupId}`
 
-### 업무(task) 링크
+`projects/{projectId}/` 경로를 **넣지 않는다** — 직관과 반대라 흔히 틀리는 지점이다.
+title 속성도 없다.
+
+### 업무
+
 ```markdown
 [projectCode/{number} {subject}](dooray://{orgId}/tasks/{postId} "registered")
 ```
-- 표시 텍스트: `{project}/{number} {subject}`
-- URL: `dooray://{orgId}/tasks/{postId}`
-- title: workflow class — `registered` / `working` / `closed` / `backlog`
-- 클릭 시 외부 브라우저 안 열고 Dooray 앱 내부 navigation + workflow 상태 표시
 
-### 위키 페이지 링크
+title 은 workflow class 다 — `registered` / `working` / `closed` / `backlog`.
+클릭하면 브라우저가 아니라 Dooray 앱 안에서 이동하며 workflow 상태가 함께 보인다.
+
+### 위키 페이지
+
 ```markdown
 [표시텍스트](dooray://{orgId}/pages/{pageId} "publish")
 ```
-- URL: `dooray://{orgId}/pages/{pageId}`
-- title: 페이지 상태 (`publish` 등) — 업무 링크의 workflow class 자리에 대응
-- 업무(task) 링크와 대칭 구조
-  - `orgId` 동일
-  - 경로만 `pages/{pageId}` 로 차이
 
-### 필요 ID 조회 명령
+업무 링크와 같은 구조이고 경로만 `pages/{pageId}` 로 다르다. title 은 페이지 상태다.
 
-| ID | 조회 |
-|---|---|
-| `orgId` | Dooray 앱/웹 URL에서 추출 (`https://{org}.dooray.com/...`의 도메인 + 별도 확인 필요) |
-| `memberId` | `dooray member get <id>`, `dooray member search <name>`, `--email <addr>`, `--user-code <code>` 등으로 검색 |
+### ID 를 얻는 곳
+
+| ID | 얻는 방법 |
+| --- | --- |
+| `orgId` | `~/.dooray/cache/me.json` 의 `data.orgId` |
+| `memberId` | `dooray member search <name>` 또는 `dooray member get <id>` |
 | `groupId` | `dooray project groups <project>` |
-| `postId` | `dooray post get <project> <number> --json` 의 `id` 필드 |
-| `pageId` | `dooray wiki page get <project> <page-id> --json` 의 `id` 필드 |
-
----
+| `postId` | `dooray post get <project> <number> --json` 의 `id` |
+| `pageId` | `dooray wiki page get <project> <page-id> --json` 의 `id` |
