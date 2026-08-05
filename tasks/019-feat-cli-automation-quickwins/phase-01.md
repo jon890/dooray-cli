@@ -2,7 +2,7 @@
 
 ## 컨텍스트
 
-GitHub Issue #35 의 1번 항목. `dooray post get tc-ocr 471 --json | jq '.id'` 같은 자동화 파이프에서 spinner 메시지 (`- 업무 조회 중...` / `✔ 업무 조회 완료`) 가 stdout 에 섞여 jq 가 실패한다.
+GitHub Issue #35 의 1번 항목. `dooray post get <project> 471 --json | jq '.id'` 같은 자동화 파이프에서 spinner 메시지 (`- 업무 조회 중...` / `✔ 업무 조회 완료`) 가 stdout 에 섞여 jq 가 실패한다.
 
 코드 현황:
 - `src/utils/spinner.ts` — ora 9.3.0 사용. `stream: process.stderr` 명시되어 있으나 ora 의 non-TTY fallback 이 stdout 으로 leak 되는 현상이 보고됨.

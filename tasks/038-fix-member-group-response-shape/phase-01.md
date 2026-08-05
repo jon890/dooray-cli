@@ -263,19 +263,19 @@ pnpm tsc --noEmit 2>&1 | grep -cE "^src/"
 pnpm build && pnpm test
 # 기대: exit 0 (5+ 케이스 통과)
 
-# 실증 1: AI-TF-VectorSearch 그룹 정상 표시 (fix 의 핵심 효과)
+# 실증 1: <project> 그룹 정상 표시 (fix 의 핵심 효과)
 node dist/index.js cache clear  # 또는 ~/.dooray/cache/member-groups/<projectId>.json 삭제
-node dist/index.js project groups AI-TF-VectorSearch
+node dist/index.js project groups <project>
 # 기대: ID + Code 컬럼에 모두 값 표시
-#   4071275527817450636  all
-#   4071276047563847414  개발
+#   1111222233334444555  all
+#   2222333344445555666  개발
 
 # 실증 2: 자연어 그룹 멘션
-node dist/index.js post create AI-TF-VectorSearch --title "테스트" --mention-group "개발" --dry-run --json
+node dist/index.js post create <project> --title "테스트" --mention-group "개발" --dry-run --json
 # 기대: dry-run JSON 에 멘션 prepend 결과 + group resolve 성공
 
 # 실증 3: id 직접 입력
-node dist/index.js post create AI-TF-VectorSearch --title "테스트" --mention-group "4071276047563847414" --dry-run --json
+node dist/index.js post create <project> --title "테스트" --mention-group "2222333344445555666" --dry-run --json
 # 기대: 동일 결과 (id 매칭 흐름)
 ```
 
@@ -316,7 +316,7 @@ grep -cE "resolveMemberGroup\(client, projectId, " src/
 
 # 실증
 node dist/index.js cache clear 2>/dev/null || true
-node dist/index.js project groups AI-TF-VectorSearch | grep -E "[0-9]{10,}|개발|all"
+node dist/index.js project groups <project> | grep -E "[0-9]{10,}|개발|all"
 # 기대: 값이 출력됨 (빈 컬럼 아님)
 ```
 

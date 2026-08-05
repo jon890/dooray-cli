@@ -66,7 +66,7 @@ for sub in list upload download delete; do
 done
 
 # 3. 개인 식별 정보 검증 (README + SKILL.md)
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/dooray-cli/SKILL.md docs/adr.md tasks/020-feat-post-comment-file-commands/ 2>/dev/null
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/dooray-cli/SKILL.md docs/adr.md tasks/020-feat-post-comment-file-commands/ 2>/dev/null
 # 기대: 0건
 ```
 
@@ -100,7 +100,7 @@ grep -cE "ADR-024" README.md skills/dooray-cli/SKILL.md
 # 기대: 1 이상
 
 # 4. 개인 식별 정보 0 건 (README + SKILL.md + docs + tasks/020)
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/dooray-cli/SKILL.md docs/adr.md tasks/020-feat-post-comment-file-commands/ 2>/dev/null
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/dooray-cli/SKILL.md docs/adr.md tasks/020-feat-post-comment-file-commands/ 2>/dev/null
 
 # 5. index.json completed
 grep -c '"status": "completed"' tasks/020-feat-post-comment-file-commands/index.json

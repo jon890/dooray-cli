@@ -70,7 +70,7 @@ it("/task/<projectId>/<postId> 형도 trailing slash 허용", () => {
   expect(parseDoorayTaskUrl("https://x.dooray.com/task/123/456/")).toBe("456");
 });
 it("/task/<projectId>/<postId> 형도 dooray.com 도메인 외 reject", () => {
-  expect(parseDoorayTaskUrl("https://other.com/task/123/456")).toBeNull();
+  expect(parseDoorayTaskUrl("https://other.example.com/task/123/456")).toBeNull();
 });
 ```
 

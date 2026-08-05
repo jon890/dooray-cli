@@ -39,24 +39,24 @@ node dist/index.js member get <id> --json
 
 **시나리오 B — member list**:
 ```bash
-node dist/index.js member list tc-ocr
+node dist/index.js member list <project>
 # 기대: ID/Name/Role 컬럼 테이블
 
-node dist/index.js member list tc-ocr --json
+node dist/index.js member list <project> --json
 # 기대: 멤버 배열 JSON
 ```
 
 **시나리오 C — comment list Creator enrich (이슈 #17 핵심)**:
 ```bash
 # 캐시 워밍 (해당 프로젝트 멤버 캐시 채우기)
-node dist/index.js member list tc-ocr > /dev/null
+node dist/index.js member list <project> > /dev/null
 
 # 핵심 검증
-node dist/index.js post comment list tc-ocr 470
+node dist/index.js post comment list <project> 470
 # 기대: Creator 컬럼에 "홍길동" 같은 이름 표시 (이전엔 비어있었음)
 
 # JSON은 raw 유지 (ADR-021)
-node dist/index.js post comment list tc-ocr 470 --json
+node dist/index.js post comment list <project> 470 --json
 # 기대: creator.member.name이 비어있는 raw 응답 (enrich 안 됨)
 ```
 
@@ -64,7 +64,7 @@ node dist/index.js post comment list tc-ocr 470 --json
 ```bash
 # 캐시 비우고 동일 호출
 node dist/index.js cache clear
-node dist/index.js post comment list tc-ocr 470
+node dist/index.js post comment list <project> 470
 # 기대: 캐시 자동 빌드 후 Creator 컬럼 채워짐 (ensureMembers가 한 번 호출됨)
 ```
 

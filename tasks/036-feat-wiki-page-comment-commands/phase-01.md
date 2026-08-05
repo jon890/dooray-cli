@@ -250,8 +250,8 @@ import type { WikiComment } from "../api/types.js";
 import { formatWikiCommentDetail, formatWikiCommentList } from "./wiki-comment.js";
 
 const fixture: WikiComment = {
-  id: "3950295078642684620",
-  page: { id: "3521165468947041024" },
+  id: "1234567890123456789",
+  page: { id: "9876543210987654321" },
   createdAt: "2024-12-03T17:51:10+09:00",
   modifiedAt: "2024-12-03T17:51:10+09:00",
   creator: { type: "member", member: { organizationMemberId: "u1", name: "홍길동" } },

@@ -61,7 +61,7 @@ grep -cE "post comment get" README.md skills/dooray-cli/SKILL.md
 grep -c '"status": "completed"' tasks/024-feat-post-comment-get/index.json
 # 기대: 3
 
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ tasks/024-feat-post-comment-get/ 2>/dev/null
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/ tasks/024-feat-post-comment-get/ 2>/dev/null
 # 기대: 0건
 ```
 

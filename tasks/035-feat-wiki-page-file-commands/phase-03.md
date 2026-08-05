@@ -144,7 +144,7 @@ executor 메모: 실증은 dry-run 옵션이 없으므로 (post file 도 없음)
 ```bash
 # cwd: /Users/nhn/personal/dooray-cli
 # 개인 식별 정보 사전 점검 (CLAUDE.md "개인 식별 정보 / 사내 식별자 노출 금지" 섹션)
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/ docs/ CLAUDE.md 2>/dev/null
 # 기대: 0건
 
 grep -rnE "[0-9]{15,}" README.md skills/ docs/ 2>/dev/null | \
@@ -195,7 +195,7 @@ node dist/index.js wiki page file --help 2>&1 | grep -cE "^  (list|upload|downlo
 # 기대: 5
 
 # 4. 개인 식별 정보 사전 점검 0건
-grep -rnE "tc-ocr|nhnent|nhn-comico|@(nhn|nhnent)\.com" README.md skills/ docs/ CLAUDE.md 2>/dev/null | wc -l
+grep -rnE "<사내 식별자 패턴 — CLAUDE.md 참조>" README.md skills/ docs/ CLAUDE.md 2>/dev/null | wc -l
 # 기대: 0
 
 # 5. index.json completed

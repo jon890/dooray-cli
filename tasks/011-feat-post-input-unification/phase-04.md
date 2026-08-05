@@ -121,9 +121,9 @@ action 분기 (phase 3과 유사 — 변수명만 filePath):
 - [ ] 5개 명령 `--help`에 `--id`, `--url` 노출. download/delete는 `--file-id`, upload는 `--file` 노출
 - [ ] `grep -c "resolvePostInput" src/commands/post/file/*.ts` → 5
 - [ ] 기존 호출 호환:
-  - `dooray post file list tc-ocr 337` 동작
-  - `dooray post file download tc-ocr 337 file-abc` 동작 (수동, phase 5)
-  - `dooray post file upload tc-ocr 337 ./report.pdf` 동작 (phase 5)
+  - `dooray post file list <project> 337` 동작
+  - `dooray post file download <project> 337 file-abc` 동작 (수동, phase 5)
+  - `dooray post file upload <project> 337 ./report.pdf` 동작 (phase 5)
 - [ ] 신규 호출:
   - `dooray post file upload --id 12345 --file ./report.pdf` 동작 (phase 5)
   - `dooray post file download --id 12345 --file-id file-abc` 동작 (phase 5)

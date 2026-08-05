@@ -144,8 +144,8 @@ action에서 commentId 추출 로직:
 - [ ] 4개 명령 `--help`에 `--id`, `--url` 노출. edit/delete는 `--comment-id`도 노출
 - [ ] `grep -c "resolvePostInput" src/commands/post/comment/*.ts` → 4
 - [ ] 기존 호출 호환:
-  - `dooray post comment add tc-ocr 337 --body "..."` 동작
-  - `dooray post comment edit tc-ocr 337 cmt-abc --body "..."` 동작 (수동, phase 5)
+  - `dooray post comment add <project> 337 --body "..."` 동작
+  - `dooray post comment edit <project> 337 cmt-abc --body "..."` 동작 (수동, phase 5)
 - [ ] 신규 호출:
   - `dooray post comment edit --id 12345 --comment-id cmt-abc --body "..."` 동작 (phase 5)
 

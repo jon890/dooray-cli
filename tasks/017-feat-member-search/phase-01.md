@@ -84,7 +84,7 @@ async searchMembers(params: SearchMembersParams): Promise<MemberSearchResponse> 
 
 - **명령은 phase 2** — 본 phase는 API 레이어만
 - **`MemberDetail` 재사용** — 신규 타입 정의 금지 (`/common/v1/members/{id}` 응답과 동일 형태)
-- **`SearchMembersParams.externalEmailAddresses`** 는 콤마 구분 문자열로 전달 (Dooray 스펙: `?externalEmailAddresses=a@x.com,b@y.com`). 명령 옵션은 단일 입력만 받고 그대로 전달
+- **`SearchMembersParams.externalEmailAddresses`** 는 콤마 구분 문자열로 전달 (Dooray 스펙: `?externalEmailAddresses=a@x.com,b@y.example.com`). 명령 옵션은 단일 입력만 받고 그대로 전달
 - **try/catch + this.api + toDoorayCliError**: 표준 패턴 유지
 - **`?` 포함 모든 필터가 optional** — params 비어있으면 호출자가 사전 검증해야 함 (phase 2에서 처리). 본 phase의 메서드 자체는 빈 params도 받아서 보냄(API가 400 반환)
 
