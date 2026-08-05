@@ -86,7 +86,7 @@ grep -rnE "[0-9]{15,}" README.md skills/ docs/ .claude/ 2>/dev/null | grep -vE "
 **형식**: `tasks/{NNN}-{task-name}/` — 코어 기본값(`plan{N}-{slug}`)과 다르다. `plan` 접두어를 붙이지 않는다.
 
 - `NNN` = 3자리 zero-padded 순차 번호. Issue 연결은 `index.json`의 `description` 필드에 남긴다.
-- `task-name` = 케밥 케이스 + 카테고리 접두(`feat-`/`fix-`/`refactor-`/`chore-`/`docs-`) — 아래 branch prefix 와 반드시 일치.
+- `task-name` = 케밥 케이스 요약에 카테고리 접두(`feat-`/`fix-`/`refactor-`/`chore-`/`docs-`)를 붙인다.
 
 **번호 충돌 방지**:
 
@@ -106,15 +106,3 @@ gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefN
 - **커밋 순서 (docs-first, 2개 커밋으로 분리)**:
   1. docs 최신화 커밋 + push (`docs(scope): ...`) — task 생성 전 필수
   2. task 파일(`index.json` + `phase-*.md`) 커밋 + push — 실행 전 필수
-- **실제 코드 구현 branch** (task 실행 단계):
-
-  | 카테고리 | branch prefix | 예시 |
-  |---|---|---|
-  | 신규 기능 task | `feat/{NNN}-{slug}` | `feat/033-feat-post-edit-tag-options` |
-  | 버그 수정 task | `fix/{NNN}-{slug}` | `fix/032-fix-member-group-resolver-guard` |
-  | 리팩토링 task | `refactor/{NNN}-{slug}` | `refactor/028-refactor-client-throw-await` |
-  | 메타 작업 (task 폴더 없음) | `chore/{topic}` | `chore/replace-foreign-terms` |
-  | docs 단독 (task 폴더 없음) | `docs/{topic}` | `docs/readability-6-patterns` |
-
-  task 폴더명 접두와 branch prefix 가 반드시 일치 (`032-fix-...` → `fix/032-fix-...`).
-- **PR 제목 형식**: `type(scope): description`. PR 본문에 commit 목록 나열 금지 — GitHub Commits 탭으로 충분.

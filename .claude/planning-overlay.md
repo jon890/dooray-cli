@@ -154,7 +154,6 @@ grep -rnE "[0-9]{15,}" README.md skills/ docs/ .claude/ 2>/dev/null | grep -vE "
 
 - `NNN` = 3자리 zero-padded 순차 번호. Issue 연결은 폴더명이 아니라 `index.json`의 `description` 필드에 남긴다.
 - `task-name` = 케밥 케이스 간결 요약이며 카테고리 접두(`feat-`/`fix-`/`refactor-`/`chore-`/`docs-`)로 시작한다.
-  - 이 접두는 아래 branch prefix 와 반드시 일치해야 한다.
 - `index.json`의 `name` 필드는 폴더명과 **동일**하게 설정.
 
 ### 번호 충돌 방지 (필수)
@@ -177,16 +176,4 @@ gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefN
 - **커밋 순서 (docs-first, 2개 커밋으로 분리)**:
   1. docs 최신화 커밋 + push (`docs(scope): ...`) — task 생성 전 필수, 건너뛰기 금지
   2. task 파일(`index.json` + `phase-*.md`) 커밋 + push — 실행 전 필수
-- **실제 코드 구현 시점의 branch**(task 실행 단계, planning 범위 밖): 카테고리별 5 prefix.
-
-  | 카테고리 | branch prefix | 예시 |
-  |---|---|---|
-  | 신규 기능 task | `feat/{NNN}-{slug}` | `feat/033-feat-post-edit-tag-options` |
-  | 버그 수정 task | `fix/{NNN}-{slug}` | `fix/032-fix-member-group-resolver-guard` |
-  | 리팩토링 task | `refactor/{NNN}-{slug}` | `refactor/028-refactor-client-throw-await` |
-  | 메타 작업 (task 폴더 없음) | `chore/{topic}` | `chore/replace-foreign-terms` |
-  | docs 단독 (task 폴더 없음) | `docs/{topic}` | `docs/readability-6-patterns` |
-
-  task 폴더명 접두와 branch prefix 가 반드시 일치한다 (`032-fix-...` → `fix/032-fix-...`, `feat/032-fix-...` 는 오분류).
-- **PR 제목 형식**: `type(scope): description` (예: `feat(commands): add wiki search subcommand`). PR 본문에 commit 목록을 나열하지 않는다 — GitHub Commits 탭으로 충분.
 - **핸드오프**: `/build-with-teams` 로 안내한다. `tasks/{NNN}-{task-name}` 디렉터리를 인자로 받아 Agent Teams 가시적 협업(team-lead·critic·executor·docs-verifier)을 수행한다.
