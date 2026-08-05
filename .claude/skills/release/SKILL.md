@@ -70,26 +70,23 @@ git log ${LAST_TAG}..HEAD --grep="#[0-9]" --oneline
 
 **결과를 사용자에게 제시**하고 close 대상 이슈 목록을 확정. 이 목록은:
 - GitHub Release 노트 하단에 `Closes #N, #M` 으로 기록
-- Step 9에서 release publish 후 자동 close
+- 10단계에서 release publish 후 자동 close
 
 이 결과는 다음 단계(문서 동기화 검증)와 GitHub Release 노트에 그대로 활용한다.
 
 ### 3. 문서 동기화 검증 (README + dooray-cli 스킬)
 
-위에서 식별된 **신규 명령/옵션이 있다면**, 다음 두 위치에 반영되었는지 확인한다.
+신규 명령이나 옵션이 있으면 사용자 문서에 반영됐는지 확인한다.
 
 ```bash
-# 신규 명령/옵션 키워드를 README.md / skills/dooray-cli/SKILL.md에서 grep
-grep -nE "<신규 옵션|신규 명령>" README.md
-grep -nE "<신규 옵션|신규 명령>" skills/dooray-cli/SKILL.md
+grep -rnE "<신규 옵션|신규 명령>" README.md skills/
 ```
 
-**검증 기준**:
-
 | 위치 | 무엇을 확인 |
-|---|---|
-| `README.md` | "사용법" 섹션에 신규 명령/옵션이 등장. 새 명령은 적절한 카테고리(### 업무, ### 멤버 등)에 추가 |
-| `skills/dooray-cli/SKILL.md` | AI 에이전트가 사용하는 외부 스킬. 신규 명령/옵션이 명령 카탈로그에 반영되어야 함 |
+| --- | --- |
+| `README.md` | "사용법" 섹션에 등장하는지. 새 명령은 알맞은 카테고리에 넣는다 |
+| `skills/dooray-cli/SKILL.md` | 의도별 커맨드 표와 공통 규칙에 반영됐는지 |
+| `skills/dooray-cli/references/` | 해당 명령군 reference 에 동작과 함정이 들어갔는지 |
 
 **누락 발견 시**:
 - 사용자에게 누락 항목을 보고하고, 어느 위치에 어떤 문장으로 추가할지 제안
@@ -98,7 +95,7 @@ grep -nE "<신규 옵션|신규 명령>" skills/dooray-cli/SKILL.md
 
 **버그 수정/리팩토링만 있는 릴리스**라면 본 단계는 통과 가능 — 사용자에게 그 사실을 명시하고 진행.
 
-#### 3.5. 개인 식별 정보 / 사내 식별자 노출 검증 (필수, 실패 시 중단)
+### 4. 개인 식별 정보 / 사내 식별자 노출 검증 (필수, 실패 시 중단)
 
 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지 (public OSS)" 섹션의 검증 grep 을 모두 실행한다 (현재 3개).
 grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실행 시점과 후속 처리만 정의.
@@ -109,7 +106,7 @@ grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실
 - 보완 commit 후 grep 재실행 → 0건 확인 후 다음 단계 진행
 - **사용자가 "내부 사용 OK" 로 명시 동의하지 않는 한 release 차단**
 
-### 4. 버전 범프
+### 5. 버전 범프
 
 **사전 가드 (필수)**: 현재 branch 가 `main` 인지 확인. PR branch 에서 bump 하면 commit 이 다른 branch 에 박혀 main 미반영 + tag 가 엉뚱한 commit 가리킴.
 
@@ -134,7 +131,7 @@ git rebase origin/main
 - `src/index.ts`는 직접 수정하지 않는다. CLI 버전은 빌드 시 `package.json.version`에서 주입된다.
 - 변경 후 다시 `pnpm run build`와 `pnpm verify:package`로 빌드 산출물 버전 일치를 검증
 
-### 5. 커밋 & 푸시
+### 6. 커밋 & 푸시
 
 ```bash
 # 커밋 직전 branch 재확인 (위 가드와 중복이지만 자기 방어)
@@ -149,7 +146,7 @@ git push origin main
 - 해당 commit 이 main 의 linear 자식이면 (대부분의 경우): `git switch main && git merge <bump-sha> --ff-only && git push origin main`. force-push 불요
 - linear 아니면 `cherry-pick` 후 PR branch 의 commit 정리
 
-### 6. Git Tag & GitHub Release
+### 7. Git Tag & GitHub Release
 
 ```bash
 git tag -a v<version> -m "v<version>"
@@ -183,23 +180,18 @@ gh release view v<version> --json body -q .body | tr -cd '\\' | wc -c
 
 0 이 아니면 `--notes-file` 로 즉시 `gh release edit v<version> --notes-file <path>` 재발행.
 
-릴리스 노트 본문 마지막에 다음 섹션을 포함:
+릴리스 노트 본문 마지막에 close 대상 이슈를 적는다. 10단계에서 이 목록을 그대로 쓴다.
 
 ```markdown
 ## Closes
 
 이번 릴리스로 해결된 이슈 (release publish 후 자동 close):
-- #16 feat(post): post-id/URL 입력 지원
-- #17 feat(member): 표시명 resolve
-- #18 feat(post create): mandatory-tag 옵션
+- #<번호> <이슈 제목>
 ```
 
-자동 생성으로 대체할 경우:
-```bash
-gh release create v<version> --title "v<version>" --generate-notes
-```
+`--generate-notes` 는 쓰지 않는다 — 2단계에서 판단한 Closes 목록과 신규 명령·옵션 분류가 빠진다.
 
-### 7. npm Publish
+### 8. npm Publish
 
 npm publish는 2FA OTP가 필요하므로 사용자에게 직접 실행을 요청한다:
 
@@ -209,12 +201,12 @@ npm publish --access public --otp=<code>
 
 사용자에게 위 명령을 안내하고, 완료 후 결과를 확인한다.
 
-### 8. 최종 확인
+### 9. 최종 확인
 
 - `https://github.com/jon890/dooray-cli/releases/tag/v<version>` 릴리스 확인
 - `https://www.npmjs.com/package/@bifos/dooray-cli` 버전 확인 (반영에 수 분 소요)
 
-### 9. 해결된 이슈 close
+### 10. 해결된 이슈 close
 
 2단계에서 식별한 close 대상 이슈를 일괄 close. release publish 완료 후에만 실행 (publish 실패 시 close 금지).
 

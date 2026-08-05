@@ -108,7 +108,7 @@ grep -rohE "(post (create|list|get|search)|project (show|members|groups|tags|tem
 # 그 밖의 값이 나오면 사내 프로젝트 코드인지 확인 후 placeholder 로 교체
 ```
 
-`/release` 스킬 Step 3 이 이 점검을 포함한다 — release 전 자동 검증된다.
+`/release` 스킬 4단계가 이 점검을 포함한다 — release 전 자동 검증된다.
 
 ## 공개 문서(README · 공개 SKILL) — 내부 참조 번호 제외
 
