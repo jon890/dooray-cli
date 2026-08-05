@@ -276,7 +276,8 @@ grep -rnE "[0-9]{15,}" $SCAN 2>/dev/null | grep -vE "$OK_IDS|<postId>|<pageId>"
 #    CLI 예시의 project 자리 값을 뽑아 placeholder 인지 눈으로 확인한다
 grep -rohE "(post (create|list|get|search)|project (show|members|groups|tags|templates|workflows)|wiki (pages|tree)) [A-Za-z][A-Za-z0-9_-]{2,}" $SCAN 2>/dev/null \
   | awk '{print $NF}' | sort -u
-# my-project / testproj / NONEXIST / <project> 만 남아야 함
+# 허용: my-project / testproj / ai-service-dev / NONEXIST / <project> (모두 가상 예시)
+# 그 밖의 값이 나오면 사내 프로젝트 코드인지 확인 후 placeholder 로 교체
 ```
 
 **자동화**: `/release` 스킬 Step 3(문서 동기화)에 개인 식별 정보 사전 점검 통합 — release 전 자동 검증.
