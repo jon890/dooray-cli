@@ -184,7 +184,7 @@ CHILD_ID=$(dooray post create <project> --title "subtask A" --json | jq -r '.id'
 dooray post edit --id "$CHILD_ID" --title "subtask A" --parent <project>/<parent-number>
 ```
 
-**한계** (cmux-browser spike 결과): Dooray API 가 `unset-parent-post` 미제공 → CLI 로 parent 해제 불가. 필요 시 웹 UI 에서 처리.
+**한계**: Dooray API 가 parent 해제(`unset-parent-post`)를 제공하지 않아 CLI 로는 해제할 수 없다. 웹 UI 에서 처리한다.
 
 ---
 

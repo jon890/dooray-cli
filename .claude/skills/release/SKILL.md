@@ -100,7 +100,7 @@ grep -nE "<신규 옵션|신규 명령>" skills/dooray-cli/SKILL.md
 
 #### 3.5. 개인 식별 정보 / 사내 식별자 노출 검증 (필수, 실패 시 중단)
 
-`CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지 (public OSS)" 섹션의 검증 grep 두 명령을 모두 실행한다.
+`CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지 (public OSS)" 섹션의 검증 grep 을 모두 실행한다 (현재 3개).
 grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실행 시점과 후속 처리만 정의.
 
 **히트가 있으면**:
@@ -168,7 +168,7 @@ git push origin v<version>
 gh release create v<version> --title "v<version> — <요약>" --notes-file /tmp/release-v<version>-notes.md
 ```
 
-**Why** (CLAUDE.md "Markdown 작성 함정" 표):
+**Why** (글로벌 `~/.claude/rules/markdown-readability.md` "Markdown 작성 함정" 표):
 
 - quoted heredoc (`<<'EOF'`) 안에서는 `` ` ``·`$`·`\` 모두 이미 비활성화 → escape 불요
 - 그런데 "안전하게" `` \` `` / `\$` 박으면 backslash 가 리터럴로 본문에 남아 markdown 깨짐 (v0.10.0 release 사고 — backtick 66개가 `\``로 출력)
