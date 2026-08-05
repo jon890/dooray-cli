@@ -8,9 +8,8 @@ NHN Dooray REST API CLI 도구. TypeScript 와 Commander.js 기반.
 
 Dooray 공식 API 문서: [https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419](https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419)
 
-인증이 필요한 share 페이지라 `WebFetch` 로는 열리지 않는다.
+공개 페이지지만 React 앱이라 `WebFetch` 로는 본문을 못 읽는다 — JS 를 실행하지 않으면 `<div id="root">` 가 빈 상태로 온다.
 Orca 내장 브라우저(`~/.claude/scripts/orca-browser.sh`)로 열어 endpoint 와 request·response 스키마, 동작 특이점을 확인한 뒤 코드를 작성한다.
-공식 문서 사본은 repo 에 두지 않는다 — stale 위험을 피하고 공식을 단일 소스로 둔다.
 
 문서에 없거나 직관에 반하는 동작은 ADR 로 보존한다. 영역별 ADR 은 `docs/adr/INDEX.md` 에서 찾는다.
 
@@ -33,7 +32,7 @@ dooray                # 글로벌 링크 시
 
 ## 코드 컨벤션
 
-- HTTP 클라이언트: `ky` (axios 사용 금지)
+- HTTP 클라이언트: `ky` 
 - 빌드: `tsup` (CJS 단일 번들, shebang 포함)
 - 패키지 매니저: `pnpm`
 - 캐시: `~/.dooray/cache/` 디렉토리에 파일별 분리 (me.json, projects.json, members/{projectId}.json, workflows/{projectId}.json, tags/{projectId}.json, templates/{projectId}.json)
@@ -52,7 +51,7 @@ dooray                # 글로벌 링크 시
   - 제목은 post·wiki 모두 `--title` (`--subject` 는 deprecated alias — stderr 경고 후 동작)
   - 본문은 `--body` / `--body-file` (`-` = stdin), 둘 다 없으면 `$EDITOR` fallback
 - **resolver 매칭**: 정확일치 → 이름 부분일치 → 모호하면 에러와 후보 목록 출력
-- **출력**: 데이터는 stdout, 스피너·에러는 stderr. `--json` 은 raw 유지, `--quiet` 은 식별자만
+- **출력**: `--json` 은 raw 유지, `--quiet` 은 식별자만
 - **파괴적 명령**: confirm 기본. non-TTY 는 abort, `--yes` 또는 `--no-confirm` 으로 생략
 - **post 목록 정렬**: 최신순 (`-createdAt`)
 - **interactive 모드**: non-interactive 전용 옵션은 무시하고 경고를 낸다
@@ -123,7 +122,11 @@ grep -rohE "(post (create|list|get|search)|project (show|members|groups|tags|tem
 **검증 grep** (README/SKILL 작성·수정 후 실행):
 
 ```bash
-grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKILL.md 2>/dev/null
+grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/ 2>/dev/null
 # 0건이어야 함
 ```
+
+## Git
+
+커밋 메시지와 PR 제목·본문은 한국어로 작성한다.
 
