@@ -76,8 +76,8 @@ grep -rnE "[0-9]{15,}" README.md skills/ docs/ .claude/ 2>/dev/null | grep -vE "
 
 ## 6. 용어 회피
 
-- "매트릭스" / "matrix" 사용 금지 — "표" / "docs 영향 표" / "분류 표" 등으로 표기
-- 발견 시 UPDATE_NEEDED
+한국어 표기 정책은 `korean-style-check` 훅이 저장 시점에 자동 검사한다.
+금지어 목록의 단일 소스는 글로벌 `~/.claude/rules/korean-style.md` 매핑 표이므로 본 agent 는 별도 목록을 두지 않는다.
 
 </Domain_Knowledge>
 
@@ -185,8 +185,8 @@ done
 
 ## F. 가독성 (Readability) — 모든 docs
 
-`CLAUDE.md` "docs / ADR 작성 형식" 6가지 패턴 위반 점검.
-정책 본문은 거기에 단일 소스 — 본 agent 는 검출 휴리스틱만 보유.
+글로벌 `~/.claude/rules/markdown-readability.md` 의 형식 규칙 위반을 점검한다.
+정책 본문은 그 파일이 단일 소스 — 본 agent 는 검출 휴리스틱만 보유한다.
 
 대상: `docs/*.md` / `CLAUDE.md` / `README.md` / `skills/dooray-cli/SKILL.md` / `tasks/**/*.md`.
 코드 블록 / 표 / 디렉터리 트리는 미적용.

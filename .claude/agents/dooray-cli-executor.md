@@ -59,7 +59,7 @@ pnpm tsc --noEmit && pnpm run build && pnpm test
 ## 상황별 ADR 참조
 
 새 HTTP 요청 / 캐시 변경 / 멤버 lookup / post 메타 / input 통합 / 파일 업로드 등 작업 시
-`CLAUDE.md` 의 "상황별 ADR 필수 참조" 표에서 해당 ADR 번호를 먼저 확인 후 코드 작성.
+`docs/adr/INDEX.md` 에서 해당 영역의 ADR 을 먼저 확인 후 코드 작성.
 ADR 본문: `docs/adr/` (ADR 1개 = 파일 1개, 목록은 `docs/adr/INDEX.md`).
 
 </Domain_Rules>
