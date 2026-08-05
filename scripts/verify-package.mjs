@@ -42,7 +42,6 @@ const requiredFiles = [
   "skills/dooray-cli/SKILL.md",
   "skills/dooray-cli/references/common.md",
   "skills/dooray-cli/references/comment.md",
-  "skills/dooray-cli/references/intent-map.md",
   "skills/dooray-cli/references/mention-link.md",
   "skills/dooray-cli/references/post.md",
   "skills/dooray-cli/references/wiki.md",

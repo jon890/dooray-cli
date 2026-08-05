@@ -11,7 +11,6 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 
 | 하려는 일 | reference |
 | --- | --- |
-| 자연어 요청을 커맨드로 옮기기 (여기서 시작) | [intent-map.md](references/intent-map.md) |
 | 설치·초기 설정, 출력 모드, API 제약, 에러 처리, 캐시, 피드백 등록 | [common.md](references/common.md) |
 | 업무 식별·생성·수정, 참조자·담당자 변경, 첨부 보호, 부모 지정, 태그 | [post.md](references/post.md) |
 | 업무 댓글 추가·필터·조회 | [comment.md](references/comment.md) |
@@ -75,3 +74,131 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | `wiki page comment delete` | **없음 — 즉시 삭제** | — |
 
 확인이 있는 명령은 TTY 가 아니면 중단되므로, 자동화에서는 위 플래그를 붙인다.
+
+# 의도별 커맨드
+
+자연어 요청을 커맨드로 옮길 때 해당 영역의 절만 본다.
+
+## 설정
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 초기 설정 (대화형) | `dooray setup` |
+
+## 프로젝트와 멤버
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 프로젝트 찾기 | `dooray project list --search <keyword>` |
+| 개인 프로젝트 목록 | `dooray project list --type private` |
+| 프로젝트 멤버 보기 | `dooray project members <project>` 또는 `dooray member list <project>` |
+| 프로젝트 멤버 그룹 목록 | `dooray project groups <project>` |
+| 프로젝트 태그 목록 | `dooray project tags <project>` |
+| 프로젝트 템플릿 목록 | `dooray project templates <project>` |
+| 멤버 상세 | `dooray member get <organizationMemberId>` (캐시 우회) |
+| organization 전체 멤버 검색 | `dooray member search <keyword>` — 옵션은 [common.md](references/common.md) |
+
+## 업무 조회와 생성
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 업무 목록 | `dooray post list <project>` |
+| 업무 검색 | `dooray post search <project> "<keyword>"` — projectId(15자리 이상 numeric) 를 넣으면 캐시를 우회한다 |
+| 업무 상세 | `dooray post get <project> <number>` 또는 `dooray post get --id <postId>` |
+| 업무 생성 | `dooray post create <project> --title "..." [--body "..." \| --body-file <path>]` |
+| 템플릿으로 생성 | `dooray post create <project> --template <name\|id>` — 본문·담당자·태그가 채워지고 사용자 옵션이 우선한다 |
+| 제목·본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` |
+| 완료 처리 | `dooray post done <project> <number>` |
+| 워크플로우 변경 | `dooray post workflow <project> <number> <workflow>` |
+
+## 업무 메타 변경
+
+자세한 동작은 [post.md](references/post.md) 를 읽는다.
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 참조자에 그룹 추가 | `dooray post edit <project> <number> --cc-group <code>` — 기존 참조자를 유지하고 추가한다 |
+| 참조자 전체 교체 | `dooray post edit <project> <number> --cc-clear --cc <name>` |
+| 생성 시 그룹 참조자 | `dooray post create <project> --title "..." --cc-group <code>` |
+| 상위 업무 지정·변경 | `dooray post edit <project> <number> --title "<원제목>" --parent <ref>` — `--title` 이 필수이고 해제는 지원하지 않는다 |
+| 태그 추가 | `dooray post edit --id <postId> --tag <name>` (반복 가능, 중복 제거) |
+| 태그 전체 교체 | `dooray post edit --id <postId> --tag-clear --tag <name>` |
+| 태그 제거 | `dooray post edit --id <postId> --tag-remove <name>` |
+
+그룹 지정(`--cc-group`, `--mention-group`)은 15자리 이상 numeric 이면 ID 로, 그 외에는 code 부분일치로 찾는다.
+
+## 업무 댓글
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 댓글 조회 | `dooray post comment list <project> <number>` — 필터는 [comment.md](references/comment.md) |
+| 최신 댓글 | `dooray post comment latest <project> <number>` (`-n <N>` 으로 개수 지정) |
+| 단일 댓글 | `dooray post comment get <project> <number> <comment-id>` |
+| 댓글 추가 | `dooray post comment add <project> <number> --body "..."` |
+| 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` |
+| 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` — **확인 없이 즉시** |
+
+## 업무 첨부
+
+`--json` 출력 스키마는 [post.md](references/post.md) 를 읽는다.
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 첨부 목록 | `dooray post file list <project> <number>` |
+| 첨부 다운로드 | `dooray post file download <project> <number> <file-id>` |
+| 첨부 일괄 다운로드 | `dooray post file download-all <project> <number>` |
+| 첨부 업로드 | `dooray post file upload <project> <number> <file-path>` |
+| 첨부 삭제 | `dooray post file delete <project> <number> <file-id>` — **확인 없이 즉시** |
+| 댓글 첨부 목록 | `dooray post comment file list <project> <number> <comment-id>` |
+| 댓글 첨부 업로드 | `dooray post comment file upload <project> <number> <comment-id> <path>` |
+| 댓글 첨부 다운로드 | `dooray post comment file download <project> <number> <comment-id> <file-id>` |
+| 댓글 첨부 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id>` — 확인 있음, `--yes` 로 생략 |
+
+## 위키
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 위키 목록 | `dooray wiki list` |
+| 페이지 목록 | `dooray wiki pages <project>` |
+| 페이지 트리 | `dooray wiki tree <project>` (`--depth N` 으로 상한, `--json` 은 flat) |
+| 페이지 상세 | `dooray wiki page get <project> <page-id>` |
+| 페이지 생성 | `dooray wiki page create <project> --title "..." [--parent <page-id>] [--body "..."]` — `--parent` 를 생략하면 위키 home 아래에 만든다 |
+| 페이지 제목 수정 | `dooray wiki page edit <project> <page-id> --title "..."` |
+| 페이지 본문 수정 | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` |
+| 페이지 에디터로 수정 | `dooray wiki page edit <project> <page-id>` — 플래그가 없으면 `$EDITOR` 가 열린다 |
+| 페이지 삭제 | `dooray wiki page delete <project> <page-id>` — 확인 있음, `--yes` 로 생략. 하위 페이지는 삭제한 페이지의 부모 아래로 재부착되어 orphan 이 생기지 않는다 |
+| 첨부 목록 | `dooray wiki page file list <project> <page-id>` — general 과 inline 을 합쳐 보여준다 |
+| 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` |
+| 첨부 다운로드 | `dooray wiki page file download <project> <page-id> --file-id <id> -o <dir>` |
+| 첨부 일괄 다운로드 | `dooray wiki page file download-all <project> <page-id> -o <dir>` |
+| 첨부 삭제 | `dooray wiki page file delete <project> <page-id> --file-id <id>` — **확인 없이 즉시** |
+| 댓글 목록 | `dooray wiki page comment list <project> <page-id> [--latest N]` (최신순) |
+| 최신 댓글 | `dooray wiki page comment latest <project> <page-id>` |
+| 단일 댓글 | `dooray wiki page comment get <project> <page-id> <comment-id>` |
+| 댓글 추가 | `dooray wiki page comment add <project> <page-id> --body "..."` (`$EDITOR` fallback) |
+| 댓글 수정 | `dooray wiki page comment edit <project> <page-id> <comment-id> --body "..."` |
+| 댓글 삭제 | `dooray wiki page comment delete <project> <page-id> <comment-id>` — **확인 없이 즉시** |
+
+## 메일
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 메일 목록 | `dooray mail list` |
+| 안 읽은 메일 | `dooray mail list --unread` |
+| 제목 검색 | `dooray mail list --search "<keyword>"` |
+| 메일 상세 | `dooray mail get <uid>` |
+| 메일 발송 | `dooray mail send --to "..." --subject "..." --body "..."` |
+| 메일 답장 | `dooray mail reply <uid> --body "..."` |
+| 저장된 인증정보 제거 | `dooray mail logout` (비대화형 환경은 `--yes`) |
+
+## 메신저
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 1:1 다이렉트 메시지 | `dooray messenger send --to "<id\|email>" --body "..."` — `--to` 는 ID 나 이메일만 받고 이름은 지원하지 않는다 |
+| 대화방 메시지 | `dooray messenger channel-send --channel "<channelId\|이름>" --body "..."` — 이름으로는 자신이 속한 방만 찾는다 |
+
+## 옵션 이름
+
+`post` 와 `wiki page` 모두 제목은 `--title` 이다.
+`post` 의 `--subject` 는 deprecated alias 로 아직 동작하지만 경고가 나온다.
