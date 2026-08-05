@@ -78,7 +78,7 @@ planning 결정 docs 를 phase 안에서 고치면 안 된다.
 `README.md` 와 `skills/` 는 사용자·에이전트 대상이라 `ADR-NNN`, `Issue #NN`, `task NNN` 같은 내부 참조를 남기지 않는다.
 문장에 녹은 참조도 번호를 빼고 재작성한다.
 
-검증 grep 은 `CLAUDE.md` "공개 문서 — 내부 참조 번호 제외" 섹션에 있다.
+검증 grep 은 `CLAUDE.md` "공개 문서(README · 공개 SKILL) — 내부 참조 번호 제외" 섹션에 있다.
 
 ## index.json 스키마 (레포 특화 — `build-with-teams` 강제)
 
@@ -133,7 +133,7 @@ planning 결정 docs 를 phase 안에서 고치면 안 된다.
   - 위 "변경 유형별 docs 영향 표"에 행 추가/보강으로 흡수한다.
   - 코어 `build-with-teams/SKILL.md` 의 docs-verifier 검증 단계가 이 표를 그대로 검증 기준으로 쓴다 — 표를 수정하면 그쪽 검증도 함께 달라지는지 확인한다.
 - **개인 식별 정보 노출 금지**: task 파일 제출 전 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션의 검증 grep 을 실행해 0건을 확인한다.
-  - 코어 `verify-task.sh` 5 패턴에 더해 이 검사도 self-check 대상이다.
+  - 코어 planning 스킬의 task 자가 점검 항목에 더해 이 검사도 수행한다.
 
 ## plan 네이밍
 
