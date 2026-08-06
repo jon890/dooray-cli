@@ -1,0 +1,29 @@
+{
+  "name": "051-fix-comment-file-reference",
+  "description": "GitHub Issue #110 — 댓글 파일 업로드 시 이미지 확장자는 이미지 마크다운, 그 외는 일반 링크로 추가하고 삭제 시 두 형식을 모두 제거",
+  "created_at": "2026-08-06T00:05:05Z",
+  "updated_at": "2026-08-06T00:05:05Z",
+  "status": "pending",
+  "current_phase": 0,
+  "total_phases": 2,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "파일 종류별 댓글 참조 생성과 삭제 회귀 테스트",
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "공개 문서 갱신과 통합 검증",
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ]
+}
