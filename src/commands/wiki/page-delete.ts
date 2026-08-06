@@ -3,8 +3,10 @@ import { getConfigOrThrow } from "../../config/store.js";
 import { DoorayApiClient } from "../../api/client.js";
 import { resolveWikiPageInput } from "../../resolvers/wiki-page-input.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
-import { DoorayCliError } from "../../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
+import {
+  authorizeDeletion,
+  promptDeletion,
+} from "../../utils/delete-confirmation.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { emitDeleteResult } from "../../formatters/file-output.js";
 
@@ -17,6 +19,19 @@ export const wikiPageDeleteCommand = new Command("delete")
   .option("--project <code>", "프로젝트 코드 (--id 모드에서 wikiId 해석용)")
   .option("-y, --yes", "확인 없이 삭제 (자동화용)")
   .action(async (arg1, arg2, opts) => {
+    const confirmed = await authorizeDeletion(
+      !!opts.yes,
+      !!process.stdin.isTTY,
+      () =>
+        promptDeletion(
+          "위키 페이지를 삭제할까요? 하위 페이지가 있으면 삭제한 페이지의 부모 아래로 재부착됩니다.",
+        ),
+    );
+    if (!confirmed) {
+      process.stderr.write("취소되었습니다.\n");
+      return;
+    }
+
     const globalOpts = wikiPageDeleteCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
@@ -29,27 +44,6 @@ export const wikiPageDeleteCommand = new Command("delete")
       urlOpt: opts.url,
       project: opts.project,
     });
-
-    if (!opts.yes) {
-      if (!process.stdin.isTTY) {
-        throw new DoorayCliError(
-          "non-TTY 환경에서는 확인 없이 삭제할 수 없습니다. --yes(-y) 플래그로 다시 실행하세요.",
-          EXIT_PARAM_ERROR,
-        );
-      }
-      const { confirm } = await import("@inquirer/prompts");
-      const ok = await confirm({
-        message: `페이지(${pageId})를 삭제할까요? 하위 페이지가 있으면 상위 페이지로 재부착됩니다.`,
-        default: false,
-      });
-      if (!ok) {
-        // 취소는 삭제 미수행 — 머신 모드(--json/--quiet)에는 성공 출력을 내지 않는다 (파싱 오염 방지).
-        if (!globalOpts.json && !globalOpts.quiet) {
-          process.stdout.write("취소되었습니다.\n");
-        }
-        return;
-      }
-    }
 
     startSpinner("페이지 삭제 중...");
     try {
