@@ -50,13 +50,13 @@ dooray                # 글로벌 링크 시
 - **옵션 이름**
   - 제목은 post·wiki 모두 `--title` (`--subject` 는 deprecated alias — stderr 경고 후 동작)
   - 본문은 `--body` / `--body-file` (둘 다 `-` 로 stdin 을 받는다)
-  - `post edit`, `wiki page edit`, `post`·`wiki page` 의 `comment add`/`edit` 는 둘 다 없으면 `$EDITOR` 가 열린다. `create` 계열은 fallback 없이 에러가 된다
+  - `post edit`, `wiki page edit`, `post`·`wiki page` 의 `comment add`/`edit` 는 둘 다 없으면 `$EDITOR` 가 열린다. 단 `post edit` 의 태그·참조자·담당자 변경 옵션은 제목·본문 없이도 비대화형 수정으로 실행한다. `create` 계열은 fallback 없이 에러가 된다
 - **resolver 매칭**: 정확일치 → 이름 부분일치 → 모호하면 에러와 후보 목록 출력
 - **출력**: `--json` 은 raw 유지, `--quiet` 은 식별자만
 - **파괴적 명령**: 새로 만들 때는 confirm 을 기본으로 하고 `--yes` 를 붙인다. non-TTY 는 abort
   - 기존 삭제 명령은 confirm 유무가 제각각이다 — `skills/dooray-cli/SKILL.md` 의 표가 현황의 단일 소스다
 - **post 목록 정렬**: 최신순 (`-createdAt`)
-- **interactive 모드**: non-interactive 전용 옵션은 무시하고 경고를 낸다
+- **interactive 모드**: 비대화형 진입 조건이 아닌 전용 옵션은 무시하고 경고를 낸다
 
 ## 개인 식별 정보 / 사내 식별자 노출 금지 (public OSS)
 
@@ -131,4 +131,3 @@ grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/ 2>/dev/null
 ## Git
 
 커밋 메시지와 PR 제목·본문은 한국어로 작성한다.
-

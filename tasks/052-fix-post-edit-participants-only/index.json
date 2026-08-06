@@ -1,0 +1,29 @@
+{
+  "name": "052-fix-post-edit-participants-only",
+  "description": "GitHub Issue #108 — `post edit`의 참조자·담당자 옵션 6개를 제목·본문 없이 단독 사용해도 비대화형 수정으로 처리한다. 기존 제목·본문·태그를 보존하고, 참여자 옵션을 무시한다는 도달 불가능 경고를 제거한다. 멘션·업무 링크·상위 업무 옵션의 단독 호출 지원은 범위 밖이다.",
+  "created_at": "2026-08-05T23:59:53Z",
+  "updated_at": "2026-08-06T01:07:58Z",
+  "status": "completed",
+  "current_phase": 2,
+  "total_phases": 2,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "참여자 단독 비대화형 수정과 회귀 테스트",
+      "file": "phase-01.md",
+      "status": "completed",
+      "execution_profile": "standard",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "공개 사용 문서와 통합 검증",
+      "file": "phase-02.md",
+      "status": "completed",
+      "execution_profile": "standard",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ]
+}

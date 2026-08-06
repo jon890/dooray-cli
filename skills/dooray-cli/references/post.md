@@ -74,7 +74,7 @@ dooray post edit <project> <number> --to 김철수 --to-group qa-team
 dooray post edit --id "$POST_ID" --cc-group qa-team --dry-run --json | jq '.users.cc'
 ```
 
-`$EDITOR` 로 여는 interactive 모드에서는 이 옵션들이 무시되고 경고만 나온다.
+참조자·담당자 옵션만 지정하면 `$EDITOR`를 열지 않고 기존 제목·본문·태그를 보존한 채 참여자만 바꾼다.
 
 ## 본문 수정은 전체 교체다 — 첨부가 사라질 수 있다
 

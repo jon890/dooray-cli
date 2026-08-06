@@ -260,6 +260,8 @@ dooray post comment file delete my-project 42 <comment-id> <file-id>    # 삭제
 
 기존 업무의 참조자·담당자에 멤버 또는 그룹 추가/제거.
 자동화 시나리오: 신규 업무 생성 후 후속으로 특정 그룹을 참조에 첨부.
+참여자 옵션 하나만 지정해도 비대화형 수정으로 실행하며 `$EDITOR` 를 열지 않는다.
+이때 조회한 기존 제목과 본문을 `updatePost` 요청에 다시 사용하고, 태그 변경 옵션이 없으면 `tagIds` 를 보내지 않아 기존 태그를 보존한다.
 
 ```
 # 멤버/그룹 추가 (append + dedupe)
@@ -281,6 +283,9 @@ dooray post edit my-project 42 \
   --cc user@example.com \                       # 이메일 (동명이인 우회)
   --cc 1234567890123456789                       # organizationMemberId 직접
 ```
+
+`--mention`, `--mention-group`, `--link-task`, `--parent` 는 참여자 옵션과 별개의 비대화형 진입 조건이다.
+이 옵션들의 단독 호출 지원 여부는 각각의 흐름에서 다루며, 참여자 옵션 정책을 확장해 암묵적으로 바꾸지 않는다.
 
 ## 템플릿으로 정형 업무 생성 흐름 (ADR-027)
 

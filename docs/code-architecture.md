@@ -120,7 +120,7 @@ src/
       search.ts
       get.ts
       create.ts
-      edit.ts               # $EDITOR 기반
+      edit.ts               # $EDITOR 또는 제목·본문·태그·참조자·담당자 옵션 기반 비대화형 수정
       done.ts
       workflow.ts
       comment/

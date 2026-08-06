@@ -13,3 +13,5 @@
 | RETRO-0009 | 2026-08-06 | 051-fix-comment-file-reference | 단계 상태 표기 불일치 | 해결 | 승격 안 함 |
 | RETRO-0010 | 2026-08-06 | 051-fix-comment-file-reference | ADR 설명의 가독성과 범위 초과 | 해결 | 승격 안 함 |
 | RETRO-0011 | 2026-08-06 | 051-fix-comment-file-reference | 작업 계획의 장문 줄 누락 | 해결 | 승격 안 함 |
+| RETRO-0012 | 2026-08-06 | 052-fix-post-edit-participants-only | zsh 특수 배열 `path`를 loop 변수로 사용 | 해결 | 승격 안 함 |
+| RETRO-0013 | 2026-08-06 | 052-fix-post-edit-participants-only | 비대화형 진입 조건과 조합 옵션의 범위 구분 | 해결 | 승격 안 함 |
