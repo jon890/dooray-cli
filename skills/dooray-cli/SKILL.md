@@ -12,7 +12,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 하려는 일 | reference |
 | --- | --- |
 | 설치·초기 설정, 출력 모드, API 제약, 에러 처리, 캐시, 피드백 등록 | [common.md](references/common.md) |
-| 업무 식별·생성·수정, 참조자·담당자 변경, 첨부 보호, 부모 지정, 태그 | [post.md](references/post.md) |
+| 업무 식별·생성·수정·삭제, 참조자·담당자 변경, 첨부 보호, 부모 지정, 태그 | [post.md](references/post.md) |
 | 업무 댓글 추가·필터·조회 | [comment.md](references/comment.md) |
 | 위키 페이지 조회·트리·삭제, 첨부와 인라인 이미지, 위키 댓글 | [wiki.md](references/wiki.md) |
 | 그룹 멘션·cc 판단, 멘션·링크 자동 삽입, Dooray 마크다운 링크 | [mention-link.md](references/mention-link.md) |
@@ -62,18 +62,20 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 
 ## 삭제 명령의 확인 동작
 
-같지 않으므로 실행 전에 확인한다. 확인 절차가 없는 명령은 되돌릴 수 없다.
+여섯 삭제 명령은 같은 안전 확인 정책을 따른다.
 
 | 명령 | 확인 | 자동화 |
 | --- | --- | --- |
 | `wiki page delete` | 있음 | `-y`, `--yes` |
-| `post comment file delete` | 있음 | `--yes` |
-| `post file delete` | **없음 — 즉시 삭제** | — |
-| `wiki page file delete` | **없음 — 즉시 삭제** | — |
-| `post comment delete` | **없음 — 즉시 삭제** | — |
-| `wiki page comment delete` | **없음 — 즉시 삭제** | — |
+| `post comment file delete` | 있음 | `-y`, `--yes` |
+| `post file delete` | 있음 | `-y`, `--yes` |
+| `wiki page file delete` | 있음 | `-y`, `--yes` |
+| `post comment delete` | 있음 | `-y`, `--yes` |
+| `wiki page comment delete` | 있음 | `-y`, `--yes` |
 
-확인이 있는 명령은 TTY 가 아니면 중단되므로, 자동화에서는 위 플래그를 붙인다.
+- TTY 확인은 기본값이 아니오다.
+- non-TTY에서 플래그가 없으면 설정 조회나 삭제 API 호출 전에 종료 코드 3으로 중단한다.
+- 자동화에서는 `-y` 또는 `--yes`를 반드시 붙인다.
 
 # 의도별 커맨드
 
@@ -138,7 +140,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 단일 댓글 | `dooray post comment get <project> <number> <comment-id>` |
 | 댓글 추가 | `dooray post comment add <project> <number> --body "..."` |
 | 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` |
-| 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` — **확인 없이 즉시** |
+| 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` — 확인 있음, `-y`/`--yes`로 생략 |
 
 ## 업무 첨부
 
@@ -150,11 +152,11 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 첨부 다운로드 | `dooray post file download <project> <number> <file-id>` |
 | 첨부 일괄 다운로드 | `dooray post file download-all <project> <number>` |
 | 첨부 업로드 | `dooray post file upload <project> <number> <file-path>` |
-| 첨부 삭제 | `dooray post file delete <project> <number> <file-id>` — **확인 없이 즉시** |
+| 첨부 삭제 | `dooray post file delete <project> <number> <file-id>` — 확인 있음, `-y`/`--yes`로 생략 |
 | 댓글 첨부 목록 | `dooray post comment file list <project> <number> <comment-id>` |
 | 댓글 첨부 업로드 | `dooray post comment file upload <project> <number> <comment-id> <path>` |
 | 댓글 첨부 다운로드 | `dooray post comment file download <project> <number> <comment-id> <file-id>` |
-| 댓글 첨부 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id>` — 확인 있음, `--yes` 로 생략 |
+| 댓글 첨부 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id>` — 확인 있음, `-y`/`--yes`로 생략 |
 
 - 댓글 파일 업로드는 이미지 확장자면 이미지 마크다운을, 그 외에는 일반 링크를 만든다.
 - `comment file list`가 비어도 웹 UI 첨부가 없다고 단정하지 말고 `post file list`로 확인한다.
@@ -171,18 +173,18 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 페이지 제목 수정 | `dooray wiki page edit <project> <page-id> --title "..."` |
 | 페이지 본문 수정 | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` |
 | 페이지 에디터로 수정 | `dooray wiki page edit <project> <page-id>` — 플래그가 없으면 `$EDITOR` 가 열린다 |
-| 페이지 삭제 | `dooray wiki page delete <project> <page-id>` — 확인 있음, `--yes` 로 생략. 하위 페이지는 삭제한 페이지의 부모 아래로 재부착되어 orphan 이 생기지 않는다 |
+| 페이지 삭제 | `dooray wiki page delete <project> <page-id>` — 확인 있음, `-y`/`--yes`로 생략. 하위 페이지는 삭제한 페이지의 부모 아래로 재부착되어 orphan 이 생기지 않는다 |
 | 첨부 목록 | `dooray wiki page file list <project> <page-id>` — general 과 inline 을 합쳐 보여준다 |
 | 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` |
 | 첨부 다운로드 | `dooray wiki page file download <project> <page-id> --file-id <id> -o <dir>` |
 | 첨부 일괄 다운로드 | `dooray wiki page file download-all <project> <page-id> -o <dir>` |
-| 첨부 삭제 | `dooray wiki page file delete <project> <page-id> --file-id <id>` — **확인 없이 즉시** |
+| 첨부 삭제 | `dooray wiki page file delete <project> <page-id> --file-id <id>` — 확인 있음, `-y`/`--yes`로 생략 |
 | 댓글 목록 | `dooray wiki page comment list <project> <page-id> [--latest N]` (최신순) |
 | 최신 댓글 | `dooray wiki page comment latest <project> <page-id>` |
 | 단일 댓글 | `dooray wiki page comment get <project> <page-id> <comment-id>` |
 | 댓글 추가 | `dooray wiki page comment add <project> <page-id> --body "..."` (`$EDITOR` fallback) |
 | 댓글 수정 | `dooray wiki page comment edit <project> <page-id> <comment-id> --body "..."` |
-| 댓글 삭제 | `dooray wiki page comment delete <project> <page-id> <comment-id>` — **확인 없이 즉시** |
+| 댓글 삭제 | `dooray wiki page comment delete <project> <page-id> <comment-id>` — 확인 있음, `-y`/`--yes`로 생략 |
 
 ## 메일
 

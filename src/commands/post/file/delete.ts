@@ -5,6 +5,10 @@ import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import {
+  authorizeDeletion,
+  promptDeletion,
+} from "../../../utils/delete-confirmation.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { emitDeleteResult } from "../../../formatters/file-output.js";
 
@@ -16,7 +20,18 @@ export const fileDeleteCommand = new Command("delete")
   .option("--id <postId>", "Dooray post ID (project/post-number 대신)")
   .option("--url <url>", "Dooray 업무 URL (project/post-number 대신)")
   .option("--file-id <fileId>", "파일 ID (positional 대체)")
+  .option("-y, --yes", "확인 없이 삭제 (자동화용)")
   .action(async (arg1, arg2, arg3, opts) => {
+    const confirmed = await authorizeDeletion(
+      !!opts.yes,
+      !!process.stdin.isTTY,
+      () => promptDeletion("업무의 첨부 파일을 영구 삭제할까요?"),
+    );
+    if (!confirmed) {
+      process.stderr.write("취소되었습니다.\n");
+      return;
+    }
+
     const globalOpts = fileDeleteCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);

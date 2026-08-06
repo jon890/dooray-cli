@@ -5,6 +5,10 @@ import { resolveWikiPageInput } from "../../../resolvers/wiki-page-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import {
+  authorizeDeletion,
+  promptDeletion,
+} from "../../../utils/delete-confirmation.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { emitDeleteResult } from "../../../formatters/file-output.js";
 
@@ -17,7 +21,18 @@ export const wikiPageFileDeleteCommand = new Command("delete")
   .option("--url <url>", "Dooray Wiki URL")
   .option("--project <code>", "프로젝트 코드 (--id 모드에서 wikiId 해석용)")
   .option("--file-id <fileId>", "파일 ID (positional 대체)")
+  .option("-y, --yes", "확인 없이 삭제 (자동화용)")
   .action(async (arg1, arg2, arg3, opts) => {
+    const confirmed = await authorizeDeletion(
+      !!opts.yes,
+      !!process.stdin.isTTY,
+      () => promptDeletion("위키 페이지의 첨부 파일을 영구 삭제할까요?"),
+    );
+    if (!confirmed) {
+      process.stderr.write("취소되었습니다.\n");
+      return;
+    }
+
     const globalOpts = wikiPageFileDeleteCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);

@@ -9,6 +9,10 @@ import { startSpinner, stopSpinner } from "../../../../utils/spinner.js";
 import { DoorayCliError } from "../../../../utils/errors.js";
 import { EXIT_API_ERROR } from "../../../../utils/exit-codes.js";
 import { removeFileReference } from "../../../../utils/comment-files.js";
+import {
+  authorizeDeletion,
+  promptDeletion,
+} from "../../../../utils/delete-confirmation.js";
 
 export const deleteCommentFileCommand = new Command("delete")
   .description("댓글 첨부 파일 삭제 (본문 reference 제거와 파일 삭제를 함께 수행)")
@@ -20,8 +24,21 @@ export const deleteCommentFileCommand = new Command("delete")
   .option("--url <url>", "Dooray 업무 URL (project/post-number 대신)")
   .option("--comment-id <logId>", "댓글 ID (positional 대체)")
   .option("--file-id <fileId>", "파일 ID (positional 대체)")
-  .option("--yes", "확인 없이 삭제")
+  .option("-y, --yes", "확인 없이 삭제 (자동화용)")
   .action(async (arg1, arg2, arg3, arg4, opts) => {
+    const confirmed = await authorizeDeletion(
+      !!opts.yes,
+      !!process.stdin.isTTY,
+      () =>
+        promptDeletion(
+          "댓글 본문에서 파일 reference를 제거하고 첨부 파일을 삭제합니다. 같은 업무의 다른 댓글이 같은 파일 ID를 참조하면 링크가 깨질 수 있습니다. 계속하시겠습니까?",
+        ),
+    );
+    if (!confirmed) {
+      process.stderr.write("취소되었습니다.\n");
+      return;
+    }
+
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
@@ -34,17 +51,6 @@ export const deleteCommentFileCommand = new Command("delete")
       requireSecondary: true,
       secondaryLabel: FILE_ID_SECONDARY_LABEL,
     });
-
-    if (!opts.yes) {
-      const { confirm } = await import("@inquirer/prompts");
-      const ok = await confirm({
-        message: `댓글 본문에서 reference 를 제거하고 파일(${fileId})을 삭제합니다. 같은 post 의 다른 댓글에서 같은 파일 ID 를 참조하는 경우 broken 됩니다. 계속하시겠습니까?`,
-      });
-      if (!ok) {
-        process.stdout.write("취소되었습니다.\n");
-        return;
-      }
-    }
 
     // Step 1: 댓글 본문에서 reference 제거
     startSpinner("댓글 본문 reference 제거 중...");

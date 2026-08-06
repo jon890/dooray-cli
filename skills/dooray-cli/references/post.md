@@ -30,6 +30,16 @@ dooray post file upload   --url <url> --file ./report.pdf
 
 기존 positional 형태(`comment edit <project> <number> <comment-id>`)는 그대로 쓸 수 있다.
 
+## 삭제 안전 확인
+
+다음 업무 삭제 명령은 같은 안전 확인 정책을 따른다.
+
+- `dooray post comment delete`
+- `dooray post file delete`
+- `dooray post comment file delete`
+
+TTY 확인, non-TTY 실행, `-y`와 `--yes` 사용법은 [SKILL.md](../SKILL.md#삭제-명령의-확인-동작)를 따른다.
+
 ## 업무 생성
 
 ```bash
