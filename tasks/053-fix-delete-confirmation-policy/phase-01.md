@@ -16,8 +16,19 @@ Issue #113의 여섯 삭제 명령이 하나의 공통 유틸리티를 통해 �
 ## 선행 계약
 
 - `CLAUDE.md`의 파괴적 삭제 명령 규약과 `docs/adr/036-delete-confirmation-policy.md`를 먼저 읽는다.
-- planning 결정 문서는 재기반된 커밋 `669dc22`에 반영되어 있다. 이 phase에서는 `CLAUDE.md`, `docs/prd.md`, `docs/flow.md`, `docs/code-architecture.md`, `docs/data-schema.md`, `docs/adr/`를 수정하지 않는다.
+- planning 결정 문서는 현재 브랜치에 반영되어 있다. 구현 전에 아래 의미 기반 검증으로 계약이 남아 있는지 확인한다.
+- 이 phase에서는 `CLAUDE.md`, `docs/prd.md`, `docs/flow.md`, `docs/code-architecture.md`, `docs/data-schema.md`, `docs/adr/`를 수정하지 않는다.
 - 기존 삭제 API와 resolver를 재사용한다. 확인 정책을 위해 `src/api/client.ts`나 `src/resolvers/`를 수정하지 않는다.
+
+```bash
+# cwd: repository implementation worktree
+test -f docs/adr/036-delete-confirmation-policy.md
+grep -Fq '**파괴적 삭제 명령**' CLAUDE.md
+grep -Fq 'delete-confirmation.ts' docs/code-architecture.md
+grep -Fq '## 삭제 확인 공통 흐름 (ADR-036)' docs/flow.md
+```
+
+네 검증 명령 중 하나라도 실패하면 planning 계약이 재기반 과정에서 사라진 것이므로 구현하지 않고 `PHASE_BLOCKED: delete confirmation planning contract is missing`을 보고한다.
 
 ---
 

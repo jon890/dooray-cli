@@ -30,6 +30,14 @@
 - 플래그 없는 non-TTY 실행은 삭제 API를 호출하기 전에 종료 코드 3으로 끝난다.
 - 기존 삭제 자동화는 명시적 yes 플래그를 추가해야 한다는 호환성 문장을 한 줄 둔다.
 
+README 검증이 표현 차이 때문에 흔들리지 않도록 다음 문자열은 그대로 포함한다.
+
+```text
+기본값이 아니오인 `y/N`
+`-y` 또는 `--yes`
+삭제 API를 호출하기 전에 종료 코드 3
+```
+
 README의 나머지 구조와 기존 plain·`--json`·`--quiet` 설명은 유지한다.
 
 ### 2. `skills/dooray-cli/SKILL.md`·`references/` — 공통 계약과 도메인 안내 동기화
@@ -72,8 +80,17 @@ README와 공개 SKILL·references에는 ADR, Issue, task 번호를 넣지 않�
 - task `status`: `completed`
 - `current_phase`: `2`
 - 두 phase의 `status`: `completed`
-- `updated_at`: 실제 완료 UTC 시각
+- `updated_at`: 아래 명령으로 생성한 초 단위 UTC 시각
 - `error_message`와 `blocked_reason`: `null` 유지
+
+```bash
+# cwd: repository implementation worktree
+task_completed_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+printf '%s\n' "$task_completed_at" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$'
+```
+
+`updated_at`에는 `task_completed_at` 값을 그대로 넣는다.
+밀리초가 붙은 `toISOString()` 값은 `jq`의 `fromdateiso8601`이 거부하므로 쓰지 않는다.
 
 마킹 직후 아래 `jq -e` 검사를 실행한다.
 성공하기 전에는 완료 커밋을 만들지 않는다.
@@ -123,6 +140,17 @@ test "$(node dist/index.js wiki page delete --help | grep -c -- "-y, --yes")" -e
 test "$(node dist/index.js wiki page file delete --help | grep -c -- "-y, --yes")" -eq 1
 test "$(node dist/index.js wiki page comment delete --help | grep -c -- "-y, --yes")" -eq 1
 
+test "$(grep -c '^### 삭제 명령의 확인$' README.md)" -eq 1
+grep -Fq 'dooray post comment delete' README.md
+grep -Fq 'dooray post file delete' README.md
+grep -Fq 'dooray post comment file delete' README.md
+grep -Fq 'dooray wiki page delete' README.md
+grep -Fq 'dooray wiki page file delete' README.md
+grep -Fq 'dooray wiki page comment delete' README.md
+grep -Fq '기본값이 아니오인 `y/N`' README.md
+grep -Fq '`-y` 또는 `--yes`' README.md
+grep -Fq '삭제 API를 호출하기 전에 종료 코드 3' README.md
+
 grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/ 2>/dev/null && exit 1 || true
 git diff --check
 ```
@@ -136,7 +164,7 @@ git diff --check
 완료 순서는 다음과 같다.
 
 1. 정책 테스트, 타입 검사, 전체 테스트, 빌드, 패키지 검증, 여섯 도움말, 공개 문서 내부 참조, 개인 식별 정보, `git diff --check`를 실행한다.
-2. 1번이 모두 통과한 뒤에만 `index.json`을 completed 상태로 마킹한다.
+2. 1번이 모두 통과한 뒤 `date -u +%Y-%m-%dT%H:%M:%SZ`로 초 단위 완료 시각을 만들고 `index.json`을 completed 상태로 마킹한다.
 3. 마킹 직후 작업 항목 4의 `jq -e`로 task·phase 최종 상태를 검사한다.
 4. `git diff --check`를 한 번 더 실행한다.
 5. `jq -e`와 최종 diff 검사가 모두 성공하면 구현·공개 문서·완료 마킹을 같은 커밋에 포함한다.
