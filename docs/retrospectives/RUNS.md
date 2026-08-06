@@ -10,3 +10,4 @@
 | 2026-08-06 | review-fix | PR 115 | - | - | - | 0 | - | 없음 | 0 | PR #115 |
 | 2026-08-06 | planning | 052-fix-post-edit-participants-only | - | - | - | - | - | 없음 | 0 | task 생성 |
 | 2026-08-06 | planning | 052-fix-post-edit-participants-only | - | - | - | - | - | 없음 | 1 | task 보완 |
+| 2026-08-06 | build-with-teams | 052-fix-post-edit-participants-only | B | 2 | - | 1 | 0 | 없음 | 0 | 로컬 구현 완료 |
