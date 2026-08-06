@@ -74,6 +74,8 @@ export const postEditCommand = new Command("edit")
     const toGroups: string[] = (opts.toGroup ?? []).filter((s: string) => s.length > 0);
     const tagAdditions: string[] = (opts.tag ?? []).filter((s: string) => s.length > 0);
     const tagRemovals: string[] = (opts.tagRemove ?? []).filter((s: string) => s.length > 0);
+    const hasParticipantChange = ccNames.length > 0 || ccGroups.length > 0 || !!opts.ccClear ||
+      toNames.length > 0 || toGroups.length > 0 || !!opts.toClear;
     const hasTagChange = tagAdditions.length > 0 || tagRemovals.length > 0 || !!opts.tagClear;
 
     startSpinner("업무 조회 중...");
@@ -95,7 +97,7 @@ export const postEditCommand = new Command("edit")
       );
     }
 
-    const nonInteractive = title || opts.body || opts.bodyFile || hasTagChange;
+    const nonInteractive = title || opts.body || opts.bodyFile || hasTagChange || hasParticipantChange;
 
     if (nonInteractive) {
       // Non-interactive mode: apply only specified changes
@@ -220,12 +222,6 @@ export const postEditCommand = new Command("edit")
       if (linkInputs.length > 0) {
         process.stderr.write(
           "⚠  --link-task 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
-        );
-      }
-      if (ccNames.length > 0 || ccGroups.length > 0 || opts.ccClear ||
-          toNames.length > 0 || toGroups.length > 0 || opts.toClear) {
-        process.stderr.write(
-          "⚠  --cc/--cc-group/--cc-clear/--to/--to-group/--to-clear 는 --title/--body 와 함께 사용 시에만 적용됩니다.\n",
         );
       }
       if (opts.parent) {
