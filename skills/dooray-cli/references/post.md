@@ -79,20 +79,23 @@ dooray post edit --id "$POST_ID" --cc-group qa-team --dry-run --json | jq '.user
 ## 본문 수정은 전체 교체다 — 첨부가 사라질 수 있다
 
 `post edit` 와 `post comment edit` 는 본문을 통째로 바꾼다.
-새 본문에 기존 첨부의 markdown reference(`![](/files/<id>)`)가 없으면 확인을 요청하고,
+새 본문에 기존 첨부의 이미지 마크다운(`![](/files/<id>)`)이나 일반 링크(`[](/files/<id>)`)가 없으면 확인을 요청하고,
 TTY 가 아니면 중단된다.
 
 첨부를 지키려면 기존 본문에서 reference 를 먼저 뽑아 새 본문에 포함한다.
 
 ```bash
 # post edit 전
-dooray post get <project> <number> --json | jq -r '.body.content' | grep -oE '!\[[^]]*\]\(/files/[^)]+\)'
+dooray post get <project> <number> --json | jq -r '.body.content' | grep -oE '!?\[[^]]*\]\(/files/[^)]+\)'
 
 # post comment edit 전
 dooray post comment get <project> <number> <comment-id> --json | jq -r '.body.content'
 ```
 
 첨부를 정말 떼려는 것이면 `--no-confirm` 으로 진행한다.
+
+`comment file list`는 댓글 조회 API가 노출한 첨부만 보여주므로 웹 UI에서 직접 첨부한 파일을 놓칠 수 있다.
+목록이 비어 있으면 `post file list`로 업무 전체 첨부를 확인한다.
 
 ## 이름이 겹칠 때
 

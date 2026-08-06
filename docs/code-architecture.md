@@ -86,7 +86,7 @@ src/
     task-link.ts            # 업무 링크 빌더 (escapeLinkText / buildTaskLink / appendTaskLinks / parseLinkRef, Issue #33)
     feedback-meta.ts        # CLI 버전·환경 수집 + GitHub issue body 빌더 + buildLastRunBlock (ADR-022, ADR-023)
     argv-sanitize.ts        # argv 시크릿 패턴 마스킹 (--api-key/--token/--password/Authorization, ADR-023)
-    comment-files.ts        # appendFileReference / removeFileReference — 댓글 본문 markdown reference 조작 (ADR-024)
+    comment-files.ts        # 확장자별 이미지/일반 링크 생성 + 두 형식 제거 (ADR-024)
     wiki-snippet.ts         # wiki inline_image 본문 삽입용 markdown reference 빌더 (ADR-031 보강, Issue #81)
     dooray-message.ts       # resultMessage URL-encoding 디코드 정규화 (API 에러 메시지 표시용)
     attachment-check.ts     # 본문 markdown 의 attachment fileId 추출 (post edit body full-replace 시 누락 confirm)
@@ -132,7 +132,7 @@ src/
         delete.ts
         file/
           index.ts            # commentFileCommand 조립
-          list.ts             # 댓글 첨부 목록 (getPostComment → .files, ADR-024)
+          list.ts             # API가 노출한 댓글 첨부 목록 (웹 UI 전용 연결은 누락 가능, ADR-024)
           upload.ts           # 파일 업로드 + 댓글 reference append
           download.ts         # post-level 다운로드 wrapper (UX 일관성, ADR-024)
           delete.ts           # reference 제거 + 파일 삭제 (atomic 보장 X, ADR-024)

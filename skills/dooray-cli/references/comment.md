@@ -28,8 +28,11 @@ table 출력은 Creator 컬럼을 프로젝트 멤버 캐시로 채운다. `--js
 
 ## 단일 댓글 본문 가져오기
 
-`post comment get <project> <number> <comment-id> --json` 으로 본문과 attachments 를 곧바로 받는다.
+`post comment get <project> <number> <comment-id> --json` 으로 본문과 댓글 조회 API가 노출한 파일을 `attachments`로 받는다.
+웹 UI에서 직접 첨부한 파일은 누락될 수 있다.
 `comment list` 를 받아 jq 로 걸러낼 필요가 없다.
+
+상세 파일 조작 규칙과 대체 확인 경로는 [post.md](post.md)를 따른다.
 
 본문을 고칠 때는 이 순서로 한다.
 

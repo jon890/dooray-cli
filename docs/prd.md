@@ -40,7 +40,9 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
   - 정형 task: `post create --template <name|id>` (ADR-027, `project templates` 명령으로 목록 조회)
 - `dooray post comment` — 목록·추가·수정($EDITOR)·삭제
 - `dooray post file` — 목록·다운로드·전체다운로드·업로드·삭제 (v0.3.0)
-- `dooray post comment file` — 댓글 첨부 파일 목록·업로드·다운로드·삭제 (post-level files API + 댓글 PUT 합성, ADR-024)
+- `dooray post comment file` — 댓글 첨부 파일 목록·업로드·다운로드·삭제 (댓글 조회·수정 API와 post-level files API 조합, ADR-024)
+  - 업로드는 이미지 파일을 인라인 이미지로, 그 외 파일을 클릭 가능한 링크로 댓글 본문에 추가한다.
+  - 웹 UI에서 직접 첨부한 파일은 댓글 조회 API에 연결 정보가 없을 수 있어 댓글 단위 목록에서 제외될 수 있다.
 - `dooray wiki` — 목록·페이지 조회·생성·수정($EDITOR)·트리 조회 (`wiki tree` 레벨별 재귀 drill-down, ADR-034, Issue #101)
 - `dooray wiki page file` — 페이지 첨부 파일 목록·업로드·다운로드·전체다운로드·삭제 (multipart `type` 순서 의존 ADR-029, Issue #70)
 - `dooray wiki page comment` — 페이지 댓글 목록·최신·조회·추가·수정·삭제 (post comment 패턴 mirror, mention/cc/file 부재 — WikiComment 시그니처 차이)

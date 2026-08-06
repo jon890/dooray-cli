@@ -2,6 +2,27 @@ import { describe, it, expect } from "vitest";
 import { appendFileReference, removeFileReference } from "./comment-files.js";
 
 describe("appendFileReference", () => {
+  it.each(["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "avif", "heic"])(
+    "%s 이미지 확장자 → 이미지 reference",
+    (extension) => {
+      expect(appendFileReference("", `image.${extension}`, "1234567890123456789"))
+        .toBe(`![image.${extension}](/files/1234567890123456789)`);
+    },
+  );
+
+  it("대문자 이미지 확장자도 이미지 reference", () => {
+    expect(appendFileReference("", "IMAGE.JPEG", "123"))
+      .toBe("![IMAGE.JPEG](/files/123)");
+  });
+
+  it.each(["index.html", "manual.pdf", "data.xlsx", "README"])(
+    "%s 비이미지 파일 → 일반 링크",
+    (fileName) => {
+      expect(appendFileReference("", fileName, "456"))
+        .toBe(`[${fileName}](/files/456)`);
+    },
+  );
+
   it("빈 본문 → reference 만 반환", () => {
     expect(appendFileReference("", "image.png", "1234567890123456789"))
       .toBe("![image.png](/files/1234567890123456789)");
@@ -32,6 +53,21 @@ describe("removeFileReference", () => {
   it("줄 끝에 섞인 reference 는 빈 문자열로 치환 (텍스트 보존)", () => {
     const body = "see ![x.png](/files/123) here";
     expect(removeFileReference(body, "123")).toBe("see  here");
+  });
+
+  it("일반 링크만 있는 줄은 통째로 제거", () => {
+    const body = "hello\n[manual.pdf](/files/123)\nworld";
+    expect(removeFileReference(body, "123")).toBe("hello\nworld");
+  });
+
+  it("문장 안의 일반 링크는 링크만 제거", () => {
+    const body = "see [manual.pdf](/files/123) here";
+    expect(removeFileReference(body, "123")).toBe("see  here");
+  });
+
+  it("같은 fileId 의 이미지와 일반 링크를 모두 제거", () => {
+    const body = "![image.png](/files/123)\n[manual.pdf](/files/123)";
+    expect(removeFileReference(body, "123")).toBe("");
   });
 
   it("다른 fileId 는 안 건드림", () => {
