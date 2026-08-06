@@ -17,7 +17,8 @@
 
 ### 1. `README.md` — 간결한 직접 사용 안내에 최소 설명 추가
 
-`## 에이전트 없이 직접 쓰기`에서 출력 모드 예시의 마지막 명령인 `dooray post comment add --id "$POST_ID" --body "시작합니다"` 뒤와 `## 프로젝트 구조` 앞에 `### 댓글에 파일 첨부` 절을 추가한다.
+`## 에이전트 없이 직접 쓰기`의 출력 모드 예시 마지막 명령 뒤에 `### 댓글에 파일 첨부` 절을 추가한다.
+삽입 위치는 `dooray post comment add --id "$POST_ID" --body "시작합니다"`와 `## 프로젝트 구조` 사이다.
 새 README의 간결한 방향을 유지하도록 다음 내용만 넣는다.
 
 - `dooray post comment file upload <project> <number> <comment-id> <path>` 예시 한 줄
@@ -40,9 +41,17 @@
 
 다음 파일을 책임에 맞게 갱신한다.
 
-- `skills/dooray-cli/references/post.md`: 본문 수정 시 첨부를 보호하는 절에서 이미지 마크다운과 일반 링크를 모두 첨부 참조로 설명하고, 추출 예시 정규식의 `!`를 선택적으로 바꾼다. 같은 절 끝에 `comment file list`의 웹 UI 첨부 누락 가능성과 `post file list` 대체 확인 경로를 적는다.
-- `skills/dooray-cli/references/comment.md`: `## 단일 댓글 본문 가져오기`의 attachments 설명을 댓글 조회 API가 노출한 파일로 한정하고, 웹 UI 첨부는 누락될 수 있음을 명시한다. 상세 파일 조작 규칙은 `post.md`로 연결한다.
-- `skills/dooray-cli/references/workflow.md`: `### 댓글에 스크린샷 첨부` 예시 뒤 설명을 이미지 확장자는 이미지 마크다운, 그 외는 일반 링크가 붙는다는 실제 업로드 결과로 바꾼다.
+- `skills/dooray-cli/references/post.md`
+  - 본문 수정 시 첨부를 보호하는 절에서 이미지 마크다운과 일반 링크를 모두 첨부 참조로 설명한다.
+  - 추출 예시 정규식의 `!`를 선택적으로 바꾼다.
+  - 같은 절 끝에 웹 UI 첨부 누락 가능성과 `post file list` 대체 확인 경로를 적는다.
+- `skills/dooray-cli/references/comment.md`
+  - `## 단일 댓글 본문 가져오기`의 attachments 설명을 댓글 조회 API가 노출한 파일로 한정한다.
+  - 웹 UI 첨부는 누락될 수 있음을 명시한다.
+  - 상세 파일 조작 규칙은 `post.md`로 연결한다.
+- `skills/dooray-cli/references/workflow.md`
+  - `### 댓글에 스크린샷 첨부` 예시 뒤 설명을 실제 업로드 결과로 바꾼다.
+  - 이미지 확장자는 이미지 마크다운, 그 외는 일반 링크가 붙는다고 설명한다.
 
 같은 설명을 세 파일에 그대로 복사하지 않고 각 문서가 소유한 판단·조회·자동화 맥락만 남긴다.
 
