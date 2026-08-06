@@ -74,6 +74,12 @@ dooray wiki pages <project>                  # 위키 페이지 목록
 dooray mail list --unread                    # 안 읽은 메일
 ```
 
+```bash
+dooray post edit <project> 42 --cc-group <group-code>  # 제목·본문 없이 참조자 그룹 추가
+```
+
+참조자·담당자 옵션만 지정하면 `$EDITOR`를 열지 않고 기존 제목·본문·태그를 보존한 채 참여자만 바꾼다.
+
 전체 명령과 옵션은 `--help` 로 본다.
 
 ```bash

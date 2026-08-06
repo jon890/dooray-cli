@@ -125,6 +125,8 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 태그 전체 교체 | `dooray post edit --id <postId> --tag-clear --tag <name>` |
 | 태그 제거 | `dooray post edit --id <postId> --tag-remove <name>` |
 
+참조자·담당자 옵션만 지정하면 `$EDITOR`를 열지 않고 기존 제목·본문·태그를 보존한 채 참여자만 바꾼다.
+
 그룹 지정(`--cc-group`, `--mention-group`)은 15자리 이상 numeric 이면 ID 로, 그 외에는 code 부분일치로 찾는다.
 
 ## 업무 댓글

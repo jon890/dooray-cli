@@ -1,7 +1,7 @@
 # Phase 02 — 공개 사용 문서와 통합 검증
 
 **Execution profile**: standard
-**Status**: pending
+**Status**: completed
 
 ---
 
@@ -69,7 +69,7 @@ pnpm run build
 git diff --check
 test -z "$(rg -n -- 'interactive \(\$EDITOR\) 모드에서는 위 6개 옵션|\$EDITOR 로 여는 interactive 모드에서는 이 옵션들이 무시' README.md skills/dooray-cli || true)"
 rg -n -F 'dooray post edit <project> 42 --cc-group <group-code>' README.md
-for path in README.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/post.md; do rg -q -F '기존 제목·본문·태그' "$path"; done
+for doc_file in README.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/post.md; do rg -q -F '기존 제목·본문·태그' "$doc_file"; done
 grep -rnE "ADR-[0-9]+|Issue #[0-9]+|task [0-9]+" README.md skills/ 2>/dev/null && exit 1 || true
 ```
 
