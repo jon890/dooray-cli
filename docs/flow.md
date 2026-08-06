@@ -235,7 +235,7 @@ post `--id`/`--url` 모드도 동일 지원 — `dooray post comment list --id <
 ## 댓글 첨부파일 흐름 (ADR-024)
 
 `post comment file *` 4 명령의 사용자 멘탈 모델은 "댓글 첨부"다.
-내부적으론 post-level files API + 댓글 본문 PUT 합성으로 구현 (Dooray 가 댓글 전용 endpoint 미지원).
+댓글 전용 첨부 엔드포인트가 없어 댓글 조회·수정 API와 post-level files API를 명령별로 조합한다.
 
 ```
 dooray post comment file list my-project 42 <comment-id>            # 댓글 첨부 목록
@@ -244,7 +244,17 @@ dooray post comment file download my-project 42 <comment-id> <file-id>  # 다운
 dooray post comment file delete my-project 42 <comment-id> <file-id>    # 삭제 (markdown + 파일 둘 다)
 ```
 
-`delete` 는 atomic 보장 없음 — 부분 성공 시 stderr 안내 + non-zero exit.
+`upload`는 파일명 확장자를 대소문자 구분 없이 판별해 댓글 본문 참조 형식을 정한다.
+
+- `png`, `jpg`, `jpeg`, `gif`, `webp`, `bmp`, `svg`, `avif`, `heic`는 이미지 마크다운 `![파일명](/files/<file-id>)`을 추가한다.
+- 그 외 확장자와 확장자 없는 파일은 일반 링크 `[파일명](/files/<file-id>)`를 추가한다.
+
+`delete`는 두 참조 형식을 모두 제거한 뒤 post-level 파일을 삭제한다.
+두 단계의 원자성은 보장하지 않으며 부분 성공 시 stderr 안내와 0이 아닌 종료 코드로 종료한다.
+
+`list`는 댓글 단건 조회 API가 반환한 `files`만 보여준다.
+웹 UI에서 첨부한 파일은 댓글 본문 참조가 없고 댓글 조회 응답에도 연결 정보가 노출되지 않을 수 있으므로 `comment file list`에서 보이지 않을 수 있다.
+이 파일은 업무 단위의 `post file list`로 확인한다.
 
 ## 참조자(cc) / 담당자(to) 변경 흐름 (ADR-025)
 
