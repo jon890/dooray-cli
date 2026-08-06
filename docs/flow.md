@@ -226,7 +226,7 @@ dooray post comment add my-project 42 \         # 댓글 추가
   --link-task my-project/41                     # 다른 업무 링크 append
 dooray post comment edit my-project 42 \        # 댓글 수정 ($EDITOR)
   --comment-id <comment-id>
-dooray post comment delete my-project 42 \      # 댓글 삭제
+dooray post comment delete my-project 42 \      # 댓글 삭제 (confirm 기본, -y/--yes 로 생략)
   --comment-id <comment-id>
 ```
 
@@ -241,7 +241,7 @@ post `--id`/`--url` 모드도 동일 지원 — `dooray post comment list --id <
 dooray post comment file list my-project 42 <comment-id>            # 댓글 첨부 목록
 dooray post comment file upload my-project 42 <comment-id> ./img.png   # 업로드
 dooray post comment file download my-project 42 <comment-id> <file-id>  # 다운로드
-dooray post comment file delete my-project 42 <comment-id> <file-id>    # 삭제 (markdown + 파일 둘 다)
+dooray post comment file delete my-project 42 <comment-id> <file-id>    # 삭제 (confirm 기본, -y/--yes 로 생략)
 ```
 
 `upload`는 파일명 확장자를 대소문자 구분 없이 판별해 댓글 본문 참조 형식을 정한다.
@@ -370,7 +370,7 @@ dooray wiki tree my-project --depth 2            # 손자까지만
 dooray wiki get my-project <page-id>             # 페이지 조회
 dooray wiki create my-project --title "설계" --body-file design.md
 dooray wiki edit my-project <page-id>            # $EDITOR 수정
-dooray wiki page delete my-project <page-id>     # 페이지 삭제 (confirm 기본, --yes 로 생략)
+dooray wiki page delete my-project <page-id>     # 페이지 삭제 (confirm 기본, -y/--yes 로 생략)
 ```
 
 ## 메신저 흐름 (Issue #88, ADR-033)
@@ -412,7 +412,7 @@ dooray wiki page file download my-project <page-id> --file-id <id> -o ./
 # 페이지 모든 첨부 일괄 다운로드
 dooray wiki page file download-all my-project <page-id> -o ./attachments/
 
-# 삭제 (post file delete 와 동일 — confirm 없이 즉시)
+# 삭제 (post file delete 와 동일 — confirm 기본, -y/--yes 로 생략)
 dooray wiki page file delete my-project <page-id> --file-id <id>
 ```
 
@@ -442,7 +442,7 @@ echo "댓글 본문" | dooray wiki page comment add <project> <page-id> --body -
 # 수정 — interactive ($EDITOR) 또는 옵션
 dooray wiki page comment edit <project> <page-id> <comment-id> --body "..."
 
-# 삭제 (confirm 없이 즉시)
+# 삭제 (confirm 기본, -y/--yes 로 생략)
 dooray wiki page comment delete <project> <page-id> <comment-id>
 ```
 
@@ -478,8 +478,29 @@ dooray post file list my-project 42                    # 첨부파일 목록
 dooray post file download my-project 42 <file-id>     # 단일 다운로드
 dooray post file download-all my-project 42 -o ./files # 전체 다운로드
 dooray post file upload my-project 42 ./report.pdf     # 업로드
-dooray post file delete my-project 42 <file-id>        # 삭제
+dooray post file delete my-project 42 <file-id>        # 삭제 (confirm 기본, -y/--yes 로 생략)
 ```
+
+## 삭제 확인 공통 흐름 (ADR-036)
+
+다음 여섯 명령은 같은 안전 정책을 적용한다.
+
+- `dooray wiki page delete`
+- `dooray wiki page file delete`
+- `dooray wiki page comment delete`
+- `dooray post file delete`
+- `dooray post comment delete`
+- `dooray post comment file delete`
+
+호출 흐름은 다음과 같다.
+
+1. `-y` 또는 `--yes`가 있으면 확인을 생략하고 기존 입력 해석과 삭제 API 흐름으로 진행한다.
+2. 플래그가 없고 stdin이 non-TTY이면 설정 조회, resolver, API 호출 전에 종료 코드 3으로 중단한다.
+3. 플래그가 없고 stdin이 TTY이면 기본값이 아니오인 확인을 표시한다.
+4. 사용자가 아니오를 선택하면 취소 메시지를 stderr에 쓰고 API 없이 정상 종료한다.
+5. 사용자가 예를 선택하면 기존 spinner, 삭제 API, 성공 출력 흐름으로 진행한다.
+
+확인 정책만 통일하며 각 명령의 기존 plain·`--json`·`--quiet` 성공 출력과 부분 실패 처리는 유지한다.
 
 업로드·다운로드 시 Dooray API는 307 리다이렉트로 파일 서버 URL을 반환한다.
 CLI가 자동 처리하므로 사용자는 신경 쓸 필요 없다.

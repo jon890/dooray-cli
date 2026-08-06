@@ -90,6 +90,7 @@ src/
     wiki-snippet.ts         # wiki inline_image 본문 삽입용 markdown reference 빌더 (ADR-031 보강, Issue #81)
     dooray-message.ts       # resultMessage URL-encoding 디코드 정규화 (API 에러 메시지 표시용)
     attachment-check.ts     # 본문 markdown 의 attachment fileId 추출 (post edit body full-replace 시 누락 confirm)
+    delete-confirmation.ts  # 삭제 공통 확인 정책: -y/--yes 우회, TTY 기본 아니오, non-TTY 선차단 (ADR-036)
 
   commands/
     setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)
@@ -129,19 +130,19 @@ src/
         get.ts                # 단일 댓글 상세 (positional 3 / --id / --url + --comment-id, Issue #45)
         add.ts
         edit.ts
-        delete.ts
+        delete.ts             # 댓글 삭제 (공통 confirm ADR-036)
         file/
           index.ts            # commentFileCommand 조립
           list.ts             # API가 노출한 댓글 첨부 목록 (웹 UI 전용 연결은 누락 가능, ADR-024)
           upload.ts           # 파일 업로드 + 댓글 reference append
           download.ts         # post-level 다운로드 wrapper (UX 일관성, ADR-024)
-          delete.ts           # reference 제거 + 파일 삭제 (atomic 보장 X, ADR-024)
+          delete.ts           # 공통 confirm 후 reference 제거 + 파일 삭제 (atomic 보장 X, ADR-024/036)
       file/
         list.ts               # 첨부파일 목록
         download.ts           # 단일 파일 다운로드 (--json/--quiet 스키마 ADR-031)
         download-all.ts       # 전체 파일 다운로드 (--json: count/succeeded/failed, ADR-031)
         upload.ts             # 파일 업로드 (--json: res.result raw, --quiet: id, ADR-031)
-        delete.ts             # 파일 삭제 (--json/--quiet 스키마 ADR-031)
+        delete.ts             # 파일 삭제 (공통 confirm ADR-036, --json/--quiet 스키마 ADR-031)
 
     wiki/
       list.ts
@@ -150,14 +151,14 @@ src/
       page-get.ts
       page-create.ts
       page-edit.ts          # $EDITOR + 비대화형 플래그(--title/--body/--body-file)
-      page-delete.ts        # 페이지 삭제 (비공식 DELETE endpoint, ADR-032) — confirm 기본 + --yes, resolveWikiPageInput
+      page-delete.ts        # 페이지 삭제 (비공식 DELETE endpoint, ADR-032) — 공통 confirm ADR-036, resolveWikiPageInput
       page-file/
         index.ts            # wikiPageFileCommand 조립
         list.ts             # 페이지 첨부 목록 (getWikiPage 응답의 files[] + images[] 합성)
         upload.ts           # 파일 업로드 (multipart type 먼저 → file, ADR-029) + --type general|inline_image (--json/--quiet 스키마 ADR-031)
         download.ts         # 단일 파일 다운로드 (307 redirect, ADR-015 패턴) (--json 스키마 ADR-031)
         download-all.ts     # 페이지 모든 첨부 + inline image 일괄 다운로드 (--json: count/succeeded/failed, ADR-031)
-        delete.ts           # 파일 삭제 (post file delete 와 동일 — confirm 없이 즉시) (--json 스키마 ADR-031)
+        delete.ts           # 파일 삭제 (공통 confirm ADR-036, --json 스키마 ADR-031)
       page-comment/
         index.ts            # wikiPageCommentCommand 조립
         list.ts             # 댓글 목록 (size/page/--latest 지원, 최신순)
@@ -165,7 +166,7 @@ src/
         get.ts              # 단일 댓글 본문 + creator + 메타
         add.ts              # 댓글 추가 — --body / --body-file / $EDITOR fallback (post comment add mirror, mention 없음)
         edit.ts             # 댓글 수정 — --body / --body-file / $EDITOR fallback
-        delete.ts           # 댓글 삭제 (confirm 없이 즉시)
+        delete.ts           # 댓글 삭제 (공통 confirm ADR-036)
 
     mail/
       list.ts               # 메일 목록 (--unread, --search)
