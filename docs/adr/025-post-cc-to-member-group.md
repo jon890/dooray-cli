@@ -20,4 +20,9 @@ PostUser type 의 그룹 분기는 `type: "memberGroup"` 이 아니라 `type: "g
 - subcommand 분리 (`post participants {add,set,remove}`) — `post edit` 의 다른 옵션 (title/body/mention/link-task) 과 조합 불가, 한 번 PUT 으로 끝낼 수 없어 race 위험
 - replace 기본 정책 — 사용자가 매번 전체 멤버/그룹 알아야 함, 자동화 친화성 떨어짐. append + `--cc-clear` / `--to-clear` 채택
 
-**적용 범위**: `post edit` + `post create`. interactive ($EDITOR) 모드는 frontmatter 와 충돌 → 옵션 사용 시 stderr 경고 후 무시 (mention/link-task 동일 패턴 적용).
+**적용 범위**: `post edit` + `post create`.
+
+**보강 (2026-08-06, Issue #108)**: `post edit` 의 참조자·담당자 옵션 6개 중 하나라도 있으면 제목·본문 없이 비대화형 수정으로 진입한다.
+`getPost` 로 조회한 제목과 본문을 `updatePost` 전체 갱신 요청에 재사용하고, 태그 변경 옵션이 없으면 `tagIds` 를 보내지 않아 기존 태그를 보존한다.
+따라서 참여자 옵션을 무시한다는 대화형 경고는 제거한다.
+멘션·업무 링크·상위 업무 옵션의 단독 호출 지원은 이 결정의 범위에 포함하지 않는다.
