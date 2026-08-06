@@ -16,3 +16,4 @@
 | 2026-08-06 | planning | 053-fix-delete-confirmation-policy | - | - | - | - | - | 없음 | 0 | 재기반 후 task 보완 |
 | 2026-08-06 | planning | 053-fix-delete-confirmation-policy | - | - | - | - | - | 없음 | 0 | 최종 검증 보완 |
 | 2026-08-06 | build-with-teams | 053-fix-delete-confirmation-policy | B | 2 | - | 0 | 0 | 없음 | 0 | 로컬 구현 완료 |
+| 2026-08-06 | review-fix | PR 117 | - | - | - | 0 | - | 없음 | 0 | PR #117 |
