@@ -9,3 +9,4 @@
 | 2026-08-06 | build-with-teams | 051-fix-comment-file-reference | B | 2 | 0 | 1 | 2 | 없음 | 0 | 로컬 완료 |
 | 2026-08-06 | review-fix | PR 115 | - | - | - | 0 | - | 없음 | 0 | PR #115 |
 | 2026-08-06 | planning | 052-fix-post-edit-participants-only | - | - | - | - | - | 없음 | 0 | task 생성 |
+| 2026-08-06 | planning | 052-fix-post-edit-participants-only | - | - | - | - | - | 없음 | 1 | task 보완 |

@@ -23,16 +23,27 @@ GitHub Issue #108을 해결하도록 `post edit`의 참조자·담당자 옵션�
 Commander 명령의 외부 경계를 `vi.mock`으로 대체하고 실제 `postEditCommand` 액션을 실행하는 테스트를 추가한다.
 동일 모듈을 자체 모킹하지 말고 설정, API 클라이언트, 입력 resolver, 편집기, 스피너만 경계에서 대체한다.
 
+`--dry-run --json` 시나리오는 `postEditCommand`만 직접 파싱하지 않는다.
+테스트 안에서 `src/index.ts`와 같은 Commander 계층을 구성한다.
+
+- 최상위 `Command`에 `--json`, `--quiet`, `--no-color` 전역 옵션을 등록한다.
+- `new Command("post")`에 실제 `postEditCommand`를 `addCommand`로 연결한다.
+- 최상위 명령에 `post` 명령을 `addCommand`로 연결한다.
+- `parseAsync(["node", "dooray", "--json", "post", "edit", "--id", "<postId>", "--cc-group", "qa-team", "--dry-run"])`을 실행한다.
+
+이 계층을 통해 `postEditCommand.optsWithGlobals()`가 상위 `--json`을 실제와 같은 방식으로 읽는지 검증한다.
+`src/index.ts`는 가져오는 즉시 `program.parseAsync()`를 실행하므로 테스트에서 직접 가져오거나 운영 코드에 `export`를 추가하지 않는다.
+
 다음 계약을 고정한다.
 
 - `--cc`, `--cc-group`, `--cc-clear`, `--to`, `--to-group`, `--to-clear` 중 하나만 있어도 `openInEditor`를 호출하지 않는다.
 - 참여자 추가·초기화 결과가 기존 `resolveUserAdditions`와 `mergeUsers` 정책대로 `updatePost.users`에 반영된다.
 - 참여자 옵션만 지정하면 `updatePost.subject`는 조회한 `post.subject`, `updatePost.body.content`는 조회한 `post.body.content`와 같다.
 - 조회 fixture에 기존 태그를 두고, 태그 옵션이 없을 때 요청에 `tagIds`가 없는지 검증한다. 기존 서버 보존 의미를 임의의 빈 배열 전송으로 바꾸지 않는다.
-- `--cc-group --dry-run --json`도 편집기를 열지 않고 기존 `users` 미리보기 형식을 유지하며 `updatePost`를 호출하지 않는다.
+- 상위 명령의 `--json`과 하위 명령의 `--cc-group --dry-run` 조합도 편집기를 열지 않고, stdout을 JSON으로 파싱했을 때 기존 `users: { to, cc }` 미리보기 형식을 유지하며 `updatePost`를 호출하지 않는다.
 
 여섯 옵션의 진입 판정은 표 기반 테스트로 모두 덮는다.
-명령 액션 통합 테스트가 반복 파싱 상태에 영향받으면 명령 생성 팩터리를 추가하기보다 `vi.resetModules()`와 격리 import를 사용한다.
+명령 액션 통합 테스트가 반복 파싱 상태에 영향받으면 운영 명령 생성 팩터리를 추가하기보다 `vi.resetModules()`와 격리 가져오기로 매 테스트에 새 `postEditCommand` 인스턴스를 사용한다.
 
 ### 2. `src/commands/post/edit.ts` — 참여자 변경을 비대화형 진입 조건에 포함
 
@@ -84,5 +95,5 @@ rg -n -- '--mention/--mention-group|--link-task|--parent 는 --title/--body' src
 
 - Issue #108의 우회 호출로 참여자 변경 자체와 제목·본문·태그 보존이 확인되어 있으므로 기존 조회·전체 갱신 경로를 재사용한다.
 - task 027의 참여자 병합과 task 033의 태그 단독 비대화형 진입 다음에 적용되는 최종 상태다.
-- 최근 `origin/main`의 범위 파일 커밋은 문서 정규화뿐이며, 현재 구현과 충돌하는 후속 코드 변경은 없다.
+- 최근 `origin/main`은 `src/commands/post/edit.ts`를 바꾸지 않았지만 PR #114에서 README를 간결한 구조로 다시 썼다. 코드 구현은 현재 경로를 기준으로 하고, 공개 문서 위치는 Phase 02의 새 README 앵커를 따른다.
 - 한 명령의 진입 조건과 도달 불가능 경고를 함께 고치는 원자적 수정이므로 별도 task로 나누지 않는다.
