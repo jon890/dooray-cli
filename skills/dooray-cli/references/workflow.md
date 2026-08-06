@@ -34,7 +34,7 @@ COMMENT_ID=$(dooray post comment add <project> <post-num> --body "스크린샷 �
 dooray post comment file upload <project> <post-num> "$COMMENT_ID" ./screenshot.png
 ```
 
-업로드하면 댓글 본문에 markdown reference 가 자동으로 붙는다.
+업로드하면 이미지 확장자는 이미지 마크다운으로, 그 외 파일은 일반 링크로 댓글 본문에 붙는다.
 
 ### 배포 알림 메신저 전송
 

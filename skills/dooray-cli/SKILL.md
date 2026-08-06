@@ -154,6 +154,9 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 댓글 첨부 다운로드 | `dooray post comment file download <project> <number> <comment-id> <file-id>` |
 | 댓글 첨부 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id>` — 확인 있음, `--yes` 로 생략 |
 
+- 댓글 파일 업로드는 이미지 확장자면 이미지 마크다운을, 그 외에는 일반 링크를 만든다.
+- `comment file list`가 비어도 웹 UI 첨부가 없다고 단정하지 말고 `post file list`로 확인한다.
+
 ## 위키
 
 | 의도 | 커맨드 |
