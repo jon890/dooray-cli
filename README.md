@@ -99,10 +99,12 @@ src/
   index.ts       CLI 진입점
   api/           Dooray REST API 클라이언트 (ky), IMAP·SMTP 클라이언트
   cache/         ~/.dooray/cache/ 파일 캐시
+  config/        ~/.dooray/config.json 스키마와 읽기·쓰기
   resolvers/     이름·이메일·URL 을 ID 로 바꾸는 계층
   commands/      Commander.js 명령 정의
   formatters/    표·JSON·quiet 출력
   editor/        $EDITOR 연동
+  skill/         Claude Code 스킬 설치·갱신
   utils/         에러, 스피너, 종료 코드
 ```
 
@@ -145,6 +147,8 @@ npm link                    # dooray 명령으로 실행
 3. `src/commands/` 에 명령을 정의한다. 인접한 명령의 구조를 따르는 것이 가장 빠르다
 4. 출력은 `src/formatters/` 에서 표·JSON·quiet 세 모드를 모두 지원한다
 5. `src/**/*.test.ts` 에 테스트를 추가한다
+
+새 설정 값이 필요하면 `src/config/` 의 스키마와 `config set` 처리에 키를 추가한다.
 
 Dooray API 의 동작이 문서와 다르거나 직관에 반하면 [docs/adr/](docs/adr/) 에 기록한다.
 파일 업로드의 307 리다이렉트나 multipart 필드 순서처럼, 모르고 접근하면 다시 막히는 것들이 이미 32건 쌓여 있다.
