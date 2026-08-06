@@ -13,3 +13,4 @@
 | 2026-08-06 | build-with-teams | 052-fix-post-edit-participants-only | B | 2 | - | 1 | 0 | 없음 | 0 | 로컬 구현 완료 |
 | 2026-08-06 | review-fix | PR 116 | - | - | - | 0 | - | 없음 | 0 | PR #116 |
 | 2026-08-06 | planning | 053-fix-delete-confirmation-policy | - | 2 | - | - | - | 없음 | 0 | docs·task 작성 |
+| 2026-08-06 | planning | 053-fix-delete-confirmation-policy | - | - | - | - | - | 없음 | 0 | 재기반 후 task 보완 |
