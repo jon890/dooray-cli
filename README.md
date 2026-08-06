@@ -1,5 +1,10 @@
 # dooray-cli
 
+[![npm version](https://img.shields.io/npm/v/@bifos/dooray-cli.svg)](https://www.npmjs.com/package/@bifos/dooray-cli)
+[![npm downloads](https://img.shields.io/npm/dm/@bifos/dooray-cli.svg)](https://www.npmjs.com/package/@bifos/dooray-cli)
+[![CI](https://github.com/jon890/dooray-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/jon890/dooray-cli/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/@bifos/dooray-cli.svg)](https://github.com/jon890/dooray-cli/blob/main/LICENSE)
+
 [NHN Dooray](https://dooray.com) 를 AI 에이전트가 다룰 수 있게 만든 CLI 다.
 
 업무·댓글·위키·메일·메신저를 명령 한 줄로 처리하고, 결과를 `--json` 으로 내보낸다.
