@@ -14,6 +14,23 @@
 
 ---
 
+## 기준선
+
+이 브랜치는 간결한 README 재작성을 병합한 `2a660ec`이 `origin/main`이던 시점에 그 위로 재기반했다.
+계획 보완 중 `origin/main`은 README 뱃지만 복원한 `4e2b1b0`까지 진행됐으며, phase 02의 삽입 기준인 `에이전트 없이 직접 쓰기`와 `프로젝트 구조` 사이는 유지된다.
+`2a660ec`은 최소 기준선일 뿐 고정 대상이 아니므로, 구현 작업트리는 최신 `origin/main`으로 재기반하고 `README.md`와 공개 스킬 문서의 겹치는 변경을 다시 확인한다.
+
+```bash
+# cwd: 이 task를 실행하는 저장소 작업트리 루트
+git merge-base --is-ancestor 2a660ec HEAD
+git merge-base --is-ancestor origin/main HEAD
+git log --oneline 2a660ec..origin/main -- README.md skills/dooray-cli/
+git log --oneline 2a660ec..HEAD -- README.md skills/dooray-cli/ src/utils/comment-files.ts src/utils/comment-files.test.ts
+```
+
+두 `merge-base` 명령이 종료 코드 0이어야 한다.
+실패하면 오래된 기준선에서 구현하지 말고 `PHASE_BLOCKED: 최신 origin/main 재기반 필요`를 보고한다.
+
 ## 선행 확인
 
 - `src/commands/post/comment/file/upload.ts`가 `appendFileReference`를 호출하는지 확인한다.
@@ -67,7 +84,9 @@ const IMAGE_FILE_EXTENSION_RE = /\.(png|jpe?g|gif|webp|bmp|svg|avif|heic)$/i;
 
 ```bash
 # cwd: 이 task를 실행하는 저장소 작업트리 루트
-git log origin/main --oneline -10 -- src/utils/comment-files.ts src/utils/comment-files.test.ts src/commands/post/comment/file
+git merge-base --is-ancestor 2a660ec HEAD
+git merge-base --is-ancestor origin/main HEAD
+git log --oneline 2a660ec..HEAD -- src/utils/comment-files.ts src/utils/comment-files.test.ts src/commands/post/comment/file
 rg -n "appendFileReference|removeFileReference" src/commands/post/comment/file/{upload,delete}.ts
 pnpm exec vitest run src/utils/comment-files.test.ts src/utils/attachment-check.test.ts
 pnpm exec tsc --noEmit
@@ -80,7 +99,8 @@ git diff --check
 ## 의도 메모 (왜)
 
 - 업로드·삭제 명령이 이미 순수 헬퍼를 호출하므로 명령 계층을 중복 수정하지 않는다.
-- 최근 comment-file 변경은 명령 도움말·입력 해석·스피너 방어에 집중되어 있으므로 해당 명령과 resolver를 보존하고 헬퍼 경계만 수정한다.
+- 기준선 `2a660ec`은 README를 간결한 구조로 재작성했으며 comment-file 구현은 바꾸지 않았다.
+- 재기반된 planning 커밋도 관리 문서와 task만 바꾸므로 명령과 resolver를 보존하고 헬퍼 경계만 수정한다.
 - 확장자 판별은 추가 I/O와 MIME 판별 의존성을 만들지 않는 최소 수정이다.
 - `attachment-check.ts`가 이미 두 참조 형식을 인식하므로 삭제 헬퍼도 같은 문법 범위를 갖게 한다.
 

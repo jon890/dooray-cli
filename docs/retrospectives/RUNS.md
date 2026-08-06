@@ -5,3 +5,4 @@
 | 2026-08-04 | review-fix | PR 109 | - | - | - | 3 | - | 없음 | 0 | PR #109 |
 | 2026-08-06 | review-fix | PR 112 | - | - | - | 1 | - | 없음 | 0 | PR #112 |
 | 2026-08-06 | planning | 051-fix-comment-file-reference | - | 2 | - | - | - | 없음 | 0 | task 생성 |
+| 2026-08-06 | planning | 051-fix-comment-file-reference 보완 | - | 2 | - | - | - | 없음 | 1 | task 보완 |
