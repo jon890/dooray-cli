@@ -10,3 +10,5 @@
 | RETRO-0006 | 2026-07-23 | 050-feat-managed-skill-store | 관리 저장소 복구·해시 계약의 구현 전 모호성 | 해결 | 승격 안 함 |
 | RETRO-0007 | 2026-07-23 | 050-feat-managed-skill-store | 관리 저장소 경계의 1단계 검토 누락 | 해결 | 승격 안 함 |
 | RETRO-0008 | 2026-07-23 | 050-feat-managed-skill-store | 저장 경로 digest 표기의 구현 불일치 | 해결 | 승격 안 함 |
+| RETRO-0009 | 2026-08-06 | 051-fix-comment-file-reference | 단계 상태 표기 불일치 | 해결 | 승격 안 함 |
+| RETRO-0010 | 2026-08-06 | 051-fix-comment-file-reference | ADR 설명의 가독성과 범위 초과 | 해결 | 승격 안 함 |

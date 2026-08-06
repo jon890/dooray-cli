@@ -1,7 +1,7 @@
 # Phase 01 — 파일 종류별 댓글 참조 생성과 삭제 회귀 테스트
 
 **Execution profile**: standard
-**Status**: pending
+**Status**: completed
 
 ---
 
