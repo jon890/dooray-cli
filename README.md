@@ -112,6 +112,18 @@ dooray post comment file upload <project> <number> <comment-id> <path>
 이미지 확장자는 이미지 마크다운으로, 그 외 파일은 일반 링크로 댓글 본문에 추가한다.
 `comment file list`는 웹 UI에서 직접 첨부한 파일을 놓칠 수 있으며, 이 경우 `post file list`로 확인한다.
 
+### 삭제 명령의 확인
+
+| 영역 | 삭제 명령 |
+| --- | --- |
+| 업무 | `dooray post comment delete`<br>`dooray post file delete`<br>`dooray post comment file delete` |
+| 위키 | `dooray wiki page delete`<br>`dooray wiki page file delete`<br>`dooray wiki page comment delete` |
+
+여섯 명령은 TTY에서 기본값이 아니오인 `y/N` 확인을 요청한다.
+자동화·파이프 등 non-TTY 실행에서는 `-y` 또는 `--yes`로 확인을 생략해야 한다.
+플래그가 없으면 삭제 API를 호출하기 전에 종료 코드 3으로 끝난다.
+기존 삭제 자동화에는 명시적인 yes 플래그를 추가해야 한다.
+
 ## 프로젝트 구조
 
 ```

@@ -113,6 +113,7 @@ CLI 에러 발생 시 복구 방법:
 | `멤버를 찾을 수 없습니다: xxx` | 해당 프로젝트에 멤버 없음 | `dooray project members <project>` 로 멤버 목록 확인 |
 | `워크플로우를 찾을 수 없습니다: xxx` | 워크플로우 이름 오류 | `dooray project workflows <project>` 로 확인 |
 | `API 호출 실패 (401)` | API 키 만료/오류 | `dooray doctor` 로 설정 검증 |
+| non-TTY 삭제 실행이 종료 코드 3으로 중단됨 | 삭제 확인용 yes 플래그가 없음 | `-y` 또는 `--yes`를 붙여 다시 실행 |
 
 ---
 

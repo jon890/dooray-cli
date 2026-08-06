@@ -38,6 +38,16 @@ dooray wiki page file list <project> <page-id>   # type 컬럼으로 general 과
 
 `list` 는 general 첨부와 inline 이미지를 합쳐 보여준다.
 
+## 삭제 안전 확인
+
+다음 위키 삭제 명령은 같은 안전 확인 정책을 따른다.
+
+- `dooray wiki page delete`
+- `dooray wiki page file delete`
+- `dooray wiki page comment delete`
+
+TTY 확인, non-TTY 실행, `-y`와 `--yes` 사용법은 [SKILL.md](../SKILL.md#삭제-명령의-확인-동작)를 따른다.
+
 ## 페이지 삭제
 
 `wiki page delete` 는 Dooray 가 공식 문서화하지 않은 endpoint 를 쓴다.
