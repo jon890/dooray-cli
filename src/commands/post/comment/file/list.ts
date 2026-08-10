@@ -58,18 +58,23 @@ export const listCommentFileCommand = new Command("list")
       }
 
       let postFiles: PostFileDetail[] = [];
-      let metadataLookupFailed = false;
+      // 보강 실패 원인을 문자열로 보존한다. 인자 없는 catch 는 API 오류와
+      // 프로그래밍 오류(TypeError 등)를 구분 없이 삼켜 회귀 추적을 막는다.
+      let metadataLookupError: string | null = null;
       try {
         const postFilesRes = await client.getPostFiles(projectId, postId);
         postFiles = postFilesRes.result;
-      } catch {
-        metadataLookupFailed = true;
+      } catch (error) {
+        metadataLookupError = error instanceof Error ? error.message : String(error);
       }
 
       const merged = mergeCommentFiles({ commentFiles, bodyRefs, postFiles });
       stopSpinner(true, `첨부 파일 ${merged.length}개`);
-      if (metadataLookupFailed) {
-        process.stderr.write("⚠  첨부 메타데이터 조회 실패 — 파일명·크기를 표시하지 못합니다.\n");
+      if (metadataLookupError !== null) {
+        // 본문 링크 항목은 마크다운 라벨이 이름 자리에 남으므로 "전부 비었다" 고 쓰지 않는다.
+        process.stderr.write(
+          `⚠  업무 첨부 이름·크기 보강 실패 (${metadataLookupError}) — 일부 항목의 파일명·크기가 비어 있습니다.\n`,
+        );
       }
 
       output(globalOpts, {
