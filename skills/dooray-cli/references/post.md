@@ -104,8 +104,14 @@ dooray post comment get <project> <number> <comment-id> --json | jq -r '.body.co
 
 첨부를 정말 떼려는 것이면 `--no-confirm` 으로 진행한다.
 
-`comment file list`는 댓글 조회 API가 노출한 첨부만 보여주므로 웹 UI에서 직접 첨부한 파일을 놓칠 수 있다.
-목록이 비어 있으면 `post file list`로 업무 전체 첨부를 확인한다.
+`comment file list`는 웹 UI 첨부와 CLI 업로드 링크를 함께 보여주고 `출처` 열로 구분한다.
+
+- `attachment`: 웹 UI 첨부
+- `body-link`: CLI 업로드 링크
+- `both`: 양쪽에 있는 파일
+
+`--json` 항목은 `{ id, name, size, mimeType, source }` 형식이다.
+메타데이터를 채우지 못하면 `name`, `size`, `mimeType`은 `null`이다.
 
 ## 이름이 겹칠 때
 

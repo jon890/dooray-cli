@@ -2,28 +2,41 @@ import readline from "node:readline";
 import { DoorayCliError } from "./errors.js";
 import { EXIT_PARAM_ERROR } from "./exit-codes.js";
 
-export function extractAttachmentFileIds(body: string): Set<string> {
-  const ids = new Set<string>();
+export interface AttachmentReference {
+  id: string;
+  label: string;
+}
+
+export function extractAttachmentReferences(body: string): AttachmentReference[] {
+  const references: AttachmentReference[] = [];
+  const seen = new Set<string>();
   // !?\[...\]\(/files/<id>...\) — id 종결자: 공백 / `)` / `?` (query) / `#` (fragment).
   // `[^\s)]+` 만 쓰면 `/files/abc?dl=1` 에서 `abc?dl=1` 을 id 로 잘못 추출하여 attachments 의 `abc` 와 매칭 실패.
   // code block 내부 표기도 매칭됨 — 보수적 검출 우선.
-  const re = /!?\[[^\]]*\]\(\/files\/([^\s)?#]+)/g;
+  const re = /!?\[([^\]]*)\]\(\/files\/([^\s)?#]+)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(body)) !== null) {
-    ids.add(m[1]);
+    const id = m[2];
+    if (seen.has(id)) continue;
+    seen.add(id);
+    references.push({ id, label: m[1] });
   }
-  return ids;
+  return references;
+}
+
+export function extractAttachmentFileIds(body: string): Set<string> {
+  return new Set(extractAttachmentReferences(body).map((reference) => reference.id));
 }
 
 export interface DroppedAttachment {
   id: string;
-  name?: string;
+  name?: string | null;
 }
 
 export function findDroppedAttachments(
   oldBody: string,
   newBody: string,
-  attachments: ReadonlyArray<{ id: string; name?: string }>,
+  attachments: ReadonlyArray<{ id: string; name?: string | null }>,
 ): DroppedAttachment[] {
   const oldIds = extractAttachmentFileIds(oldBody);
   const newIds = extractAttachmentFileIds(newBody);
@@ -65,7 +78,7 @@ export async function confirmDropped(): Promise<boolean> {
 export async function checkAndGuardDropped(
   oldBody: string,
   newBody: string,
-  attachments: ReadonlyArray<{ id: string; name?: string }>,
+  attachments: ReadonlyArray<{ id: string; name?: string | null }>,
   noConfirm: boolean,
 ): Promise<void> {
   const dropped = findDroppedAttachments(oldBody, newBody, attachments);

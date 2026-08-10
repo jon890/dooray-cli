@@ -17,3 +17,4 @@
 | 2026-08-06 | planning | 053-fix-delete-confirmation-policy | - | - | - | - | - | 없음 | 0 | 최종 검증 보완 |
 | 2026-08-06 | build-with-teams | 053-fix-delete-confirmation-policy | B | 2 | - | 0 | 0 | 없음 | 0 | 로컬 구현 완료 |
 | 2026-08-06 | review-fix | PR 117 | - | - | - | 0 | - | 없음 | 0 | PR #117 |
+| 2026-08-10 | planning | 054-fix-comment-file-list-enrich | - | 3 | - | - | - | 없음 | 4 | docs·task 작성, 오버레이 branch 규칙 교정 |

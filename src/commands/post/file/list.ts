@@ -4,12 +4,7 @@ import { DoorayApiClient } from "../../../api/client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { output, type OutputOptions } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-}
+import { formatSize } from "../../../utils/format-size.js";
 
 export const fileListCommand = new Command("list")
   .description("업무 첨부파일 목록 조회")

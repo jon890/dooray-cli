@@ -1,0 +1,37 @@
+{
+  "name": "054-fix-comment-file-list-enrich",
+  "description": "GitHub Issue #118/#119 — post comment file list 가 댓글 files 와 본문 참조를 합쳐 보여주고 이름·크기를 업무 첨부 목록에서 보강",
+  "created_at": "2026-08-10T00:00:00Z",
+  "updated_at": "2026-08-10T06:23:35Z",
+  "status": "completed",
+  "current_phase": 3,
+  "total_phases": 3,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "크기 표기 공용화와 nullable 타입 정정",
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "status": "completed",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "댓글 첨부 두 출처 병합과 이름·크기 보강",
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "status": "completed",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 3,
+      "title": "공개 문서 갱신과 통합 검증",
+      "file": "phase-03.md",
+      "execution_profile": "standard",
+      "status": "completed",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ]
+}

@@ -1,5 +1,30 @@
 import { describe, it, expect } from "vitest";
-import { extractAttachmentFileIds, findDroppedAttachments, sanitizeFileName } from "./attachment-check.js";
+import {
+  extractAttachmentFileIds,
+  extractAttachmentReferences,
+  findDroppedAttachments,
+  sanitizeFileName,
+} from "./attachment-check.js";
+
+describe("extractAttachmentReferences", () => {
+  it("이미지와 일반 링크의 라벨을 캡처", () => {
+    expect(extractAttachmentReferences("![이미지](/files/image-1) [문서](/files/doc-1)"))
+      .toEqual([
+        { id: "image-1", label: "이미지" },
+        { id: "doc-1", label: "문서" },
+      ]);
+  });
+
+  it("같은 id는 첫 라벨만 유지", () => {
+    expect(extractAttachmentReferences("[첫 번째](/files/file-1) [두 번째](/files/file-1)"))
+      .toEqual([{ id: "file-1", label: "첫 번째" }]);
+  });
+
+  it("라벨이 없으면 빈 문자열을 유지", () => {
+    expect(extractAttachmentReferences("![](/files/file-1)"))
+      .toEqual([{ id: "file-1", label: "" }]);
+  });
+});
 
 describe("extractAttachmentFileIds", () => {
   it("인라인 이미지 markdown 에서 id 추출", () => {
