@@ -110,7 +110,8 @@ dooray post comment file upload <project> <number> <comment-id> <path>
 ```
 
 이미지 확장자는 이미지 마크다운으로, 그 외 파일은 일반 링크로 댓글 본문에 추가한다.
-`comment file list`는 웹 UI에서 직접 첨부한 파일을 놓칠 수 있으며, 이 경우 `post file list`로 확인한다.
+`comment file list`는 웹 UI 첨부와 CLI 업로드 파일을 함께 보여주며 `출처` 열로 구분한다.
+CLI로 올린 파일은 댓글의 첨부 카드가 아니라 본문 링크로 표시된다.
 
 ### 삭제 명령의 확인
 

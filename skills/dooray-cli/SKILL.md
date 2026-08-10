@@ -159,7 +159,13 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 댓글 첨부 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id>` — 확인 있음, `-y`/`--yes`로 생략 |
 
 - 댓글 파일 업로드는 이미지 확장자면 이미지 마크다운을, 그 외에는 일반 링크를 만든다.
-- `comment file list`가 비어도 웹 UI 첨부가 없다고 단정하지 말고 `post file list`로 확인한다.
+- `comment file list`의 `출처`는 다음과 같다.
+  - `attachment` (`첨부`): 웹 UI 첨부
+  - `body-link` (`본문 링크`): CLI 업로드 링크
+  - `both` (`둘 다`): 양쪽에 있는 파일
+- `--json` 항목은 `{ id, name, size, mimeType, source }` 형식이다.
+  `source`는 위 값 중 하나다.
+- 메타데이터를 채우지 못하면 `name`, `size`, `mimeType`은 `null`이다.
 
 ## 위키
 

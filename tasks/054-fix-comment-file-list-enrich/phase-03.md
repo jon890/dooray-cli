@@ -61,6 +61,7 @@ Phase 02 로 `post comment file list` 의 동작이 바뀌었다.
 |---|---|
 | `README.md` | 수정 |
 | `skills/dooray-cli/SKILL.md` | 수정 |
+| `skills/dooray-cli/references/post.md` | 수정 |
 | `tasks/054-fix-comment-file-list-enrich/index.json` | 수정 |
 
 ## 검증

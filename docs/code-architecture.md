@@ -135,7 +135,7 @@ src/
         delete.ts             # 댓글 삭제 (공통 confirm ADR-036)
         file/
           index.ts            # commentFileCommand 조립
-          list.ts             # API가 노출한 댓글 첨부 목록 (웹 UI 전용 연결은 누락 가능, ADR-024)
+          list.ts             # 댓글 files + 본문 파일 링크 병합·메타데이터 보강 (ADR-024)
           upload.ts           # 파일 업로드 + 댓글 reference append
           download.ts         # post-level 다운로드 wrapper (UX 일관성, ADR-024)
           delete.ts           # 공통 confirm 후 reference 제거 + 파일 삭제 (atomic 보장 X, ADR-024/036)
