@@ -155,8 +155,8 @@ pnpm tsc --noEmit && pnpm run build && pnpm test
 
 ```bash
 # cwd: <repo root>
-# 정규식이 한 벌인지 — attachment-check.ts 한 곳에서만 나와야 한다
-grep -rn "files/" src/utils/*.ts | grep -c "\["
+# 정규식이 한 벌인지 — 출력은 attachment-check.ts 한 줄뿐이어야 한다
+grep -rnF '\/files\/' src
 ```
 
 ```bash
