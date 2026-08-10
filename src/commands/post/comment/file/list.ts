@@ -4,12 +4,7 @@ import { DoorayApiClient } from "../../../../api/client.js";
 import { resolveCommentFileInput } from "../../../../resolvers/comment-file-input.js";
 import { output, printJson, type OutputOptions } from "../../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../../utils/spinner.js";
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-}
+import { formatSize } from "../../../../utils/format-size.js";
 
 export const listCommentFileCommand = new Command("list")
   .description("댓글 첨부 파일 목록 조회")
@@ -47,7 +42,7 @@ export const listCommentFileCommand = new Command("list")
 
     output(globalOpts, {
       headers: ["파일명", "크기", "ID"],
-      rows: files.map((f) => [f.name, formatSize(f.size), f.id]),
+      rows: files.map((f) => [f.name ?? "-", formatSize(f.size), f.id]),
       raw: files,
       ids: files.map((f) => f.id),
     });

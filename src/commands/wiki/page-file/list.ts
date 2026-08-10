@@ -4,12 +4,7 @@ import { DoorayApiClient } from "../../../api/client.js";
 import { resolveWikiPageInput } from "../../../resolvers/wiki-page-input.js";
 import { output, type OutputOptions } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-}
+import { formatSize } from "../../../utils/format-size.js";
 
 export const wikiPageFileListCommand = new Command("list")
   .description("위키 페이지 첨부파일 목록 조회 (general + inline image)")

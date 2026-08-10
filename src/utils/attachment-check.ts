@@ -17,13 +17,13 @@ export function extractAttachmentFileIds(body: string): Set<string> {
 
 export interface DroppedAttachment {
   id: string;
-  name?: string;
+  name?: string | null;
 }
 
 export function findDroppedAttachments(
   oldBody: string,
   newBody: string,
-  attachments: ReadonlyArray<{ id: string; name?: string }>,
+  attachments: ReadonlyArray<{ id: string; name?: string | null }>,
 ): DroppedAttachment[] {
   const oldIds = extractAttachmentFileIds(oldBody);
   const newIds = extractAttachmentFileIds(newBody);
@@ -65,7 +65,7 @@ export async function confirmDropped(): Promise<boolean> {
 export async function checkAndGuardDropped(
   oldBody: string,
   newBody: string,
-  attachments: ReadonlyArray<{ id: string; name?: string }>,
+  attachments: ReadonlyArray<{ id: string; name?: string | null }>,
   noConfirm: boolean,
 ): Promise<void> {
   const dropped = findDroppedAttachments(oldBody, newBody, attachments);

@@ -1,6 +1,7 @@
 import type { PostComment } from "../api/types.js";
 import type { OutputOptions } from "./table.js";
 import { printJson, printTable } from "./table.js";
+import { formatSize } from "../utils/format-size.js";
 
 // table 모드: 메타 (Field/Value) → 본문 → attachments (있으면)
 // JSON 모드: printJson(comment)
@@ -24,7 +25,7 @@ export function formatCommentDetail(comment: PostComment, opts: OutputOptions): 
     process.stdout.write("\n[Attachments]\n");
     printTable(
       ["Name", "Size", "ID"],
-      comment.files.map((f) => [f.name, String(f.size), f.id]),
+      comment.files.map((f) => [f.name ?? "-", formatSize(f.size), f.id]),
     );
   }
 }

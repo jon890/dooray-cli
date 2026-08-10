@@ -284,8 +284,8 @@ export interface PostCommentBody {
 
 export interface PostCommentFile {
   id: string;
-  name: string;
-  size: number;
+  name: string | null;
+  size: number | null;
 }
 
 export interface PostInfo {
