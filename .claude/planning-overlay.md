@@ -159,8 +159,11 @@ gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefN
 
 ## branch / 커밋 / 핸드오프
 
-- **task 파일 + planning docs 는 main 브랜치 직접 commit** — 별도 branch 분기 금지.
-- **커밋 순서 (docs-first, 2개 커밋으로 분리)**:
+- **task 파일과 planning docs 는 plan 브랜치에 commit** — main 직접 commit 금지.
+  - 브랜치 이름은 `plan{NNN}-{task-name}` 으로, task 디렉터리 `tasks/{NNN}-{task-name}` 와 1:1 대응한다.
+  - planning 은 PR 을 만들지 않는다. 이 브랜치에 구현 커밋이 이어 붙어 PR 1개로 닫힌다 — 계획과 코드가 같은 PR 에서 함께 검토된다.
+  - main 에 docs 를 먼저 넣으면 코드가 머지되지 않아도 문서만 앞서 나가고, `build-with-teams` 의 사전 검증(원격 plan 브랜치에 task 존재)도 성립하지 않는다.
+- **커밋 순서 (docs-first, 2개 커밋으로 분리)** — 두 커밋 모두 plan 브랜치에 쌓는다:
   1. docs 최신화 커밋 + push (`docs(scope): ...`) — task 생성 전 필수, 건너뛰기 금지
   2. task 파일(`index.json` + `phase-*.md`) 커밋 + push — 실행 전 필수
 - **핸드오프**: `/build-with-teams` 로 안내한다. `tasks/{NNN}-{task-name}` 디렉터리를 인자로 받아 Agent Teams 가시적 협업(team-lead·critic·executor·docs-verifier)을 수행한다.
