@@ -89,7 +89,9 @@ src/
     comment-files.ts        # 확장자별 이미지/일반 링크 생성 + 두 형식 제거 (ADR-024)
     wiki-snippet.ts         # wiki inline_image 본문 삽입용 markdown reference 빌더 (ADR-031 보강, Issue #81)
     dooray-message.ts       # resultMessage URL-encoding 디코드 정규화 (API 에러 메시지 표시용)
-    attachment-check.ts     # 본문 markdown 의 attachment fileId 추출 (post edit body full-replace 시 누락 confirm)
+    attachment-check.ts     # 본문 markdown 의 attachment 참조(fileId 와 라벨) 추출 (post edit 누락 confirm, comment file list 병합)
+    format-size.ts          # 바이트 → B/KB/MB 표기, 값 없으면 "-" (file list 3 명령 공용)
+    comment-file-merge.ts   # 댓글 files 와 본문 참조 합집합 + 업무 첨부 목록으로 이름·크기 보강 (ADR-024)
     delete-confirmation.ts  # 삭제 공통 확인 정책: -y/--yes 우회, TTY 기본 아니오, non-TTY 선차단 (ADR-036)
 
   commands/
