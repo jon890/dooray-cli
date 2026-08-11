@@ -22,7 +22,7 @@
   },
   "files": [
     "dist",
-    "skills",
+    "skills/dooray-cli",
     "README.md"
   ],
   "engines": {
