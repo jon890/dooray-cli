@@ -50,6 +50,7 @@ dooray                # 글로벌 링크 시
 - **옵션 이름**
   - 제목은 post·wiki 모두 `--title` (`--subject` 는 deprecated alias — stderr 경고 후 동작)
   - 본문은 `--body` / `--body-file` (둘 다 `-` 로 stdin 을 받는다)
+  - `config set <key> <value>` 의 값도 `-` 로 stdin 을 받는다 — 토큰이 셸 기록과 프로세스 목록에 남지 않게 하는 경로다
   - `post edit`, `wiki page edit`, `post`·`wiki page` 의 `comment add`/`edit` 는 둘 다 없으면 `$EDITOR` 가 열린다. 단 `post edit` 의 태그·참조자·담당자 변경 옵션은 제목·본문 없이도 비대화형 수정으로 실행한다. `create` 계열은 fallback 없이 에러가 된다
 - **resolver 매칭**: 정확일치 → 이름 부분일치 → 모호하면 에러와 후보 목록 출력
 - **출력**: `--json` 은 raw 유지, `--quiet` 은 식별자만

@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { getConfig, setConfigValue } from "../config/store.js";
+import { resolveConfigValue } from "../utils/config-value.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
 
@@ -16,10 +17,10 @@ configCommand
   .command("set")
   .description("설정 값 저장")
   .argument("<key>", "설정 키 (api-key, base-url)")
-  .argument("<value>", "설정 값")
+  .argument("<value>", "설정 값 (`-` 이면 stdin 에서 읽음)")
   .action(async (key: string, value: string) => {
     try {
-      await setConfigValue(key, value);
+      await setConfigValue(key, await resolveConfigValue(value));
       console.log(chalk.green(`✓ ${key} 설정 완료`));
     } catch (err) {
       if (err instanceof DoorayCliError) {

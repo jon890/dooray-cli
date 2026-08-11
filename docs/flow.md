@@ -55,6 +55,15 @@ dooray config set base-url https://api.dooray.com
 dooray doctor
 ```
 
+값에 `-` 를 주면 stdin 에서 읽는다. 토큰을 명령 인자로 넘기지 않으려는 경로다.
+
+```
+printf '%s' "$TOKEN" | dooray config set api-key -
+```
+
+인자로 넘기면 셸 기록과 프로세스 목록에 값이 남는다.
+stdin 으로 받은 값은 양끝 공백을 지운 뒤 저장하고, 비어 있으면 저장하지 않고 종료 코드 3 으로 끝낸다.
+
 ## Claude Code 스킬 관리 흐름
 
 스킬 관리는 API·메일 설정과 독립적으로 실행한다.
