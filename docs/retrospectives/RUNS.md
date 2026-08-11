@@ -21,3 +21,4 @@
 | 2026-08-10 | build-with-teams | 054-fix-comment-file-list-enrich | codex | 3 | - | - | - | 없음 | 4 | PR #120 생성 |
 | 2026-08-10 | review-fix | PR 120 | - | - | - | 3 | - | 없음 | 2 | PR #120 머지 |
 | 2026-08-11 | planning | 055-feat-dooray-persona-skill | - | 5 | - | - | - | 없음 | 2 | docs·task 작성, 설치 체계 확장 범위 철회 |
+| 2026-08-11 | review-fix | PR 128 | - | - | - | 4 | - | 없음 | 0 | 🟡 4건 반영, 스레드 4건 resolve |
