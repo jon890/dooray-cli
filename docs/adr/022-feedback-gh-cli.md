@@ -12,7 +12,7 @@ baseUrl 노출 시 사내 endpoint 사용자가 OSS public repo 로 보낼 때 �
 
 **대안 기각**:
 - PAT 를 config.json 에 저장 — 토큰 만료/회수/스코프 관리 부담, UX 약함
-- OAuth Device Flow, 직접 토큰 — 매끄러우나 앱 등록·보관 코드 ↑, 가치 대비 과함
+- OAuth Device Flow와 직접 토큰 — 매끄러우나 앱 등록·보관 코드 ↑, 가치 대비 과함
 - octokit SDK — 외부 dep 추가, gh 위임이면 0
 - baseUrl host 마스킹 — suffix 로 회사 식별 가능, 누출 0 인 "제외" 가 단순·안전
 

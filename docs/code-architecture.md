@@ -252,7 +252,7 @@ class DoorayApiClient {
 - 현재 커버:
   - `src/utils/dooray-url.ts` (URL parser)
   - `src/resolvers/post-input.ts` (7-branch 분기, ADR-020)
-  - `src/resolvers/comment-file-input.ts` (option-mode/positional-mode 분기, secondaryLabel 메시지 customization, plan025)
+  - `src/resolvers/comment-file-input.ts` (option-mode/positional-mode 분기와 secondaryLabel 메시지 customization, plan025)
 - 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 (ADR-020 도입 근거)
 
 ## 빌드·배포

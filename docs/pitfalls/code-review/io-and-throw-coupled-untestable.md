@@ -1,7 +1,7 @@
 ---
 id: io-and-throw-coupled-untestable
 category: code-review
-title: I/O, throw 결정을 한 함수에 묶음 → 단위 테스트 불가
+title: I/O와 throw 결정을 한 함수에 묶음 → 단위 테스트 불가
 triggers: [readline, stdin mock, 책임 분리, 단위 테스트]
 tool_catchable: false
 source: [CLI12, PR #43]

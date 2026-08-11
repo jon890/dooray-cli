@@ -48,7 +48,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray wiki page file` — 페이지 첨부 파일 목록·업로드·다운로드·전체다운로드·삭제 (multipart `type` 순서 의존 ADR-029, Issue #70)
 - `dooray wiki page comment` — 페이지 댓글 목록·최신·조회·추가·수정·삭제 (post comment 패턴 mirror, mention/cc/file 부재 — WikiComment 시그니처 차이)
 - `dooray mail` — 목록·조회·검색·발송·답장 (v0.2.0)
-- `dooray feedback` — `gh` CLI 위임으로 GitHub 이슈 자동 생성 (`--last` 옵션으로 직전 명령 sanitized argv, 에러 자동 첨부, ADR-022/023)
+- `dooray feedback` — `gh` CLI 위임으로 GitHub 이슈 자동 생성 (`--last` 옵션으로 직전 명령 sanitized argv와 에러 자동 첨부, ADR-022/023)
 - `dooray messenger` — 1:1 다이렉트 메시지 (`send`) / 대화방 메시지 (`channel-send`) 전송 (`--to` id·email, `--channel` id·이름, ADR-033)
 - `skills/dooray-persona` — Dooray 에 쌓인 본인 글을 수집해 업무 글 문체 문서를 만드는 워크플로우 스킬. CLI 명령이 아니라 저장소를 내려받아 쓰는 자산이다 (ADR-038)
 

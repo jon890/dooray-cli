@@ -97,14 +97,14 @@ grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실
 
 **히트가 있으면**:
 
-- 사용자에게 즉시 보고, 위치 노출
+- 사용자에게 즉시 보고하고 위치를 노출
 - CLAUDE.md 개인 식별 정보 섹션의 placeholder 가이드 (`<project>` / `<tenant>` / `<postId>` 등) 또는 dummy 패턴으로 교체 후 보완 commit
 - 보완 commit 후 grep 재실행 → 0건 확인 후 다음 단계 진행
 - **사용자가 "내부 사용 OK" 로 명시 동의하지 않는 한 release 차단**
 
 ### 5. 버전 범프
 
-**사전 가드 (필수)**: 현재 branch 가 `main` 인지 확인. PR branch 에서 bump 하면 commit 이 다른 branch 에 박혀 main 미반영, tag 가 엉뚱한 commit 가리킴.
+**사전 가드 (필수)**: 현재 branch 가 `main` 인지 확인. PR branch 에서 bump 하면 commit 이 다른 branch 에 박혀 main 에 반영되지 않고 tag 가 엉뚱한 commit 가리킴.
 
 ```bash
 CURRENT=$(git branch --show-current)
@@ -220,5 +220,4 @@ done
 
 - 후속 작업이 남은 이슈 (예: MVP만 구현되고 추가 옵션 후속)
 - 이슈 본문 범위와 구현 범위가 부분적으로만 일치
-→ 이런 케이스는 close 대신 **comment**로 진행 상황만 기록, 이슈 open 유지
-
+→ 이런 케이스는 close 대신 **comment**로 진행 상황만 기록하고 이슈 open 유지

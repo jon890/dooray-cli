@@ -135,7 +135,7 @@ dooray post search my-project "스프린트"   # 4) 제목 검색
 ### projectId 직접 입력 (member=me 응답 외 프로젝트, ADR-030, Issue #78)
 
 `member=me` 응답에 없는 프로젝트 (다른 팀 프로젝트 등) 는 코드로 resolve 안 됨.
-projectId (15+자리 numeric) 를 직접 입력하면 cache 우회, 후속 API 호출에 그대로 사용.
+projectId (15+자리 numeric) 를 직접 입력하면 cache 를 우회하고 후속 API 호출에 그대로 사용.
 
 ```
 dooray post search 1234567890123456789 "keyword"
@@ -170,7 +170,7 @@ dooray post edit my-project 42
 ```
 
 1. API로 현재 업무 조회
-2. 임시 파일 생성 (YAML frontmatter, 본문):
+2. 임시 파일 생성 (YAML frontmatter와 본문):
 
 ```yaml
 ---
@@ -324,11 +324,11 @@ dooray post edit --id <postId> --parent <parentPostId>   # 직접 postId
 ```
 
 내부적으로 `client.updatePost` (subject/body/users) → `client.setPostParent` (별도 `POST .../set-parent-post` endpoint) 순차 호출.
-둘 다 무관 endpoint 라 atomic 보장 없음 — partial 실패 시 stderr 안내, non-zero exit.
+둘 다 무관 endpoint 라 atomic 보장 없음 — partial 실패 시 stderr 안내 후 non-zero exit.
 
 **한계**: Dooray API 가 `unset-parent-post` 미제공 → CLI 로 parent 해제 (top-level 화) 불가. 웹 UI 에서 수동 처리.
 
-interactive ($EDITOR) 모드에서는 이 옵션들 무시, stderr 경고 (mention/link-task 와 동일 패턴).
+interactive ($EDITOR) 모드에서는 이 옵션들 무시 후 stderr 경고 (mention/link-task 와 동일 패턴).
 
 ## 업무 메타데이터 흐름 (ADR-019)
 
@@ -341,7 +341,7 @@ dooray post create my-project \
   --milestone "Sprint 17"                        # 이름 lookup
 ```
 
-resolver 모호성 (이름 부분일치 복수 매칭) 시 에러, 후보 목록 출력.
+resolver 모호성 (이름 부분일치 복수 매칭) 시 에러와 후보 목록 출력.
 
 `post edit` 에서 사후 태그 변경 (`--tag`/`--tag-clear`/`--tag-remove`) 도 동일 정책 (Issue #66, ADR-019 확장):
 

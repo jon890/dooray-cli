@@ -12,7 +12,7 @@ related: [filter-type-narrowing-gap]
   그러나 해당 필드를 *사용하는* 다른 파일 (`commands/project/groups.ts` 의 `[g.id, g.code]` 같은 `string[][]` 단언) 에서 type narrowing 실패 → tsc 실패.
   plan 본문 `## 변경 파일` 섹션에 그 cascade 파일이 누락.
 
-**Good**: type 변경 (특히 optional 완화 / 새 필드 추가 / 필드 제거) 을 plan 에 넣을 때 `grep -rn "\.{필드명}\b" src/` 로 모든 사용처 grep, `## 변경 파일` 에 추가.
+**Good**: type 변경 (특히 optional 완화 / 새 필드 추가 / 필드 제거) 을 plan 에 넣을 때 `grep -rn "\.{필드명}\b" src/` 로 모든 사용처를 grep하고 `## 변경 파일` 에 추가.
   type narrowing 손실 가능성 (배열 element type, .map 결과 type, return type 추론 등) 도 같이 점검.
 
 ```bash

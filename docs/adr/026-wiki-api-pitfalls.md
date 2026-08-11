@@ -9,7 +9,7 @@
 
 - **`parentPageId` 사실상 필수** — `POST /wiki/v1/wikis/{wikiId}/pages` 의 `parentPageId` 가 공식적으로는 optional 처럼 보이나 미지정/빈 문자열 시 400.
   사용자 UX 보존 위해 CLI 가 `home.pageId` 로 자동 폴백 (Issue #5)
-- **`subject` vs `title` 네이밍 불일치** — API body 필드는 `subject` (업무·위키 공통). 사용자 친화 위해 CLI 는 `--title` 플래그로 노출, 매핑
+- **`subject` vs `title` 네이밍 불일치** — API body 필드는 `subject` (업무·위키 공통). 사용자 친화 위해 CLI 는 `--title` 플래그로 노출하고 매핑
 - **페이지 수정 endpoint 3종 분리** — Dooray 가 제목+본문 동시, 제목만, 본문만을 별도 endpoint 로 제공.
   CLI `wiki page edit` 가 플래그 조합으로 라우팅 분기 (Issue #4)
 
@@ -22,7 +22,7 @@
 
 | Endpoint | 용도 | CLI 트리거 |
 |---|---|---|
-| `PUT .../pages/{pageId}` | 제목+본문 동시 | 플래그 없음 (`$EDITOR`) 또는 `--title`, body 둘 다 |
+| `PUT .../pages/{pageId}` | 제목+본문 동시 | 플래그 없음 (`$EDITOR`) 또는 `--title` 과 body 둘 다 |
 | `PUT .../pages/{pageId}/title` | 제목만 | `--title X` 단독 |
 | `PUT .../pages/{pageId}/content` | 본문만 | `--body` 또는 `--body-file` 단독 |
 

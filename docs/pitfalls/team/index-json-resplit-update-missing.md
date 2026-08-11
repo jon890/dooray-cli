@@ -8,7 +8,7 @@ source: [2-8]
 related: []
 ---
 
-**증상**: critic REVISE 후 phase 파일 재작성 / 추가 / 제거 시 `index.json.total_phases`, `phases` 배열 미갱신.
+**증상**: critic REVISE 후 phase 파일 재작성 / 추가 / 제거 시 `index.json.total_phases` 와 `phases` 배열 미갱신.
 **왜**: 파이프라인이 신 phase 인식 못 해 executor 가 구 phase 만 실행 → plan 핵심 누락.
 
 ```bash

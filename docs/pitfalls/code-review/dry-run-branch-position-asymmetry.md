@@ -8,12 +8,12 @@ source: [CLI21, PR #55]
 related: [dry-run-json-quiet-branch-missing]
 ---
 
-**증상**: 새 옵션 (`--cc-group` / `--to-group` 등) 을 `post edit`, `post create` 양쪽에 추가.
+**증상**: 새 옵션 (`--cc-group` / `--to-group` 등) 을 `post edit` 과 `post create` 양쪽에 추가.
 `post edit` 은 dry-run 분기 *이후* 에 cc/to resolve 가 일어나도록 작성돼서 `--dry-run --json` 출력이 `{ body, users: { to, cc } }` 를 포함.
 `post create` 는 dry-run 분기가 cc/to resolve *이전* 에 조기 반환되어 `{ body }` 만 출력.
-같은 옵션, 같은 `--dry-run --json` 입력에 대해 명령마다 출력 범위 비대칭 → README 가 "포함된다" 로 일괄 서술하면 한 쪽 명령에서 docs↔코드 불일치.
+같은 옵션과 같은 `--dry-run --json` 입력에 대해 명령마다 출력 범위 비대칭 → README 가 "포함된다" 로 일괄 서술하면 한 쪽 명령에서 docs↔코드 불일치.
 
-**Good**: phase 작성 시 새 옵션이 두 명령 (`edit`, `create` 등) 에 들어가면:
+**Good**: phase 작성 시 새 옵션이 두 명령 (`edit` 과 `create` 등) 에 들어가면:
 - 양 명령의 dry-run 분기 라인을 phase 본문에 명시
 - "dry-run JSON 출력 범위가 두 명령에서 동일한가" self-check
 - 범위 통일이 불가능하면 (예: create 가 신규 자원이라 resolve 비용 회피) README/SKILL.md 에 명령별로 범위를 분리 서술

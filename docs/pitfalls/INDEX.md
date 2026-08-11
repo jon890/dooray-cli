@@ -21,7 +21,7 @@
 
 ## 축적 규칙
 
-새 패턴을 추가할 때는 아래 4조건 게이트를 통과해야 한다.
+새 패턴을 추가할 때는 아래 4조건 점검을 통과해야 한다.
 
 - **재발성**: 같은 사고가 다른 plan·PR 에서도 발생할 가능성이 있다 (1회성 오타·특정 plan 컨텍스트 종속 코멘트는 제외).
 - **심각도**: critic REVISE·code-reviewer FIX_NEEDED 급 이상이다.
@@ -42,7 +42,7 @@
 | --- | --- | --- |
 | plan 작성 | team-lead | phase 본문에 "회피 항목"으로 1줄 인용 (executor 가 그 phase 만 보고도 알 수 있도록) |
 | executor 코드 작성 시작 직전 | executor | 해당 카테고리 디렉터리를 grep 하여 self-check |
-| code-reviewer 검사 | code-reviewer | build-with-teams 7단계 13 항목과 별도로 `code-review/` 전 항목 grep 게이트 |
+| code-reviewer 검사 | code-reviewer | build-with-teams 7단계 13 항목과 별도로 `code-review/` 전 항목 grep 점검 |
 
 ## 회고 절차 (build-with-teams 9단계)
 
@@ -50,14 +50,14 @@ PR 생성 후 team-lead 가 자문한다.
 
 - code-reviewer 가 이번 plan 에서 FIX_NEEDED 또는 코멘트로 지적한 항목이 있는가?
 - 있으면, 그 패턴이 **다른 plan 에서도 발생할 가능성**이 있는가? (1회성 typo 는 제외)
-- 가능성이 있으면 위 축적 규칙 4조건 게이트를 통과시켜 해당 카테고리 디렉터리에 새 패턴 파일을 추가한다 (또는 새 카테고리 디렉터리 신설).
+- 가능성이 있으면 위 축적 규칙 4조건 점검을 통과시켜 해당 카테고리 디렉터리에 새 패턴 파일을 추가한다 (또는 새 카테고리 디렉터리 신설).
 
-회고에서 발견된 패턴은 **다음 plan 의 phase 작성 시 critic 평가 전에 소진**된다 (`planning` 스킬 8단계 self-check, `build-with-teams` critic 평가 7번 게이트가 본 INDEX 도 참조).
+회고에서 발견된 패턴은 **다음 plan 의 phase 작성 시 critic 평가 전에 소진**된다 (`planning` 스킬 8단계 self-check와 `build-with-teams` critic 평가 7번 통과 조건이 본 INDEX 도 참조).
 
 ## 파일 형식
 
 각 패턴은 파일 1개다.
-frontmatter, 본문 구조를 따른다.
+frontmatter와 본문 구조를 따른다.
 
 ```yaml
 ---

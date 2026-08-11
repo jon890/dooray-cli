@@ -14,7 +14,7 @@ related: [missing-tsc-noemit-check]
 
 **왜**: plan 작성자가 "이 함수가 이렇게 동작하면 좋겠다" 의도로 호출 시그니처를 쓰면서 실제 src 의 시그니처를 grep 으로 확인 안 함.
   critic 도 시그니처까지 grep 안 하면 놓침.
-  executor 가 발견, 자체 수정하는 경우도 있지만 (PR #64 사례) 시그니처가 직관에 반하는 경우 (예: `validateMandatoryTags` 가 입력 검증 아니라 mandatory 그룹 존재만 검사) 잘못된 분기 작성 가능.
+  executor 가 발견하고 자체 수정하는 경우도 있지만 (PR #64 사례) 시그니처가 직관에 반하는 경우 (예: `validateMandatoryTags` 가 입력 검증 아니라 mandatory 그룹 존재만 검사) 잘못된 분기 작성 가능.
 
 **Good**: phase 본문에 외부 함수 호출 코드 스니펫을 쓸 때 (1) `grep -nE "^export (async )?function {함수명}" src/` 로 정확한 시그니처 확인, (2) 반환 타입까지 인용. 두 줄 검증이 plan 본문에 들어가야 critic 도 함께 검증 가능.
 
@@ -26,12 +26,12 @@ grep -nE "^\s*(export )?async function (validateMandatoryTags|resolveTags|toDoor
 
 **Why**: PR #64 (plan031) critic 재평가 — 1차 REVISE 반영 후 신규 Critical 1건 발견.
   plan 본문이 `validateMandatoryTags(client, projectId, effectiveTags)` 로 3인자 호출 작성.
-  실제 시그니처는 `(client, projectId)` 2인자, 입력 검증 안 함 (mandatory 그룹 존재 여부만).
-  executor 가 알아서 `resolveTags` vs `validateMandatoryTags` 분기로 회피했지만 plan 본문 그대로 실행됐으면 tsc 실패, 의도와 다른 검증.
+  실제 시그니처는 `(client, projectId)` 2인자이고 입력 검증 안 함 (mandatory 그룹 존재 여부만).
+  executor 가 알아서 `resolveTags` vs `validateMandatoryTags` 분기로 회피했지만 plan 본문 그대로 실행됐으면 tsc 실패와 의도에 어긋난 검증.
 
 **Self-check**: type 추가·변경·삭제를 포함한 phase 의 성공 기준 점검:
-- `pnpm tsc --noEmit` 의 baseline 비교 명령이 있는가?
-- CI 가 tsc 게이트를 돌리는 경우라도 phase 가드는 별도로 명시
+- `pnpm tsc --noEmit` 의 기준값 비교 명령이 있는가?
+- CI 가 tsc 점검을 돌리는 경우라도 phase 가드는 별도로 명시
 - CI 는 PR scope 외 회귀까지 잡아주지만, phase 자체 검증은 plan-local
 
 **Why**: PR #46 (post comment get) 가 `PostCommentDetailResponse` 를 사용했지만 import 누락.

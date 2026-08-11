@@ -14,4 +14,4 @@ related: []
 **검출**: `grep -rnE 'opts\.[a-zA-Z]+\s*\?\?\s*arg[0-9]' src/commands/` (옵션 우선 fallback 패턴).
 **Why**: PR #46 review — `comment/get.ts` 의 `parseGetArgs` 가 `opts.commentId ?? arg3` 로 옵션 우선.
 사용자가 `dooray post comment get myproject 337 id-A --comment-id id-B` 입력하면 `id-A` 가 silent 무시.
-ADR-020 의 분기 게이트는 모호한 입력을 거부해야 함.
+ADR-020 의 분기 점검은 모호한 입력을 거부해야 함.
