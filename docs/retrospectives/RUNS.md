@@ -20,3 +20,4 @@
 | 2026-08-10 | planning | 054-fix-comment-file-list-enrich | - | 3 | - | - | - | 없음 | 4 | docs·task 작성, 오버레이 branch 규칙 교정 |
 | 2026-08-10 | build-with-teams | 054-fix-comment-file-list-enrich | codex | 3 | - | - | - | 없음 | 4 | PR #120 생성 |
 | 2026-08-10 | review-fix | PR 120 | - | - | - | 3 | - | 없음 | 2 | PR #120 머지 |
+| 2026-08-11 | planning | 055-feat-dooray-persona-skill | - | 5 | - | - | - | 없음 | 2 | docs·task 작성, 설치 체계 확장 범위 철회 |

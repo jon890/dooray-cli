@@ -1,0 +1,53 @@
+{
+  "name": "055-feat-dooray-persona-skill",
+  "description": "Dooray 에 쌓인 본인 글을 수집해 업무 글 문체 페르소나 문서를 만드는 dooray-persona 스킬 신규 추가 (ADR-037, ADR-038)",
+  "created_at": "2026-08-11T00:00:00Z",
+  "updated_at": "2026-08-11T00:00:00Z",
+  "status": "pending",
+  "current_phase": 0,
+  "total_phases": 5,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "수집 공용 모듈 lib/dooray.mjs 와 단위 테스트",
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "대상 탐색과 수집 스크립트",
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 3,
+      "title": "분류·세션 대조·통계 스크립트와 단위 테스트",
+      "file": "phase-03.md",
+      "execution_profile": "standard",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 4,
+      "title": "SKILL.md 라우터와 references·templates 작성",
+      "file": "phase-04.md",
+      "execution_profile": "standard",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 5,
+      "title": "패키지 범위 조정, README 안내, 통합 검증",
+      "file": "phase-05.md",
+      "execution_profile": "standard",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ]
+}
