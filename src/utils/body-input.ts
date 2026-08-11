@@ -43,7 +43,7 @@ export async function readBodyInputOrNull(
   return readBodyInput(opts);
 }
 
-async function readStdin(): Promise<string> {
+export async function readStdin(): Promise<string> {
   if (process.stdin.isTTY) {
     throw new DoorayCliError(
       "stdin에서 읽으려면 파이프로 데이터를 전달해주세요.",
