@@ -9,6 +9,6 @@
 project 단위 캐시 유지는 enrich 사용 시점에 항상 projectId 가 동반됨.
 
 **대안 기각**:
-- organization 단위 캐시 — 사용 패턴 (comment list enrich + member get 단건) 에서 이득 부족 + invalidation 부담
+- organization 단위 캐시 — 사용 패턴 (comment list enrich, member get 단건) 에서 이득 부족, invalidation 부담
 - `--json` 도 enrich — 응답 스키마 변경 = breaking, 외부 자동화 깨짐
 - `member search` 같은 task 포함 — `GET /common/v1/members?name=` 동작이 공식 doc 모순, 실호출 검증 필요로 별도 task

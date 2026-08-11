@@ -1,7 +1,7 @@
 ---
 id: required-input-empty-early-return-exit-zero
 category: code-review
-title: "필수 입력 빈 값을 조기 return + stdout 안내로 처리 (exit 0 오인)"
+title: "필수 입력 빈 값을 조기 return, stdout 안내로 처리 (exit 0 오인)"
 triggers: [빈 본문, empty body, exit code, EXIT_PARAM_ERROR, 조기 return, stdout, $EDITOR fallback]
 tool_catchable: true
 source: [PR #100]
@@ -15,7 +15,7 @@ related: [empty-result-to-stderr, resolver-before-editor]
 - 에러 안내가 stdout 으로 나감 → `데이터=stdout / 에러=stderr` 컨벤션 위반 (`--json` 파이프 파서 오염).
 - 검증이 `$EDITOR` fallback 분기 안에만 있어 `--body ""` / 빈 `--body-file` 로 우회 → 빈 값 그대로 API 전송.
 
-**Good**: 검증을 모든 입력 경로 뒤 공통 지점으로 승격 + `throw new DoorayCliError(msg, EXIT_PARAM_ERROR)`.
+**Good**: 검증을 모든 입력 경로 뒤 공통 지점으로 승격, `throw new DoorayCliError(msg, EXIT_PARAM_ERROR)`.
 
 ```ts
 let bodyContent = await readBodyInputOrNull(opts);

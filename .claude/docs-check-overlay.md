@@ -33,7 +33,7 @@ ls docs/*.md docs/adr/*.md .claude/skills/*/SKILL.md skills/dooray-cli/SKILL.md
 | `docs/adr/` (ADR 1개 = 파일 1개, 목록은 `docs/adr/INDEX.md`) | 기술 의사결정·왜·대안 기각                |
 | `docs/data-schema.md`                                        | `~/.dooray/cache/` 구조·TTL·resolver 로직 |
 | `docs/code-architecture.md`                                  | 디렉터리 트리·레이어·API 전략             |
-| `CLAUDE.md`                                                  | 코드 작업 가이드 + 상황별 ADR 참조 표     |
+| `CLAUDE.md`                                                  | 코드 작업 가이드, 상황별 ADR 참조 표     |
 | `README.md` / `skills/dooray-cli/SKILL.md`                   | 사용자 가이드 (외부 facing)               |
 
 ## 실행 주기

@@ -11,6 +11,6 @@
 **구현**:
 
 - 다운로드: `?media=raw` 쿼리 파라미터로 307 유도 후 Location 헤더 캡처, fetch로 2차 요청
-- 업로드: `fetch` 직접 사용 (`ky`는 307 + `redirect: "manual"` 조합에서 정상 동작하지 않음)
+- 업로드: `fetch` 직접 사용 (`ky`는 307, `redirect: "manual"` 조합에서 정상 동작하지 않음)
 - 2차 요청 시 동일한 Authorization 헤더 첨부
-- 업로드: FormData + Blob, 다운로드: ArrayBuffer로 수신 후 파일 저장
+- 업로드: FormData, Blob, 다운로드: ArrayBuffer로 수신 후 파일 저장

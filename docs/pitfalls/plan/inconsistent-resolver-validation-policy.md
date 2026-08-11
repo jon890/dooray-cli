@@ -8,7 +8,7 @@ source: [1-15, PR #68, plan033]
 related: []
 ---
 
-**증상**: 기존 `resolveTags` 가 mandatory + selectOne 둘 다 검증.
+**증상**: 기존 `resolveTags` 가 mandatory, selectOne 둘 다 검증.
   새 helper `validateMandatoryCoverage` 추가 시 이름이 "Mandatory" 라 mandatory 만 검증하고 selectOne 누락.
   post create 는 정책 모두 검사하는데 post edit (신규 helper) 는 mandatory 만 → 정책 비대칭.
 

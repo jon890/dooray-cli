@@ -9,7 +9,7 @@
 **맥락**: `mail send` 는 있으나 Dooray 메신저 전송 명령이 없어, 빠른 알림·배포 요청을 CLI/에이전트가 REST 직접 호출로만 처리했다 (Issue #88). 위 endpoint 는 공식 문서에 명시된 정식 API.
 
 **대안 기각**:
-- Incoming Hook(webhook URL) 방식 — 봇/채널당 URL 발급 필요 + 받는 사람 지정 불가. 토큰 소유자 명의 1:1 DM 이 목적에 맞음.
+- Incoming Hook(webhook URL) 방식 — 봇/채널당 URL 발급 필요, 받는 사람 지정 불가. 토큰 소유자 명의 1:1 DM 이 목적에 맞음.
 - direct-send 전에 `POST /messenger/v1/channels` 로 대화방 먼저 생성 — direct-send 가 organizationMemberId 를 직접 받으므로 불필요한 왕복.
 
 **적용 범위 (설계 결정)**:

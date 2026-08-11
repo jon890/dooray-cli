@@ -52,12 +52,12 @@ PR 생성 후 team-lead 가 자문한다.
 - 있으면, 그 패턴이 **다른 plan 에서도 발생할 가능성**이 있는가? (1회성 typo 는 제외)
 - 가능성이 있으면 위 축적 규칙 4조건 게이트를 통과시켜 해당 카테고리 디렉터리에 새 패턴 파일을 추가한다 (또는 새 카테고리 디렉터리 신설).
 
-회고에서 발견된 패턴은 **다음 plan 의 phase 작성 시 critic 평가 전에 소진**된다 (`planning` 스킬 8단계 self-check + `build-with-teams` critic 평가 7번 게이트가 본 INDEX 도 참조).
+회고에서 발견된 패턴은 **다음 plan 의 phase 작성 시 critic 평가 전에 소진**된다 (`planning` 스킬 8단계 self-check, `build-with-teams` critic 평가 7번 게이트가 본 INDEX 도 참조).
 
 ## 파일 형식
 
 각 패턴은 파일 1개다.
-frontmatter + 본문 구조를 따른다.
+frontmatter, 본문 구조를 따른다.
 
 ```yaml
 ---

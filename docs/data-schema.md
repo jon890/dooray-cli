@@ -101,7 +101,7 @@ const API_ENDPOINTS = {
 
 - `tenantName`은 API Key 발급 링크(`https://{tenant}.dooray.com/setting/api/token`)와 메일 설정 링크 생성에 사용
 - `baseUrl`은 4개 환경 중 하나로 고정 (자유 입력 아님)
-- 미설정 키 접근 시 에러 + `dooray setup` 안내 출력
+- 미설정 키 접근 시 에러, `dooray setup` 안내 출력
 - env var 폴백 없음 (보안 원칙)
 - IMAP/SMTP 서버 정보는 기본값 제공. 사용자는 username/password만 설정하면 됨
 
@@ -207,7 +207,7 @@ interface CachedMemberGroup {
 
 `post create/edit --mention-group <code>` 시 code lookup.
 members/ 와 분리된 별도 캐시 — Dooray 의 그룹 멘션 endpoint 가 별도.
-resolver 는 code 누락 그룹을 사전 필터링 + 후보 5개 안내 출력.
+resolver 는 code 누락 그룹을 사전 필터링, 후보 5개 안내 출력.
 
 ### TTL 설계 근거
 

@@ -1,6 +1,6 @@
 ## ADR-030: `resolveProject` numeric 입력 cache 우회 fallback
 
-**결정**: `resolveProject` 입력이 numeric 15+자리이면 cache 우회 + 입력값을 그대로 projectId 로 반환.
+**결정**: `resolveProject` 입력이 numeric 15+자리이면 cache 우회, 입력값을 그대로 projectId 로 반환.
 권한 검증은 후속 API 호출 (getPosts / getProjectMembers 등) 의 4xx 응답에 위임.
 13 호출자 (post create/list/search, member/list, project/* 5종, post-input, postRef, wiki) 자동 혜택.
 

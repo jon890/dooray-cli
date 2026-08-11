@@ -5,7 +5,7 @@
 - 사용자가 `--title`/`--body`/`--tag`/`--to`/`--cc` 명시 입력하면 그 값이 템플릿 값을 override
 - 사용자 정의 변수 (`--field key=value`) 는 본 task scope 제외 (별도 후속)
 
-**맥락**: Issue #59 — 자동화 스크립트가 정형 task (릴리스 플랜, 요청서 등) 를 매번 기존 본문 fetch + 변수 치환 수동 우회.
+**맥락**: Issue #59 — 자동화 스크립트가 정형 task (릴리스 플랜, 요청서 등) 를 매번 기존 본문 fetch, 변수 치환 수동 우회.
 Dooray API 가 `GET /templates` 와 `interpolation` 파라미터를 노출 (cmux-browser 사전 조사 2026-05-11 확인).
 
 **대안 기각**:

@@ -15,7 +15,7 @@ plan 제출 전 10개 패턴 모두 self-check:
 - [ ] **1-3**: 최근 10개 커밋과 이 plan 의 관계 서술
 - [ ] **1-4**: 모든 Bash 블록에 `# cwd:` 주석
 - [ ] **1-5**: 성공 기준에 인간 의존 문구 없음
-- [ ] **1-6**: 외부 상태 변경 단계에 gate + rollback
+- [ ] **1-6**: 외부 상태 변경 단계에 gate, rollback
 - [ ] **1-7**: load-bearing 불변식 도입 시 4면 가드
 - [ ] **1-8**: 마지막 phase 에 index.json `completed` 마킹 지시
 - [ ] **1-9**: rename 시 `sed \b` 대신 `perl`

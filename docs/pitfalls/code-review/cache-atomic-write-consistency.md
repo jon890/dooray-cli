@@ -9,5 +9,5 @@ related: []
 ---
 
 **증상**: `~/.dooray/cache/` 쓰기 후 읽기 시 부분 쓰기 / 스키마 불일치 노출.
-**Good**: write 는 atomic (`writeFile` to temp + rename), read 는 schema 검증 (타입 가드). ADR-004 / ADR-010 참조.
+**Good**: write 는 atomic (`writeFile` to temp, rename), read 는 schema 검증 (타입 가드). ADR-004 / ADR-010 참조.
 **검출**: `grep -nE 'fs\.writeFile.*cache' src/cache/` 결과 중 atomic 패턴 미적용 라인.

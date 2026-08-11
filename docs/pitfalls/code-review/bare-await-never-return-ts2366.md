@@ -37,4 +37,4 @@ grep -nE "^\s+await\s+\w+\(.*\);?\s*$" src/api/client.ts | grep -v "return"
 
 **Self-check**: catch 블록의 헬퍼 호출 패턴을 바꾸는 리팩토링이라면 빌드만 보지 말고 `pnpm tsc --noEmit` 을 반드시 실행 — tsup/vitest 가 type-check 를 우회하므로 빌드/테스트 PASS 가 type 안전성을 의미하지 않는다.
 
-**Why**: plan026 PR #48 — `return toDoorayCliError(e)` → `await toDoorayCliError(e)` 일괄 치환 시 34곳 모두 TS2366. tsup 빌드 + 91 tests 통과로 1차 검증을 빠져나갔고, code-reviewer 가 `tsc --noEmit` 으로 잡음. async 시그니처를 유지한 호출자 리팩토링은 type-check 없이는 안전하지 않다.
+**Why**: plan026 PR #48 — `return toDoorayCliError(e)` → `await toDoorayCliError(e)` 일괄 치환 시 34곳 모두 TS2366. tsup 빌드, 91 tests 통과로 1차 검증을 빠져나갔고, code-reviewer 가 `tsc --noEmit` 으로 잡음. async 시그니처를 유지한 호출자 리팩토링은 type-check 없이는 안전하지 않다.
