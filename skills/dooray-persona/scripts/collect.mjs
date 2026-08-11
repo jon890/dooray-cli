@@ -147,17 +147,28 @@ async function main() {
       const { post, involvement } = candidates[index];
       if (involvement.authored) {
         const detail = await getPost(client, target.projectId, post.id);
-        entries.push(bodyEntry(target, post, detail, involvement));
+        // 첨부만 있거나 권한으로 본문이 누락된 업무가 섞여 있다.
+        // 여기서 예외를 올리면 앞서 모은 표본까지 저장 전에 사라진다.
+        if (detail?.body == null) {
+          process.stderr.write(`본문 없음, 건너뜀: ${post.id}\n`);
+        } else {
+          entries.push(bodyEntry(target, post, detail, involvement));
+        }
       }
 
       const comments = await listComments(client, target.projectId, post.id);
       for (const comment of comments) {
         if (
-          comment?.creator?.member?.organizationMemberId ===
+          comment?.creator?.member?.organizationMemberId !==
           me.organizationMemberId
         ) {
-          entries.push(commentEntry(target, post, comment, involvement));
+          continue;
         }
+        if (comment?.body == null) {
+          process.stderr.write(`댓글 본문 없음, 건너뜀: ${comment.id}\n`);
+          continue;
+        }
+        entries.push(commentEntry(target, post, comment, involvement));
       }
 
       if ((index + 1) % 25 === 0 || index + 1 === candidates.length) {
