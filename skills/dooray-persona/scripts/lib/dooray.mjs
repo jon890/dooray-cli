@@ -256,19 +256,20 @@ export function classifyInvolvement(post, memberId) {
   const to = post?.users?.to ?? [];
   const ccEntries = post?.users?.cc ?? [];
   const assignedAsMember = containsMember(to, memberId, false);
-  const assignedThroughGroup = containsMember(to, memberId, true);
+  // 직접 배정이거나 소속 그룹이 담당으로 걸린 경우 모두 참이다.
+  const assignedDirectOrViaGroup = containsMember(to, memberId, true);
 
   return {
     authored:
       post?.users?.from?.member?.organizationMemberId === memberId,
-    assigned: assignedThroughGroup,
+    assigned: assignedDirectOrViaGroup,
     cc: containsMember(ccEntries, memberId, true),
     assigneeKind:
       to.length === 0
         ? "none"
         : assignedAsMember
           ? "member"
-          : assignedThroughGroup
+          : assignedDirectOrViaGroup
             ? "group"
             : "none",
   };
