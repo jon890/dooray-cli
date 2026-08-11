@@ -1,6 +1,6 @@
 ## ADR-020: post 명령 input 통합 (`--id`/URL/positional) + 첫 테스트 인프라 (vitest)
 
-**결정**: post 하위 명령에 3 가지 입력 모드 (기존 `<project> <post-number>` + `--id <postId>` + `--url <url>` + 첫 positional 이 Dooray URL 이면 자동) 도입.
+**결정**: post 하위 명령에 3 가지 입력 모드 (기존 `<project> <post-number>`, `--id <postId>`, `--url <url>`, 첫 positional 이 Dooray URL 이면 자동) 도입.
 sub-id (`<comment-id>`, `<file-id>`) 는 옵션화 (positional 호환).
 분기는 `resolvePostInput` 단일 헬퍼.
 동시 사용은 명시적 에러.
@@ -17,7 +17,7 @@ standalone API `GET /project/v1/posts/{postId}` 응답에 `project.{id,code}` �
 - sub-id 를 인자 개수로 분기 — `comment edit <project> cmt-abc` 같은 사용자 실수에 모호한 에러
 - `node:test` 빌트인 — mocking·watch·확장성에서 vitest 우위
 
-분기 규칙·URL 정규식·테스트 케이스는 `src/resolvers/post-input.ts` + `src/utils/dooray-url.ts` 참조.
+분기 규칙·URL 정규식·테스트 케이스는 `src/resolvers/post-input.ts` 와 `src/utils/dooray-url.ts` 참조.
 후속 (wiki input 통합, CI 통합) 은 별도 task.
 
 **보강 (Issue #82/#83, 2026-06)**: 입력 처리를 '만능 추론' 에서 '명시적 타입 분류' 로 강화한다.

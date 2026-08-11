@@ -10,7 +10,7 @@ related: [json-parse-as-type-assertion, test-fixture-as-never-bypass, type-doubl
 
 **증상**: API client 의 메소드 반환 타입이 spec 과 실제 응답 shape 다를 때 (예: Dooray `result` 가 nested array) resolver 단에서 `(res.result as unknown as MemberGroup[][] | MemberGroup[]).flat()` 같이 이중 단언 사용.
 TypeScript 의 구조적 호환성 검사가 우회되어 다른 shape mismatch 가 silent 통과할 위험.
-**Good**: `MemberGroupListResponse.result: MemberGroup[] | MemberGroup[][]` 처럼 **반환 타입 자체를 union 으로 선언** + resolver 에서 `res.result.flat()` 단언 없이 호출. `Array.prototype.flat()` 시그니처가 union 양쪽 case 자동 흡수.
+**Good**: `MemberGroupListResponse.result: MemberGroup[] | MemberGroup[][]` 처럼 **반환 타입 자체를 union 으로 선언**하고 resolver 에서 `res.result.flat()` 단언 없이 호출. `Array.prototype.flat()` 시그니처가 union 양쪽 case 자동 흡수.
 **검출**: 신규 resolver / parser 추가 시:
 ```bash
 grep -nE "as unknown as .*\|" src/

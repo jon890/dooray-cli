@@ -1,14 +1,14 @@
 ---
 id: redirect-manual-status-branch-missing
 category: code-review
-title: redirect manual + status code 분기 누락
+title: redirect manual과 status code 분기 누락
 triggers: [redirect manual, throwHttpErrors, 307, status 분기]
 tool_catchable: false
 source: [code-review 6-1, PR #72, plan035]
 related: []
 ---
 
-**증상**: `redirect: "manual"` + `throwHttpErrors: false` 패턴에서 `location` 헤더만 체크하고 `if (response.status === 307)` 분기가 없음.
+**증상**: `redirect: "manual"` 과 `throwHttpErrors: false` 패턴에서 `location` 헤더만 체크하고 `if (response.status === 307)` 분기가 없음.
 200 OK 직접 응답 시 에러 경로로 진입.
 
 **Good**: `if (response.status === 307)` 분기 명시.

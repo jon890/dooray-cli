@@ -20,15 +20,15 @@
 
 | 압축 단계 | 원 단계 |
 |---|---|
-| (1+2) | 구현 가능성 + 기술 스택 |
-| (3+4) | 호출 시나리오 + 인터페이스 |
-| (5+6) | API + 코드 구조 |
-| (7+8) | docs 영향 + task 생성 |
+| (1+2) | 구현 가능성, 기술 스택 |
+| (3+4) | 호출 시나리오, 인터페이스 |
+| (5+6) | API, 코드 구조 |
+| (7+8) | docs 영향, task 생성 |
 
 ## docs 컨벤션
 
 5 핵심 docs — `docs/prd.md` / `docs/flow.md` / `docs/adr/`(ADR 1개 = 파일 1개, 목록은 `docs/adr/INDEX.md`) / `docs/data-schema.md` / `docs/code-architecture.md`.
-`CLAUDE.md` 는 코드 작업 지침. `README.md` + `skills/dooray-cli/SKILL.md` 는 외부 facing 사용자 가이드.
+`CLAUDE.md` 는 코드 작업 지침. `README.md` 와 `skills/dooray-cli/SKILL.md` 는 외부 facing 사용자 가이드.
 
 ### 변경 유형별 docs 영향 표 (필수 — 누락 0 화)
 
@@ -36,15 +36,15 @@
 
 | 변경 유형 | CLAUDE.md | adr/ | code-architecture.md | prd.md | flow.md | data-schema.md | README.md | skills/dooray-cli/SKILL.md |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| 신규 CLI 명령 (소) | — (명령별 스펙은 CLAUDE.md 에 쌓지 않는다) | — | 디렉터리 트리 + 필요 시 utils 추가 | MVP 범위 한 줄 | 사용자 흐름 섹션 | (캐시 도입 시) | 사용 예 섹션 | 빠른 참조 표 + 자동화 시나리오 |
+| 신규 CLI 명령 (소) | — (명령별 스펙은 CLAUDE.md 에 쌓지 않는다) | — | 디렉터리 트리, 필요 시 utils 추가 | MVP 범위 한 줄 | 사용자 흐름 섹션 | (캐시 도입 시) | 사용 예 섹션 | 빠른 참조 표, 자동화 시나리오 |
 | 신규 ADR 동반 변경 | ADR 참조 표 행 | ADR 본문 | 해당 영역 ADR-NNN 역참조 | (사용자 facing 시) | (사용자 흐름 변경 시) | (스키마 결정 시) | 사용 예 (해당 명령) | 시나리오 (해당 명령) |
-| 캐시 schema / TTL 변경 | 캐시 규약 행 | ADR 갱신 (ADR-004/010) | utils/cache 섹션 | — | — | 캐시 디렉터리 + 스키마 본문 | — | — |
-| 새 API 호출 패턴 (재시도/redirect 등) | — | 정책 결정 ADR | api/ 섹션 + ADR-NNN 역참조 | — | — | — | — | — |
+| 캐시 schema / TTL 변경 | 캐시 규약 행 | ADR 갱신 (ADR-004/010) | utils/cache 섹션 | — | — | 캐시 디렉터리, 스키마 본문 | — | — |
+| 새 API 호출 패턴 (재시도/redirect 등) | — | 정책 결정 ADR | api/ 섹션, ADR-NNN 역참조 | — | — | — | — | — |
 | 기존 resolver 입력 형식 확대 | 공통 규약의 resolver 줄 (규약이 바뀔 때만) | — | resolver 주석 1줄 갱신 | — | 사용 예 (자동 분기 시나리오) | — | 사용 예 | 빠른 참조 표 |
 | 의존성 추가 / 빌드 설정 | 빌드 명령 (해당 시) | ADR 작성 전 점검 후 ADR | 기술 스택 표 | — | — | — | — | — |
 | 신규 스킬 추가 (`skills/<name>/`) | — | 배포 정책, 스킬이 의존하는 API 함정 | — (src 레이어 무변경 시) | MVP 범위 한 줄 | — (CLI 명령 흐름이 아니면 미손) | 스킬이 만드는 설정·산출물 스키마 | 내려받아 쓰는 방법 | — |
 
-**갱신 시점 분리**: planning 결정 docs(`adr/`·`code-architecture.md`·`CLAUDE.md`·`data-schema.md`·`flow.md`·`prd.md`)는 **task 생성 전 즉시 반영 + commit**.
+**갱신 시점 분리**: planning 결정 docs(`adr/`·`code-architecture.md`·`CLAUDE.md`·`data-schema.md`·`flow.md`·`prd.md`)는 **task 생성 전 즉시 반영하고 commit**.
 `README.md` 와 `skills/dooray-cli/`(사용자 가이드)는 코드 산출물에 의존하므로 **마지막 phase** 에서 갱신한다.
 이 분리를 phase 작성 시 명시적으로 따른다.
 planning 결정 docs 를 phase 안에서 고치면 안 된다.
@@ -152,7 +152,7 @@ ls tasks/ | grep -E "^[0-9]{3}-" | sort
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
 
-다음 가용 번호(가장 큰 번호 + 1) 사용. 번호 없는 레거시 폴더는 count 에서 제외(소급 rename 금지).
+다음 가용 번호(가장 큰 번호 다음 값) 사용. 번호 없는 레거시 폴더는 count 에서 제외(소급 rename 금지).
 
 ### 서브넘버 규칙
 
@@ -165,6 +165,6 @@ gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefN
   - planning 은 PR 을 만들지 않는다. 이 브랜치에 구현 커밋이 이어 붙어 PR 1개로 닫힌다 — 계획과 코드가 같은 PR 에서 함께 검토된다.
   - main 에 docs 를 먼저 넣으면 코드가 머지되지 않아도 문서만 앞서 나가고, `build-with-teams` 의 사전 검증(원격 plan 브랜치에 task 존재)도 성립하지 않는다.
 - **커밋 순서 (docs-first, 2개 커밋으로 분리)** — 두 커밋 모두 plan 브랜치에 쌓는다:
-  1. docs 최신화 커밋 + push (`docs(scope): ...`) — task 생성 전 필수, 건너뛰기 금지
-  2. task 파일(`index.json` + `phase-*.md`) 커밋 + push — 실행 전 필수
+  1. docs 최신화 커밋하고 push (`docs(scope): ...`) — task 생성 전 필수, 건너뛰기 금지
+  2. task 파일(`index.json` 과 `phase-*.md`) 커밋하고 push — 실행 전 필수
 - **핸드오프**: `/build-with-teams` 로 안내한다. `tasks/{NNN}-{task-name}` 디렉터리를 인자로 받아 Agent Teams 가시적 협업(team-lead·critic·executor·docs-verifier)을 수행한다.
