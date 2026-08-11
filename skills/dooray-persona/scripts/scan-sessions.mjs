@@ -1,5 +1,7 @@
+import { createReadStream } from "node:fs";
 import { readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
+import { createInterface } from "node:readline";
 import { loadPersonaConfig, parseArgs } from "./lib/config.mjs";
 
 function sanitizeForTerminal(value) {
@@ -55,9 +57,32 @@ function parseJsonLines(contents, sourcePath) {
     });
 }
 
+const COMMENT_ID_PATTERN = /댓글이 추가되었습니다:\s*([A-Za-z0-9_-]+)/g;
+
 function collectCommentIds(contents, ids) {
-  for (const match of contents.matchAll(/댓글이 추가되었습니다:\s*([A-Za-z0-9_-]+)/g)) {
+  for (const match of contents.matchAll(COMMENT_ID_PATTERN)) {
     ids.add(match[1]);
+  }
+}
+
+/**
+ * 세션 로그를 줄 단위로 훑는다.
+ * 대화가 길어진 jsonl 은 파일 하나가 수십 MB 까지 커지는데 필요한 줄은 극소수다.
+ * 파일째 읽으면 메모리가 파일 크기에 비례하므로 스트림으로 상수 메모리를 유지한다.
+ */
+async function collectCommentIdsFromFile(path, ids) {
+  const reader = createInterface({
+    input: createReadStream(path, { encoding: "utf8" }),
+    crlfDelay: Infinity,
+  });
+  try {
+    for await (const line of reader) {
+      if (line.includes("댓글이 추가되었습니다:")) {
+        collectCommentIds(line, ids);
+      }
+    }
+  } finally {
+    reader.close();
   }
 }
 
@@ -99,7 +124,7 @@ async function main() {
 
   const commentIds = new Set();
   for (const file of files) {
-    collectCommentIds(await readFile(file, "utf8"), commentIds);
+    await collectCommentIdsFromFile(file, commentIds);
   }
 
   const outDir = args.outDir ?? config.workDir;
