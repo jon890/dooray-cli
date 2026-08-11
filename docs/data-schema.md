@@ -28,6 +28,13 @@ ${XDG_DATA_HOME}/dooray-cli/              # XDG_DATA_HOME이 절대 경로일 �
 
 ~/.claude/skills/
   dooray-cli -> <dataRoot>/skills/{packageVersion}-{contentDigestHex}/
+
+~/.claude/dooray-persona.config.json       # dooray-persona 스킬 설정 (ADR-038)
+~/.local/share/dooray-persona/             # dooray-persona 중간 산출물
+  candidates.json
+  corpus.jsonl
+  classified.jsonl
+  stats.json
 ```
 
 `templates/{projectId}.json` — `GET /project/v1/projects/{projectId}/templates` 응답의 id/templateName/메타만 보존 (body 는 미포함 — list 응답 자체가 body 제외).
@@ -289,3 +296,80 @@ resolver 는 code 누락 그룹을 사전 필터링 + 후보 5개 안내 출력.
 → wikiId null이면 에러 ("프로젝트에 위키가 없습니다")
 출력: wikiId (string)
 ```
+
+---
+
+## dooray-persona 스킬 데이터 (ADR-038)
+
+CLI가 아니라 스킬 스크립트가 읽고 쓴다.
+인증은 `~/.dooray/config.json`의 `apiKey`와 `baseUrl`을 **읽기 전용**으로 참조하고, 그 파일을 수정하지 않는다.
+
+### dooray-persona.config.json
+
+```ts
+interface DoorayPersonaConfig {
+  version: 1;
+  targets: Array<{
+    projectId: string;   // 판정 키 (유니크)
+    code: string;        // 표시용 프로젝트 코드
+    name: string;        // 표시용 프로젝트 이름
+  }>;
+  outputPath: string;    // 생성할 페르소나 문서 경로
+  workDir: string;       // 중간 산출물 디렉터리
+  since: string | null;  // ISO 날짜. null이면 기간 제한 없음
+  sessionScan: {
+    enabled: boolean;
+    roots: string[];     // 세션 로그 탐색 경로
+  };
+}
+```
+
+대상 프로젝트를 구분자로 이은 문자열이 아니라 객체 배열로 둔다.
+표시용 이름은 바뀔 수 있고 판정은 항상 `projectId`로 한다.
+
+본인 식별자는 저장하지 않는다.
+매 실행 `common/v1/members/me`로 읽어, 계정이 바뀌었을 때 남의 글을 본인 표본으로 모으는 사고를 막는다.
+
+### 중간 산출물
+
+| 파일 | 내용 |
+| --- | --- |
+| `candidates.json` | 프로젝트별 본인 관련 업무 집계. 대상 선택 근거 |
+| `corpus.jsonl` | 수집한 본문·댓글 원문. 한 줄이 표본 하나 |
+| `classified.jsonl` | `corpus.jsonl` 각 줄에 분류 결과를 더한 것 |
+| `stats.json` | 기호·종결어미·문장 길이 빈도 |
+
+`corpus.jsonl` 한 줄의 필드는 다음과 같다.
+
+```ts
+interface CorpusEntry {
+  id: string;                  // "{postId}#body" 또는 "{postId}#log-{logId}"
+  kind: "body" | "comment";
+  projectId: string;
+  projectCode: string;
+  postId: string;
+  postNumber: number;
+  subject: string;
+  createdAt: string;
+  mimeType: string;
+  text: string;
+  involvement: { authored: boolean; assigned: boolean; cc: boolean };
+  assigneeKind: "member" | "group" | "none";
+}
+```
+
+`assigneeKind`는 수신자 축 판정의 근거다.
+그룹으로 접수된 업무가 대외 문의 성격을 띤다는 실측(ADR-037)이 여기서 문체 추출로 이어진다.
+
+`classified.jsonl`은 위 필드에 분류 결과를 더한다.
+
+```ts
+interface ClassifiedEntry extends CorpusEntry {
+  label: "human" | "ai-suspect" | "formal-template";
+  signals: Record<string, number>;  // 구조 신호별 점수
+  confirmed: boolean;               // 사용자 확인을 거쳤는지
+}
+```
+
+스킬은 `workDir`을 자동으로 지우지 않는다.
+원문이 남아 있어야 재수집 없이 분류·추출을 다시 돌릴 수 있다.
