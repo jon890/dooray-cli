@@ -45,3 +45,5 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-034](034-wiki-tree-drill-down.md) — wiki tree 레벨별 drill-down 재귀 조립 (flat list endpoint 부재, Issue #101)
 - [ADR-035](035-managed-skill-lifecycle.md) — Claude Code 스킬 명시 갱신, 버전·해시별 관리형 저장소
 - [ADR-036](036-delete-confirmation-policy.md) — 삭제 명령 공통 확인·비대화형 선차단 정책
+- [ADR-037](037-bulk-post-collection-pitfalls.md) — 업무 대량 수집 시 Dooray API 함정 (그룹 담당·조용한 속도 제한·목록 응답 body 부재)
+- [ADR-038](038-persona-skill-outside-managed-install.md) — `dooray-persona` 스킬을 관리형 설치 체계 밖에 둔다
