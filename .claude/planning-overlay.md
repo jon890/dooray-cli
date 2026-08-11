@@ -152,7 +152,7 @@ ls tasks/ | grep -E "^[0-9]{3}-" | sort
 gh pr list --state open --json number,headRefName,title --jq '.[] | "\(.headRefName) \(.title)"'
 ```
 
-다음 가용 번호(가장 큰 번호의 다음 정수) 사용. 번호 없는 레거시 폴더는 count 에서 제외(소급 rename 금지).
+다음 가용 번호(가장 큰 번호 다음 값) 사용. 번호 없는 레거시 폴더는 count 에서 제외(소급 rename 금지).
 
 ### 서브넘버 규칙
 
