@@ -365,11 +365,14 @@ interface CorpusEntry {
 
 ```ts
 interface ClassifiedEntry extends CorpusEntry {
-  label: "human" | "ai-suspect" | "formal-template";
+  label: "human" | "ai-suspect" | "ai-confirmed" | "formal-template";
   signals: Record<string, number>;  // 구조 신호별 점수
   confirmed: boolean;               // 사용자 확인을 거쳤는지
 }
 ```
+
+`ai-confirmed`는 구조 신호가 아니라 등록 기록 대조로 확정된 AI 작성분이다.
+`ai-suspect`와 나누는 이유는 확신도가 다르기 때문이다 — 의심은 사용자 확인이 필요하고, 확정은 그대로 제외한다.
 
 스킬은 `workDir`을 자동으로 지우지 않는다.
 원문이 남아 있어야 재수집 없이 분류·추출을 다시 돌릴 수 있다.
