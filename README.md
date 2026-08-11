@@ -32,6 +32,15 @@ dooray setup
 dooray doctor   # 설정이 제대로 됐는지 확인
 ```
 
+개별 값만 바꾸려면 `dooray config set` 을 쓴다. 값 자리에 `-` 를 주면 stdin 에서 읽는다.
+
+```bash
+printf '%s' "$TOKEN" | dooray config set api-key -
+```
+
+토큰을 명령 인자로 넘기면 셸 기록과 프로세스 목록에 남는다. 에이전트가 대신 실행하면 실행 로그에도 남는다.
+stdin 으로 받은 값은 양끝 공백을 지운 뒤 저장하고, 비어 있으면 저장하지 않고 종료 코드 3 으로 끝낸다.
+
 에이전트에서 쓰려면 스킬을 설치한다. Claude Code 가 이 CLI 의 사용법을 알게 된다.
 
 ```bash
