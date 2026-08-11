@@ -42,6 +42,7 @@
 | 새 API 호출 패턴 (재시도/redirect 등) | — | 정책 결정 ADR | api/ 섹션 + ADR-NNN 역참조 | — | — | — | — | — |
 | 기존 resolver 입력 형식 확대 | 공통 규약의 resolver 줄 (규약이 바뀔 때만) | — | resolver 주석 1줄 갱신 | — | 사용 예 (자동 분기 시나리오) | — | 사용 예 | 빠른 참조 표 |
 | 의존성 추가 / 빌드 설정 | 빌드 명령 (해당 시) | ADR 작성 전 점검 후 ADR | 기술 스택 표 | — | — | — | — | — |
+| 신규 스킬 추가 (`skills/<name>/`) | — | 배포 정책, 스킬이 의존하는 API 함정 | — (src 레이어 무변경 시) | MVP 범위 한 줄 | — (CLI 명령 흐름이 아니면 미손) | 스킬이 만드는 설정·산출물 스키마 | 내려받아 쓰는 방법 | — |
 
 **갱신 시점 분리**: planning 결정 docs(`adr/`·`code-architecture.md`·`CLAUDE.md`·`data-schema.md`·`flow.md`·`prd.md`)는 **task 생성 전 즉시 반영 + commit**.
 `README.md` 와 `skills/dooray-cli/`(사용자 가이드)는 코드 산출물에 의존하므로 **마지막 phase** 에서 갱신한다.
