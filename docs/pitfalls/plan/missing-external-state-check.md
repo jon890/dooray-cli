@@ -1,5 +1,5 @@
 ---
-id: missing-external-state-gate
+id: missing-external-state-check
 category: plan
 title: 외부 상태 사전 점검 부재
 triggers: [push, merge, PR comment, npm publish, 사전 점검, rollback]
