@@ -22,6 +22,7 @@ Dooray에 축적된 본인 글에서 개인 문체를 추출하고, 계속 재�
 | AI 작성분과 정형 양식 분리, 경계 항목 확인 | [classification.md](references/classification.md) |
 | 문체 추출, 페르소나 작성, 하네스 주입과 Dooray 연동 | [authoring.md](references/authoring.md) |
 | 최종 문서 골격 확인 | [persona.md](templates/persona.md) |
+| 터미널에 익숙하지 않은 사람에게 이 워크플로우 넘기기 | [bootstrap.md](references/bootstrap.md) |
 
 ## 6단계 워크플로우
 
@@ -55,3 +56,6 @@ Dooray에 축적된 본인 글에서 개인 문체를 추출하고, 계속 재�
 
 최초 실행에서는 [collection.md](references/collection.md)에 따라 후보를 탐색하고 사용자가 고른 `targets`를 설정에 저장한 뒤 수집한다.
 설정에 `targets`가 이미 있으면 대상 탐색을 건너뛰고 수집부터 시작한다.
+
+터미널 작업에 익숙하지 않은 사람에게 이 워크플로우를 넘길 때는 [bootstrap.md](references/bootstrap.md)의 프롬프트를 전달한다.
+설치와 인증 설정, 스킬 연결, 주입까지 한 번에 진행하게 되어 있다.
