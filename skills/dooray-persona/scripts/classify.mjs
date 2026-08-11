@@ -1,7 +1,11 @@
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { loadPersonaConfig, parseArgs } from "./lib/config.mjs";
-import { extractSignals, labelEntry } from "./lib/signals.mjs";
+import {
+  buildSubjectShapeIndex,
+  extractSignals,
+  labelEntry,
+} from "./lib/signals.mjs";
 
 function sanitizeForTerminal(value) {
   return String(value).replace(/[\u0000-\u001f\u007f]/g, "?");
@@ -67,9 +71,14 @@ async function main() {
   const outDir = args.outDir ?? config.workDir;
   const corpusPath = join(outDir, "corpus.jsonl");
   const entries = parseJsonLines(await readFile(corpusPath, "utf8"), corpusPath);
+  const subjectShapeIndex = buildSubjectShapeIndex(entries);
   const decisions = entries.map((entry) => {
     const signals = extractSignals(entry.text);
-    return { entry, signals, decision: labelEntry(entry, signals, entries) };
+    return {
+      entry,
+      signals,
+      decision: labelEntry(entry, signals, subjectShapeIndex),
+    };
   });
   const classified = decisions.map(({ entry, signals, decision }) => ({
     ...entry,

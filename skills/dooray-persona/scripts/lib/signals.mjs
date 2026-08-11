@@ -51,15 +51,30 @@ function contextEntries(corpusContext) {
   return [];
 }
 
+/**
+ * 제목 형태별 postId 집합을 미리 만든다.
+ * 이걸 만들지 않고 항목마다 corpus 를 순회하면 분류 전체가 O(N²) 이 된다.
+ */
+export function buildSubjectShapeIndex(corpusContext) {
+  const index = new Map();
+  for (const candidate of contextEntries(corpusContext)) {
+    const shape = normalizeSubjectShape(candidate?.subject);
+    if (!shape) continue;
+    if (!index.has(shape)) index.set(shape, new Set());
+    index.get(shape).add(candidate?.postId ?? candidate?.id);
+  }
+  return index;
+}
+
 function repeatedSubjectCount(entry, corpusContext) {
   const shape = normalizeSubjectShape(entry?.subject);
   if (!shape) return 0;
-  const matchingPosts = new Set();
-  for (const candidate of contextEntries(corpusContext)) {
-    if (normalizeSubjectShape(candidate?.subject) !== shape) continue;
-    matchingPosts.add(candidate?.postId ?? candidate?.id);
-  }
-  return matchingPosts.size;
+  // 사전 계산한 색인을 그대로 받거나, 없으면 이 자리에서 한 번 만든다.
+  const index =
+    corpusContext instanceof Map
+      ? corpusContext
+      : buildSubjectShapeIndex(corpusContext);
+  return index.get(shape)?.size ?? 0;
 }
 
 function isAiSuspect(signals) {

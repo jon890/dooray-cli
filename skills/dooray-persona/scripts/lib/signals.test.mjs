@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { extractSignals, labelEntry } from "./signals.mjs";
+import {
+  buildSubjectShapeIndex,
+  extractSignals,
+  labelEntry,
+} from "./signals.mjs";
 
 describe("labelEntry", () => {
   it("헤더와 표가 많은 배포 기록을 formal-template으로 먼저 분류한다", () => {
@@ -60,6 +64,28 @@ describe("labelEntry", () => {
     expect(labelEntry(entry, extractSignals(entry.text), context).label).toBe(
       "human",
     );
+  });
+
+  it("사전 계산한 제목 색인을 넘겨도 배열을 넘긴 것과 같은 결과를 낸다", () => {
+    const entry = {
+      id: "<postId>#body",
+      postId: "<postId>",
+      subject: "정기 확인 1",
+      text: "짧은 확인 내용",
+    };
+    const context = [
+      entry,
+      { id: "<otherPostId>#body", postId: "<otherPostId>", subject: "정기 확인 2" },
+      { id: "<thirdPostId>#body", postId: "<thirdPostId>", subject: "정기 확인 3" },
+    ];
+    const signals = extractSignals(entry.text);
+
+    expect(labelEntry(entry, signals, buildSubjectShapeIndex(context))).toEqual(
+      labelEntry(entry, signals, context),
+    );
+    expect(
+      labelEntry(entry, signals, buildSubjectShapeIndex(context)).label,
+    ).toBe("formal-template");
   });
 
   it("짧은 항목 나열 글은 human으로 남긴다", () => {
