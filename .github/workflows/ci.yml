@@ -27,6 +27,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
 
+      # 의존성 설치 전에 돈다. 문서 검사는 Node 가 필요 없고,
+      # 공개 저장소라 식별자 노출은 한 번 새면 되돌리기 어렵다.
+      - name: Check for exposed identifiers
+        run: bash scripts/check-pii.sh
+
+      - name: Check public docs for internal references
+        run: bash scripts/check-public-refs.sh
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

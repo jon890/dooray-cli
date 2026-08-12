@@ -48,7 +48,7 @@
 
 ### 공개 문서 내부 참조 제거 (필수 — README / SKILL 갱신 시)
 
-규칙과 검증 grep 은 `CLAUDE.md` "공개 문서(README · 공개 SKILL) — 내부 참조 번호 제외" 가 소유한다.
+규칙은 `CLAUDE.md` "공개 문서(README · 공개 SKILL) — 내부 참조 번호 제외" 가, 검사는 `scripts/check-public-refs.sh` 가 소유한다.
 planning 에서는 README 와 `skills/` 를 손대는 phase 마다 그 grep 을 통과시킨다.
 
 ## 검증
@@ -57,5 +57,5 @@ planning 에서는 README 와 `skills/` 를 손대는 phase 마다 그 grep 을 
 - **docs-verifier 흡수 원칙**: docs-verifier(`.claude/agents/dooray-cli-docs-verifier.md`)의 반복 지적은 별도 회고 docs 를 신설하지 않는다.
   - 위 "변경 유형별 docs 영향 표"에 행 추가나 보강으로 흡수한다.
   - 그 agent 가 이 표를 검증 기준으로 그대로 쓴다 — 표를 고치면 검증도 함께 달라진다.
-- **개인 식별 정보 노출 금지**: task 파일 제출 전 `CLAUDE.md` 의 검증 grep 을 실행해 0건을 확인한다.
+- **개인 식별 정보 노출 금지**: task 파일 제출 전 `bash scripts/check-pii.sh` 를 실행해 통과시킨다.
 

@@ -27,7 +27,7 @@ ADR 본문은 planning 단계에서 사용자와 함께 결정한다.
 | --- | --- |
 | ADR 번호와 주제 | `docs/adr/INDEX.md` |
 | 캐시 파일 구조와 TTL | `docs/data-schema.md` |
-| 코드 컨벤션, 개인 식별 정보 금지 유형과 검증 grep | `CLAUDE.md` |
+| 코드 컨벤션, 개인 식별 정보 금지 유형 | `CLAUDE.md` (검사는 `scripts/check-pii.sh`) |
 | docs 갱신 범위 | `.claude/planning-overlay.md` "변경 유형별 docs 영향 표" |
 | 마크다운 형식 규칙 | 글로벌 `~/.claude/rules/markdown-readability.md` |
 
@@ -166,7 +166,7 @@ docs-check 호출 시에는 위 형식에 Critical / Warning / Safe 분류를 �
 - **자기-면제 금지**: "단순 변경이라 검증 생략 가능" 같은 회신을 하지 않는다. team-lead 가 그대로 수용하면 검증이 없는 것과 같다.
 - **도메인 한정**: dooray-cli repo 만 검증한다. 다른 repo 호출은 거부한다.
 - **사용자 가이드 변경 시점**: `README.md` 와 `skills/dooray-cli/` 는 마지막 phase(사용자 가이드 갱신)에서만 변경한다. 중간 phase 에서 바뀌면 VIOLATION 이다.
-- **개인 식별 정보 노출은 즉시 VIOLATION**: `CLAUDE.md` 의 검증 grep 을 그대로 실행해 판정한다.
+- **개인 식별 정보 노출은 즉시 VIOLATION**: `bash scripts/check-pii.sh` 를 실행해 판정한다.
 
 </Self_Discipline>
 
