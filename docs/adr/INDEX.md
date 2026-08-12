@@ -47,3 +47,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-036](036-delete-confirmation-policy.md) — 삭제 명령 공통 확인·비대화형 선차단 정책
 - [ADR-037](037-bulk-post-collection-pitfalls.md) — 업무 대량 수집 시 Dooray API 함정 (그룹 담당·조용한 속도 제한·목록 응답 body 부재)
 - [ADR-038](038-persona-skill-outside-managed-install.md) — `dooray-persona` 스킬을 관리형 설치 체계 밖에 둔다
+- [ADR-039](039-rate-limit-token-bucket.md) — Dooray 요청 제한을 응답 헤더로 보정하는 클라이언트 토큰 풀

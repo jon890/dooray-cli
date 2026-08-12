@@ -24,6 +24,7 @@ src/
 
   api/
     client.ts               # DoorayApiClient — ky 기반 HTTP 래퍼
+    rate-limiter.ts         # 요청 토큰 버킷. 응답 헤더로 서버 잔량과 동기화 (ADR-039)
     imapClient.ts           # IMAP 메일 조회 (imapflow + mailparser)
     smtpClient.ts           # SMTP 메일 발송 (nodemailer)
     types.ts                # 모든 API 요청/응답 타입
@@ -192,6 +193,7 @@ editor/    → api/client (현재 데이터 fetch) + resolvers/member
 - `skill/manager.ts`는 경로·현재 버전을 주입받아 명령 출력과 분리된 순수 상태 전이를 제공한다. 테스트 전용 등으로 `SkillManagerContext.dataRoot?`가 없으면 `homeDir/.local/share/dooray-cli`를 사용한다.
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
 - `api/client`는 순수 HTTP 래퍼. 비즈니스 로직 없음
+- `api/client`의 모든 요청은 `api/rate-limiter`의 토큰 버킷을 공유한다. 호출부는 요청 간격을 신경 쓰지 않는다 (ADR-039)
 - `resolvers/*`는 캐시 우선 조회, 만료 시 api/client 호출
 - `commands/*`는 resolvers, api/client, formatters 조합
 
