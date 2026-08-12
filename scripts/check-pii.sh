@@ -39,14 +39,20 @@ report() {
 }
 
 # 1) 공개 화이트리스트 밖의 URL·이메일 도메인
-#    https:// 또는 @ 접두를 요구해 코드의 property 접근(.com/.net)을 배제한다
+#    https:// 또는 @ 접두를 요구해 코드의 property 접근(.com/.net)을 배제한다.
+#
+#    화이트리스트는 호스트 경계에 앵커한다. 앵커가 없으면 `dooray.com` 이
+#    `evil-dooray.com` 안에서도 매치되어 typosquat 이 그대로 통과한다.
 domains=$(grep -rnoE "(https?://|@)[A-Za-z0-9.-]+\.(com|co\.kr|net)" "${SCAN[@]}" 2>/dev/null \
-  | grep -vE "$OK_DOMAINS")
+  | grep -vE "(https?://|@|\.)($OK_DOMAINS)\$")
 [ -n "$domains" ] && report "화이트리스트 밖 도메인 — placeholder 로 바꾸거나 이 스크립트의 OK_DOMAINS 를 검토한다" "$domains"
 
 # 2) 15자리 이상 numeric — 실제 Dooray ID 일 수 있다
-ids=$(grep -rnE "[0-9]{15,}" "${SCAN[@]}" 2>/dev/null \
-  | grep -vE "$OK_IDS|<postId>|<pageId>")
+#
+#    `-o` 로 매치 단위로 뽑는다. 줄 단위로 거르면 허용 ID 와 실제 ID 가
+#    한 줄에 같이 있을 때 그 줄 전체가 걸러져 실제 ID 가 빠져나간다.
+ids=$(grep -rnoE "[0-9]{15,}" "${SCAN[@]}" 2>/dev/null \
+  | grep -vE ":($OK_IDS)\$")
 [ -n "$ids" ] && report "허용 목록 밖의 긴 숫자 — 실제 ID 인지 확인하고 placeholder 나 dummy 로 바꾼다" "$ids"
 
 # 3) CLI 예시의 project 인자
