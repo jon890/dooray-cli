@@ -17,7 +17,7 @@ Agent({
 
 agent 는 read-only (`disallowedTools: Write, Edit`) — team-lead 가 회신을 받아 Critical 부터 사용자 승인 후 수정한다.
 
-**Fallback**: agent 사용 불가 환경(Claude Code 아닌 다른 harness)에서만 코어의 legacy 절차로 대체. 이때도 grep 명령의 진실원은 agent 본문.
+**Fallback**: agent 를 못 쓰는 환경에서는 코어 `docs-check` 의 6축 절차를 직접 따른다. 이때도 grep 명령의 단일 소스는 agent 본문이다.
 
 ## docs 구조 + 문서 목록
 
@@ -33,7 +33,7 @@ ls docs/*.md docs/adr/*.md .claude/skills/*/SKILL.md skills/dooray-cli/SKILL.md
 | `docs/adr/` (ADR 1개 = 파일 1개, 목록은 `docs/adr/INDEX.md`) | 기술 의사결정·왜·대안 기각                |
 | `docs/data-schema.md`                                        | `~/.dooray/cache/` 구조·TTL·resolver 로직 |
 | `docs/code-architecture.md`                                  | 디렉터리 트리·레이어·API 전략             |
-| `CLAUDE.md`                                                  | 코드 작업 가이드, 상황별 ADR 참조 표     |
+| `CLAUDE.md`                                                  | 코드 작업 지침, 전 명령 공통 규약, 노출 금지 정책 |
 | `README.md` / `skills/dooray-cli/SKILL.md`                   | 사용자 가이드 (외부 facing)               |
 
 ## 실행 주기
