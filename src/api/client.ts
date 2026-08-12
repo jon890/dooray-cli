@@ -164,7 +164,9 @@ export class DoorayApiClient {
         jitter: true,
       },
       hooks: {
-        // beforeRequest 는 재시도에는 돌지 않으므로 beforeRetry 에서도 토큰을 받는다.
+        // 훅 순서는 실측했다 — beforeRequest → afterResponse → beforeRetry → afterResponse.
+        // beforeRequest 는 첫 요청에만 돌고 재시도에는 돌지 않으므로,
+        // beforeRetry 에서도 토큰을 받아야 재시도가 버킷을 우회하지 않는다.
         beforeRequest: [
           async () => {
             await bucket.acquire();
@@ -172,8 +174,9 @@ export class DoorayApiClient {
         ],
         beforeRetry: [
           async ({ error }) => {
-            const response = (error as { response?: Response }).response;
-            if (response?.status === 429) bucket.drain();
+            if (error instanceof HTTPError && error.response.status === 429) {
+              bucket.drain();
+            }
             await bucket.acquire();
           },
         ],

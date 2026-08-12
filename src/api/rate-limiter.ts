@@ -64,19 +64,28 @@ export function createTokenBucket(options: TokenBucketOptions = {}): TokenBucket
   const now = options.now ?? (() => Date.now());
   const sleep = options.sleep ?? defaultSleep;
 
-  let capacity = options.capacity ?? DEFAULT_BURST_CAPACITY;
-  let replenishRate = options.replenishRate ?? DEFAULT_REPLENISH_RATE;
+  // 0 이하가 들어오면 충전이 멈춰 영원히 대기하게 되므로 기본값으로 되돌린다.
+  const positiveOr = (value: number | undefined, fallback: number): number =>
+    value != null && value > 0 ? value : fallback;
+
+  let capacity = positiveOr(options.capacity, DEFAULT_BURST_CAPACITY);
+  let replenishRate = positiveOr(options.replenishRate, DEFAULT_REPLENISH_RATE);
   let tokens = capacity;
   let updatedAt = now();
 
   // 동시 호출이 같은 잔량을 보고 함께 통과하는 것을 막는다.
   let queue: Promise<void> = Promise.resolve();
 
+  /** 지금 시점의 토큰 수를 계산만 한다. 상태를 바꾸지 않는다. */
+  function projected(at: number): number {
+    const elapsed = Math.max(0, at - updatedAt);
+    return Math.min(capacity, tokens + (elapsed / 1000) * replenishRate);
+  }
+
   function refill(): void {
     const at = now();
-    const elapsed = at - updatedAt;
-    if (elapsed <= 0) return;
-    tokens = Math.min(capacity, tokens + (elapsed / 1000) * replenishRate);
+    if (at <= updatedAt) return;
+    tokens = projected(at);
     updatedAt = at;
   }
 
@@ -124,8 +133,7 @@ export function createTokenBucket(options: TokenBucketOptions = {}): TokenBucket
     },
 
     get available(): number {
-      refill();
-      return tokens;
+      return projected(now());
     },
   };
 }

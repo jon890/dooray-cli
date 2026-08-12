@@ -90,8 +90,44 @@ describe("createTokenBucket", () => {
       bucket.acquire(),
     ]);
 
-    // 네 번째는 충전을 기다려야 한다
-    expect(clock.slept.length).toBeGreaterThan(0);
+    // 앞의 셋은 즉시 통과하고 네 번째만 토큰 하나를 기다린다.
+    // 초당 5개면 200ms 다.
+    expect(clock.slept).toHaveLength(1);
+    expect(clock.slept[0]).toBeCloseTo(200, 0);
+  });
+
+  it("available 은 상태를 바꾸지 않는다", async () => {
+    const clock = fakeClock();
+    const bucket = createTokenBucket({
+      capacity: 5,
+      replenishRate: 5,
+      now: clock.now,
+      sleep: clock.sleep,
+    });
+
+    await bucket.acquire();
+    clock.advance(200);
+
+    // 여러 번 읽어도 같은 값이어야 한다
+    expect(bucket.available).toBeCloseTo(5, 5);
+    expect(bucket.available).toBeCloseTo(5, 5);
+  });
+
+  it("충전 속도가 0 이하로 들어오면 기본값으로 되돌린다", async () => {
+    const clock = fakeClock();
+    const bucket = createTokenBucket({
+      capacity: 1,
+      replenishRate: 0,
+      now: clock.now,
+      sleep: clock.sleep,
+    });
+
+    await bucket.acquire();
+    await bucket.acquire();
+
+    // 0 이었다면 무한 대기했을 것이다. 기본 충전 속도로 200ms 만 기다린다.
+    expect(clock.slept).toHaveLength(1);
+    expect(clock.slept[0]).toBeCloseTo(200, 0);
   });
 
   it("sync 는 서버가 알려준 잔량으로 내린다", async () => {
