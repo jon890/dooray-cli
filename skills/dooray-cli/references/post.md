@@ -130,6 +130,20 @@ dooray post edit --id "$POST_ID" --cc "$MEMBER_ID"
 - 이메일 형태 → exact 매칭
 - 그 외 → 이름 부분일치
 
+**이름은 그 프로젝트의 멤버만 찾는다.** 이메일과 memberId 는 조직 전체에서 찾는다.
+
+그래서 프로젝트 멤버가 아닌 사람을 이름으로 지정하면 실패한다.
+
+```bash
+dooray post create <project> --to 홍길동                  # 프로젝트 멤버가 아니면 실패
+dooray post create <project> --to user@example.com        # 통과
+```
+
+에러에 붙는 "사용 가능한 멤버 (N/M)" 은 CLI 의 조회 한계가 아니라 **그 프로젝트의 멤버 목록**이다.
+일부만 가져온 것으로 오해하기 쉬운 표기다.
+
+대상이 그 프로젝트 멤버인지 확실하지 않으면 처음부터 이메일을 쓴다. 이메일은 `dooray member search <이름>` 으로 찾는다.
+
 ## 부모 업무 지정
 
 ```bash

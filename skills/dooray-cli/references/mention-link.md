@@ -61,6 +61,17 @@ title 속성도 없다.
 title 은 workflow class 다 — `registered` / `working` / `closed` / `backlog`.
 클릭하면 브라우저가 아니라 Dooray 앱 안에서 이동하며 workflow 상태가 함께 보인다.
 
+**표시 텍스트의 대괄호는 엔티티로 바꾼다.** `[` 는 `&#91;`, `]` 는 `&#93;` 다.
+제목에 모듈명을 대괄호로 붙이는 팀이 많은데, 조회한 `subject` 를 그대로 넣으면 링크 문법과 충돌해 깨진다.
+
+| 입력 | 결과 |
+| --- | --- |
+| `[my-project/524 [MOD] 한도 분리](dooray://...)` | 링크 깨짐 |
+| `[my-project/524 &#91;MOD&#93; 한도 분리](dooray://...)` | 정상 |
+
+치환 대상은 표시 텍스트뿐이고 URL 은 해당 없다.
+`--link-task` 옵션을 쓰면 CLI 가 알아서 치환하므로 손으로 조립할 때만 신경 쓴다.
+
 ### 위키 페이지
 
 ```markdown
@@ -68,13 +79,31 @@ title 은 workflow class 다 — `registered` / `working` / `closed` / `backlog`
 ```
 
 업무 링크와 같은 구조이고 경로만 `pages/{pageId}` 로 다르다. title 은 페이지 상태다.
+표시 텍스트의 대괄호 치환도 업무 링크와 같다.
 
 ### ID 를 얻는 곳
 
 | ID | 얻는 방법 |
 | --- | --- |
 | `orgId` | `~/.dooray/cache/me.json` 의 `data.orgId` |
-| `memberId` | `dooray member search <name>` 또는 `dooray member get <id>` |
+| `memberId` | 응답에 있으면 그 값을 쓴다 (아래 참조). 없을 때만 `dooray member search <name>` |
 | `groupId` | `dooray project groups <project>` |
 | `postId` | `dooray post get <project> <number> --json` 의 `id` |
 | `pageId` | `dooray wiki page get <project> <page-id> --json` 의 `id` |
+
+### 답장 대상은 이름으로 찾지 않는다
+
+답장할 상대의 ID 는 이미 조회 응답 안에 있다. 검색할 필요가 없다.
+
+| 대상 | 응답의 위치 |
+| --- | --- |
+| 업무 작성자 | `post get ... --json` 의 `users.from.member.organizationMemberId` |
+| 댓글 작성자 | `post comment list ... --json` 의 `creator.member.organizationMemberId` |
+
+이 값을 쓰면 표시 이름이 한자든 영문이든 닉네임이든 항상 정확하다.
+
+**검색 결과가 1건이어도 확정 근거로 삼지 않는다.**
+표시 이름이 한자로 되어 있으면 한글 이름 검색에 원 작성자가 아예 안 잡히고, 표기가 비슷한 **다른 사람만** 걸린다.
+후보가 여럿이면 모호하다는 신호라도 있지만, 하나뿐이면 오히려 확신하게 되는 것이 함정이다.
+
+이름 검색은 대상이 응답에 없을 때만 쓰고, 그때도 이메일이나 사번으로 교차 확인한다.
