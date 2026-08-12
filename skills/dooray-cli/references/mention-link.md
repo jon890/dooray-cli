@@ -61,6 +61,17 @@ title 속성도 없다.
 title 은 workflow class 다 — `registered` / `working` / `closed` / `backlog`.
 클릭하면 브라우저가 아니라 Dooray 앱 안에서 이동하며 workflow 상태가 함께 보인다.
 
+**표시 텍스트의 대괄호는 엔티티로 바꾼다.** `[` 는 `&#91;`, `]` 는 `&#93;` 다.
+제목에 모듈명을 대괄호로 붙이는 팀이 많은데, 조회한 `subject` 를 그대로 넣으면 링크 문법과 충돌해 깨진다.
+
+| 입력 | 결과 |
+| --- | --- |
+| `[my-project/524 [MOD] 한도 분리](dooray://...)` | 링크 깨짐 |
+| `[my-project/524 &#91;MOD&#93; 한도 분리](dooray://...)` | 정상 |
+
+치환 대상은 표시 텍스트뿐이고 URL 은 해당 없다.
+`--link-task` 옵션을 쓰면 CLI 가 알아서 치환하므로 손으로 조립할 때만 신경 쓴다.
+
 ### 위키 페이지
 
 ```markdown
@@ -68,13 +79,14 @@ title 은 workflow class 다 — `registered` / `working` / `closed` / `backlog`
 ```
 
 업무 링크와 같은 구조이고 경로만 `pages/{pageId}` 로 다르다. title 은 페이지 상태다.
+표시 텍스트의 대괄호 치환도 업무 링크와 같다.
 
 ### ID 를 얻는 곳
 
 | ID | 얻는 방법 |
 | --- | --- |
 | `orgId` | `~/.dooray/cache/me.json` 의 `data.orgId` |
-| `memberId` | `dooray member search <name>` 또는 `dooray member get <id>` |
+| `memberId` | 응답에 있으면 그 값을 쓴다 (아래 참조). 없을 때만 `dooray member search <name>` |
 | `groupId` | `dooray project groups <project>` |
 | `postId` | `dooray post get <project> <number> --json` 의 `id` |
 | `pageId` | `dooray wiki page get <project> <page-id> --json` 의 `id` |
