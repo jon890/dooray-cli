@@ -5,6 +5,7 @@ import { basename } from "node:path";
 import { DoorayCliError } from "../utils/errors.js";
 import { normalizeDoorayMessage } from "../utils/dooray-message.js";
 import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "../utils/exit-codes.js";
+import { createTokenBucket, parseRateLimitHeaders } from "./rate-limiter.js";
 import type {
   ProjectListResponse,
   PostListResponse,
@@ -148,10 +149,42 @@ export class DoorayApiClient {
   constructor(apiKey: string, baseUrl: string) {
     this.authHeader = `dooray-api ${apiKey}`;
     this.baseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+    const bucket = createTokenBucket();
     this.api = ky.create({
       prefix: baseUrl,
       headers: {
         Authorization: this.authHeader,
+      },
+      // 429 는 재시도할 가치가 있지만, 동시 요청이 한꺼번에 재시도하면 같은 결과가 반복된다.
+      // jitter 로 재시도 시점을 흩고, 아래 훅이 재시도분도 버킷을 거치게 한다.
+      retry: {
+        limit: 3,
+        statusCodes: [408, 413, 429, 500, 502, 503, 504],
+        backoffLimit: 8000,
+        jitter: true,
+      },
+      hooks: {
+        // 훅 순서는 실측했다 — beforeRequest → afterResponse → beforeRetry → afterResponse.
+        // beforeRequest 는 첫 요청에만 돌고 재시도에는 돌지 않으므로,
+        // beforeRetry 에서도 토큰을 받아야 재시도가 버킷을 우회하지 않는다.
+        beforeRequest: [
+          async () => {
+            await bucket.acquire();
+          },
+        ],
+        beforeRetry: [
+          async ({ error }) => {
+            if (error instanceof HTTPError && error.response.status === 429) {
+              bucket.drain();
+            }
+            await bucket.acquire();
+          },
+        ],
+        afterResponse: [
+          ({ response }) => {
+            bucket.sync(parseRateLimitHeaders(response.headers));
+          },
+        ],
       },
     });
   }
