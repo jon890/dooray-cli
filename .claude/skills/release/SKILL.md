@@ -92,14 +92,19 @@ git log ${LAST_TAG}..HEAD --grep="#[0-9]" --oneline
 
 ### 4. 개인 식별 정보 / 사내 식별자 노출 검증 (필수, 실패 시 중단)
 
-`CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지 (public OSS)" 섹션의 검증 grep 을 모두 실행한다 (현재 3개).
-grep 패턴 정의는 거기에서 단일 소스로 관리 — 본 skill 은 실행 시점과 후속 처리만 정의.
+```bash
+# cwd: <repo root>
+bash scripts/check-pii.sh
+bash scripts/check-public-refs.sh
+```
 
-**히트가 있으면**:
+패턴과 화이트리스트는 두 스크립트가 소유한다. 본 skill 은 실행 시점과 후속 처리만 정의한다.
+
+**종료 코드가 0 이 아니면**:
 
 - 사용자에게 즉시 보고하고 위치를 노출
-- CLAUDE.md 개인 식별 정보 섹션의 placeholder 가이드 (`<project>` / `<tenant>` / `<postId>` 등) 또는 dummy 패턴으로 교체 후 보완 commit
-- 보완 commit 후 grep 재실행 → 0건 확인 후 다음 단계 진행
+- `CLAUDE.md` 의 placeholder 표(`<project>` / `<tenant>` / `<postId>` 등)를 따라 교체하고 보완 commit
+- 보완 commit 후 다시 실행해 통과를 확인하고 다음 단계로 간다
 - **사용자가 "내부 사용 OK" 로 명시 동의하지 않는 한 release 차단**
 
 ### 5. 버전 범프

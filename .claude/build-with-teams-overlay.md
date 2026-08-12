@@ -32,7 +32,7 @@ phase 완료 조건은 `pnpm tsc --noEmit && pnpm run build && pnpm test` 다.
 
 ## 개인 식별 정보 노출 금지
 
-phase 완료 전과 PR 생성 전에 `CLAUDE.md` "개인 식별 정보 / 사내 식별자 노출 금지" 섹션의 검증 grep 을 실행해 0건을 확인한다.
+phase 완료 전과 PR 생성 전에 `bash scripts/check-pii.sh` 를 실행해 통과시킨다. CI 도 같은 스크립트를 돌린다.
 
 ## PR 본문
 

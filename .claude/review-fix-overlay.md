@@ -12,12 +12,12 @@ conflict 해결 시 코어의 "merge 또는 rebase" 분기에서 **`git merge or
 
 | 증상 (로그 키워드) | 원인 | 해결 |
 | --- | --- | --- |
-| `does not provide an export named 'styleText'` / `node:util` | Node 18 ↔ 의존성이 Node 20.12+ API 사용 (vitest 4 / rolldown 등) | `.github/workflows/ci.yml` `NODE_VERSION` 을 20 으로 바꾸고 `package.json` `engines.node >=20` 설정 |
+| `does not provide an export named 'styleText'` / `node:util` | CI 의 Node 가 의존성이 요구하는 버전보다 낮다 | `.github/workflows/ci.yml` 의 `NODE_VERSION` 과 `package.json` 의 `engines.node` 를 대조해 올린다. 두 값이 현재 기준이다 |
 | `ERR_PNPM_OUTDATED_LOCKFILE` / `frozen-lockfile` 실패 | 로컬에서 의존성 변경 후 lockfile 미커밋 | 로컬 `pnpm install` 후 `pnpm-lock.yaml` 같이 커밋 |
 | `Cannot find module 'X'` | 새 import 추가했는데 의존성 미설치 / package.json 미커밋 | `pnpm add X` 를 실행하고 `package.json` 과 lockfile 을 같이 커밋 |
 | `SyntaxError: Unexpected token` 빌드 단계 | tsup target 불일치 또는 Node 버전 mismatch | 위 styleText 건과 동일 원인 — Node 버전 점검 |
 | `Test Files X failed` / vitest assertion | 테스트 회귀 | 실패 테스트 파일 직접 읽고 픽스 |
-| Lint/format 실패 | dooray-cli 는 별도 lint 단계 없음 — `pnpm build` (tsup/tsc) 가 타입 검증을 겸함 | 타입 에러로 취급하고 수정 |
+| 타입 에러 | dooray-cli 에 별도 lint 단계는 없다. 빌드는 tsup(esbuild) 이라 타입을 보지 않는다 | `pnpm tsc --noEmit` 으로 잡는다. `pnpm run build` 는 타입 오류가 있어도 통과한다 |
 
 표에 없는 증상은 사용자에게 "CI 로그 일부와 의심 원인" 을 제시하고 진행 방향을 확인한다.
 

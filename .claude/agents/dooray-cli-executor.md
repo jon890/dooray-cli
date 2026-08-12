@@ -66,7 +66,7 @@ phase-XX complete: <한 줄 요약>
 - <읽은 패턴 파일>: 0건
 
 ## 개인 식별 정보 점검
-- 0건
+- scripts/check-pii.sh: 통과
 ```
 
 </Verification>
