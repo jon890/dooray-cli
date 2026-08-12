@@ -90,3 +90,20 @@ title 은 workflow class 다 — `registered` / `working` / `closed` / `backlog`
 | `groupId` | `dooray project groups <project>` |
 | `postId` | `dooray post get <project> <number> --json` 의 `id` |
 | `pageId` | `dooray wiki page get <project> <page-id> --json` 의 `id` |
+
+### 답장 대상은 이름으로 찾지 않는다
+
+답장할 상대의 ID 는 이미 조회 응답 안에 있다. 검색할 필요가 없다.
+
+| 대상 | 응답의 위치 |
+| --- | --- |
+| 업무 작성자 | `post get ... --json` 의 `users.from.member.organizationMemberId` |
+| 댓글 작성자 | `post comment list ... --json` 의 `creator.member.organizationMemberId` |
+
+이 값을 쓰면 표시 이름이 한자든 영문이든 닉네임이든 항상 정확하다.
+
+**검색 결과가 1건이어도 확정 근거로 삼지 않는다.**
+표시 이름이 한자로 되어 있으면 한글 이름 검색에 원 작성자가 아예 안 잡히고, 표기가 비슷한 **다른 사람만** 걸린다.
+후보가 여럿이면 모호하다는 신호라도 있지만, 하나뿐이면 오히려 확신하게 되는 것이 함정이다.
+
+이름 검색은 대상이 응답에 없을 때만 쓰고, 그때도 이메일이나 사번으로 교차 확인한다.
