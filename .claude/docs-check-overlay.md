@@ -11,7 +11,7 @@ agent 본문이 검증 항목·자동 grep 명령·도메인 지식(ADR 인덱�
 Agent({
   subagent_type: "dooray-cli-docs-verifier",
   description: "6-axis docs audit",
-  prompt: "전체 docs (docs/*.md + .claude/skills/*/SKILL.md) 6축 점검. Critical / Warning / Safe 분류 보고."
+  prompt: "전체 docs (docs/*.md, .claude/skills/*/SKILL.md, skills/*/ 공개 스킬) 6축 점검. Critical / Warning / Safe 분류 보고."
 })
 ```
 
@@ -23,7 +23,7 @@ agent 는 read-only (`disallowedTools: Write, Edit`) — team-lead 가 회신을
 
 ```bash
 # cwd: <repo root>
-ls docs/*.md docs/adr/*.md .claude/skills/*/SKILL.md skills/dooray-cli/SKILL.md
+ls docs/*.md docs/adr/*.md .claude/skills/*/SKILL.md skills/*/SKILL.md skills/*/references/*.md
 ```
 
 | 문서                                                         | 담당                                      |
@@ -34,7 +34,8 @@ ls docs/*.md docs/adr/*.md .claude/skills/*/SKILL.md skills/dooray-cli/SKILL.md
 | `docs/data-schema.md`                                        | `~/.dooray/cache/` 구조·TTL·resolver 로직 |
 | `docs/code-architecture.md`                                  | 디렉터리 트리·레이어·API 전략             |
 | `CLAUDE.md`                                                  | 코드 작업 지침, 전 명령 공통 규약, 노출 금지 정책 |
-| `README.md` / `skills/dooray-cli/SKILL.md`                   | 사용자 가이드 (외부 facing)               |
+| `README.md` / `skills/dooray-cli/`                           | 사용자 가이드 (외부 facing)               |
+| `skills/dooray-persona/`                                     | 문체 페르소나 워크플로우 (외부 facing)    |
 
 ## 실행 주기
 
