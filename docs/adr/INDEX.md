@@ -48,4 +48,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-037](037-bulk-post-collection-pitfalls.md) — 업무 대량 수집 시 Dooray API 함정 (그룹 담당·조용한 속도 제한·목록 응답 body 부재)
 - [ADR-038](038-persona-skill-outside-managed-install.md) — `dooray-persona` 스킬을 관리형 설치 체계 밖에 둔다
 - [ADR-039](039-rate-limit-token-bucket.md) — Dooray 요청 제한을 응답 헤더로 보정하는 클라이언트 토큰 풀
-- [ADR-040](040-mail-web-url-not-mappable.md) — 웹 메일 URL 의 mail id 를 IMAP UID 로 매핑하지 않는다 (Issue #141)
+- [ADR-040](040-mail-url-to-uid-lookup.md) — 웹 메일 주소의 mail id 를 시각으로 풀어 IMAP UID 를 찾는다 (Issue #141)

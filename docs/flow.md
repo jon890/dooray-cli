@@ -534,14 +534,22 @@ dooray mail send --to "recipient@example.com" --subject "제목" --body "본문"
 dooray mail reply <uid> --body "답장 내용"              # 스레드 유지
 ```
 
-`mail get` 과 `mail reply` 는 IMAP UID 만 받는다.
-웹 메일 주소나 그 주소에 들어 있는 19자리 mail id 를 넣으면 조회하지 않고 아래처럼 안내한다 (ADR-040).
+`mail get` 과 `mail reply` 는 세 가지 입력을 받는다.
 
 ```
-$ dooray mail get https://<tenant>.dooray.com/mail/systems/inbox/<mail-id>
-오류: 웹 메일 주소입니다. CLI 는 IMAP UID 로만 메일을 조회합니다.
-      웹 주소의 mail id 와 IMAP UID 는 서로 다른 체계라 변환할 수 없습니다.
-      제목 일부를 알고 있다면 UID 를 먼저 찾으세요:
-        dooray mail list --search "<제목 일부>"
-        dooray mail get <uid>
+dooray mail get 6980                                                    # IMAP UID
+dooray mail get https://<tenant>.dooray.com/mail/systems/inbox/<mail-id>  # 메일 웹 주소
+dooray mail get <mail-id>                                               # 주소에서 뽑은 19자리 id
 ```
+
+뒤의 두 형태는 id 에서 도착 시각을 꺼낸 뒤 UID 를 이분 탐색해 찾는다 (ADR-040).
+같은 초에 도착한 메일이 여럿이면 하나를 고르지 않고 후보를 보여준다.
+
+```
+$ dooray mail get <mail-id>
+오류: 같은 시각에 도착한 메일이 2건입니다. UID 로 다시 조회하세요.
+  6979  2026-08-18 19:52  [보낸사람] 제목
+  6980  2026-08-18 19:52  [보낸사람] 제목
+```
+
+메일이 다른 폴더로 옮겨졌거나 삭제됐으면 찾지 못한다. 이때는 `mail list --search` 로 우회한다.

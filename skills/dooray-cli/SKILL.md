@@ -200,7 +200,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 메일 목록 | `dooray mail list` |
 | 안 읽은 메일 | `dooray mail list --unread` |
 | 제목 검색 | `dooray mail list --search "<keyword>"` |
-| 메일 상세 | `dooray mail get <uid>` — UID 는 `mail list` 가 보여주는 값이다. 웹 메일 주소나 그 주소의 19자리 id 로는 조회할 수 없다 |
+| 메일 상세 | `dooray mail get <uid\|url\|mail-id>` — `mail list` 의 UID, 메일 웹 주소, 그 주소의 19자리 id 를 모두 받는다 |
 | 메일 발송 | `dooray mail send --to "..." --subject "..." --body "..."` |
 | 메일 답장 | `dooray mail reply <uid> --body "..."` |
 | 저장된 인증정보 제거 | `dooray mail logout` (비대화형 환경은 `--yes`) |

@@ -22,4 +22,5 @@
 | 2026-08-10 | review-fix | PR 120 | - | - | - | 3 | - | 없음 | 2 | PR #120 머지 |
 | 2026-08-11 | planning | 055-feat-dooray-persona-skill | - | 5 | - | - | - | 없음 | 2 | docs·task 작성, 설치 체계 확장 범위 철회 |
 | 2026-08-11 | review-fix | PR 128 | - | - | - | 4 | - | 없음 | 0 | 🟡 4건 반영, 스레드 4건 resolve |
-| 2026-08-19 | planning | 056-fix-mail-get-input | - | 2 | - | - | - | 없음 | 1 | docs·task 작성, IMAP 실측으로 URL 매핑 불가 확정 |
+| 2026-08-19 | planning | 056-fix-mail-get-input | - | 2 | - | - | - | 없음 | 1 | docs·task 작성, 헤더 경로만 보고 매핑 불가로 오판 |
+| 2026-08-19 | planning | 056-fix-mail-get-input 재계획 | - | 3 | - | - | - | 없음 | 1 | id 가 시각을 담는 것을 실측, 매핑 포함해 ADR·phase 재작성 |

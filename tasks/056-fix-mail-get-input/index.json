@@ -1,17 +1,17 @@
 {
   "name": "056-fix-mail-get-input",
-  "description": "GitHub Issue #141 — mail get/reply 가 19자리 웹 mail id 와 메일 웹 주소를 알아보고 정밀도 손실 없이 안내하며 거절한다",
+  "description": "GitHub Issue #141 — mail get/reply 가 메일 웹 주소와 19자리 mail id 를 받아 도착 시각으로 UID 를 찾고, 19자리 입력의 정밀도 손실을 없앤다",
   "created_at": "2026-08-19T00:00:00Z",
   "updated_at": "2026-08-19T00:00:00Z",
   "status": "pending",
   "current_phase": 1,
-  "total_phases": 2,
+  "total_phases": 3,
   "error_message": null,
   "blocked_reason": null,
   "phases": [
     {
       "number": 1,
-      "title": "메일 URL 파서와 인자 분류기 추가",
+      "title": "메일 주소 파서와 id 디코더, 인자 분류기",
       "file": "phase-01.md",
       "execution_profile": "standard",
       "status": "pending",
@@ -19,8 +19,16 @@
     },
     {
       "number": 2,
-      "title": "mail get·reply 배선과 통합 검증",
+      "title": "IMAP 계층의 mail id → UID 이분 탐색",
       "file": "phase-02.md",
+      "execution_profile": "deep",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 3,
+      "title": "mail get·reply 배선과 통합 검증",
+      "file": "phase-03.md",
       "execution_profile": "standard",
       "status": "pending",
       "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]

@@ -25,7 +25,7 @@ src/
   api/
     client.ts               # DoorayApiClient — ky 기반 HTTP 래퍼
     rate-limiter.ts         # 요청 토큰 버킷. 응답 헤더로 서버 잔량과 동기화 (ADR-039)
-    imapClient.ts           # IMAP 메일 조회 (imapflow + mailparser)
+    imapClient.ts           # IMAP 메일 조회 (imapflow + mailparser). resolveUidByMailId — 도착 시각으로 UID 이분 탐색 (ADR-040)
     smtpClient.ts           # SMTP 메일 발송 (nodemailer)
     types.ts                # 모든 API 요청/응답 타입
 
@@ -49,7 +49,7 @@ src/
     post-tags.ts            # mergeTagIds pure helper — post edit 의 --tag/--tag-clear/--tag-remove 머지 (clear → remove → add → dedupe, Issue #66, ADR-019 확장)
     wiki-page-input.ts      # wiki page file 5 명령 입력 분기 (--id/--url/positional URL → {wikiId, pageId}, post-input.ts 패턴 mirror, ADR-020 확장)
     messenger-channel.ts    # messenger channel-send --channel 분기: channelId(15+자리) 직접 / 그 외 GET channels title 매칭 (ADR-033)
-    mail-input.ts           # mail get/reply 인자 분류 (classifyMailInputToken) — 32비트 초과 숫자와 웹 메일 URL 은 UID 아님으로 거절, BigInt 경계 비교 (ADR-040)
+    mail-input.ts           # mail get/reply 인자 분류 (classifyMailInputToken) + mail id → UID 해석. 32비트 경계로 UID 와 mail id 를 가르고 BigInt 로 비교 (ADR-040)
 
   cache/
     store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크
@@ -174,9 +174,9 @@ src/
 
     mail/
       list.ts               # 메일 목록 (--unread, --search)
-      get.ts                # 메일 상세 조회 (resolveMailUid 로 인자 검증)
+      get.ts                # 메일 상세 조회 (UID / 웹 주소 / mail id 입력 분기)
       send.ts               # 메일 발송 (--to, --cc, --bcc, --html)
-      reply.ts              # 메일 답장 (In-Reply-To 스레드 유지, resolveMailUid 공유)
+      reply.ts              # 메일 답장 (In-Reply-To 스레드 유지, get.ts 와 입력 분기 공유)
 ```
 
 ## 모듈 의존 관계
