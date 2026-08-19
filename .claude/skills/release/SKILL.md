@@ -166,7 +166,7 @@ git push origin v{version}
 gh release create v{version} --title "v{version} — {요약}" --notes-file /tmp/release-v{version}-notes.md
 ```
 
-**Why** (글로벌 `~/.claude/rules/markdown-readability.md` "Markdown 작성 함정" 표):
+**Why** (글로벌 `~/.claude/rules/markdown-readability.md` "렌더링 함정" 표):
 
 - quoted heredoc 안에서는 backtick 과 달러 기호, backslash 가 이미 비활성화되므로 escape 가 필요 없다
 - 그런데 "안전하게" backslash 를 덧붙이면 그것이 본문에 리터럴로 남아 markdown 이 깨진다

@@ -29,7 +29,8 @@ ADR 본문은 planning 단계에서 사용자와 함께 결정한다.
 | 캐시 파일 구조와 TTL | `docs/data-schema.md` |
 | 코드 컨벤션, 개인 식별 정보 금지 유형 | `CLAUDE.md` (검사는 `scripts/check-pii.sh`) |
 | docs 갱신 범위 | `.claude/planning-overlay.md` "변경 유형별 docs 영향 표" |
-| 마크다운 형식 규칙 | 글로벌 `~/.claude/rules/markdown-readability.md` |
+| 글의 구조 규칙 | 글로벌 `~/.claude/rules/writing-structure.md` |
+| 마크다운 렌더링 규칙 | 글로벌 `~/.claude/rules/markdown-readability.md` |
 
 ## dooray-cli docs 의 역할 구분
 
