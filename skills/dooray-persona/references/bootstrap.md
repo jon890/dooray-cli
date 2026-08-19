@@ -116,12 +116,14 @@ dooray project list 로 목록이 나오는지 확인한다.
 - 심볼릭 링크를 만들지 않고 복사한다. Windows 에서 링크는 개발자 모드나 관리자 권한을 요구한다.
 - curl 과 tar 는 macOS 와 Windows 10 이상에 기본으로 들어 있다.
 
-  임시 폴더에 압축본을 풀고
+  빈 임시 폴더를 하나 만들고 그 안에 압축본을 풀고
     curl -fsSL https://github.com/jon890/dooray-cli/archive/refs/heads/main.tar.gz -o <임시>/dooray-cli.tar.gz
-    tar xzf <임시>/dooray-cli.tar.gz -C <임시>/src --strip-components=1
-  그 안의 skills/dooray-persona 를 통째로
+    tar xzf <임시>/dooray-cli.tar.gz -C <임시> --strip-components=1
+  풀린 <임시>/skills/dooray-persona 를 통째로
     ~/.claude/skills/dooray-persona
   로 복사한다. 이미 있으면 지우고 다시 복사한다.
+
+tar 는 -C 로 지정한 폴더가 없으면 실패한다. 풀기 전에 그 폴더가 있는지 확인한다.
 
 Windows 에서는 curl.exe 와 tar.exe 를 쓰고, 경로는 %USERPROFILE%\.claude\skills 아래가 된다.
 
