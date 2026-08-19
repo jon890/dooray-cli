@@ -533,3 +533,15 @@ dooray mail get <uid>                                   # 메일 상세
 dooray mail send --to "recipient@example.com" --subject "제목" --body "본문"
 dooray mail reply <uid> --body "답장 내용"              # 스레드 유지
 ```
+
+`mail get` 과 `mail reply` 는 IMAP UID 만 받는다.
+웹 메일 주소나 그 주소에 들어 있는 19자리 mail id 를 넣으면 조회하지 않고 아래처럼 안내한다 (ADR-040).
+
+```
+$ dooray mail get https://<tenant>.dooray.com/mail/systems/inbox/<mail-id>
+오류: 웹 메일 주소입니다. CLI 는 IMAP UID 로만 메일을 조회합니다.
+      웹 주소의 mail id 와 IMAP UID 는 서로 다른 체계라 변환할 수 없습니다.
+      제목 일부를 알고 있다면 UID 를 먼저 찾으세요:
+        dooray mail list --search "<제목 일부>"
+        dooray mail get <uid>
+```
