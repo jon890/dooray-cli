@@ -1,4 +1,4 @@
-import { readFile, writeFile, rm, mkdir, readdir } from "node:fs/promises";
+import { readFile, writeFile, rm, mkdir, readdir, stat } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 import type {
@@ -185,11 +185,31 @@ export async function setWikis(items: CachedWiki[]): Promise<void> {
 
 // ─── Clear ────────────────────────────────────────────────
 
-export async function clearCache(): Promise<void> {
+/**
+ * 캐시 디렉터리를 통째로 지운다. 지운 것이 있었으면 `true` 다.
+ *
+ * 삭제에 실패하면 원래 오류를 그대로 던진다. `DoorayCliError` 로 감싸지 않는 이유는
+ * 부르는 쪽마다 처리가 다르기 때문이다 (ADR-042).
+ * `dooray cache clear` 는 사용자가 명시적으로 요청한 작업이라 실패를 에러로 노출하고,
+ * `services/config.ts` 의 무효화는 부수 작업이라 경고만 낸다.
+ *
+ * 반환값으로 부재와 삭제를 가르는 이유는 안내 때문이다.
+ * 지울 캐시가 없었는데 비웠다고 알리면 처음 쓰는 사용자에게 없는 이야기를 꺼내게 된다.
+ */
+export async function clearCache(): Promise<boolean> {
+  const existed = await cacheDirExists();
+  await rm(CACHE_DIR, { recursive: true, force: true });
+  return existed;
+}
+
+/** 캐시 디렉터리 존재 여부. `ENOENT` 만 부재로 보고 나머지 오류는 그대로 던진다. */
+async function cacheDirExists(): Promise<boolean> {
   try {
-    await rm(CACHE_DIR, { recursive: true, force: true });
-  } catch {
-    // directory doesn't exist
+    await stat(CACHE_DIR);
+    return true;
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw e;
   }
 }
 
