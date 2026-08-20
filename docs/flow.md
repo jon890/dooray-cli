@@ -214,7 +214,7 @@ dooray cache refresh     # 즉시 갱신
 dooray cache clear       # 전체 삭제
 ```
 
-TTL: projects·members·tags·milestones·member-groups 1시간 / workflows·me 24시간
+TTL: projects·members 1시간, 나머지 24시간. 엔티티별 값과 근거는 `docs/data-schema.md` 의 TTL 설계 근거 표가 소유한다.
 
 ## 멤버 조회 흐름 (ADR-021)
 
@@ -367,6 +367,35 @@ dooray post edit --id <postId> --tag-remove "분류: <name>"
 
 `--title`/`--body` 없이 단독 호출 허용 — 기존 본문 자동 재전송.
 mandatory tag 그룹 위반 시 친절한 에러.
+
+## 프로젝트 태그 관리 흐름 (ADR-041)
+
+태그를 업무에 붙이는 것과 별개로, 붙일 태그를 만드는 흐름이다.
+
+```
+dooray project tags my-project                              # 목록 (기존 호출 그대로 동작)
+dooray project tags list my-project                         # 같은 동작
+
+dooray project tags create my-project --name "배포환경:staging"
+dooray project tags create my-project --name "배포환경:production" --color c6eab3
+dooray project tags create my-project --name "긴급"          # 그룹 없는 개별 태그
+
+dooray project tags group my-project "배포환경" --select-one  # 그룹에서 하나만 선택하게
+```
+
+`--name` 은 `"그룹명:태그명"` 이고 그룹명은 생략할 수 있다.
+같은 그룹명으로 여러 번 만들면 그 그룹에 태그가 쌓인다.
+`--color` 를 생략하면 `e0e0e0` 이 붙고, `#c6eab3` 처럼 `#` 을 붙여 넣어도 벗겨서 보낸다.
+
+생성 직후 그 프로젝트의 태그 캐시를 지운다.
+지우지 않으면 방금 만든 태그를 `post create --tag` 가 최대 24시간 찾지 못한다.
+
+`group` 은 그룹의 필수 여부(`--mandatory`)와 단일 선택 여부(`--select-one`)만 바꾼다.
+해제는 `--no-mandatory`, `--no-select-one` 이고, 지정하지 않은 쪽은 현재 값을 유지한다.
+그룹 이름은 태그 목록에서 파생하므로 태그가 하나도 없는 그룹은 찾을 수 없다.
+
+태그 이름·색상 수정과 태그 삭제는 공식 API 에 경로가 없어 제공하지 않는다.
+그 두 가지는 웹 설정 화면에서 한다.
 
 ## 업무 워크플로우 변경 흐름
 

@@ -37,7 +37,7 @@ src/
     post.ts                 # postNumber → postId (API 호출)
     wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시)
     postRef.ts              # "code/number" 또는 raw postId → postId (post create / post edit --parent 공용)
-    tag.ts                  # name[] → tagIds + mandatory/selectOne 검증
+    tag.ts                  # name[] → tagIds + mandatory/selectOne 검증, 그룹 이름 → groupId (태그 목록의 tagGroup 에서 파생, ADR-041)
     milestone.ts            # name → milestoneId
     match.ts                # 공용 매칭: 정확일치 → 부분일치 → 모호 시 에러. helpHint 옵션 + name 가드 (ADR-028)
     post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020). 입력 토큰 타입 판별 (classifyPostInputToken) + 진입점별 검증 (ADR-020 보강)
@@ -111,7 +111,9 @@ src/
       members.ts
       workflows.ts
       groups.ts               # dooray project groups <project>
-      tags.ts                 # dooray project tags <project>
+      tags.ts                 # dooray project tags — 그룹 명령 조립 + list 동작 (인자 있는 기존 호출 호환)
+      tags-create.ts          # dooray project tags create — POST tags, "그룹:태그" 이름과 color 정규화 (ADR-041)
+      tags-group.ts           # dooray project tags group — PUT tag-groups, mandatory/selectOne 현재값 병합 (ADR-041)
 
     member/
       index.ts              # member 서브커맨드 등록

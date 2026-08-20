@@ -169,6 +169,27 @@ CLI로 올린 파일은 댓글의 첨부 카드가 아니라 본문 링크로 �
 플래그가 없으면 삭제 API를 호출하기 전에 종료 코드 3으로 끝난다.
 기존 삭제 자동화에는 명시적인 yes 플래그를 추가해야 한다.
 
+### 프로젝트 태그 만들기
+
+업무에 붙일 태그를 CLI 에서 만든다.
+
+```bash
+dooray project tags <project>                                    # 태그 목록
+dooray project tags create <project> --name "배포환경:staging"    # 그룹에 속한 태그
+dooray project tags create <project> --name "긴급" --color c6eab3  # 그룹 없는 태그
+dooray project tags group <project> "배포환경" --select-one        # 그룹에서 하나만 고르게
+```
+
+`--name` 은 `"그룹명:태그명"` 형식이고 그룹명은 생략할 수 있다.
+같은 그룹명으로 여러 번 만들면 그 그룹에 태그가 쌓인다.
+`--color` 를 생략하면 회색이 붙는다.
+
+`group` 은 그룹의 필수 여부(`--mandatory`)와 단일 선택 여부(`--select-one`)를 바꾼다.
+해제는 `--no-mandatory` 와 `--no-select-one` 이고, 지정하지 않은 쪽은 그대로 둔다.
+태그가 하나도 없는 그룹은 대상이 되지 않는다.
+
+태그 이름·색상 수정과 태그 삭제는 Dooray API 에 경로가 없어 웹 설정 화면에서 한다.
+
 ## 프로젝트 구조
 
 ```
