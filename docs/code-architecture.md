@@ -247,7 +247,7 @@ class DoorayApiClient {
 
 - 모든 에러는 `DoorayCliError(message, exitCode)` 로 통일
 - `commands/*` 최상단에서 catch: stderr 출력 후 `process.exit(exitCode)`
-- API 4xx: exitCode 1, 인증 401/403: exitCode 2, 파라미터: exitCode 3, config 없음: exitCode 4
+- API 4xx: exitCode 1, 인증 401/403: exitCode 2, 파라미터: exitCode 3, config 없음: exitCode 4, 파일 시스템 오류: exitCode 5
 
 ## 출력 원칙
 

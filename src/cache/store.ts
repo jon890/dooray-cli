@@ -14,7 +14,8 @@ import type {
   CachedTemplate,
 } from "./types.js";
 
-const CACHE_DIR = join(homedir(), ".dooray", "cache");
+/** 캐시 루트. 오류 메시지에 경로를 실어야 하는 호출부가 있어 내보낸다. */
+export const CACHE_DIR = join(homedir(), ".dooray", "cache");
 const ME_PATH = join(CACHE_DIR, "me.json");
 const PROJECTS_PATH = join(CACHE_DIR, "projects.json");
 const PROJECTS_PRIVATE_PATH = join(CACHE_DIR, "projects-private.json");

@@ -1,9 +1,23 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { getConfig, setConfigValue } from "../config/store.js";
+import { getConfig } from "../config/store.js";
+import { updateConfigValue } from "../services/config.js";
 import { resolveConfigValue } from "../utils/config-value.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
+
+/**
+ * 캐시를 비웠을 때 덧붙이는 한 줄. 무엇이 바뀌어서 비웠는지를 키에 따라 가른다 (ADR-042).
+ *
+ * 실제로 지운 것이 있었을 때만 부른다. 지울 캐시가 없었으면 이 문장이 나오지 않는다.
+ */
+function cacheClearedNotice(key: string): string {
+  const reason =
+    key === "api-key"
+      ? "계정이 바뀌었을 수 있어"
+      : "접속 환경이 바뀌었을 수 있어";
+  return `  ${reason} 캐시를 비웠습니다. 다음 조회가 API 를 다시 호출합니다.`;
+}
 
 function maskApiKey(key: string): string {
   if (key.length <= 8) return "****";
@@ -20,8 +34,12 @@ configCommand
   .argument("<value>", "설정 값 (`-` 이면 stdin 에서 읽음)")
   .action(async (key: string, value: string) => {
     try {
-      await setConfigValue(key, await resolveConfigValue(value));
+      const { cacheCleared } = await updateConfigValue(
+        key,
+        await resolveConfigValue(value),
+      );
       console.log(chalk.green(`✓ ${key} 설정 완료`));
+      if (cacheCleared) console.log(chalk.gray(cacheClearedNotice(key)));
     } catch (err) {
       if (err instanceof DoorayCliError) {
         console.error(chalk.red(err.message));

@@ -4,7 +4,8 @@ import path from "path";
 import fs from "fs/promises";
 import { createSkillManagerContext } from "../skill/context.js";
 import { installSkill as installClaudeSkill } from "../skill/manager.js";
-import { getConfig, saveConfig } from "../config/store.js";
+import { getConfig } from "../config/store.js";
+import { replaceConfig } from "../services/config.js";
 import { DoorayApiClient } from "../api/client.js";
 import { ensureMe } from "../resolvers/me.js";
 import { API_ENDPOINTS, DEFAULTS } from "../config/types.js";
@@ -173,12 +174,21 @@ export const setupCommand = new Command("setup")
       };
       config.trackLastRun = trackLastRun;
 
-      await saveConfig(config);
+      // setup 은 existing 을 들고 있지만 직접 비교하지 않는다.
+      // 판정 규칙이 두 곳에 생기면 config 키가 늘어날 때 한쪽이 빠진다 (ADR-042).
+      const { cacheCleared } = await replaceConfig(config);
       console.log(
         chalk.green(
           "\n✓ 설정 완료. dooray doctor로 상태를 확인할 수 있습니다.",
         ),
       );
+      if (cacheCleared) {
+        console.log(
+          chalk.gray(
+            "  계정이나 접속 환경이 바뀌어 캐시를 비웠습니다. 다음 조회가 API 를 다시 호출합니다.",
+          ),
+        );
+      }
     } catch (err) {
       if (
         err != null &&
