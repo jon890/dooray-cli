@@ -3,7 +3,7 @@ import { getConfigOrThrow } from "../../config/store.js";
 import { DoorayApiClient } from "../../api/client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { createTag } from "../../services/tag.js";
-import { printJson, type OutputOptions } from "../../formatters/table.js";
+import { printJson, printQuiet, type OutputOptions } from "../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
@@ -65,7 +65,7 @@ export const projectTagsCreateCommand = new Command("create")
     if (globalOpts.json) {
       printJson({ id: tagId, name, color });
     } else if (globalOpts.quiet) {
-      process.stdout.write(tagId + "\n");
+      printQuiet([tagId]);
     } else {
       process.stdout.write(`태그가 생성되었습니다: ${name} (${tagId})\n`);
     }

@@ -42,7 +42,9 @@ export const projectTagsCommand = new Command("tags")
   .argument("[project]", "프로젝트 코드 또는 ID (생략하면 도움말)")
   .action(async (project: string | undefined) => {
     if (!project) {
-      projectTagsCommand.outputHelp();
+      // 다른 그룹 명령(dooray project, wiki page)과 같이 stderr 로 내고 종료 코드 1 로 끝낸다.
+      // stdout 으로 내면 --json 과 --quiet 이 사람용 도움말을 받아 파싱이 깨진다.
+      projectTagsCommand.help({ error: true }); // 프로세스를 종료한다
       return;
     }
     await runTagsList(project, projectTagsCommand.optsWithGlobals() as OutputOptions);

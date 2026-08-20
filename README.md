@@ -175,6 +175,7 @@ CLI로 올린 파일은 댓글의 첨부 카드가 아니라 본문 링크로 �
 
 ```bash
 dooray project tags <project>                                    # 태그 목록
+dooray project tags list <project>                               # 같은 동작
 dooray project tags create <project> --name "배포환경:staging"    # 그룹에 속한 태그
 dooray project tags create <project> --name "긴급" --color c6eab3  # 그룹 없는 태그
 dooray project tags group <project> "배포환경" --select-one        # 그룹에서 하나만 고르게
@@ -187,6 +188,9 @@ dooray project tags group <project> "배포환경" --select-one        # 그룹�
 `group` 은 그룹의 필수 여부(`--mandatory`)와 단일 선택 여부(`--select-one`)를 바꾼다.
 해제는 `--no-mandatory` 와 `--no-select-one` 이고, 지정하지 않은 쪽은 그대로 둔다.
 태그가 하나도 없는 그룹은 대상이 되지 않는다.
+
+프로젝트 코드가 `list`, `create`, `group` 중 하나와 같으면 그 인자가 하위 명령으로 먼저 읽힌다.
+그때는 `dooray project tags list <project>` 로 목록을 조회한다.
 
 태그 이름·색상 수정과 태그 삭제는 Dooray API 에 경로가 없어 웹 설정 화면에서 한다.
 

@@ -4,7 +4,7 @@ import { DoorayApiClient } from "../../api/client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { resolveTagGroup } from "../../resolvers/tag.js";
 import { updateTagGroup } from "../../services/tag.js";
-import { printJson, type OutputOptions } from "../../formatters/table.js";
+import { printJson, printQuiet, type OutputOptions } from "../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
@@ -53,7 +53,7 @@ export const projectTagsGroupCommand = new Command("group")
     if (globalOpts.json) {
       printJson({ id: resolved.id, name: resolved.name, mandatory, selectOne });
     } else if (globalOpts.quiet) {
-      process.stdout.write(resolved.id + "\n");
+      printQuiet([resolved.id]);
     } else {
       process.stdout.write(
         `태그 그룹이 변경되었습니다: ${resolved.name} ` +

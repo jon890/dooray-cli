@@ -279,6 +279,16 @@ grep -nE "optsWithGlobals\(\)[^;]*\.(color|name)" src/commands/project/tags-crea
 grep -nE "\.(color|name)[^;]*optsWithGlobals\(\)" src/commands/project/tags-create.ts
 ```
 
+위 둘은 한 줄 안에서 붙어 있는 형태만 잡는다.
+`const opts = cmd.optsWithGlobals()` 로 먼저 받아 두고 몇 줄 뒤에 `opts.color` 를 쓰면 통과한다.
+그래서 등장 횟수도 함께 본다. 주석을 뺀 코드에서 `optsWithGlobals` 는 출력 모드용 한 번뿐이어야 한다.
+
+```bash
+# cwd: <repo root>
+grep -c "optsWithGlobals" src/commands/project/tags-create.ts   # 주석 포함 횟수를 눈으로 빼지 말고
+grep -n "optsWithGlobals" src/commands/project/tags-create.ts   # 실제 대입문이 하나인지 본다
+```
+
 눈으로 대조하는 검증은 쓰지 않는다. 회피 항목은 `docs/pitfalls/plan/manual-eyeball-verification.md` 다.
 
 `README.md` 가 `services/` 를 담는지 확인한다. 두 grep 이 모두 결과를 내야 한다.
