@@ -22,4 +22,4 @@
 | 2026-08-10 | review-fix | PR 120 | - | - | - | 3 | - | 없음 | 2 | PR #120 머지 |
 | 2026-08-11 | planning | 055-feat-dooray-persona-skill | - | 5 | - | - | - | 없음 | 2 | docs·task 작성, 설치 체계 확장 범위 철회 |
 | 2026-08-11 | review-fix | PR 128 | - | - | - | 4 | - | 없음 | 0 | 🟡 4건 반영, 스레드 4건 resolve |
-| 2026-08-20 | planning | plan057-feat-project-tags-write | - | 3 | - | - | - | 없음 | 3 | docs·task 작성, API 문서 확인으로 지원 범위 한정, flow TTL 불일치 교정 |
+| 2026-08-20 | planning | plan057-feat-project-tags-write | - | 3 | - | - | - | 없음 | 4 | docs·task 작성, API 문서 확인으로 지원 범위 한정, flow TTL 불일치 교정, 캐시 무효화 정책 ADR 신설 |

@@ -9,11 +9,13 @@
 `project tags` 를 하위 명령을 갖는 그룹 명령으로 바꾸고, 태그 생성과 태그 그룹 속성 변경 명령을 만든다.
 사용자에게 보이는 변화가 이 phase 에서 생긴다.
 
-phase-01 이 만든 표면을 전제한다. 아래 넷이 없으면 phase-01 이 끝나지 않은 것이므로 멈추고 보고한다.
+phase-01 이 만든 표면을 전제한다. 아래가 없으면 phase-01 이 끝나지 않은 것이므로 멈추고 보고한다.
 
-- `src/api/client.ts` 의 `createProjectTag`, `updateProjectTagGroup`
-- `src/cache/store.ts` 의 `clearTags`
-- `src/resolvers/tag.ts` 의 `resolveTagGroup`
+- `src/resolvers/tag.ts` 의 `resolveTagGroup`, `createTag`, `updateTagGroup`
+
+이 명령들은 `src/api/client.ts` 와 `src/cache/store.ts` 를 직접 부르지 않는다.
+API 호출과 캐시 무효화가 위 세 함수 안에 이미 묶여 있다.
+근거는 `docs/adr/042-cache-invalidation-on-mutation.md` 다.
 
 설계 근거는 `docs/adr/041-project-tag-write-scope.md` 다. 작업 전에 읽는다.
 사용자 흐름은 `docs/flow.md` 의 "프로젝트 태그 관리 흐름" 절에 이미 확정되어 있다. 그 문서와 어긋나게 만들지 않는다.
@@ -57,9 +59,9 @@ dooray project tags create <project> --name "<그룹>:<태그>" [--color <hex>]
 - `--name` 은 trim 후 빈 값이면 거부한다.
 - `--name` 값을 API 에 그대로 보낸다. CLI 가 `:` 를 파싱해 그룹과 태그로 쪼개지 않는다.
   그룹 해석은 서버가 한다. `"그룹:태그"` 와 `"태그"` 둘 다 서버가 받는 형식이다.
-- `resolveProject` 로 projectId 를 얻고 `client.createProjectTag(projectId, { name, color })` 를 호출한다.
-- 성공하면 `clearTags(projectId)` 를 호출해 태그 캐시를 지운다. 이 호출을 빼면 안 된다.
-  TTL 이 24시간이라 방금 만든 태그를 `post create --tag` 가 그만큼 찾지 못한다.
+- `resolveProject` 로 projectId 를 얻고 `createTag(client, projectId, { name, color })` 를 호출한다.
+  반환값이 만들어진 태그 id 다.
+- 캐시 무효화는 `createTag` 안에서 일어난다. 명령이 `clearTags` 를 따로 부르지 않는다.
 
 출력 세 모드를 모두 채운다.
 
@@ -91,8 +93,8 @@ dooray project tags group <project> <그룹> [--mandatory] [--no-mandatory] [--s
   API 를 호출하지 않고, 무엇을 지정해야 하는지 안내한다.
 - 지정하지 않은 쪽은 `resolveTagGroup` 이 돌려준 현재 값을 그대로 실어 보낸다.
   `PUT tag-groups` 가 `mandatory` 와 `selectOne` 을 함께 받으므로, 병합하지 않으면 지정하지 않은 쪽이 초기화된다.
-- `client.updateProjectTagGroup(projectId, group.id, { mandatory, selectOne })` 를 호출한다.
-- 성공하면 `clearTags(projectId)` 를 호출한다. 그룹 속성이 태그 캐시에 함께 들어 있다.
+- `updateTagGroup(client, projectId, group.id, { mandatory, selectOne })` 를 호출한다.
+- 캐시 무효화는 그 함수 안에서 일어난다. 명령이 `clearTags` 를 따로 부르지 않는다.
 
 Commander 의 `--no-` 접두는 같은 이름 옵션의 기본값을 뒤집는다.
 `--mandatory` 와 `--no-mandatory` 를 함께 등록할 때 지정 여부를 구분할 수 있어야 한다.
@@ -194,13 +196,22 @@ node dist/index.js project tags create --help
 node dist/index.js project tags group --help
 ```
 
-세 출력 모드가 모두 채워졌는지 확인한다. 두 grep 이 각각 결과를 내야 한다.
+세 출력 모드가 모두 채워졌는지 확인한다. 아래 grep 이 두 파일 모두에서 결과를 내야 한다.
 
 ```bash
 # cwd: <repo root>
 grep -n "quiet" src/commands/project/tags-create.ts src/commands/project/tags-group.ts
-grep -n "clearTags" src/commands/project/tags-create.ts src/commands/project/tags-group.ts
 ```
+
+명령이 캐시와 API 클라이언트를 직접 부르지 않는지 확인한다. 아래 출력이 없어야 한다.
+
+```bash
+# cwd: <repo root>
+grep -n "clearTags\|createProjectTag\|updateProjectTagGroup" \
+  src/commands/project/tags-create.ts src/commands/project/tags-group.ts
+```
+
+회피 항목은 `docs/pitfalls/code-review/mutation-without-cache-invalidation.md` 다.
 
 스피너가 검증 뒤에 오는지 확인한다. 각 파일에서 `startSpinner` 가 파라미터 검증보다 아래에 있어야 한다.
 
@@ -228,3 +239,5 @@ bash scripts/check-pii.sh
   중간 실패 시 어디까지 만들어졌는지를 따로 알려야 한다. 명령 하나가 호출 하나에 대응하는 편이 단순하다.
 - 기존 `project tags <project>` 를 남기는 이유는 그 형태가 공개 문서에 이미 실려 있어서다.
   하위 명령만 남기면 사용자 스크립트가 조용히 깨진다.
+- 명령이 API 클라이언트와 캐시를 직접 부르지 않는 이유는 캐시 무효화를 잊을 수 있는 자리를
+  없애기 위해서다. 두 함수를 부르는 것 말고는 선택지가 없어야 한다.

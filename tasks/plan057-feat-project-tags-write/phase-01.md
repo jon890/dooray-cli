@@ -11,7 +11,9 @@
 
 배경은 GitHub Issue #146 이다.
 태그를 업무에 붙이는 일은 `post edit --tag` 로 되지만, 붙일 태그를 만드는 단계만 웹 설정 화면에 남아 있었다.
-설계 근거와 지원 범위 한정 이유는 `docs/adr/041-project-tag-write-scope.md` 에 있다. 작업 전에 읽는다.
+설계 근거와 지원 범위 한정 이유는 `docs/adr/041-project-tag-write-scope.md` 에 있다.
+캐시 무효화를 어느 계열이 맡는지는 `docs/adr/042-cache-invalidation-on-mutation.md` 가 소유한다.
+둘 다 작업 전에 읽는다.
 
 **범위 외**:
 
@@ -21,7 +23,7 @@
 
 ---
 
-## 작업 항목 (4)
+## 작업 항목 (5)
 
 ### 1. 요청·응답 타입 추가 (`src/api/types.ts`)
 
@@ -89,6 +91,8 @@ export async function clearTags(projectId: string): Promise<void>
 이 변경은 필드를 늘리지 않고 삭제 경로만 추가하므로 `CachedTag` 타입과 reader 는 손대지 않는다.
 그 판단이 맞는지 `grep -n "CachedTag" src/` 로 확인하고, 새 필드가 필요 없다는 것을 확인한 뒤 넘어간다.
 
+`clearTags` 를 명령 파일에서 직접 부르지 않는다. 아래 5번 항목의 쓰기 함수만 부른다.
+
 ### 4. 그룹 이름을 groupId 로 바꾸는 resolver (`src/resolvers/tag.ts`)
 
 파일 끝에 추가한다.
@@ -134,6 +138,41 @@ export async function resolveTagGroup(
 그룹 정보를 태그 목록에서 파생하는 이유는 그룹 목록을 주는 API 경로가 없기 때문이다.
 그래서 태그가 하나도 없는 그룹은 찾을 수 없다. 이 제약은 ADR-041 에 기록되어 있다.
 
+### 5. 태그 쓰기 함수와 캐시 무효화 (`src/resolvers/tag.ts`)
+
+API 호출과 캐시 무효화를 한 함수 안에 묶는다. 같은 파일에 추가한다.
+
+```typescript
+export async function createTag(
+  client: DoorayApiClient,
+  projectId: string,
+  body: CreateTagRequest,
+): Promise<string>
+
+export async function updateTagGroup(
+  client: DoorayApiClient,
+  projectId: string,
+  tagGroupId: string,
+  body: UpdateTagGroupRequest,
+): Promise<void>
+```
+
+`createTag` 는 `client.createProjectTag` 를 부르고 응답의 `result.id` 를 반환한다.
+`updateTagGroup` 은 `client.updateProjectTagGroup` 을 부른다.
+둘 다 호출이 성공한 뒤에 `clearTags(projectId)` 를 부른다.
+
+캐시 삭제가 실패해도 함수는 정상 반환한다. 예외를 밖으로 던지지 않는다.
+대신 `stderr` 로 경고를 한 줄 내고 `dooray cache clear` 를 안내한다.
+이 시점에 API 호출은 이미 성공했으므로, 실패로 만들면 사용자가 재시도해 태그가 한 번 더 만들어진다.
+경고 출력은 `src/utils/` 에 이미 있는 stderr 출력 방식을 찾아 그것을 쓴다. 새로 만들지 않는다.
+
+이 배치의 근거는 `docs/adr/042-cache-invalidation-on-mutation.md` 다.
+캐시를 읽는 계열이 무효화도 맡아, 호출자가 무효화를 잊을 수 없게 하는 것이 목적이다.
+그래서 phase-02 의 명령 파일은 `client.createProjectTag` 와 `clearTags` 를 직접 부르지 않고
+이 두 함수만 부른다.
+
+회피 항목은 `docs/pitfalls/code-review/mutation-without-cache-invalidation.md` 다.
+
 ---
 
 ## Critical Files
@@ -165,10 +204,25 @@ grep -n "createProjectTag\|updateProjectTagGroup" src/api/client.ts
 grep -n "project/v1/projects/\${projectId}/tags\`" src/api/client.ts
 grep -n "tag-groups/\${tagGroupId}" src/api/client.ts
 grep -n "clearTags" src/cache/store.ts
-grep -n "resolveTagGroup" src/resolvers/tag.ts
+grep -n "resolveTagGroup\|createTag\|updateTagGroup" src/resolvers/tag.ts
 ```
 
 다섯 grep 이 모두 결과를 내야 한다.
+
+쓰기 함수가 캐시를 지우는지 확인한다. 아래 결과가 2 여야 한다.
+
+```bash
+# cwd: <repo root>
+grep -c "clearTags" src/resolvers/tag.ts
+```
+
+`api/client.ts` 가 캐시를 부르지 않는지 확인한다. 아래 출력이 없어야 한다.
+`api/client` 는 순수 HTTP 래퍼라 캐시를 알지 못한다.
+
+```bash
+# cwd: <repo root>
+grep -n "cache/store\|clearTags" src/api/client.ts
+```
 
 `toDoorayCliError` 로 감쌌는지 확인한다. 아래 결과가 2 여야 한다.
 
@@ -188,3 +242,8 @@ sed -n '/async createProjectTag/,/^  }/p;/async updateProjectTagGroup/,/^  }/p' 
   변경을 일으킨 명령이 자기 캐시를 지우는 편이 범위가 좁다.
 - 이 phase 가 phase-02 의 명령 세 개가 호출할 표면을 모두 확정한다.
   시그니처가 흔들리면 phase-02 를 다시 써야 한다.
+- 무효화를 resolver 계열에 둔 이유는 그 캐시를 읽는 책임이 이미 여기 있어서다.
+  명령이 무효화를 부르는 형태로 두면, 새 mutation 명령을 짜는 사람이 그것을 기억해야 하고
+  잊어도 어떤 검사도 잡지 못한다. 증상이 24시간짜리 지연이라 원인을 찾기 어렵다.
+- 캐시 삭제 실패를 성공으로 넘기는 이유는 그 시점에 API 호출이 이미 끝났기 때문이다.
+  실패로 만들면 재시도가 중복 생성을 부른다. 캐시가 낡은 것보다 그게 나쁘다.
