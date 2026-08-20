@@ -95,6 +95,10 @@ node --version 으로 Node.js 20 이상인지 확인한다.
 - 내 운영체제를 확인한다.
 - https://nodejs.org 의 LTS 설치 파일을 내려받아 실행하면 된다고 알려준다.
   macOS 는 `.pkg`, Windows 는 `.msi` 다. 내 운영체제에 맞는 것을 집어서 알려준다.
+- Windows 면 설치 중에 나오는 `Tools for Native Modules` 화면을 체크하지 말라고 미리 알려준다.
+  체크하면 Chocolatey 와 Python, Visual Studio Build Tools 를 함께 설치한다.
+  dooray-cli 는 의존 패키지가 전부 순수 JavaScript 라 컴파일할 것이 없어 필요 없다.
+  이미 체크해서 설치했더라도 Node 를 다시 깔 필요는 없다.
 - 설치 창이 관리자 비밀번호나 권한 확인을 물어볼 수 있다고 미리 알려준다.
 - 설치가 끝나면 알려 달라고 요청하고 기다린다. 임의로 다른 방법을 쓰지 않는다.
 - 내가 끝났다고 하면 node --version 을 다시 확인한다.
