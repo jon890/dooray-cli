@@ -246,7 +246,9 @@ class DoorayApiClient {
 ## 에러 처리 원칙
 
 - 모든 에러는 `DoorayCliError(message, exitCode)` 로 통일
-- `commands/*` 최상단에서 catch: stderr 출력 후 `process.exit(exitCode)`
+- `index.ts` 의 `parseAsync().catch` 가 전역에서 받는다. `오류: ` 접두사를 붙여 stderr 로 내고
+  `DoorayCliError` 의 `exitCode` 로 끝내며 `trackLastRun` 기록도 여기서 한다
+- 그래서 `commands/*` 는 던지기만 한다. 명령 안에서 `process.exit` 를 부르면 위 셋을 건너뛴다
 - API 4xx: exitCode 1, 인증 401/403: exitCode 2, 파라미터: exitCode 3, config 없음: exitCode 4, 파일 시스템 오류: exitCode 5
 
 ## 출력 원칙
