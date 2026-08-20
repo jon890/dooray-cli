@@ -11,10 +11,11 @@
 
 phase-01 이 만든 표면을 전제한다. 아래가 없으면 phase-01 이 끝나지 않은 것이므로 멈추고 보고한다.
 
-- `src/resolvers/tag.ts` 의 `resolveTagGroup`, `createTag`, `updateTagGroup`
+- `src/resolvers/tag.ts` 의 `resolveTagGroup` (읽기: 그룹 이름을 groupId 로)
+- `src/services/tag.ts` 의 `createTag`, `updateTagGroup` (쓰기: API 호출 후 캐시 무효화)
 
 이 명령들은 `src/api/client.ts` 와 `src/cache/store.ts` 를 직접 부르지 않는다.
-API 호출과 캐시 무효화가 위 세 함수 안에 이미 묶여 있다.
+API 호출과 캐시 무효화가 `src/services/tag.ts` 안에 이미 묶여 있다.
 근거는 `docs/adr/042-cache-invalidation-on-mutation.md` 다.
 
 설계 근거는 `docs/adr/041-project-tag-write-scope.md` 다. 작업 전에 읽는다.

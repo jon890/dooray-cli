@@ -15,6 +15,10 @@
 캐시 무효화를 어느 계열이 맡는지는 `docs/adr/042-cache-invalidation-on-mutation.md` 가 소유한다.
 둘 다 작업 전에 읽는다.
 
+이 phase 에서 `src/services/` 계열을 새로 만든다.
+`src/resolvers/` 는 읽기 전용으로 남기고 쓰기는 그 새 계열이 맡는다.
+근거는 `docs/adr/042-cache-invalidation-on-mutation.md` 다.
+
 **범위 외**:
 
 - 명령 파일 작성과 `src/index.ts` 등록은 phase-02 다.
@@ -138,9 +142,10 @@ export async function resolveTagGroup(
 그룹 정보를 태그 목록에서 파생하는 이유는 그룹 목록을 주는 API 경로가 없기 때문이다.
 그래서 태그가 하나도 없는 그룹은 찾을 수 없다. 이 제약은 ADR-041 에 기록되어 있다.
 
-### 5. 태그 쓰기 함수와 캐시 무효화 (`src/resolvers/tag.ts`)
+### 5. 태그 쓰기 함수와 캐시 무효화 (`src/services/tag.ts`)
 
-API 호출과 캐시 무효화를 한 함수 안에 묶는다. 같은 파일에 추가한다.
+API 호출과 캐시 무효화를 한 함수 안에 묶는다. `src/services/` 는 이번에 새로 만드는 계열이다.
+이 파일이 그 첫 파일이므로 디렉터리도 함께 만든다.
 
 ```typescript
 export async function createTag(
@@ -167,9 +172,17 @@ export async function updateTagGroup(
 경고 출력은 `src/utils/` 에 이미 있는 stderr 출력 방식을 찾아 그것을 쓴다. 새로 만들지 않는다.
 
 이 배치의 근거는 `docs/adr/042-cache-invalidation-on-mutation.md` 다.
-캐시를 읽는 계열이 무효화도 맡아, 호출자가 무효화를 잊을 수 없게 하는 것이 목적이다.
+`src/resolvers/` 는 사람이 쓴 문자열을 API 가 요구하는 id 로 바꾸는 읽기 전용 계열이고,
+파일 19개가 모두 읽기다. 여기에 쓰기를 넣지 않는다.
+
+`services` 는 `resolvers` 를 의존하지 않는다.
+이름을 id 로 바꾸는 일과 바꾸는 일은 따로이고, 둘을 조합하는 것은 명령 파일의 몫이다.
 그래서 phase-02 의 명령 파일은 `client.createProjectTag` 와 `clearTags` 를 직접 부르지 않고
-이 두 함수만 부른다.
+`resolveTagGroup`(읽기)과 이 두 함수(쓰기)를 각각 부른다.
+
+앞으로 다른 엔티티의 mutation 이 붙으면 `src/services/<엔티티>.ts` 를 새로 만든다.
+`POST .../milestones` 가 이미 공식 API 에 있어 `src/services/milestone.ts` 가 다음 후보다.
+이 phase 에서 그 파일을 미리 만들지는 않는다.
 
 회피 항목은 `docs/pitfalls/code-review/mutation-without-cache-invalidation.md` 다.
 
@@ -183,6 +196,7 @@ export async function updateTagGroup(
 | `src/api/client.ts` | 수정 |
 | `src/cache/store.ts` | 수정 |
 | `src/resolvers/tag.ts` | 수정 |
+| `src/services/tag.ts` | 신규 |
 
 ## 검증
 
@@ -204,16 +218,24 @@ grep -n "createProjectTag\|updateProjectTagGroup" src/api/client.ts
 grep -n "project/v1/projects/\${projectId}/tags\`" src/api/client.ts
 grep -n "tag-groups/\${tagGroupId}" src/api/client.ts
 grep -n "clearTags" src/cache/store.ts
-grep -n "resolveTagGroup\|createTag\|updateTagGroup" src/resolvers/tag.ts
+grep -n "resolveTagGroup" src/resolvers/tag.ts
+grep -n "createTag\|updateTagGroup" src/services/tag.ts
 ```
 
-다섯 grep 이 모두 결과를 내야 한다.
+여섯 grep 이 모두 결과를 내야 한다.
 
 쓰기 함수가 캐시를 지우는지 확인한다. 아래 결과가 2 여야 한다.
 
 ```bash
 # cwd: <repo root>
-grep -c "clearTags" src/resolvers/tag.ts
+grep -c "clearTags" src/services/tag.ts
+```
+
+`resolvers` 에 쓰기가 섞이지 않았는지 확인한다. 아래 출력이 없어야 한다.
+
+```bash
+# cwd: <repo root>
+grep -rn "client\.\(create\|update\|delete\|set\)" src/resolvers/ | grep -v "\.test\.ts"
 ```
 
 `api/client.ts` 가 캐시를 부르지 않는지 확인한다. 아래 출력이 없어야 한다.
@@ -242,8 +264,10 @@ sed -n '/async createProjectTag/,/^  }/p;/async updateProjectTagGroup/,/^  }/p' 
   변경을 일으킨 명령이 자기 캐시를 지우는 편이 범위가 좁다.
 - 이 phase 가 phase-02 의 명령 세 개가 호출할 표면을 모두 확정한다.
   시그니처가 흔들리면 phase-02 를 다시 써야 한다.
-- 무효화를 resolver 계열에 둔 이유는 그 캐시를 읽는 책임이 이미 여기 있어서다.
-  명령이 무효화를 부르는 형태로 두면, 새 mutation 명령을 짜는 사람이 그것을 기억해야 하고
+- 계열을 새로 만든 이유는 `resolvers` 파일 19개가 모두 읽기이기 때문이다.
+  쓰기가 하나뿐일 때는 감출 수 있지만 마일스톤 생성이 이미 예정되어 있어 계속 쌓인다.
+  읽기와 쓰기를 계열로 가르면 어디에 넣을지가 이름으로 정해진다.
+- 명령이 무효화를 부르는 형태로 두면, 새 mutation 명령을 짜는 사람이 그것을 기억해야 하고
   잊어도 어떤 검사도 잡지 못한다. 증상이 24시간짜리 지연이라 원인을 찾기 어렵다.
 - 캐시 삭제 실패를 성공으로 넘기는 이유는 그 시점에 API 호출이 이미 끝났기 때문이다.
   실패로 만들면 재시도가 중복 생성을 부른다. 캐시가 낡은 것보다 그게 나쁘다.
