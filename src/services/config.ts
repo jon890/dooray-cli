@@ -60,8 +60,16 @@ export async function updateConfigValue(
   await setConfigValue(key, value);
   const next = await getConfig();
 
-  // 방금 저장했으므로 도달하지 않는다. 판정에 넘길 Config 가 없으니 지울 근거도 없다.
-  if (next === null) return { cacheCleared: false };
+  // 방금 저장했는데 되읽지 못한 경우다. `getConfig` 가 모든 오류를 `null` 로 삼키므로
+  // 파일이 깨졌거나 읽을 수 없으면 여기 온다. 판정에 넘길 Config 가 없으니 지울 근거도 없다.
+  // `as Config` 로 단언하면 이 상태가 그대로 판정에 들어가므로 단언하지 않는다.
+  if (next === null) {
+    process.stderr.write(
+      "⚠  저장한 설정을 되읽지 못해 캐시 무효화 판정을 건너뜁니다.\n" +
+        "   이전 계정·환경의 데이터가 남아 있을 수 있습니다: dooray cache clear\n",
+    );
+    return { cacheCleared: false };
+  }
 
   if (!shouldInvalidateCache(prev, next)) return { cacheCleared: false };
   return { cacheCleared: await invalidateAllCache() };

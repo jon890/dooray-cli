@@ -20,6 +20,8 @@ import {
 } from "./config.js";
 import { getConfig, setConfigValue, saveConfig } from "../config/store.js";
 import { clearCache } from "../cache/store.js";
+import { DoorayCliError } from "../utils/errors.js";
+import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
 import type { Config } from "../config/types.js";
 
 const mockedGetConfig = vi.mocked(getConfig);
@@ -39,6 +41,11 @@ function config(over: Partial<Config> = {}): Config {
     tenantName: "example",
     ...over,
   };
+}
+
+/** setConfigValue 의 알 수 없는 키 분기는 EXIT_CONFIG_ERROR 를 단 DoorayCliError 를 던진다 */
+function unknownKeyError(): DoorayCliError {
+  return new DoorayCliError("알 수 없는 설정 키: nope", EXIT_CONFIG_ERROR);
 }
 
 /** clearCache 는 node:fs 의 rm 을 부르므로 실패하면 raw Error 가 올라온다 */
@@ -175,13 +182,29 @@ describe("updateConfigValue", () => {
     }
   });
 
-  it("저장이 실패하면 그대로 던지고 캐시를 지우지 않는다", async () => {
+  it("알 수 없는 키면 그대로 던지고 캐시를 지우지 않는다", async () => {
     mockedGetConfig.mockResolvedValueOnce(config());
-    mockedSetConfigValue.mockRejectedValue(new Error("알 수 없는 설정 키: nope"));
+    mockedSetConfigValue.mockRejectedValue(unknownKeyError());
 
-    await expect(updateConfigValue("nope", "x")).rejects.toThrow(
-      "알 수 없는 설정 키",
-    );
+    await expect(updateConfigValue("nope", "x")).rejects.toMatchObject({
+      exitCode: EXIT_CONFIG_ERROR,
+    });
+    expect(mockedClearCache).not.toHaveBeenCalled();
+  });
+
+  it("저장 결과를 되읽지 못하면 경고하고 캐시를 지우지 않는다", async () => {
+    mockedGetConfig
+      .mockResolvedValueOnce(config())
+      .mockResolvedValueOnce(null);
+    const warn = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    try {
+      await expect(updateConfigValue("api-key", KEY_B)).resolves.toEqual({
+        cacheCleared: false,
+      });
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
     expect(mockedClearCache).not.toHaveBeenCalled();
   });
 });

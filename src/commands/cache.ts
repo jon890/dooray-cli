@@ -10,6 +10,9 @@ import { EXIT_IO_ERROR } from "../utils/exit-codes.js";
  * 삭제 실패는 에러로 노출한다. `cache clear` 는 사용자가 명시적으로 요청한 작업이라
  * 지우지 못했는데 성공 메시지를 내면 잘못된 캐시가 남은 것을 모르게 된다 (ADR-042).
  * `services/config.ts` 의 무효화는 부수 작업이라 경고만 내는 것과 갈린다.
+ *
+ * 여기서 `process.exit` 를 부르지 않고 던지기만 하는 이유는 `src/index.ts` 의 전역 catch 가
+ * 종료 코드와 메시지 형식, `trackLastRun` 기록을 모두 소유하기 때문이다.
  */
 async function clearOrThrow(): Promise<boolean> {
   try {
@@ -23,14 +26,6 @@ async function clearOrThrow(): Promise<boolean> {
   }
 }
 
-function fail(err: unknown): never {
-  if (err instanceof DoorayCliError) {
-    console.error(chalk.red(err.message));
-    process.exit(err.exitCode);
-  }
-  throw err;
-}
-
 export const cacheCommand = new Command("cache")
   .description("캐시 관리");
 
@@ -38,33 +33,25 @@ cacheCommand
   .command("clear")
   .description("캐시 전체 삭제")
   .action(async () => {
-    try {
-      const cleared = await clearOrThrow();
-      // 지울 것이 없었던 경우는 실패가 아니다. 사용자가 원한 상태가 이미 이뤄져 있다.
-      console.log(
-        cleared
-          ? chalk.green("✓ 캐시가 삭제되었습니다.")
-          : chalk.gray("지울 캐시가 없습니다."),
-      );
-    } catch (err) {
-      fail(err);
-    }
+    const cleared = await clearOrThrow();
+    // 지울 것이 없었던 경우는 실패가 아니다. 사용자가 원한 상태가 이미 이뤄져 있다.
+    console.log(
+      cleared
+        ? chalk.green("✓ 캐시가 삭제되었습니다.")
+        : chalk.gray("지울 캐시가 없습니다."),
+    );
   });
 
 cacheCommand
   .command("refresh")
   .description("캐시 갱신 (API 클라이언트 연동 후 지원 예정)")
   .action(async () => {
-    try {
-      const cleared = await clearOrThrow();
-      console.log(
-        chalk.yellow(
-          cleared
-            ? "캐시를 삭제했습니다. API 클라이언트 연동 후 자동 갱신이 지원됩니다."
-            : "지울 캐시가 없습니다. API 클라이언트 연동 후 자동 갱신이 지원됩니다.",
-        ),
-      );
-    } catch (err) {
-      fail(err);
-    }
+    const cleared = await clearOrThrow();
+    console.log(
+      chalk.yellow(
+        cleared
+          ? "캐시를 삭제했습니다. API 클라이언트 연동 후 자동 갱신이 지원됩니다."
+          : "지울 캐시가 없습니다. API 클라이언트 연동 후 자동 갱신이 지원됩니다.",
+      ),
+    );
   });
