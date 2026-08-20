@@ -15,3 +15,5 @@
 | RETRO-0011 | 2026-08-06 | 051-fix-comment-file-reference | 작업 계획의 장문 줄 누락 | 해결 | 승격 안 함 |
 | RETRO-0012 | 2026-08-06 | 052-fix-post-edit-participants-only | zsh 특수 배열 `path`를 loop 변수로 사용 | 해결 | 승격 안 함 |
 | RETRO-0013 | 2026-08-06 | 052-fix-post-edit-participants-only | 비대화형 진입 조건과 조합 옵션의 범위 구분 | 해결 | 승격 안 함 |
+| RETRO-0014 | 2026-08-20 | plan057-feat-project-tags-write | 전역 옵션과 이름이 같은 하위 명령 옵션이 값을 잃는다 | 해결 | 승격 안 함 |
+| RETRO-0015 | 2026-08-20 | plan057-feat-project-tags-write | 팀원이 worktree 가 아닌 저장소 루트를 보고 판정했다 | 해결 | 승격 안 함 |
