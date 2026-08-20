@@ -218,3 +218,51 @@ export async function validateMandatoryCoverage(
     );
   }
 }
+
+export interface ResolvedTagGroup {
+  id: string;
+  name: string;
+  mandatory: boolean;
+  selectOne: boolean;
+}
+
+/**
+ * 태그 그룹 이름을 groupId 로 바꾼다.
+ * 그룹 목록을 주는 API 경로가 없어 태그 목록에서 파생하므로,
+ * 태그가 하나도 없는 그룹은 찾을 수 없다 (ADR-041).
+ */
+export async function resolveTagGroup(
+  client: DoorayApiClient,
+  projectId: string,
+  input: string,
+): Promise<ResolvedTagGroup> {
+  const name = input.trim();
+  if (!name) {
+    throw new DoorayCliError("태그 그룹 이름이 비어 있습니다", EXIT_PARAM_ERROR);
+  }
+
+  const tags = await ensureTags(client, projectId);
+  const groups: ResolvedTagGroup[] = [];
+  const seen = new Set<string>();
+  for (const t of tags) {
+    if (!t.groupId || seen.has(t.groupId)) continue;
+    seen.add(t.groupId);
+    groups.push({
+      id: t.groupId,
+      name: t.groupName ?? "",
+      mandatory: t.groupMandatory,
+      selectOne: t.groupSelectOne,
+    });
+  }
+
+  if (groups.length === 0) {
+    throw new DoorayCliError(
+      `이 프로젝트에는 태그 그룹이 없습니다.\n` +
+        `그룹은 태그 목록에서 파생하므로 태그가 하나도 없으면 알 수 없습니다.\n` +
+        `먼저 태그를 만드세요: dooray project tags create <project> --name "${name}:<태그>"`,
+      EXIT_PARAM_ERROR,
+    );
+  }
+
+  return matchByName(groups, name, "태그 그룹", (g) => `${g.name} (${g.id})`);
+}

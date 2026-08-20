@@ -126,6 +126,11 @@ export async function setTags(projectId: string, items: CachedTag[]): Promise<vo
   await writeJson(tagsPath(projectId), { updatedAt: now(), data: items } satisfies CacheEntry<CachedTag[]>);
 }
 
+/** 태그를 만들거나 태그 그룹을 바꾼 뒤 그 프로젝트의 태그 캐시를 지운다 (ADR-042) */
+export async function clearTags(projectId: string): Promise<void> {
+  await rm(tagsPath(projectId), { force: true });
+}
+
 // ─── Milestones (per project) ─────────────────────────
 
 function milestonesPath(projectId: string): string {
