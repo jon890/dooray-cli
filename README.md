@@ -198,7 +198,8 @@ src/
   api/           Dooray REST API 클라이언트 (ky), IMAP·SMTP 클라이언트
   cache/         ~/.dooray/cache/ 파일 캐시
   config/        ~/.dooray/config.json 스키마와 읽기·쓰기
-  resolvers/     이름·이메일·URL 을 ID 로 바꾸는 계층
+  resolvers/     이름·이메일·URL 을 ID 로 바꾸는 읽기 계층
+  services/      상태를 바꾸는 API 를 호출하고 그 엔티티의 캐시를 지우는 계층
   commands/      Commander.js 명령 정의
   formatters/    표·JSON·quiet 출력
   editor/        $EDITOR 연동
@@ -206,7 +207,10 @@ src/
   utils/         에러, 스피너, 종료 코드
 ```
 
-의존 방향은 `api/` → `resolvers/` → `commands/` → `formatters/` 다.
+의존 방향은 읽기와 쓰기로 나뉜다.
+읽기는 `api/` → `resolvers/` → `commands/` → `formatters/` 다.
+쓰기는 `commands/` → `services/` → `api/` 와 `cache/` 다.
+`services/` 는 `resolvers/` 를 의존하지 않는다. 이름을 ID 로 바꾸는 일과 바꾸는 일을 조합하는 것은 `commands/` 다.
 
 | 문서 | 담는 것 |
 | --- | --- |
