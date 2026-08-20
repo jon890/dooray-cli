@@ -11,7 +11,7 @@
   "phases": [
     {
       "number": 1,
-      "title": "services/config.ts 신설과 clearCache 실패 노출",
+      "title": "services/config.ts 신설과 clearCache 실패 노출·반환형 변경",
       "file": "phase-01.md",
       "execution_profile": "standard",
       "status": "pending",
@@ -19,7 +19,7 @@
     },
     {
       "number": 2,
-      "title": "config set·setup 연결과 cache clear 에러 처리",
+      "title": "config set·setup 연결, EXIT_IO_ERROR 신설, cache clear 에러 처리",
       "file": "phase-02.md",
       "execution_profile": "standard",
       "status": "pending",

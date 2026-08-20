@@ -13,7 +13,7 @@ phase-01 이 만든 함수를 두 명령에 연결하고, 캐시를 비웠다는
 phase-01 이 만든 표면을 전제한다. 아래가 없으면 phase-01 이 끝나지 않은 것이므로 멈추고 보고한다.
 
 - `src/services/config.ts` 의 `updateConfigValue`, `replaceConfig`
-- `src/cache/store.ts` 의 `clearCache` 가 실패를 던지는 상태
+- `src/cache/store.ts` 의 `clearCache` 가 실패를 던지고 반환형이 `Promise<boolean>` 인 상태
 
 사용자 흐름은 `docs/flow.md` 의 "최초 설정" 절과 "캐시 흐름" 절에 이미 확정되어 있다.
 `README.md` 의 설치와 설정 절에도 사용자가 볼 문장이 들어가 있다.
@@ -27,7 +27,7 @@ phase-01 이 만든 표면을 전제한다. 아래가 없으면 phase-01 이 끝
 
 ---
 
-## 작업 항목 (3)
+## 작업 항목 (4)
 
 ### 1. config set 연결 (`src/commands/config.ts`)
 
@@ -82,7 +82,33 @@ setup 은 이미 `existing` 변수로 이전 config 를 들고 있다.
 phase-01 의 판정이 `prev` 가 `null` 일 때 `false` 이기 때문이다.
 처음 설정하는 사용자에게 캐시 이야기를 꺼내지 않는 것이 의도다.
 
-### 3. cache clear 의 실패 노출 (`src/commands/cache.ts`)
+`config set` 으로 값을 하나씩 넣는 경로에서는 판정이 아니라 캐시 존재 여부가 안내를 막는다.
+`setConfigValue` 가 config 부재 시 `apiKey: ""` 뼈대를 만들어 `prev` 가 `null` 이 아니게 되기 때문이다.
+그 경우에도 지울 캐시가 없으면 `clearCache` 가 `false` 를 돌려주므로 안내가 나오지 않는다.
+근거는 phase-01 의 항목 2 와 3 이다.
+
+### 3. 종료 코드 신설 (`src/utils/exit-codes.ts`)
+
+파일 시스템 오류에 해당하는 코드가 없다. 현재는 다섯뿐이다.
+
+```typescript
+export const EXIT_SUCCESS = 0;
+export const EXIT_API_ERROR = 1;
+export const EXIT_AUTH_ERROR = 2;
+export const EXIT_PARAM_ERROR = 3;
+export const EXIT_CONFIG_ERROR = 4;
+```
+
+`EXIT_IO_ERROR = 5` 를 더한다.
+
+`EXIT_API_ERROR` 를 캐시 삭제 실패에 쓰면 이름이 사실과 어긋나고,
+`EXIT_CONFIG_ERROR` 는 설정 부재와 캐시 삭제 실패를 자동화가 구분하지 못하게 만든다.
+종료 코드 추가는 기존 값의 의미를 바꾸지 않으므로 하위 호환이다.
+
+`docs/code-architecture.md` 의 종료 코드 한 줄(250번째 줄 근처)에
+"파일 시스템 오류: exitCode 5" 를 더한다. `README.md` 에는 종료 코드 표가 없어 손대지 않는다.
+
+### 4. cache clear 의 실패 노출과 빈 캐시 구분 (`src/commands/cache.ts`)
 
 현재 두 하위 명령이 `clearCache()` 를 부른 뒤 무조건 성공 메시지를 낸다.
 
@@ -91,14 +117,19 @@ await clearCache();
 console.log(chalk.green("✓ 캐시가 삭제되었습니다."));
 ```
 
-phase-01 에서 `clearCache` 가 실패를 던지게 되었으므로, 그 오류가 사용자에게 닿아야 한다.
-`clear` 와 `refresh` 양쪽 모두 처리한다.
+phase-01 에서 `clearCache` 가 실패를 던지고 지운 것이 있었는지를 돌려주게 되었다.
+`clear` 와 `refresh` 양쪽 모두 세 결과를 구분해 처리한다.
 
-`DoorayCliError` 로 감싸 무엇이 실패했는지와 경로를 알린다.
-종료 코드는 `src/utils/exit-codes.ts` 에 있는 것 중 이 상황에 맞는 것을 고른다.
-`EXIT_CONFIG_ERROR` 는 설정이 없을 때 쓰는 코드라 맞지 않다.
-파일 시스템 오류에 해당하는 코드가 없으면 일반 오류 코드를 쓰고, 고른 근거를 커밋 메시지에 남긴다.
+| `clearCache()` 결과 | 출력 |
+| --- | --- |
+| `true` | 기존 성공 메시지 |
+| `false` | 지울 캐시가 없었다는 안내. 종료 코드는 0 이다 |
+| throw | `DoorayCliError` 로 감싸 실패를 노출한다 |
 
+`false` 를 실패로 만들지 않는다. 사용자가 원한 상태(캐시 없음)가 이미 이뤄져 있다.
+
+던질 때는 `DoorayCliError(message, EXIT_IO_ERROR)` 로 감싸
+무엇이 실패했는지와 캐시 디렉터리 경로를 알린다.
 성공 메시지는 삭제가 실제로 끝난 뒤에만 낸다.
 회피 항목은 `docs/pitfalls/code-review/exit-code-missing.md` 다. 던질 때 종료 코드를 반드시 붙인다.
 
@@ -111,6 +142,8 @@ phase-01 에서 `clearCache` 가 실패를 던지게 되었으므로, 그 오류
 | `src/commands/config.ts` | 수정 |
 | `src/commands/setup.ts` | 수정 |
 | `src/commands/cache.ts` | 수정 |
+| `src/utils/exit-codes.ts` | 수정 — `EXIT_IO_ERROR = 5` 신설 |
+| `docs/code-architecture.md` | 수정 — 종료 코드 한 줄 |
 | `tasks/plan058-fix-config-change-cache-invalidation/index.json` | 수정 |
 
 ## 검증
@@ -147,7 +180,7 @@ grep -n "replaceConfig" src/commands/setup.ts
 cat src/commands/cache.ts
 ```
 
-실제 동작을 번들에서 확인한다.
+실제 동작을 번들에서 확인한다. 읽기만 하므로 사용자 설정을 건드리지 않는다.
 
 ```bash
 # cwd: <repo root>
@@ -155,38 +188,17 @@ node dist/index.js config --help
 node dist/index.js cache --help
 ```
 
-**같은 값 재설정이 캐시를 지우지 않는지 실측한다.**
-이 검증은 실제 config 파일을 건드리므로 순서를 지킨다.
+**같은 값 재설정을 실제 `config set` 으로 확인하지 않는다.**
+사용자의 `~/.dooray/config.json` 을 수정하는 절차이고, 중간에 실패하면 복구가 사람 손에 간다.
+같은 조건을 phase-01 의 `updateConfigValue` 테스트 4번 항목이 이미 덮는다.
+판정이 `false` 면 `clearCache` 를 부르지 않는다는 것이 같은 명제다.
+
+새 종료 코드가 있는지 확인한다.
 
 ```bash
 # cwd: <repo root>
-cp ~/.dooray/config.json /tmp/dooray-config-backup.json
-CURRENT=$(node dist/index.js config get base-url)
-node dist/index.js config set base-url "$CURRENT"
-```
-
-출력에 캐시를 비웠다는 안내가 **없어야** 한다. 같은 값이라 변경이 아니다.
-확인 후 백업을 되돌린다.
-
-```bash
-# cwd: <repo root>
-cp /tmp/dooray-config-backup.json ~/.dooray/config.json
-```
-
-`config get base-url` 이 값만 주는지 먼저 확인한다. 아래가 URL 한 줄이어야 위 명령이 안전하다.
-
-```bash
-# cwd: <repo root>
-node dist/index.js config get base-url | wc -l          # 1 이어야 한다
-node dist/index.js config get base-url | grep -c "^https://"   # 1 이어야 한다
-```
-
-둘 중 하나라도 다르면 출력에 라벨이나 색상 코드가 섞인 것이다.
-그 경우 위 재설정 검증을 건너뛰지 말고, `~/.dooray/config.json` 에서 `baseUrl` 값을 직접 읽어 넘긴다.
-
-```bash
-# cwd: <repo root>
-CURRENT=$(python3 -c "import json;print(json.load(open('$HOME/.dooray/config.json'))['baseUrl'])")
+grep -n "EXIT_IO_ERROR" src/utils/exit-codes.ts src/commands/cache.ts
+grep -n "exitCode 5" docs/code-architecture.md
 ```
 
 공개 문서 검사를 통과해야 한다.
@@ -214,5 +226,11 @@ bash scripts/check-pii.sh
   지울 것도 없다.
 - `cache clear` 의 실패를 노출하는 이유는 사용자가 명시적으로 요청한 작업이기 때문이다.
   `services` 의 무효화는 부수 작업이라 경고만 내지만, 이쪽은 그 자체가 목적이다.
-- 같은 값 재설정을 실측으로 확인하는 이유는 이 조건이 코드 리뷰로 놓치기 쉽고,
-  잘못 구현하면 사용자가 값을 확인할 때마다 캐시가 날아가기 때문이다.
+- 같은 값 재설정을 실측하지 않는 이유는 그 절차가 사용자의 실제 설정 파일을 수정하기 때문이다.
+  이 조건이 코드 리뷰로 놓치기 쉽고 잘못 구현하면 사용자가 값을 확인할 때마다 캐시가 날아가는 것은 맞다.
+  그래서 검증을 없애지 않고 phase-01 의 단위 테스트로 옮겼다.
+- 종료 코드를 새로 만든 이유는 이름이 사실과 맞아야 하기 때문이다.
+  캐시 삭제 실패를 `EXIT_API_ERROR` 로 보고하면 코드를 읽는 사람이 매번 왜 API 오류인지 되묻는다.
+  추가는 기존 값의 의미를 바꾸지 않아 기존 자동화가 깨지지 않는다.
+- 지울 캐시가 없는 경우를 실패로 만들지 않는 이유는 사용자가 원한 상태가 이미 이뤄져 있기 때문이다.
+  `cache clear` 는 캐시를 없애는 것이 목적이고, 없는 것을 없애라고 한 것도 목적을 만족한다.
