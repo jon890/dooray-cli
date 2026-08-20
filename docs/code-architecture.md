@@ -37,7 +37,7 @@ src/
     post.ts                 # postNumber → postId (API 호출)
     wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시)
     postRef.ts              # "code/number" 또는 raw postId → postId (post create / post edit --parent 공용)
-    tag.ts                  # name[] → tagIds + mandatory/selectOne 검증, 그룹 이름 → groupId (태그 목록의 tagGroup 에서 파생, ADR-041)
+    tag.ts                  # name[] → tagIds + mandatory/selectOne 검증, 그룹 이름 → groupId (태그 목록의 tagGroup 에서 파생, ADR-041), 태그·그룹 쓰기와 캐시 무효화 (ADR-042)
     milestone.ts            # name → milestoneId
     match.ts                # 공용 매칭: 정확일치 → 부분일치 → 모호 시 에러. helpHint 옵션 + name 가드 (ADR-028)
     post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020). 입력 토큰 타입 판별 (classifyPostInputToken) + 진입점별 검증 (ADR-020 보강)
@@ -112,8 +112,8 @@ src/
       workflows.ts
       groups.ts               # dooray project groups <project>
       tags.ts                 # dooray project tags — 그룹 명령 조립 + list 동작 (인자 있는 기존 호출 호환)
-      tags-create.ts          # dooray project tags create — POST tags, "그룹:태그" 이름과 color 정규화 (ADR-041)
-      tags-group.ts           # dooray project tags group — PUT tag-groups, mandatory/selectOne 현재값 병합 (ADR-041)
+      tags-create.ts          # dooray project tags create — 이름·color 정규화 후 resolvers/tag 의 createTag 호출 (ADR-041, ADR-042)
+      tags-group.ts           # dooray project tags group — mandatory/selectOne 현재값 병합 후 resolvers/tag 의 updateTagGroup 호출 (ADR-041, ADR-042)
 
     member/
       index.ts              # member 서브커맨드 등록
@@ -197,6 +197,7 @@ editor/    → api/client (현재 데이터 fetch) + resolvers/member
 - `api/client`는 순수 HTTP 래퍼. 비즈니스 로직 없음
 - `api/client`의 모든 요청은 `api/rate-limiter`의 토큰 버킷을 공유한다. 호출부는 요청 간격을 신경 쓰지 않는다 (ADR-039)
 - `resolvers/*`는 캐시 우선 조회, 만료 시 api/client 호출
+- 캐시되는 엔티티를 바꾸는 API 호출도 `resolvers/*`의 쓰기 함수를 거친다. 그 함수가 성공 직후 해당 캐시 파일을 지운다 (ADR-042)
 - `commands/*`는 resolvers, api/client, formatters 조합
 
 ## API Client 구조

@@ -192,9 +192,10 @@ interface CachedTag {
 `post create/edit --tag <name>` 시 사전 검증 (mandatory-tag 그룹 누락 시 클라이언트 에러).
 `post edit --tag-remove`/`--tag-clear` 도 동일 캐시 사용 (Issue #66, ADR-019 확장).
 
-`project tags create` 와 `project tags group` 은 성공 직후 이 파일을 삭제한다 (ADR-041).
+`project tags create` 와 `project tags group` 은 성공 직후 이 파일을 삭제한다.
 TTL 이 24시간이라 삭제하지 않으면 방금 만든 태그와 바뀐 그룹 속성을 `post create --tag` 가
 최대 24시간 보지 못한다. 삭제만 하고 재조회하지 않으며, 다음 조회가 API 에서 다시 채운다.
+삭제를 누가 언제 하는지는 ADR-042 가 소유한다 (`src/resolvers/` 의 쓰기 함수).
 
 그룹 정보는 별도 캐시가 없다. 그룹 목록을 주는 API 경로가 없어 `tagGroup` 필드에서 파생하므로,
 태그가 하나도 없는 그룹은 이 캐시에 나타나지 않는다.
