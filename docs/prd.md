@@ -31,7 +31,8 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray config` — API key·base URL·IMAP/SMTP 설정 (개별 수동 관리)
 - `dooray doctor` — 설정·연결 검증
 - `dooray cache` — 캐시 관리
-- `dooray project` — 목록·멤버·워크플로우·템플릿 조회
+- `dooray project` — 목록·멤버·워크플로우·템플릿 조회, 태그 조회와 생성
+  - 태그: `project tags create` 로 `"그룹:태그"` 생성, `project tags group` 으로 그룹의 필수·단일선택 속성 변경 (ADR-041)
 - `dooray member` — 표시명/이메일 조회 (`get`/`list`, ADR-021)
 - `dooray post` — 목록·검색·조회·생성·수정($EDITOR)·완료·상태변경
   - 메타데이터: `--tag`, `--parent`, `--workflow`, `--milestone` (ADR-019)

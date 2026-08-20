@@ -98,6 +98,24 @@ export interface TagListResponse {
   totalCount: number;
 }
 
+export interface CreateTagRequest {
+  name: string;
+  color: string;
+}
+
+export interface CreateTagApiResponse {
+  header: DoorayApiHeader;
+  result: { id: string };
+}
+
+export interface UpdateTagGroupRequest {
+  mandatory: boolean;
+  selectOne: boolean;
+}
+
+// PUT tag-groups 응답의 result 는 null 이라 unit 응답을 재사용한다 (UpdatePostResponse 와 같은 방식)
+export type UpdateTagGroupResponse = DoorayApiUnitResponse;
+
 export interface MilestoneListResponse {
   header: DoorayApiHeader;
   result: Milestone[];

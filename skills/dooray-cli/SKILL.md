@@ -96,7 +96,9 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 개인 프로젝트 목록 | `dooray project list --type private` |
 | 프로젝트 멤버 보기 | `dooray project members <project>` 또는 `dooray member list <project>` |
 | 프로젝트 멤버 그룹 목록 | `dooray project groups <project>` |
-| 프로젝트 태그 목록 | `dooray project tags <project>` |
+| 프로젝트 태그 목록 | `dooray project tags <project>` — 프로젝트 코드가 `list`·`create`·`group` 과 같으면 `dooray project tags list <project>` |
+| 태그 만들기 | `dooray project tags create <project> --name "<그룹>:<태그>" [--color <hex>]` — 그룹명 생략 가능 |
+| 태그 그룹 속성 변경 | `dooray project tags group <project> "<그룹>" [--mandatory] [--select-one]` — 해제는 `--no-` 접두 |
 | 프로젝트 템플릿 목록 | `dooray project templates <project>` |
 | 멤버 상세 | `dooray member get <organizationMemberId>` (캐시 우회) |
 | organization 전체 멤버 검색 | `dooray member search <keyword>` — 옵션은 [common.md](references/common.md) |

@@ -29,6 +29,10 @@ import type {
   MemberSearchResponse,
   MeResponse,
   TagListResponse,
+  CreateTagRequest,
+  CreateTagApiResponse,
+  UpdateTagGroupRequest,
+  UpdateTagGroupResponse,
   MilestoneListResponse,
   MemberGroupListResponse,
   WikiListResponse,
@@ -464,6 +468,30 @@ export class DoorayApiClient {
           },
         })
         .json<TagListResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async createProjectTag(projectId: string, body: CreateTagRequest): Promise<CreateTagApiResponse> {
+    try {
+      return await this.api
+        .post(`project/v1/projects/${projectId}/tags`, { json: body })
+        .json<CreateTagApiResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async updateProjectTagGroup(
+    projectId: string,
+    tagGroupId: string,
+    body: UpdateTagGroupRequest,
+  ): Promise<UpdateTagGroupResponse> {
+    try {
+      return await this.api
+        .put(`project/v1/projects/${projectId}/tag-groups/${tagGroupId}`, { json: body })
+        .json<UpdateTagGroupResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);
     }

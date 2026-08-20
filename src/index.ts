@@ -9,7 +9,9 @@ import { projectListCommand } from "./commands/project/list.js";
 import { projectMembersCommand } from "./commands/project/members.js";
 import { projectWorkflowsCommand } from "./commands/project/workflows.js";
 import { projectGroupsCommand } from "./commands/project/groups.js";
-import { projectTagsCommand } from "./commands/project/tags.js";
+import { projectTagsCommand, projectTagsListCommand } from "./commands/project/tags.js";
+import { projectTagsCreateCommand } from "./commands/project/tags-create.js";
+import { projectTagsGroupCommand } from "./commands/project/tags-group.js";
 import { projectTemplatesCommand } from "./commands/project/templates.js";
 import { postListCommand } from "./commands/post/list.js";
 import { postSearchCommand } from "./commands/post/search.js";
@@ -83,6 +85,9 @@ projectCommand.addCommand(projectWorkflowsCommand);
 projectCommand.addCommand(projectGroupsCommand);
 projectCommand.addCommand(projectTagsCommand);
 projectCommand.addCommand(projectTemplatesCommand);
+projectTagsCommand.addCommand(projectTagsListCommand);
+projectTagsCommand.addCommand(projectTagsCreateCommand);
+projectTagsCommand.addCommand(projectTagsGroupCommand);
 
 // post 커맨드 그룹
 const postCommand = new Command("post").description("업무 관련 명령");

@@ -1,0 +1,58 @@
+{
+  "name": "plan057-feat-project-tags-write",
+  "description": "GitHub Issue #146 — project tags 하위에 태그 생성과 태그 그룹 속성 변경 명령을 추가한다 (ADR-041, 공식 API 지원 범위 한정)",
+  "created_at": "2026-08-20T00:00:00Z",
+  "updated_at": "2026-08-20T00:00:00Z",
+  "status": "completed",
+  "current_phase": 3,
+  "total_phases": 3,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "API 메서드·타입·캐시 무효화·그룹 resolver",
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 2,
+      "title": "tags 그룹 명령 전환과 create·group 명령 구현",
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    },
+    {
+      "number": 3,
+      "title": "단위 테스트와 통합 검증",
+      "file": "phase-03.md",
+      "execution_profile": "standard",
+      "status": "completed",
+      "allowedTools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "Glob",
+        "Grep"
+      ]
+    }
+  ]
+}

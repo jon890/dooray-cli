@@ -48,3 +48,5 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-037](037-bulk-post-collection-pitfalls.md) — 업무 대량 수집 시 Dooray API 함정 (그룹 담당·조용한 속도 제한·목록 응답 body 부재)
 - [ADR-038](038-persona-skill-outside-managed-install.md) — `dooray-persona` 스킬을 관리형 설치 체계 밖에 둔다
 - [ADR-039](039-rate-limit-token-bucket.md) — Dooray 요청 제한을 응답 헤더로 보정하는 클라이언트 토큰 풀
+- [ADR-041](041-project-tag-write-scope.md) — 프로젝트 태그 쓰기를 공식 문서 지원 범위(생성·그룹 속성)로 한정 (Issue #146)
+- [ADR-042](042-cache-invalidation-on-mutation.md) — 캐시된 엔티티를 바꾸는 호출은 services 계열이 맡고 그 안에서 캐시를 지운다
