@@ -127,6 +127,11 @@ export async function resolveTagGroup(
 5. 그룹 목록이 비어 있으면 모호성 에러가 아니라 별도 안내를 던진다.
    태그가 하나도 없으면 그룹을 알 수 없다는 사실과, 태그를 먼저 만들라는 안내를 담는다.
 
+`ResolvedTagGroup` 의 네 필드는 `CachedTag` 에서 가져온다.
+`id` 는 `groupId`, `name` 은 `groupName`, `mandatory` 는 `groupMandatory`, `selectOne` 은 `groupSelectOne` 이다.
+`groupName` 이 `null` 인 경우는 `groupId` 가 있으면서 이름만 비는 경우인데, 그때는 빈 문자열로 둔다.
+`matchByName` 이 빈 `name` 을 매칭 후보에서 제외하므로 그 그룹은 이름으로 찾히지 않는다.
+
 `matchByName` 은 같은 파일이 이미 `import` 하고 있다. 정확일치 다음 부분일치, 모호하면 후보 목록 에러라는
 기존 정책을 그대로 쓴다. 새 매칭 규칙을 만들지 않는다.
 
@@ -169,7 +174,10 @@ export async function updateTagGroup(
 캐시 삭제가 실패해도 함수는 정상 반환한다. 예외를 밖으로 던지지 않는다.
 대신 `stderr` 로 경고를 한 줄 내고 `dooray cache clear` 를 안내한다.
 이 시점에 API 호출은 이미 성공했으므로, 실패로 만들면 사용자가 재시도해 태그가 한 번 더 만들어진다.
-경고 출력은 `src/utils/` 에 이미 있는 stderr 출력 방식을 찾아 그것을 쓴다. 새로 만들지 않는다.
+경고 출력은 `src/commands/post/create.ts:236` 의 형태를 따른다.
+`process.stderr.write("⚠  ...\n")` 로 한 줄 내고 exit code 는 0 을 유지한다.
+그 자리도 업무 생성이 끝난 뒤 후속 호출만 실패한 경우라 이 plan 이 원하는 것과 같다.
+`src/utils/` 에는 범용 경고 helper 가 없다. 새로 만들지 않는다.
 
 이 배치의 근거는 `docs/adr/042-cache-invalidation-on-mutation.md` 다.
 `src/resolvers/` 는 사람이 쓴 문자열을 API 가 요구하는 id 로 바꾸는 읽기 전용 계열이고,

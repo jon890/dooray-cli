@@ -119,8 +119,10 @@ node dist/index.js project tags create --help
 node dist/index.js project tags group --help
 ```
 
-어긋나면 구현이 아니라 문서를 고칠지 먼저 판단한다.
-설계는 `docs/adr/041-project-tag-write-scope.md` 가 소유하므로, 그 결정과 다르게 구현됐다면 구현을 고친다.
+설계는 `docs/adr/041-project-tag-write-scope.md` 가 소유한다.
+그 결정과 다르게 구현됐으면 구현을 고친다.
+ADR 과 구현은 맞는데 `README.md` 나 `docs/flow.md` 의 표현만 다르면 문서를 고쳐도 되지만,
+어느 쪽을 고칠지는 스스로 정하지 말고 team-lead 에게 보고해 결정을 받는다.
 
 ## 의도 메모
 

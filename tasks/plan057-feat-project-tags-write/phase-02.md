@@ -64,6 +64,24 @@ dooray project tags create <project> --name "<그룹>:<태그>" [--color <hex>]
   반환값이 만들어진 태그 id 다.
 - 캐시 무효화는 `createTag` 안에서 일어난다. 명령이 `clearTags` 를 따로 부르지 않는다.
 
+**옵션을 어느 객체에서 읽는지가 여기서 갈린다.**
+
+- `--name` 과 `--color` 는 이 명령의 `opts()` 로 읽는다.
+- `--json` 과 `--quiet` 는 `optsWithGlobals()` 로 읽는다.
+
+`optsWithGlobals()` 를 `--color` 에 쓰면 값이 조용히 버려진다.
+`src/index.ts:65` 에 전역 `--no-color` 가 있고, Commander 가 조상 옵션을 자식 위에 덮어쓰기 때문이다.
+worktree 에서 재현한 결과는 이렇다.
+
+| 입력 | `opts()` | `optsWithGlobals()` |
+| --- | --- | --- |
+| `--name a` | `{name:"a"}` | `{name:"a", color:true}` |
+| `--name a --color c6eab3` | `{name:"a", color:"c6eab3"}` | `{name:"a", color:true}` |
+
+그대로 두면 `normalizeTagColor(true)` 가 불려 boolean 에 `.trim()` 을 호출하다 런타임 예외가 난다.
+옵션 이름을 `--tag-color` 로 바꾸는 대안은 쓰지 않는다.
+`README.md`, `docs/flow.md`, `skills/dooray-cli/SKILL.md` 가 이미 `--color` 로 적고 있다.
+
 출력 세 모드를 모두 채운다.
 
 | 모드 | 출력 |
@@ -75,13 +93,24 @@ dooray project tags create <project> --name "<그룹>:<태그>" [--color <hex>]
 `--quiet` 에서 id 를 반드시 낸다. 후속 명령으로 파이프하는 진입점이다.
 회피 항목은 `docs/pitfalls/code-review/quiet-mode-missing-identifier.md` 다.
 
+**`formatters/table.ts` 의 `output()` 을 쓰지 않는다.** 그 helper 는 `raw: unknown[]` 을 받아 배열을 그대로 내므로
+`--json` 이 `[{...}]` 가 된다. 이 명령의 `--json` 은 단일 객체다.
+단건 생성의 선례는 `src/commands/post/create.ts:241-247` 이고, `printJson` 과 `process.stdout.write` 를 직접 쓴다.
+`src/commands/wiki/page-create.ts` 도 같다. 두 새 명령 모두 그 형태를 따른다.
+
 스피너는 검증과 정규화가 모두 끝난 뒤에 시작한다.
 `--name` 검증과 `normalizeTagColor` 를 `startSpinner` 앞에 둔다.
 회피 항목은 `docs/pitfalls/code-review/spinner-before-validation.md` 다.
 파라미터 오류가 스피너 애니메이션과 섞여 나오는 것을 막는다.
 
-같은 디렉터리의 `groups.ts` 와 `tags.ts` 가 `optsWithGlobals`, `getConfigOrThrow`, `DoorayApiClient`,
-`startSpinner`, `stopSpinner`, `output` 을 쓰는 방식을 그대로 따른다.
+스피너를 켠 뒤의 외부 호출은 `try`/`catch` 로 감싸고 `catch` 에서 `stopSpinner(false, ...)` 후 다시 던진다.
+`resolveProject`, `resolveTagGroup`, `createTag`, `updateTagGroup` 이 모두 여기 해당한다.
+회피 항목은 `docs/pitfalls/code-review/spinner-missing-try-catch.md` 다.
+기존 `tags.ts` 에는 이 처리가 없다. 그 파일을 따라 쓰면 새 코드에 같은 누락이 들어간다.
+
+같은 디렉터리의 `groups.ts` 와 `tags.ts` 가 `getConfigOrThrow`, `DoorayApiClient`,
+`startSpinner`, `stopSpinner` 를 쓰는 방식을 그대로 따른다.
+`optsWithGlobals` 와 `output` 은 따르지 않는다. 위 두 절이 그 둘을 각각 좁히고 금지한다.
 
 ### 3. 태그 그룹 속성 변경 명령 (`src/commands/project/tags-group.ts`)
 
@@ -129,11 +158,24 @@ Commander 의 `--no-` 접두는 같은 이름 옵션의 기본값을 뒤집는�
    예를 들어 `async function runTagsList(project: string, opts: OutputOptions): Promise<void>` 형태다.
 2. `projectTagsCommand` 를 그룹 명령으로 두고 `.argument("[project]", ...)` 와 `.action()` 을 함께 등록한다.
    `project` 가 주어지면 `runTagsList` 를 호출하고, 없으면 도움말을 출력한다.
-3. `list` 하위 명령을 등록해 같은 `runTagsList` 를 호출한다.
+3. `list` 하위 명령을 `projectTagsListCommand` 라는 이름으로 만들어 같은 `runTagsList` 를 호출하고 `export` 한다.
+   `tags.ts` 안에서 `addCommand` 하지 않는다. 등록은 아래 5번 항목이 `src/index.ts` 에서 한 곳에 모아 한다.
 
-**여기서 실측이 필요하다.** Commander 는 하위 명령을 가진 command 에도 argument 와 action 을 둘 수 있지만,
-첫 positional 이 등록된 하위 명령 이름과 겹칠 때의 라우팅을 코드만 보고 단정하지 않는다.
-빌드한 뒤 아래 넷을 실제로 실행해 확인한다.
+`runTagsList` 의 두 번째 인자로 넘길 `OutputOptions` 는 **그 경로를 탄 command 객체의 `optsWithGlobals()`** 다.
+부모 경로는 `projectTagsCommand.optsWithGlobals()`, `list` 경로는 `projectTagsListCommand.optsWithGlobals()` 다.
+현재 `tags.ts:14` 는 클로저로 `projectTagsCommand` 를 직접 참조한다. 그대로 두면 `list` 경로에서 어긋난다.
+
+**실측은 team-lead 가 이미 끝냈다.** worktree 에서 같은 구조를 조립해 넷을 모두 확인했다.
+
+| 입력 | 라우팅 |
+| --- | --- |
+| `project tags my-project` | 부모 action 이 받아 목록 경로 |
+| `project tags list my-project` | `list` 하위 명령 |
+| `project tags create my-project --name x:y` | `create` 하위 명령 |
+| `project tags group my-project "배포환경"` | `group` 하위 명령 |
+| `project tags` (인자 없음) | 부모 action 이 `project === undefined` 로 진입 |
+
+구현 후 빌드해서 아래 넷을 다시 실행해 실제 번들에서도 같은지 확인한다.
 
 ```bash
 # cwd: <repo root>
@@ -146,7 +188,7 @@ node dist/index.js project tags list --help
 
 네 명령의 도움말이 각각 제대로 나와야 한다.
 
-기존 형태와 하위 명령 형태가 함께 동작하지 않으면, 억지로 우회하지 말고 멈추고 보고한다.
+실측 결과가 뒤집혀 두 형태가 함께 동작하지 않으면, 억지로 우회하지 말고 멈추고 보고한다.
 그 경우의 대안은 `project tags` 를 지금의 leaf 명령으로 되돌리고
 새 명령을 `project tag-create` 와 `project tag-group` 이라는 별개 이름으로 두는 것이다.
 이 대안을 고르면 `README.md`, `docs/flow.md`, `skills/dooray-cli/SKILL.md` 의 명령 표기도 함께 고쳐야 하므로
@@ -165,6 +207,20 @@ projectTagsCommand.addCommand(projectTagsGroupCommand);
 
 `projectCommand.addCommand(projectTagsCommand)` 는 이미 있다. 중복으로 추가하지 않는다.
 
+### 6. README 의 프로젝트 구조에 `services/` 를 반영 (`README.md`)
+
+`docs/code-architecture.md` 는 이미 `services/` 를 담고 있는데 `README.md` 의 "프로젝트 구조" 절은 아직 아니다.
+두 문서가 어긋난 채로 두면 docs-verifier 단계에서 되돌아온다.
+
+- 코드 블록의 `resolvers/` 줄 아래에 `services/` 한 줄을 넣는다.
+  설명은 "API 를 호출해 상태를 바꾸고 그 엔티티의 캐시를 지우는 계층" 으로 한다.
+- 그 아래 "의존 방향은 `api/` → `resolvers/` → `commands/` → `formatters/` 다" 문장을
+  `services/` 가 들어간 형태로 고친다. `services/` 는 `api/` 와 `cache/` 에 의존하고 `resolvers/` 에는 의존하지 않는다.
+  둘을 조합하는 것은 `commands/` 다.
+
+`docs/code-architecture.md` 의 해당 문장을 먼저 읽고 그 표현과 어긋나지 않게 쓴다.
+`README.md` 는 공개 문서이므로 `ADR-041` 같은 내부 참조 번호를 넣지 않는다.
+
 ---
 
 ## Critical Files
@@ -175,6 +231,7 @@ projectTagsCommand.addCommand(projectTagsGroupCommand);
 | `src/commands/project/tags-create.ts` | 신규 |
 | `src/commands/project/tags-group.ts` | 신규 |
 | `src/index.ts` | 수정 |
+| `README.md` | 수정 |
 
 ## 검증
 
@@ -214,6 +271,24 @@ grep -n "clearTags\|createProjectTag\|updateProjectTagGroup" \
 
 회피 항목은 `docs/pitfalls/code-review/mutation-without-cache-invalidation.md` 다.
 
+`--color` 를 `optsWithGlobals()` 로 읽지 않는지 확인한다. 아래 두 grep 이 **결과를 내지 않아야** 한다.
+
+```bash
+# cwd: <repo root>
+grep -nE "optsWithGlobals\(\)[^;]*\.(color|name)" src/commands/project/tags-create.ts
+grep -nE "\.(color|name)[^;]*optsWithGlobals\(\)" src/commands/project/tags-create.ts
+```
+
+눈으로 대조하는 검증은 쓰지 않는다. 회피 항목은 `docs/pitfalls/plan/manual-eyeball-verification.md` 다.
+
+`README.md` 가 `services/` 를 담는지 확인한다. 두 grep 이 모두 결과를 내야 한다.
+
+```bash
+# cwd: <repo root>
+grep -n "services/" README.md
+grep -n "services" docs/code-architecture.md | head -3
+```
+
 스피너가 검증 뒤에 오는지 확인한다. 각 파일에서 `startSpinner` 가 파라미터 검증보다 아래에 있어야 한다.
 
 ```bash
@@ -240,5 +315,9 @@ bash scripts/check-pii.sh
   중간 실패 시 어디까지 만들어졌는지를 따로 알려야 한다. 명령 하나가 호출 하나에 대응하는 편이 단순하다.
 - 기존 `project tags <project>` 를 남기는 이유는 그 형태가 공개 문서에 이미 실려 있어서다.
   하위 명령만 남기면 사용자 스크립트가 조용히 깨진다.
+- 이 라우팅에는 대가가 하나 있다. 프로젝트 코드가 `list`, `create`, `group` 중 하나와 같으면
+  그 인자가 하위 명령으로 먹혀 목록이 아니라 그 명령으로 간다.
+  Dooray 프로젝트 코드가 이 세 낱말과 같을 확률이 낮아 그대로 둔다.
+  피하려면 하위 명령 이름을 프로젝트 코드가 될 수 없는 형태로 바꿔야 하는데, 공개 문서가 이미 이 이름으로 적혀 있다.
 - 명령이 API 클라이언트와 캐시를 직접 부르지 않는 이유는 캐시 무효화를 잊을 수 있는 자리를
   없애기 위해서다. 두 함수를 부르는 것 말고는 선택지가 없어야 한다.
