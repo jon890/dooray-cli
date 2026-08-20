@@ -15,7 +15,7 @@ phase-01 과 phase-02 가 만든 순수 로직에 단위 테스트를 붙이고,
 
 ---
 
-## 작업 항목 (3)
+## 작업 항목 (4)
 
 ### 1. 색상 정규화 테스트
 
@@ -64,7 +64,27 @@ mock 은 기존 테스트의 방식을 그대로 따른다.
 프로젝트는 `my-project`, 긴 숫자 id 는 자리수만 맞춘 가상 값을 쓴다.
 회피 항목은 `docs/pitfalls/code-review/src-test-fixture-internal-identifier.md` 다.
 
-### 3. 통합 검증과 완료 마킹
+### 3. 쓰기 함수의 캐시 무효화 테스트
+
+`src/services/tag.test.ts` 를 만든다. `createTag` 와 `updateTagGroup` 각각에 대해 셋을 덮는다.
+
+1. 호출이 성공하면 그 프로젝트의 `clearTags` 가 불린다. `createTag` 는 태그 id 를 돌려준다.
+2. `clearTags` 가 던져도 두 함수가 정상 반환한다.
+3. API 호출 자체가 실패하면 그대로 던지고 `clearTags` 를 부르지 않는다.
+
+3번을 빠뜨리지 않는다. 1번과 대칭이고, 이것이 없으면 무효화를 호출 앞으로 옮기는 변경이 통과한다.
+실패한 변경에 캐시를 지울 이유가 없다.
+
+mock 의 reject 값을 실제 구현이 던지는 것과 같은 형태로 만든다.
+`clearTags` 는 `node:fs` 의 `rm` 을 부르므로 raw `Error` 가 올라온다.
+`api/client` 의 throw path 는 `toDoorayCliError` 를 거쳐 `EXIT_API_ERROR` 를 단다.
+회피 항목은 `docs/pitfalls/code-review/mock-reject-value-not-mirroring-production.md` 와
+`docs/pitfalls/plan/test-self-mock.md` 다.
+
+이 항목은 ADR-042 의 핵심 불변식을 고정한다. `services` 계열이 이번에 생겼고
+앞으로 mutation 이 붙을 때마다 같은 불변식이 따라온다.
+
+### 4. 통합 검증과 완료 마킹
 
 아래 검증을 모두 통과시킨 뒤 `tasks/plan057-feat-project-tags-write/index.json` 을 고친다.
 
@@ -81,6 +101,8 @@ mock 은 기존 테스트의 방식을 그대로 따른다.
 | --- | --- |
 | `src/commands/project/tags-create.test.ts` | 신규 |
 | `src/resolvers/tag.test.ts` | 수정 |
+| `src/services/tag.test.ts` | 신규 |
+| `docs/pitfalls/code-review/mutation-without-cache-invalidation.md` | 수정 |
 | `tasks/plan057-feat-project-tags-write/index.json` | 수정 |
 
 ## 검증
@@ -98,10 +120,11 @@ pnpm test
 
 ```bash
 # cwd: <repo root>
-npx vitest run --reporter=verbose 2>&1 | grep -E "tags-create|resolvers/tag"
+npx vitest run --reporter=verbose 2>&1 | grep -E "tags-create|resolvers/tag|services/tag"
 ```
 
 `pnpm test` 의 기본 reporter 는 통과한 파일 이름을 찍지 않는다. `--reporter=verbose` 가 필요하다.
+세 파일 이름이 모두 나와야 한다.
 
 공개 문서와 개인 식별 정보 검사를 통과해야 한다.
 
