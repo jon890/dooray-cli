@@ -238,6 +238,15 @@ resolver 는 code 누락 그룹을 사전 필터링하고 후보 5개 안내 출
 | templates     | 24h | 정형 task 템플릿 변경 빈도 낮음 (ADR-027) |
 | wikis         | 24h | 위키 home page 거의 불변             |
 
+### 캐시 전체가 무효해지는 조건 (ADR-042)
+
+캐시 디렉터리는 `~/.dooray/cache` 하나이고 계정·환경별로 나뉘지 않는다.
+그래서 `config.json` 의 `apiKey` 나 `baseUrl` 이 바뀌면 남아 있는 모든 파일이 다른 곳의 데이터가 된다.
+
+`dooray config set` 과 `dooray setup` 은 두 값 중 하나가 실제로 달라졌을 때 캐시 전체를 지운다.
+같은 값을 다시 설정하는 경우와 이전 설정이 없는 최초 설정은 지우지 않는다.
+`tenantName`, IMAP·SMTP 설정, `trackLastRun` 은 캐시 내용에 영향을 주지 않아 대상이 아니다.
+
 ### Lazy Loading 전략
 
 - 커맨드 실행 시 해당 캐시 파일이 없거나 TTL 만료 시 자동 fetch

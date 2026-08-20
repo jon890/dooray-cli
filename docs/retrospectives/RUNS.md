@@ -25,3 +25,4 @@
 | 2026-08-20 | planning | plan057-feat-project-tags-write | - | 3 | - | - | - | 없음 | 4 | docs·task 작성, API 문서 확인으로 지원 범위 한정, flow TTL 불일치 교정, 캐시 무효화 정책 ADR 신설 |
 | 2026-08-20 | build-with-teams | plan057-feat-project-tags-write | B | 3 | 1 | 1 | 0 | 없음 | 1 | 로컬 구현 완료, services 계열 신설, 테스트 범위 확장은 조율자 승인 |
 | 2026-08-20 | review-fix | PR 149 | - | - | - | 0 | - | 없음 | 0 | 리뷰 전 항목 🟢, 수정 사항 없음 |
+| 2026-08-20 | planning | plan058-fix-config-change-cache-invalidation | - | 2 | - | - | - | 없음 | 1 | docs·task 작성, ADR-042 를 config 변경까지 확장, clearCache 실패 삼킴 발견 |

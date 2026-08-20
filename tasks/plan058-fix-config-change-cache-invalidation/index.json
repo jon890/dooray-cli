@@ -1,0 +1,29 @@
+{
+  "name": "plan058-fix-config-change-cache-invalidation",
+  "description": "apiKey·baseUrl 이 바뀔 때 캐시 전체를 무효화한다. 캐시가 계정·환경별로 나뉘지 않아 이전 계정의 데이터가 남는 문제 (ADR-042 확장)",
+  "created_at": "2026-08-20T00:00:00Z",
+  "updated_at": "2026-08-20T00:00:00Z",
+  "status": "pending",
+  "current_phase": 1,
+  "total_phases": 2,
+  "error_message": null,
+  "blocked_reason": null,
+  "phases": [
+    {
+      "number": 1,
+      "title": "services/config.ts 신설과 clearCache 실패 노출",
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    },
+    {
+      "number": 2,
+      "title": "config set·setup 연결과 cache clear 에러 처리",
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "status": "pending",
+      "allowedTools": ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+    }
+  ]
+}
