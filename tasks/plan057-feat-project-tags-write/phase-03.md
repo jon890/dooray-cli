@@ -98,8 +98,10 @@ pnpm test
 
 ```bash
 # cwd: <repo root>
-pnpm test 2>&1 | grep -E "tags-create|resolvers/tag"
+npx vitest run --reporter=verbose 2>&1 | grep -E "tags-create|resolvers/tag"
 ```
+
+`pnpm test` 의 기본 reporter 는 통과한 파일 이름을 찍지 않는다. `--reporter=verbose` 가 필요하다.
 
 공개 문서와 개인 식별 정보 검사를 통과해야 한다.
 
