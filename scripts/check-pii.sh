@@ -56,12 +56,15 @@ ids=$(grep -rnoE "[0-9]{15,}" "${SCAN[@]}" 2>/dev/null \
 [ -n "$ids" ] && report "허용 목록 밖의 긴 숫자 — 실제 ID 인지 확인하고 placeholder 나 dummy 로 바꾼다" "$ids"
 
 # 3) CLI 예시의 project 인자
-#    프로젝트 코드는 임의 문자열이라 패턴으로 못 거른다. 허용 목록 밖이면 사람이 확인한다
+#    프로젝트 코드는 임의 문자열이라 패턴으로 못 거른다. 허용 목록 밖이면 사람이 확인한다.
+#    project 자리에 하위 명령 이름이 오는 형태(`project tags create <project>`)는 검출에서 뺀다.
+#    같은 이름의 프로젝트를 놓치지만, 하위 명령이 늘 때마다 오탐이 나는 편이 나쁘다
+SUBCOMMANDS="create group list edit delete add update"
 projects=$(grep -rohE "(post (create|list|get|search)|project (list|members|groups|tags|templates|workflows)|wiki (pages|tree)) [A-Za-z][A-Za-z0-9_-]{2,}" "${SCAN[@]}" 2>/dev/null \
   | awk '{print $NF}' | sort -u)
 unknown=""
 for p in $projects; do
-  case " $OK_PROJECTS " in
+  case " $OK_PROJECTS $SUBCOMMANDS " in
     *" $p "*) ;;
     *) unknown="$unknown$p"$'\n' ;;
   esac
