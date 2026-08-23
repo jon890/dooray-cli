@@ -17,3 +17,5 @@
 | RETRO-0013 | 2026-08-06 | 052-fix-post-edit-participants-only | 비대화형 진입 조건과 조합 옵션의 범위 구분 | 해결 | 승격 안 함 |
 | RETRO-0014 | 2026-08-20 | plan057-feat-project-tags-write | 전역 옵션과 이름이 같은 하위 명령 옵션이 값을 잃는다 | 해결 | 승격 안 함 |
 | RETRO-0015 | 2026-08-20 | plan057-feat-project-tags-write | 팀원이 worktree 가 아닌 저장소 루트를 보고 판정했다 | 해결 | 승격 안 함 |
+| RETRO-0016 | 2026-08-20 | plan058-fix-config-change-cache-invalidation | 이름을 지정한 팀원이 두 번 다 회신 없이 멈췄다 | 해결 | 승격 안 함 |
+| RETRO-0017 | 2026-08-20 | plan058-fix-config-change-cache-invalidation | 선례를 따르라는 지시가 의존 형태의 차이를 흡수하지 못했다 | 해결 | 승격 후보 |

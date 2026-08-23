@@ -13,6 +13,11 @@ API 를 호출하고 그 엔티티의 캐시 파일을 지우지 않는다.
 대부분의 TTL 이 24시간이라 방금 바꾼 것을 다음 명령이 최대 24시간 보지 못한다.
 명령 자체는 성공으로 끝나고 에러도 없어서, 사용자는 서버가 반영되지 않은 것으로 오해한다.
 
+캐시가 어느 계정·환경의 것인지를 바꾸는 config 변경도 같다.
+`~/.dooray/cache` 는 계정별로 나뉘지 않아서 `apiKey` 나 `baseUrl` 이 바뀌면 전체가 무효해진다.
+이쪽 증상은 더 조용하다. 낡은 데이터가 아니라 다른 계정의 데이터를 쓰기 때문에
+`resolveProject` 가 엉뚱한 projectId 를 돌려주고 그 id 로 새 환경에 요청을 보낸다.
+
 **Good**: 쓰기 호출을 `src/services/<엔티티>.ts` 의 함수로 감싸고, 그 함수가 성공 직후 캐시 파일을 지운다.
 명령 파일이 `api/client` 의 쓰기 메서드를 직접 부르고 따로 캐시를 지우는 형태를 만들지 않는다.
 `src/resolvers/` 는 읽기 전용이라 쓰기 함수를 넣지 않는다.
@@ -40,7 +45,10 @@ grep -rn "client\.\(create\|update\|delete\|set\)" src/commands/ | grep -v "\.te
 grep -rn "client\.\(create\|update\|delete\|set\)" src/resolvers/ | grep -v "\.test\.ts"
 ```
 
-**Self-check**: 새 쓰기 메서드의 대상이 `src/cache/store.ts` 의 `set*` 함수 중 하나에 대응하는가?
+**Self-check**: config 스키마에 키를 추가했다면, 그 값이 캐시가 어느 계정·환경의 것인지를 바꾸는가?
+바꾼다면 `src/services/config.ts` 의 무효화 판정에 그 키를 넣었는가?
+
+새 쓰기 메서드의 대상이 `src/cache/store.ts` 의 `set*` 함수 중 하나에 대응하는가?
 대응하면 `src/services/` 의 함수와 그 안의 무효화가 있는가?
 그 불변식이 `src/services/<엔티티>.test.ts` 로 고정되어 있는가?
 호출 성공 직후 캐시를 지우는 것, 캐시 삭제 실패가 명령을 실패로 만들지 않는 것,
