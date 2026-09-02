@@ -66,15 +66,21 @@ jobs:
             --method POST \
             --field content=eyes || true
 
-      - name: 이전 Claude 봇 댓글 삭제
+      - name: 이전 Claude 봇 리뷰 정리
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           REPO="${{ github.repository }}"
           PR_NUMBER="${{ env.PR_NUMBER }}"
 
+          # 목록 조회는 모두 --paginate 와 per_page=100 을 함께 쓴다.
+          # REST 기본 페이지 크기가 30 이라 그대로 두면 30 건이 넘는 오래된
+          # 댓글과 리뷰가 정리되지 않고 남는다. per_page 를 빼면 --paginate 가
+          # 30 건씩 여러 번 호출해 느려진다.
+
           # 이전 일반 PR 코멘트 삭제 (claude[bot] 작성)
-          gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+          # — 요약이 리뷰 body 로 옮겨가기 전 방식으로 올라간 댓글도 계속 걷어낸다.
+          gh api --paginate "repos/$REPO/issues/$PR_NUMBER/comments?per_page=100" \
             --jq '.[] | select(.user.login == "claude[bot]") | .id' \
             | while read -r comment_id; do
               if [ -n "$comment_id" ]; then
@@ -84,12 +90,32 @@ jobs:
             done
 
           # 이전 인라인 리뷰 코멘트 삭제 (claude[bot] 작성)
-          gh api "repos/$REPO/pulls/$PR_NUMBER/comments" \
+          gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/comments?per_page=100" \
             --jq '.[] | select(.user.login == "claude[bot]") | .id' \
             | while read -r comment_id; do
               if [ -n "$comment_id" ]; then
                 echo "오래된 Claude 인라인 댓글 삭제 중: $comment_id"
                 gh api "repos/$REPO/pulls/comments/$comment_id" --method DELETE || true
+              fi
+            done
+
+          # 이전 리뷰 본문을 OUTDATED 로 접기 (claude[bot] 작성)
+          # — 요약이 리뷰 body 에 실리므로 reviews 도 정리 대상이다. 제출된 COMMENT
+          # 리뷰는 REST 로 삭제할 수 없고 (reviews DELETE 는 PENDING 전용) dismiss 도
+          # APPROVED / CHANGES_REQUESTED 에만 되므로, GraphQL minimizeComment 로 접는다.
+          # 인라인·일반 댓글은 위에서 그대로 삭제한다 — 실행당 접히는 블록은 리뷰 본문 1 개다.
+          # 이미 접힌 리뷰를 다시 접어도 안전하므로 isMinimized 필터는 두지 않는다.
+          gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/reviews?per_page=100" \
+            --jq '.[] | select(.user.login == "claude[bot]") | .node_id' \
+            | while read -r review_node_id; do
+              if [ -n "$review_node_id" ]; then
+                echo "오래된 Claude 리뷰 본문 접는 중: $review_node_id"
+                gh api graphql -f query='
+                  mutation($id: ID!) {
+                    minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) {
+                      minimizedComment { isMinimized }
+                    }
+                  }' -f id="$review_node_id" </dev/null || true
               fi
             done
 
@@ -136,7 +162,7 @@ jobs:
           #   1) 본문 길이 12자 미만
           #   2) /^test\s*\d*$/i 같은 단순 placeholder (test, test1, sample, foo 등)
           #   3) 🔴 / 🟡 severity 마커 부재 (정상 review 형식 미준수)
-          ids=$(gh api "repos/$REPO/pulls/$PR_NUMBER/comments" --jq '
+          ids=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/comments?per_page=100" --jq '
             .[]
             | select(.user.login == "claude[bot]")
             | select(
