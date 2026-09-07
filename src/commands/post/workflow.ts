@@ -55,6 +55,7 @@ export const postWorkflowCommand = new Command("workflow")
       postNumberArg,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     const workflowId = await resolveWorkflow(client, projectId, workflowInput);
     await client.setPostWorkflow(projectId, postId, workflowId);

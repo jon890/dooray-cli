@@ -29,7 +29,7 @@ $B waitjs "$PAGE" 'document.body.innerText.length > 2000' 60000
 $B js "$PAGE" 'document.body.innerText' > "$TMPDIR/dooray-official-page.txt"
 ```
 
-**중간 파일을 저장소 안에 두지 않는다.** `scripts/check-pii.sh` 의 `SCAN` 배열이 `docs/` 를 포함하고
+**중간 파일을 저장소 안에 두지 않는다.** `scripts/check-pii.mjs` 의 `SCAN` 배열이 `docs/` 를 포함하고
 그 스크립트는 `.gitignore` 를 보지 않는다. 공식 문서 본문에는 예시 ID 와 도메인이 들어 있어
 15자리 이상 숫자와 화이트리스트 밖 도메인이 그대로 위반으로 잡힌다.
 그러면 이 phase 의 검증 절을 통과할 수 없다.
@@ -64,7 +64,7 @@ $B js "$PAGE" 'document.body.innerText' > "$TMPDIR/dooray-official-page.txt"
 ## 의도 메모
 
 - Python 이 아니라 `.mjs` 로 쓴다. CI 가 Node 만 설치하고, 검사 스텝이 `pnpm install` 앞에서 돈다.
-  `.github/workflows/ci.yml` 에서 `check-pii.sh` 와 `check-public-refs.sh` 가 `pnpm install` 보다 앞에 있다.
+  `.github/workflows/ci.yml` 에서 `check-pii.mjs` 와 `check-public-refs.mjs` 가 `pnpm install` 보다 앞에 있다.
   그래서 npm 의존성을 쓸 수 없다. `node:` 빌트인만 쓴다.
 - `scripts/verify-package.mjs` 가 같은 방식의 선례다. `node:fs` 와 `node:path` 만 쓰고 `node` 가 직접 실행한다.
 - TypeScript 로 쓰지 않는다. `tsx` 가 devDependency 에 없고, 있어도 `pnpm install` 앞에서는 쓸 수 없다.
@@ -212,7 +212,7 @@ grep -cE "^import .* from \"[^n]" scripts/api-endpoint-inventory.mjs      # = 0
 
 ```bash
 # cwd: <repo root>
-bash scripts/check-pii.sh
+node scripts/check-pii.mjs
 ```
 
 `docs/api/official-endpoints.txt` 에 실제 ID 나 사내 도메인이 섞이지 않았는지 이 검사가 본다.

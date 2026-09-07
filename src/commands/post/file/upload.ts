@@ -67,6 +67,7 @@ export const fileUploadCommand = new Command("upload")
       postNumberArg,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     const res = await client.uploadPostFile(projectId, postId, filePath);
     stopSpinner(true, "업로드 완료");

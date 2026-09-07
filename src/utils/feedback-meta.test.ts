@@ -19,7 +19,7 @@ describe("buildIssueBody", () => {
     expect(out).toContain("의견 내용");
   });
 
-  it("baseUrl 미포함 (ADR-022)", () => {
+  it("baseUrl 을 포함하지 않는다", () => {
     const out = buildIssueBody("의견", FAKE_META);
     expect(out).not.toMatch(/baseUrl|api\.dooray|https:\/\//);
   });

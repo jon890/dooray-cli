@@ -86,6 +86,7 @@ interface DooraySkillManifest {
 ```typescript
 interface Config {
   version: 1;
+  trackLastRun?: boolean; // feedback --last 에 쓸 직전 실행 기록 활성화
   tenantName?: string;     // 회사 테넌트명 (e.g. "<tenant>"), 기본값: "<tenant>"
   apiKey: string;          // Dooray API 토큰
   baseUrl: string;         // API Endpoint, 4개 환경 중 택 1
@@ -111,6 +112,13 @@ const API_ENDPOINTS = {
 - 미설정 키 접근 시 에러와 `dooray setup` 안내 출력
 - env var 폴백 없음 (보안 원칙)
 - IMAP/SMTP 서버 정보는 기본값 제공. 사용자는 username/password만 설정하면 됨
+
+`getConfig` 는 설정 파일 읽기 결과를 네 상태로 돌려준다 (ADR-049).
+
+- `absent`: `config.json` 파일이 없다.
+- `invalid`: 파일은 있지만 JSON 파싱이나 필드 검증에 실패했다.
+- `unreadable`: 파일 권한이나 입출력 문제로 내용을 읽지 못했다.
+- `ok`: 파일을 읽었고 `Config` 형식 검증을 통과했다.
 
 ---
 
@@ -245,6 +253,8 @@ resolver 는 code 누락 그룹을 사전 필터링하고 후보 5개 안내 출
 
 `dooray config set` 과 `dooray setup` 은 두 값 중 하나가 실제로 달라졌을 때 캐시 전체를 지운다.
 같은 값을 다시 설정하는 경우와 이전 설정이 없는 최초 설정은 지우지 않는다.
+설정 파일이 손상됐거나 읽히지 않으면 `dooray config set` 은 기존 파일을 덮지 않고 오류로 끝난다.
+`dooray setup` 이 전체 설정 저장에 성공하면 이전 계정을 알 수 없으므로 캐시 전체를 지운다 (ADR-049).
 `tenantName`, IMAP·SMTP 설정, `trackLastRun` 은 캐시 내용에 영향을 주지 않아 대상이 아니다.
 
 지운 것이 있었을 때만 사용자에게 알린다. 지울 캐시가 없었으면 알리지 않는다.

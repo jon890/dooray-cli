@@ -58,7 +58,8 @@ dooray doctor
 `api-key` 나 `base-url` 을 바꾸면 캐시 전체를 함께 지우고 그 사실을 알린다 (ADR-042).
 이전 계정이나 이전 접속 환경의 프로젝트·멤버·태그가 남아 잘못 매칭되는 것을 막는다.
 같은 값을 다시 설정하는 경우와 최초 설정에서는 지우지 않는다.
-`dooray setup` 으로 값을 바꿀 때도 같다.
+설정 파일이 손상됐거나 읽히지 않으면 `dooray config set` 은 기존 파일을 덮지 않고 오류로 끝난다.
+`dooray setup` 으로 전체 설정을 저장하는 데 성공하면 이전 계정을 알 수 없으므로 캐시 전체를 지운다.
 
 값에 `-` 를 주면 stdin 에서 읽는다. 토큰을 명령 인자로 넘기지 않으려는 경로다.
 
@@ -221,14 +222,16 @@ dooray cache clear       # 전체 삭제
 
 TTL: projects·members 1시간, 나머지 24시간. 엔티티별 값과 근거는 `docs/data-schema.md` 의 TTL 설계 근거 표가 소유한다.
 
-TTL 을 기다리지 않고 비워지는 경우가 둘 있다 (ADR-042).
+TTL 을 기다리지 않고 비워지는 경우가 세 가지 있다.
 
 - 태그를 만들거나 태그 그룹 속성을 바꾸면 그 프로젝트의 태그 캐시를 지운다.
 - `api-key` 나 `base-url` 이 실제로 바뀌면 캐시 전체를 지운다. 계정이나 접속 환경이 바뀌면
   남아 있는 모든 파일이 다른 곳의 데이터이기 때문이다.
+- `dooray setup` 이 이전 설정 파일이 손상됐거나 읽히지 않는 상태에서 전체 설정을 저장하면 캐시 전체를 지운다.
+  이전 계정을 알 수 없어 남은 캐시가 맞는지 판단할 수 없기 때문이다.
 
 `dooray cache clear` 는 사용자가 명시적으로 요청한 작업이라 삭제에 실패하면 에러로 끝난다.
-위 두 경우의 무효화는 부수 작업이라 실패해도 경고만 내고 원래 명령을 성공으로 끝낸다.
+위 경우의 무효화는 부수 작업이라 실패해도 경고만 내고 원래 명령을 성공으로 끝낸다.
 
 ## 멤버 조회 흐름 (ADR-021)
 
@@ -421,14 +424,58 @@ dooray post workflow my-project 42 "review"     # 임의 상태로 (이름 또�
 ## 위키 흐름
 
 ```
-dooray wiki list my-project                      # 위키 페이지 목록
+dooray wiki list                                 # 위키 목록 (ID / Name / Project / Type)
+dooray wiki list --search 설계                    # 이름 부분 일치, 대소문자 무시 (ADR-043)
+dooray wiki pages my-project                     # root 페이지 목록
 dooray wiki tree my-project                      # 페이지 계층 트리 (root 부터 재귀)
 dooray wiki tree my-project --depth 2            # 손자까지만
-dooray wiki get my-project <page-id>             # 페이지 조회
-dooray wiki create my-project --title "설계" --body-file design.md
-dooray wiki edit my-project <page-id>            # $EDITOR 수정
+dooray wiki page get my-project <page-id>        # 페이지 조회
+dooray wiki page create my-project --title "설계" --body-file design.md
+dooray wiki page edit my-project <page-id>       # $EDITOR 수정
 dooray wiki page delete my-project <page-id>     # 페이지 삭제 (confirm 기본, -y/--yes 로 생략)
+dooray wiki page move <project> <page-id> --parent <parent-page-id>
+dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
+dooray wiki page move --id <page-id> --parent <parent-page-id> --first
 ```
+
+페이지 ID 하나만 아는 상태에서 시작하는 경로다 (Issue #154, ADR-045).
+project 를 찾을 필요가 없다.
+
+```
+dooray wiki page get --id <page-id>
+```
+
+위키 자체를 이름으로 찾아야 할 때가 따로 있다 (ADR-043).
+페이지 ID 를 모르거나 그 위키의 페이지 목록이나 트리를 보려 할 때다.
+
+```
+# 1. 위키를 이름으로 찾는다. Project 열의 값이 다음 명령의 project 인자다
+dooray wiki list --search <위키 이름 일부>
+
+# 2. 그 값으로 페이지 목록이나 트리를 본다
+dooray wiki pages <project>
+dooray wiki tree <project>
+```
+
+위키 본문의 페이지 링크는 `dooray://<orgId>/pages/<pageId>` 형태다.
+앞 숫자는 orgId 이고 project 도 위키 ID 도 아니다.
+그 값을 project 자리에 넣으면 `프로젝트에 위키가 없습니다` 로 끝난다.
+`resolveProject` 가 15자리 이상 numeric 을 project ID 로 통과시킨 뒤(ADR-030) `resolveWiki` 가 캐시에서 찾지 못하기 때문이다.
+뒤 숫자가 페이지 ID 이므로 그것만 떼어 `--id` 에 넣으면 project 없이 조회된다. 오류 안내가 그 방법을 알려준다.
+
+`wiki page get` 은 `wiki page file` 과 `wiki page comment` 와 같은 네 가지 입력 형태를 받는다 (ADR-020, ADR-043).
+`--id` 모드는 project 없이 단독으로 동작한다 (ADR-045).
+`GET /wiki/v1/pages/{page-id}` 를 한 번 불러 응답의 wikiId 를 읽는다.
+`--project` 는 선택이며 함께 주면 그 해석 호출을 아낀다.
+`wiki page` 의 `file`, `comment`, `delete` 도 같은 방식으로 `--id` 만 받는다.
+
+```
+dooray wiki page get --id <page-id>
+dooray wiki page get --url "https://x.dooray.com/wiki/<wikiId>/<pageId>"
+dooray wiki page get --id <page-id> --project my-project
+```
+하위 페이지는 기본으로 함께 이동한다.
+이동할 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
 
 ## 메신저 흐름 (Issue #88, ADR-033)
 

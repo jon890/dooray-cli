@@ -16,7 +16,7 @@
 `README.md` 와 `skills/dooray-cli/SKILL.md` 에는 내부 추적 번호를 넣지 않는다.
 `ADR-NNN`, `Issue #NN`, `task NN` 이 모두 금지 대상이다.
 `CLAUDE.md` 의 「공개 문서(README · 공개 SKILL)」 절이 이 규칙을 소유하고
-`scripts/check-public-refs.sh` 가 검사한다. CI 도 같은 스크립트를 돌린다.
+`scripts/check-public-refs.mjs` 가 검사한다. CI 도 같은 스크립트를 돌린다.
 
 고칠 자리는 이렇다.
 
@@ -135,8 +135,8 @@ pnpm api:inventory
 
 ```bash
 # cwd: <repo root>
-bash scripts/check-public-refs.sh
-bash scripts/check-pii.sh
+node scripts/check-public-refs.mjs
+node scripts/check-pii.mjs
 bash ~/.claude/scripts/korean-style-check.sh README.md CLAUDE.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/wiki.md skills/dooray-cli/references/post.md
 python3 ~/.claude/scripts/check-readability.py README.md CLAUDE.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/wiki.md skills/dooray-cli/references/post.md
 ```
@@ -156,8 +156,8 @@ git diff --unified=0 -- README.md CLAUDE.md skills/ | grep '^+' | grep -v '^+++'
 
 ```bash
 # cwd: <repo root>
-bash scripts/check-public-refs.sh
-bash scripts/check-pii.sh
+node scripts/check-public-refs.mjs
+node scripts/check-pii.mjs
 pnpm test
 ```
 

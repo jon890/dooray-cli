@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { resolveProject } from "./project.js";
 import type { DoorayApiClient } from "../api/client.js";
+import { DoorayCliError } from "../utils/errors.js";
+import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 // cache store mock — ensureProjects 내부에서 호출하는 함수들을 mock
 // self-mock (vi.mock("./project.js")) 는 동일 파일 내부 함수 참조를 교체 못함 → 사용 금지
@@ -27,7 +29,7 @@ describe("resolveProject", () => {
     expect(result).toBe("1111222233334444555");
   });
 
-  it("numeric 15+자리 — cache 우회 (ADR-030)", async () => {
+  it("numeric 15자리 이상 — cache 우회", async () => {
     const result = await resolveProject({} as unknown as DoorayApiClient, "9999888877776666555");
     expect(result).toBe("9999888877776666555");
   });
@@ -37,8 +39,19 @@ describe("resolveProject", () => {
     expect(result).toBe("1111222233334444555");
   });
 
-  it("code 매칭 실패 — 친절한 안내 (ADR-030 회피책 포함)", async () => {
-    await expect(resolveProject({} as unknown as DoorayApiClient, "nonexistent-code"))
-      .rejects.toThrow(/프로젝트를 찾을 수 없습니다.*ADR-030/s);
+  it("code 매칭 실패 — 내부 번호와 API 용어 없이 회피책을 안내한다", async () => {
+    await expect(resolveProject({} as unknown as DoorayApiClient, "nonexistent-code")).rejects.toSatisfy(
+      (err: unknown) => {
+        expect(err).toBeInstanceOf(DoorayCliError);
+        if (!(err instanceof DoorayCliError)) return false;
+        expect(err.exitCode).toBe(EXIT_PARAM_ERROR);
+        expect(err.message).toContain("프로젝트를 찾을 수 없습니다: nonexistent-code");
+        expect(err.message).not.toContain("ADR");
+        expect(err.message).not.toContain("member=me");
+        expect(err.message).toContain("dooray project list --type private");
+        expect(err.message).toContain("15자리 이상 숫자");
+        return true;
+      },
+    );
   });
 });

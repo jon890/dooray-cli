@@ -69,6 +69,7 @@ export const fileDownloadCommand = new Command("download")
       postNumberArg,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     const { buffer, fileName } = await client.downloadPostFile(projectId, postId, fileId);
 

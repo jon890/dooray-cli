@@ -2,7 +2,7 @@ import { DoorayApiClient } from "../api/client.js";
 import { resolveWiki } from "./wiki.js";
 import { parseDoorayWikiUrl, isLikelyDoorayUrl } from "../utils/dooray-url.js";
 import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+import { EXIT_PARAM_ERROR, EXIT_API_ERROR } from "../utils/exit-codes.js";
 
 export interface WikiPageInputArgs {
   projectArg?: string;
@@ -19,9 +19,11 @@ export interface ResolvedWikiPageInput {
 
 const INPUT_HELP =
   "위키 페이지를 식별할 정보가 부족합니다. 다음 중 하나를 입력하세요:\n" +
-  "  - <project> <page-id>                    예: my-project 9876543210987654321\n" +
-  "  - --id <page-id> --project <project>      (또는 --url)\n" +
-  "  - <Dooray URL>                            예: https://x.dooray.com/wiki/<wikiId>/<pageId>";
+  "  - --id <page-id>                          예: --id 1234567890123456789\n" +
+  "  - <project> <page-id>                     예: my-project 1234567890123456789\n" +
+  "  - <Dooray URL>                            예: https://x.dooray.com/wiki/<wikiId>/<pageId>\n" +
+  "  위키를 이름으로 찾으려면: dooray wiki list --search <위키 이름 일부>\n" +
+  "  --project 는 선택입니다. 함께 주면 wikiId 해석 호출을 아낍니다.";
 
 export async function resolveWikiPageInput(
   client: DoorayApiClient,
@@ -64,16 +66,23 @@ export async function resolveWikiPageInput(
     return parsed;
   }
 
-  // 3. --id 단독 — project 필요 (wikiId 해석에 project 필요)
+  // 3. --id — project 가 있으면 그것으로 wikiId 해석, 없으면 page-only endpoint 로 wikiId 를 얻는다 (ADR-045)
   if (idOpt) {
-    const projectCode = project ?? projectArg;
-    if (!projectCode) {
+    // projectArg 를 fallback 으로 두지 않는다. 위 가드가 --id 와 positional 동시 사용을
+    // 이미 EXIT_PARAM_ERROR 로 막으므로 이 지점의 projectArg 는 항상 undefined 다.
+    if (project) {
+      const wikiId = await resolveWiki(client, project);
+      return { wikiId, pageId: idOpt };
+    }
+
+    const res = await client.getWikiPageStandalone(idOpt);
+    const wikiId = res.result.wikiId;
+    if (!wikiId) {
       throw new DoorayCliError(
-        "--id 모드는 --project <code> 가 필요합니다 (또는 첫 positional 에 project code).",
-        EXIT_PARAM_ERROR,
+        `페이지 응답에 wikiId 가 없습니다 (pageId: ${idOpt})`,
+        EXIT_API_ERROR,
       );
     }
-    const wikiId = await resolveWiki(client, projectCode);
     return { wikiId, pageId: idOpt };
   }
 

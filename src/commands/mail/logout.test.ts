@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clearMailCredentials } from "../../config/store.js";
 import { authorizeMailLogout, mailLogoutCommand } from "./logout.js";
-import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
+import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 
 vi.mock("../../config/store.js", () => ({
   clearMailCredentials: vi.fn(),
@@ -42,7 +42,10 @@ describe("authorizeMailLogout", () => {
 
 describe("mailLogoutCommand", () => {
   it("제거 결과를 stderr에만 출력한다", async () => {
-    vi.mocked(clearMailCredentials).mockResolvedValueOnce(true);
+    vi.mocked(clearMailCredentials).mockResolvedValueOnce({
+      state: "cleared",
+      hadCredentials: true,
+    });
     const stdout = vi
       .spyOn(process.stdout, "write")
       .mockImplementation(() => true);
@@ -56,5 +59,19 @@ describe("mailLogoutCommand", () => {
     expect(stderr).toHaveBeenCalledWith(
       expect.stringContaining("메일 인증정보를 제거했습니다"),
     );
+  });
+
+  it("설정을 읽지 못하면 config 오류로 전파한다", async () => {
+    vi.mocked(clearMailCredentials).mockResolvedValueOnce({
+      state: "failed",
+      reason: "설정 파일이 손상되었습니다.",
+    });
+
+    await expect(
+      mailLogoutCommand.parseAsync(["node", "dooray", "--yes"]),
+    ).rejects.toMatchObject({
+      exitCode: EXIT_CONFIG_ERROR,
+      message: expect.stringContaining("손상"),
+    });
   });
 });

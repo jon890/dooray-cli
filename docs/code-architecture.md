@@ -1,4 +1,4 @@
-# Code Architecture — dooray-cli
+# dooray-cli 코드 구조
 
 ## 기술 스택
 
@@ -15,6 +15,7 @@
 | IMAP 클라이언트 | imapflow (메일 조회)                  |
 | SMTP 클라이언트 | nodemailer (메일 발송)                |
 | 메일 파서       | mailparser (메일 본문 파싱)           |
+| 문서 검사       | `node:` 빌트인만 쓰는 `.mjs` 스크립트. CI 에서 의존성 설치 전에 실행한다 (ADR-048) |
 
 ## 디렉터리 구조
 
@@ -35,7 +36,7 @@ src/
     member.ts               # 입력 자동 분기: 15자리 숫자 / 이메일 / 이름. lookupMemberName + buildMemberNameMap (ADR-021)
     workflow.ts             # name·class → workflowId
     post.ts                 # postNumber → postId (API 호출)
-    wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시)
+    wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시). fetchAllWikis 가 size 100 씩 totalCount 까지 순회 (ADR-043)
     postRef.ts              # "code/number" 또는 raw postId → postId (post create / post edit --parent 공용)
     tag.ts                  # name[] → tagIds + mandatory/selectOne 검증, 그룹 이름 → groupId (태그 목록의 tagGroup 에서 파생, ADR-041)
     milestone.ts            # name → milestoneId
@@ -62,7 +63,7 @@ src/
     last-run.ts             # ~/.dooray/last-run.json 단일 read/write (ADR-023, cache 디렉토리 외부 — cache clear 영향 없음)
 
   config/
-    store.ts                # ~/.dooray/config.json CRUD
+    store.ts                # ~/.dooray/config.json CRUD. getConfig 는 absent·invalid·unreadable·ok 상태를 돌려준다 (ADR-049)
     types.ts                # Config 인터페이스
 
   skill/
@@ -75,7 +76,7 @@ src/
   formatters/
     table.ts                # cli-table3 기반 테이블 출력
     post.ts                 # Post 전용 포맷 (workflow 이름 등)
-    wiki.ts                 # Wiki 전용 포맷 (formatWikiTree — flat 배열 → parentPageId 로 트리 조립 후 ├─└─ 렌더, ADR-034)
+    wiki.ts                 # Wiki 전용 포맷 (formatWikiTree — flat 배열 → parentPageId 로 트리 조립 후 ├─└─ 렌더, ADR-034). formatWikiList 는 project 열을 받아 표에 낸다 (ADR-043)
     member.ts               # Member 상세/목록 포맷 (ADR-021)
     comment.ts              # PostComment 상세 포맷 (table/JSON/quiet, Issue #45)
     wiki-comment.ts         # WikiComment 전용 포맷 — page.id + creator.member 시그니처 차이 (post comment 와 mailUsers/files/mention 부재)
@@ -92,6 +93,7 @@ src/
     task-link.ts            # 업무 링크 빌더 (escapeLinkText / buildTaskLink / appendTaskLinks / parseLinkRef, Issue #33)
     feedback-meta.ts        # CLI 버전·환경 수집 + GitHub issue body 빌더 + buildLastRunBlock (ADR-022, ADR-023)
     argv-sanitize.ts        # argv 시크릿 패턴 마스킹 (--api-key/--token/--password/Authorization, ADR-023)
+    command-hint.ts         # 실행된 argv 에서 positional 을 빼고 --id 를 끼운 완성 명령 문자열 빌더 (ADR-044)
     comment-files.ts        # 확장자별 이미지/일반 링크 생성 + 두 형식 제거 (ADR-024)
     wiki-snippet.ts         # wiki inline_image 본문 삽입용 markdown reference 빌더 (ADR-031 보강, Issue #81)
     dooray-message.ts       # resultMessage URL-encoding 디코드 정규화 (API 에러 메시지 표시용)
@@ -161,6 +163,7 @@ src/
       page-get.ts
       page-create.ts
       page-edit.ts          # $EDITOR + 비대화형 플래그(--title/--body/--body-file)
+      page-move.ts          # 부모 변경, 정렬 변경, 위키 간 이동을 공식 move endpoint 로 호출 (ADR-047)
       page-delete.ts        # 페이지 삭제 (공식 DELETE endpoint, ADR-032) — 공통 confirm ADR-036, resolveWikiPageInput
       page-file/
         index.ts            # wikiPageFileCommand 조립

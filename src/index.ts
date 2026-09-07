@@ -39,6 +39,7 @@ import { wikiPageGetCommand } from "./commands/wiki/page-get.js";
 import { wikiPageCreateCommand } from "./commands/wiki/page-create.js";
 import { wikiPageEditCommand } from "./commands/wiki/page-edit.js";
 import { wikiPageDeleteCommand } from "./commands/wiki/page-delete.js";
+import { wikiPageMoveCommand } from "./commands/wiki/page-move.js";
 import { wikiPageFileCommand } from "./commands/wiki/page-file/index.js";
 import { wikiPageCommentCommand } from "./commands/wiki/page-comment/index.js";
 import { memberCommand } from "./commands/member/index.js";
@@ -131,6 +132,7 @@ wikiPageCommand.addCommand(wikiPageGetCommand);
 wikiPageCommand.addCommand(wikiPageCreateCommand);
 wikiPageCommand.addCommand(wikiPageEditCommand);
 wikiPageCommand.addCommand(wikiPageDeleteCommand);
+wikiPageCommand.addCommand(wikiPageMoveCommand);
 wikiPageCommand.addCommand(wikiPageFileCommand);
 wikiPageCommand.addCommand(wikiPageCommentCommand);
 wikiCommand.addCommand(wikiPageCommand);
@@ -166,7 +168,12 @@ program.parseAsync().catch(async (err) => {
     const sanitized = sanitizeArgv(process.argv.slice(2));
     const firstNonFlag = sanitized.find((a) => !a.startsWith("-"));
     const isFeedbackCommand = firstNonFlag === "feedback";
-    if (config?.trackLastRun && !isFeedbackCommand) {
+    // last-run 기록은 완성된 설정에서만 의미가 있어 ok 상태만 사용한다.
+    if (
+      config.state === "ok" &&
+      config.config.trackLastRun &&
+      !isFeedbackCommand
+    ) {
       await writeLastRun({
         argv: ["dooray", ...sanitized],
         exitCode,

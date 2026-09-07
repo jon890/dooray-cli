@@ -226,7 +226,7 @@ grep -n "결정\|대체된 부분\|맥락" docs/adr/032-wiki-page-delete.md | he
 
 ```bash
 # cwd: <repo root>
-bash scripts/check-pii.sh
+node scripts/check-pii.mjs
 ```
 
 ## Critical Files

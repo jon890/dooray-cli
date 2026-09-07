@@ -86,7 +86,7 @@ dooray post edit --id "$POST_ID" --cc-group qa-team --dry-run --json | jq '.user
 
 참조자·담당자 옵션만 지정하면 `$EDITOR`를 열지 않고 기존 제목·본문·태그를 보존한 채 참여자만 바꾼다.
 
-## 본문 수정은 전체 교체다 — 첨부가 사라질 수 있다
+## 본문 전체 교체와 첨부 손실 주의
 
 `post edit` 와 `post comment edit` 는 본문을 통째로 바꾼다.
 새 본문에 기존 첨부의 이미지 마크다운(`![](/files/<id>)`)이나 일반 링크(`[](/files/<id>)`)가 없으면 확인을 요청하고,
@@ -152,7 +152,7 @@ dooray post edit --id "$CHILD_ID" --title "subtask A" --parent <project>/<parent
 ```
 
 `--parent` 를 쓸 때 `--title` 이 필수다. 제목을 바꾸지 않으려면 원래 제목을 그대로 넣는다.
-parent 해제는 API 가 지원하지 않아 CLI 로 할 수 없다 — 웹 UI 에서 처리한다.
+parent 해제는 API 가 지원하지 않아 CLI 로 할 수 없다. 웹 UI 에서 처리한다.
 계층 구조는 두 단계를 넘지 못한다. 상위업무를 가진 하위업무를 상위 업무로 설정할 수 없고,
 그 조건에서 `--parent` 를 쓰면 실패한다.
 

@@ -35,6 +35,8 @@
     "api:inventory": "node scripts/api-endpoint-inventory.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:pii": "node scripts/check-pii.mjs",
+    "check:refs": "node scripts/check-public-refs.mjs",
     "verify:package": "node scripts/verify-package.mjs"
   },
   "license": "MIT",

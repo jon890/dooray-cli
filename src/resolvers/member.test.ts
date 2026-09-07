@@ -111,7 +111,7 @@ describe("resolveMember 입력 자동 분기", () => {
   });
 });
 
-describe("resolveMemberByIdOrEmail (messenger --to 공유 헬퍼, ADR-033)", () => {
+describe("resolveMemberByIdOrEmail (messenger --to 공유 헬퍼)", () => {
   it("15자리 이상 숫자 → getMemberDetail 호출 후 input 반환", async () => {
     const id = "1234567890123456789";
     const client = mockClient({
