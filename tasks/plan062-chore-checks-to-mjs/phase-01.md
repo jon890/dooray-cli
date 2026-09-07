@@ -8,7 +8,9 @@
 검사 규칙을 함수로 export 해 vitest 로 검증한다.
 
 **범위 외**: 호출 지점 갱신과 CI 수정은 phase 02 다.
-검사 규칙 자체를 바꾸지 않는다. 화이트리스트 항목을 더하거나 빼지 않는다.
+검사 규칙 변경은 승인된 두 결함 수정으로 한정한다.
+필수 검사 경로가 없거나 읽을 수 없으면 오류 코드 2로 끝내고, 도메인은 호스트 전체를 허용 목록과 완전 일치로 비교한다.
+그 밖의 검사 규칙과 ID·project 화이트리스트를 바꾸지 않는다.
 `scripts/verify-package.mjs` 는 이미 `.mjs` 라 대상이 아니다.
 
 ## 컨텍스트
@@ -42,13 +44,13 @@
 - npm 의존성을 쓰지 않는다. CI 의 검사 스텝이 `pnpm install` 앞에서 돈다.
   `node:` 로 시작하는 import 만 쓴다.
 - TypeScript 로 쓰지 않는다. `tsx` 가 devDependency 에 없고, 있어도 설치 앞에서는 쓸 수 없다.
-- 검사 규칙을 바꾸지 않는다. 이 phase 는 옮기는 작업이다.
-  옮기면서 발견한 규칙의 결함은 고치지 말고 보고에 적는다.
+- 검사 경로 오류와 tenant 하위 도메인 누락은 승인된 범위 확장으로 함께 고친다.
+  그 밖에 발견한 규칙의 결함은 고치지 말고 보고에 적는다.
 - 파일 훑기를 셸의 `grep -r` 대신 직접 구현한다. `node:fs` 의 `readdir` 을 재귀로 쓴다.
   `.git` 과 `node_modules` 와 `dist` 와 `worktrees` 를 건너뛴다.
   `worktrees` 를 빼는 것이 중요하다. 다른 브랜치의 사본이 그 아래 있어 넣으면 검사가 중복되고 느려진다.
 - 출력 형식과 종료 코드를 그대로 유지한다. CI 와 사람이 그것을 읽는다.
-  위반이 있으면 1, 깨끗하면 0 이다.
+  위반이 있으면 1, 깨끗하면 0 이다. 두 검사기 모두 필수 검사 경로가 없거나 읽을 수 없으면 오류를 출력하고 2로 끝낸다.
 - **검사기의 테스트 데이터가 검사기 자신에게 걸린다.** 위반 사례를 소스에 그대로 적으면
   `check-pii` 가 그것을 잡아 CI 가 실패한다.
   위반 사례는 실행 시점에 조각을 이어 만든다. 화이트리스트 밖 도메인과 실제처럼 보이는 긴 숫자가 그 대상이다.
@@ -70,6 +72,7 @@
 파일 훑기와 정규식 판정을 함수로 나눠 export 한다.
 
 - `walkFiles(roots, options)` 는 경로 목록을 돌려준다. `.git` 과 `node_modules` 와 `dist` 와 `worktrees` 를 건너뛴다.
+- 모든 필수 root의 존재를 확인한다. 경로 부재, 디렉터리 순회 실패, 파일 읽기 실패를 통과로 처리하지 않는다.
 - `findInternalRefs(text)` 는 매치 목록을 돌려준다. 파일을 읽지 않는다.
 
 `main` 은 이 둘을 엮고 출력과 종료 코드를 맡는다.
@@ -86,10 +89,38 @@
 
 화이트리스트 넷을 모듈 상단 상수로 두고 export 한다.
 `SCAN`, `OK_DOMAINS`, `OK_IDS`, `OK_PROJECTS` 다.
-기존 셸 스크립트의 값을 그대로 옮긴다. 항목을 더하거나 빼지 않는다.
+기존 셸 스크립트의 값을 옮긴다. `OK_IDS`와 `OK_PROJECTS`, `SCAN` 항목은 더하거나 빼지 않는다.
+`OK_DOMAINS`는 승인된 다음 21개 정확한 호스트 목록으로 교체한다.
 
-`OK_DOMAINS` 는 호스트 경계에 앵커한다.
-정규식으로 옮길 때 그 성질이 유지되는지 반드시 확인한다.
+```text
+anthropic.com
+api.dooray.co.kr
+api.dooray.com
+api.gov-dooray.co.kr
+api.gov-dooray.com
+b.example.com
+claude.com
+cli.github.com
+dooray.com
+example.com
+example.dooray.com
+github.com
+helpdesk.dooray.com
+my-org.dooray.com
+other.example.com
+www.anthropic.com
+www.npmjs.com
+www.youtube.com
+x.com
+x.dooray.com
+y.example.com
+```
+
+21개 호스트 각각의 URL과 이메일이 통과하고, 목록 밖 호스트는 위반인지 테스트한다.
+접두가 없는 IMAP·SMTP 호스트나 코드의 property 접근은 계속 검사하지 않는다.
+
+`OK_DOMAINS`는 URL과 이메일에서 추출한 호스트 전체와 완전 일치로 비교한다.
+기존 제외 정규식의 `.` 대안을 제거해 허용 호스트의 임의 하위 도메인이 통과하지 않게 한다.
 `dooray.com` 이 `evil-dooray.com` 안에서 매치되면 typosquat 이 통과한다.
 그 주석을 함께 옮긴다.
 
@@ -137,6 +168,7 @@ vitest 가 `scripts/` 의 `.mjs` 를 집어가는지 먼저 확인한다.
   정규식은 이어진 결과를 보므로 판정은 같고, 소스에는 그 도메인이 통째로 남지 않는다.
 - `@` 접두 이메일을 본다. `user@example.com` 이 통과하고 화이트리스트 밖 도메인의 이메일이 걸린다.
 - 코드의 property 접근을 배제한다. `obj.com` 이나 `x.net` 이 걸리지 않는다.
+- 허용 도메인에 임의 tenant 접두가 붙은 하위 도메인은 위반으로 잡힌다. 문자열은 실행 시점에 조각으로 이어 만든다.
 - `findLongIds` 가 허용 ID 를 통과시키고 그 밖의 15자리 이상 숫자를 잡는다.
 - **한 줄에 허용 ID 와 실제 ID 가 같이 있을 때 실제 ID 를 잡는다.**
   줄 단위로 걸렀으면 이 테스트가 실패한다.
@@ -153,6 +185,8 @@ vitest 가 `scripts/` 의 `.mjs` 를 집어가는지 먼저 확인한다.
 - 내부 참조가 없는 문장을 통과시킨다.
 - `walkFiles` 가 `node_modules` 와 `.git` 과 `dist` 와 `worktrees` 를 건너뛴다.
   임시 디렉터리를 만들어 확인한다. `node:fs` 의 `mkdtemp` 를 쓴다.
+- 두 검사기를 필수 root가 없는 임시 작업 공간에서 직접 실행하면 오류를 출력하고 종료 코드 2를 반환한다.
+  파일 읽기나 디렉터리 순회가 실패하는 경우에도 성공 메시지를 출력하지 않고 코드 2로 끝나는지 검증한다.
 
 테스트 대상 파일 자체를 `vi.mock` 하지 않는다. 같은 파일 안의 함수 참조가 교체되지 않아 실제 구현이 불린다.
 문자열을 직접 넘겨 순수 함수를 검증한다.
