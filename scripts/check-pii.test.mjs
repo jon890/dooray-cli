@@ -66,6 +66,10 @@ async function createCleanPiiRoot() {
   return root;
 }
 
+  // root uid 는 mode 0o000 파일도 읽으므로 이 검사가 성립하지 않는다.
+  // self-hosted 나 컨테이너 러너에서 flake 로 남지 않게 건너뛴다.
+  const skipAsRoot = process.getuid?.() === 0;
+
 describe("findForeignDomains", () => {
   it("승인된 정확한 21개 도메인 목록을 유지한다", () => {
     expect(OK_DOMAINS).toHaveLength(21);
@@ -185,7 +189,7 @@ describe("check-pii CLI", () => {
     expect(result.stdout).not.toContain("검사 통과");
   });
 
-  it("필수 파일을 읽을 수 없으면 종료 코드 2로 실패한다", async () => {
+  it.skipIf(skipAsRoot)("필수 파일을 읽을 수 없으면 종료 코드 2로 실패한다", async () => {
     const root = await createCleanPiiRoot();
     await writeFile(join(root, "scripts", "unreadable.md"), "unreadable\n", { mode: 0o000 });
 

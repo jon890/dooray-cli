@@ -193,8 +193,9 @@ export async function main(options = {}) {
 
   const domainMatches = [];
   const idMatches = [];
-  const projectTexts = [];
-
+  // 도메인·ID 검사와 같은 `파일:줄:매치` 형태로 낸다.
+  // 전체 텍스트를 이어 붙이면 어느 파일 어느 줄인지가 사라진다.
+  const projectMatches = [];
   try {
     for (const file of files) {
       const text = await readFile(file, "utf8");
@@ -202,14 +203,17 @@ export async function main(options = {}) {
         ...collectLineMatches(text, file, cwd, (line) => findForeignDomains(line, OK_DOMAINS)),
       );
       idMatches.push(...collectLineMatches(text, file, cwd, (line) => findLongIds(line, OK_IDS)));
-      projectTexts.push(text);
+      projectMatches.push(
+        ...collectLineMatches(text, file, cwd, (line) =>
+          findUnknownProjects(line, OK_PROJECTS, SUBCOMMANDS),
+        ),
+      );
     }
   } catch (error) {
     console.error(`개인 식별 정보 검사 실패: 파일을 읽을 수 없다: ${error.message}`);
     return 2;
   }
 
-  const projectMatches = findUnknownProjects(projectTexts.join("\n"), OK_PROJECTS, SUBCOMMANDS);
   const failures = [];
 
   report(

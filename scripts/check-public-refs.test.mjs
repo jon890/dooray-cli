@@ -19,6 +19,10 @@ afterEach(async () => {
   await Promise.all(tempRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
+  // root uid 는 mode 0o000 파일도 읽으므로 이 검사가 성립하지 않는다.
+  // self-hosted 나 컨테이너 러너에서 flake 로 남지 않게 건너뛴다.
+  const skipAsRoot = process.getuid?.() === 0;
+
 describe("findInternalRefs", () => {
   it("ADR 번호를 잡는다", () => {
     expect(findInternalRefs("참고: ADR-030")).toEqual(["ADR-030"]);
@@ -97,7 +101,7 @@ describe("check-public-refs CLI", () => {
     expect(result.stdout).not.toContain("검사 통과");
   });
 
-  it("파일을 읽을 수 없으면 종료 코드 2로 실패한다", async () => {
+  it.skipIf(skipAsRoot)("파일을 읽을 수 없으면 종료 코드 2로 실패한다", async () => {
     const root = await makeTempRoot();
     await mkdir(join(root, "skills"));
     await writeFile(join(root, "README.md"), "readme\n");
