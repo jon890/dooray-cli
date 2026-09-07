@@ -44,6 +44,7 @@ import type {
   UpdateWikiPageRequest,
   UpdateWikiPageTitleRequest,
   UpdateWikiPageContentRequest,
+  MoveWikiPageRequest,
   WikiPageFileType,
   UploadWikiPageFileResponse,
   WikiCommentListResponse,
@@ -667,6 +668,20 @@ export class DoorayApiClient {
     try {
       return await this.api
         .delete(`wiki/v1/wikis/${wikiId}/pages/${pageId}`)
+        .json<DoorayApiUnitResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async moveWikiPage(
+    wikiId: string,
+    pageId: string,
+    body: MoveWikiPageRequest,
+  ): Promise<DoorayApiUnitResponse> {
+    try {
+      return await this.api
+        .post(`wiki/v1/wikis/${wikiId}/pages/${pageId}/move`, { json: body })
         .json<DoorayApiUnitResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);

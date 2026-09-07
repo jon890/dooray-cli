@@ -122,6 +122,8 @@ dooray wiki pages <project>                  # 위키 페이지 목록
 dooray wiki page get --id <page-id>          # 페이지 ID 하나로 조회 (project 불필요)
 dooray wiki list --search 설계               # 위키 이름으로 찾기 (대소문자 무시)
 dooray wiki page get --url "https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>"
+dooray wiki page move --id <page-id> --parent <parent-page-id>
+dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
 dooray mail list --unread                    # 안 읽은 메일
 ```
 

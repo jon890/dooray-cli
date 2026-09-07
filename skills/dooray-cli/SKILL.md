@@ -187,6 +187,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 페이지 제목 수정 | `dooray wiki page edit <project> <page-id> --title "..."` |
 | 페이지 본문 수정 | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` |
 | 페이지 에디터로 수정 | `dooray wiki page edit <project> <page-id>` — 플래그가 없으면 `$EDITOR` 가 열린다 |
+| 페이지 이동 | `dooray wiki page move <project> <page-id> --parent <parent-page-id>` — `--parent` 는 필수다. 하위 페이지는 기본으로 함께 이동하고, `--no-children` 으로 페이지 하나만 옮긴다. `--to-wiki <project-or-wiki-id>` 로 다른 위키로 옮기며, `--first` 와 `--before <page-id>` 로 형제 사이 정렬을 바꾼다 |
 | 페이지 삭제 | `dooray wiki page delete <project> <page-id>` — 확인 있음, `-y`/`--yes`로 생략. 하위 페이지는 삭제한 페이지의 부모 아래로 재부착되어 orphan 이 생기지 않는다 |
 | 첨부 목록 | `dooray wiki page file list <project> <page-id>` — general 과 inline 을 합쳐 보여준다 |
 | 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` |

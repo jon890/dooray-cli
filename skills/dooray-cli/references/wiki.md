@@ -102,3 +102,35 @@ TTY 확인, non-TTY 실행, `-y`와 `--yes` 사용법은 [SKILL.md](../SKILL.md#
 
 `parentPageId` 를 바꾸는 이동은 API 로 할 수 없다. 수정 요청이 `parentPageId` 를 무시하고 전용 endpoint 도 없다.
 사용자가 이동을 요청하면 웹 UI 를 안내한다.
+
+## 위키 페이지 이동 사용법
+
+페이지를 옮길 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
+
+```bash
+dooray wiki page move <project> <page-id> --parent <parent-page-id>
+```
+
+`--id <page-id>` 로 페이지를 직접 지정할 수 있다.
+`--project <project>` 를 함께 주면 CLI 가 wikiId 해석 호출을 줄인다.
+`--project` 는 선택이다.
+
+하위 페이지는 기본으로 함께 이동한다.
+페이지 하나만 옮기려면 `--no-children` 을 붙인다.
+
+```bash
+dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
+```
+
+형제 사이 정렬은 `--first` 또는 `--before <page-id>` 로 바꾼다.
+다른 위키로 옮길 때는 `--to-wiki <project-or-wiki-id>` 를 붙인다.
+값에는 프로젝트 코드나 위키 ID 를 줄 수 있다.
+대상 위키에 권한이 없으면 명령은 오류로 끝난다.
+
+이동 명령에는 삭제 명령처럼 실행 전 확인 절차가 없다.
+
+페이지를 지우고 다시 만드는 방식은 쓰지 않는다.
+첨부와 인라인 이미지, 댓글, 페이지 ID 가 사라진다.
+
+`wiki page edit` 은 부모를 바꾸지 못한다.
+수정 요청에 부모 필드를 넣어도 해당 필드는 무시된다.
