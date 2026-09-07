@@ -18,7 +18,7 @@
 **근거 문서**: `docs/adr/050-agent-overlay-boundary.md`.
 
 `dooray-cli-executor` 는 82줄이고 `model: sonnet` 만 갖는다. 도구 제한이 없다.
-그래서 agent 파일이어야 할 이유가 없다. 근거는 ADR-050 의 「왜 `disallowedTools` 만 남는가」 다.
+그래서 agent 파일이어야 할 이유가 없다. 근거는 ADR-050 의 「왜 오버레이로 충분한가」 다.
 
 **이 agent 가 코어 계약을 덮으면서 잃은 것이 있다.** `grep` 으로 확인했고 0건이다.
 `role-executor.md` 의 「테스트」, 「단언 대상」, 「테스트 품질」, 「중단 조건」 네 절이 그 agent 에 없다.
@@ -77,6 +77,9 @@ executor 줄을 없애고, 코어 `role-executor.md` 를 쓴다는 것과 등급
 
 docs-verifier 줄은 phase 02 가 고친다. 이 phase 에서 손대지 않는다.
 
+`.claude/agents/` 를 완전히 없애는 것은 phase 02 가 마무리한다.
+이 phase 는 executor 파일 하나만 지우므로 그 디렉터리에 docs-verifier 가 남는다.
+
 ### 2. `.claude/executor-notes.md` 를 새로 만든다
 
 `dooray-cli-executor` 본문의 저장소 고유 지침을 옮긴다. 코어 계약과 겹치는 것은 옮기지 않는다.
@@ -128,12 +131,12 @@ docs-verifier 줄은 phase 02 가 고친다. 이 phase 에서 손대지 않는�
 
 ```bash
 # cwd: <repo root>
-bash ~/.claude/scripts/korean-style-check.sh .claude/build-with-teams-overlay.md .claude/executor-notes.md
-python3 ~/.claude/scripts/check-readability.py .claude/build-with-teams-overlay.md .claude/executor-notes.md
+~/.claude/skills/korean-check/scripts/check.sh .claude/build-with-teams-overlay.md .claude/executor-notes.md
 node scripts/check-pii.mjs
 ```
 
-셋 다 종료 코드 0 이어야 한다.
+둘 다 종료 코드 0 이어야 한다.
+판정 기준과 검사기는 `korean-check` 스킬이 소유한다.
 
 ## 검증
 

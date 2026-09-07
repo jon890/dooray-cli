@@ -1,16 +1,17 @@
-# Phase 02. docs-verifier 를 호출자별로 가른다
+# Phase 02. docs-verifier 전용 agent 를 없애고 `.claude/agents/` 를 정리한다
 
 **Execution profile**: standard
 
 ## 목표
 
-`dooray-cli-docs-verifier` 를 `docs-check` 전용으로 좁힌다.
+`dooray-cli-docs-verifier` 를 없애고 `.claude/agents/` 디렉터리를 정리한다.
 `build-with-teams` 는 코어 `role-docs-verifier.md` 를 쓰게 해 잃은 축을 되살린다.
+`docs-check` 는 6축 판정 기준을 문서로 옮겨 쓰고, 오버레이가 그 경로를 넘긴다.
 
-그리고 그 agent 본문에서 실측으로 확인된 결함 넷을 고친다.
+옮기면서 그 본문에서 실측으로 확인된 결함 넷을 고친다.
 
 **범위 외**: executor 는 phase 01 이다. 코어 스킬 파일을 고치지 않는다.
-6축 모델 자체를 바꾸지 않는다. 그것은 `docs-check` 의 계약이다.
+6축 모델 자체를 바꾸지 않는다. 그것은 `docs-check` 의 계약이고 판정 기준만 자리를 옮긴다.
 
 ## 컨텍스트
 
@@ -30,8 +31,10 @@
 | `VIOLATION` 을 만드는 축 | 「accepted ADR 과 이번 변경을 대조한다」가 첫 축 | 없다. 개인 식별 정보 노출만 즉시 판정 |
 | 회피 규칙 | 「`docs/` 를 코드에 맞춰 고치는 것으로 처리하지 않는다」 | 없다 |
 
-이 agent 를 남기는 이유는 `disallowedTools: Write, Edit` 하나다.
-그것만 스폰 시점에 지정할 수단이 없다. 근거는 ADR-050 이 담는다.
+이 agent 를 남길 이유가 없다.
+`disallowedTools: Write, Edit` 가 유일한 후보였는데 `Bash` 를 막지 않아 리다이렉트로 파일을 쓸 수 있다.
+그 제한은 agent 를 만든 첫 커밋에 함께 들어왔고 이후 한 번도 조정되지 않았다.
+실제 경계는 본문의 「docs 와 코드를 직접 수정하지 않는다」 였다. 근거는 ADR-050 이 담는다.
 
 **실측으로 확인된 결함 넷이 있다.** 줄 번호는 이 plan 을 쓴 시점의 값이고 실제 위치는 grep 으로 다시 잡는다.
 
@@ -52,8 +55,9 @@ F축 정의도 코어와 갈렸다.
 
 - 6축 모델을 바꾸지 않는다. 그것은 `docs-check` 의 계약이고 이 plan 의 대상이 아니다.
   `build-with-teams` 가 그 모델을 쓰지 않게 하는 것이 목적이다.
-- agent 를 없애지 않는다. `docs-check` 경로에서 편집 도구 제한이 값을 갖는다.
-- F축의 두 정의 중 어느 것을 쓸지 정한다. 이 agent 는 `docs-check` 전용이 되므로
+- agent 를 없앤다. 편집 도구 제한이 `Bash` 를 막지 못해 보장이 되지 않는다.
+  검토가 파일을 고쳤는지는 `git status` 로 확인한다.
+- F축의 두 정의 중 어느 것을 쓸지 정한다. 옮긴 문서는 `docs-check` 전용이 되므로
   코어 `six-axis.md` 의 「문서 구조 무결성」을 따르고, 지금의 가독성 항목은 검사기에 넘긴다.
 - `check-readability.py` 가 괄호 중첩과 엠대시와 범위 물결표를 이미 소유한다.
   agent 가 그 일부를 다시 적으면 갈라진다. 스크립트를 부르게 한다.
@@ -72,13 +76,22 @@ F축 정의도 코어와 갈렸다.
 
 `docs-check` 는 계속 이 agent 를 쓴다는 것도 한 줄 적어, 두 경로가 다른 계약을 쓰는 것이 의도임을 밝힌다.
 
-### 2. agent 의 `description` 과 `<Role>` 을 `docs-check` 전용으로 좁힌다
+### 2. `.claude/docs-audit-axes.md` 로 6축 판정 기준을 옮긴다
 
-`description` 에서 「build-with-teams 의 docs-verifier 와 docs-check 양쪽이 이 agent 를 호출한다」를 고친다.
-`docs-check` 가 호출한다고 적는다.
+`dooray-cli-docs-verifier` 본문의 6축 판정 기준과 자동 grep 명령을 이 문서로 옮긴다.
+`docs-check` 오버레이가 그 경로를 넘기고, `docs-check` 만 그것을 읽는다.
 
-`<Role>` 의 「변경 코드와 docs 의 일치를 검증한다 (build-with-teams 8단계)」 줄을 지운다.
-그 단계 번호는 코어의 실제 단계와도 맞지 않는다. 코어 단계는 1부터 6까지다.
+옮길 때 아래를 함께 고친다. 항목 3 부터 6 이 각 결함을 다룬다.
+
+옮기지 않는 것이 둘이다.
+
+- `<Role>` 의 「변경 코드와 docs 의 일치를 검증한다 (build-with-teams 8단계)」 줄.
+  `build-with-teams` 가 이 문서를 쓰지 않으므로 필요 없다.
+  그 단계 번호는 코어의 실제 단계와도 맞지 않는다. 코어 단계는 1부터 6까지다.
+- `disallowedTools` 와 `model` 을 담은 frontmatter. 문서에는 그 필드가 뜻을 갖지 않는다.
+
+문서 첫머리에 소유자를 한 줄 밝힌다. `docs-check` 의 6축 판정 기준을 이 문서가 소유하고
+`build-with-teams` 는 코어 `role-docs-verifier.md` 를 쓴다는 것이다.
 
 ### 3. A축의 검출 명령을 고친다
 
@@ -118,16 +131,29 @@ F축 정의도 코어와 갈렸다.
 - 괄호 중첩과 200자 초과 같은 항목을 목록에서 지운다. `check-readability.py` 가 그것을 소유한다.
   스크립트가 잡지 못하는 항목만 남긴다.
 
-### 7. `tasks/` 검사 범위가 이미 빠진 것을 확인한다
+### 7. `.claude/agents/` 를 제거하고 `docs-check` 오버레이를 고친다
 
-F축의 검사 대상에서 `tasks/**` 가 빠져 있는지 본다. 앞선 변경이 이미 그것을 했다.
+`git rm .claude/agents/dooray-cli-docs-verifier.md` 로 지운다.
+phase 01 이 executor 를 이미 지웠으므로 이 디렉터리가 비고, 빈 디렉터리는 git 이 추적하지 않는다.
+
+`.claude/docs-check-overlay.md` 의 「검증 위임」 절을 고친다.
+
+- agent 위임을 없애고 `.claude/docs-audit-axes.md` 를 읽으라고 적는다.
+- `Agent({ subagent_type: "dooray-cli-docs-verifier", ... })` 예시를 지운다.
+  하위 에이전트를 띄울 때는 그 문서 경로를 프롬프트에 담는다고 적는다.
+- 「agent 는 read-only (`disallowedTools: Write, Edit`)」 문장을 지운다.
+  그 보장이 성립하지 않았고 이제 그 필드도 없다.
+  대신 검토가 파일을 고치지 않는 것은 지시로 지키고 `git status` 로 확인한다고 적는다.
+- 「Fallback: agent 를 못 쓰는 환경에서는」 문장을 고친다. 이제 agent 가 없으므로 fallback 이 기본 경로다.
+
+`tasks/**` 가 F축 검사 대상에서 빠져 있는지도 확인한다. 앞선 변경이 이미 그것을 했다.
 
 ```bash
 # cwd: <repo root>
-grep -c "tasks/\*\*" .claude/agents/dooray-cli-docs-verifier.md
+grep -c "tasks/\*\*" .claude/docs-audit-axes.md
 ```
 
-0 이면 아무것도 하지 않는다. 0 이 아니면 이 phase 가 뺀다.
+0 이어야 한다. 0 이 아니면 옮기면서 뺀다.
 
 ### 8. 문서 검사를 이 phase 의 테스트로 돌린다
 
@@ -135,13 +161,12 @@ grep -c "tasks/\*\*" .claude/agents/dooray-cli-docs-verifier.md
 
 ```bash
 # cwd: <repo root>
-bash ~/.claude/scripts/korean-style-check.sh .claude/agents/dooray-cli-docs-verifier.md .claude/build-with-teams-overlay.md
-python3 ~/.claude/scripts/check-readability.py .claude/agents/dooray-cli-docs-verifier.md .claude/build-with-teams-overlay.md
+~/.claude/skills/korean-check/scripts/check.sh .claude/docs-audit-axes.md .claude/build-with-teams-overlay.md .claude/docs-check-overlay.md
 node scripts/check-pii.mjs
 ```
 
-셋 다 종료 코드 0 이어야 한다.
-`check-readability.py` 는 손대지 않은 줄의 기존 엠대시로 1 이 나올 수 있다.
+둘 다 종료 코드 0 이어야 한다.
+`korean-check` 의 검사기는 손대지 않은 줄의 기존 엠대시로 1 이 나올 수 있다.
 그 경우 이 phase 가 추가한 줄에 위반이 없는지 아래로 확인하고 넘어간다.
 
 ```bash
@@ -164,28 +189,29 @@ pnpm test
 
 ```bash
 # cwd: <repo root>
-grep -c "dooray-cli-docs-verifier" .claude/build-with-teams-overlay.md   # = 0
+ls .claude/agents 2>/dev/null | wc -l                                    # = 0
+grep -rc "dooray-cli-docs-verifier" .claude/ | grep -c ":[1-9]"          # = 0
 grep -c "role-docs-verifier" .claude/build-with-teams-overlay.md         # >= 1
-grep -c "dooray-cli-docs-verifier" .claude/docs-check-overlay.md         # >= 1
-grep -c "build-with-teams 의 docs-verifier 와 docs-check 양쪽" .claude/agents/dooray-cli-docs-verifier.md   # = 0
-grep -c "훅이 저장 시점에 자동 검사" .claude/agents/dooray-cli-docs-verifier.md   # = 0
-grep -c "planning 오버레이의 ADR 작성 기준" .claude/agents/dooray-cli-docs-verifier.md   # = 0
-grep -c "문서 구조 무결성" .claude/agents/dooray-cli-docs-verifier.md    # = 1
-grep -c "disallowedTools" .claude/agents/dooray-cli-docs-verifier.md     # = 1
+grep -c "docs-audit-axes" .claude/docs-check-overlay.md                  # >= 1
+grep -c "disallowedTools" .claude/docs-audit-axes.md                     # = 0
+grep -c "훅이 저장 시점에 자동 검사" .claude/docs-audit-axes.md            # = 0
+grep -c "planning 오버레이의 ADR 작성 기준" .claude/docs-audit-axes.md     # = 0
+grep -c "문서 구조 무결성" .claude/docs-audit-axes.md                     # = 1
 ```
 
 여덟 기대값이 모두 맞아야 한다.
-셋째가 1 이상인 것은 `docs-check` 경로가 유지됐다는 근거다.
-마지막이 1 인 것은 이 agent 를 남기는 유일한 이유가 그대로 있다는 근거다.
+첫째가 0 인 것은 `.claude/agents/` 가 사라졌다는 근거다.
+둘째가 0 인 것은 그 agent 를 가리키는 참조가 `.claude/` 어디에도 남지 않았다는 근거다.
+다섯째가 0 인 것은 문서로 옮기면서 뜻을 갖지 않는 frontmatter 필드를 빼왔다는 근거다.
 
 **A축 명령이 실제로 도는지 확인한다.** 이것이 이 phase 의 핵심이다.
 
 ```bash
 # cwd: <repo root>
-grep -c "A-Za-z" .claude/agents/dooray-cli-docs-verifier.md   # >= 1
+grep -c "A-Za-z" .claude/docs-audit-axes.md   # >= 1
 ```
 
-그리고 agent 본문의 A축 블록을 그대로 실행해 `diff` 가 빈 결과를 내는지 본다.
+그리고 옮긴 문서의 A축 블록을 그대로 실행해 `diff` 가 빈 결과를 내는지 본다.
 지금은 40여 줄을 낸다. 고친 뒤 0 줄이어야 한다.
 실행한 명령과 결과 줄 수를 보고에 적는다.
 
@@ -209,6 +235,8 @@ grep -c '"current_phase": 2' $PLAN/index.json        # = 1
 
 | 파일 | 변경 |
 |---|---|
-| `.claude/agents/dooray-cli-docs-verifier.md` | 수정 |
+| `.claude/agents/dooray-cli-docs-verifier.md` | 삭제 |
+| `.claude/docs-audit-axes.md` | 신규 |
 | `.claude/build-with-teams-overlay.md` | 수정 |
+| `.claude/docs-check-overlay.md` | 수정 |
 | `tasks/plan064-chore-agent-contract-boundary/index.json` | 수정 |
