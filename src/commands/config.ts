@@ -54,11 +54,13 @@ configCommand
   .description("설정 값 조회")
   .argument("[key]", "설정 키 (생략 시 전체 출력)")
   .action(async (key?: string) => {
-    const config = await getConfig();
-    if (!config) {
+    const result = await getConfig();
+    if (result.state !== "ok") {
+      // config get 은 값 표시 명령이라 읽기 실패 원인은 세부 복구 흐름 없이 같은 오류로 다룬다.
       console.error(chalk.red("설정 파일이 없습니다. dooray config set 으로 설정하세요."));
       process.exit(EXIT_CONFIG_ERROR);
     }
+    const config = result.config;
 
     const display: Record<string, string> = {
       "api-key": config.apiKey ? maskApiKey(config.apiKey) : "(미설정)",

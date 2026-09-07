@@ -2,7 +2,7 @@ import { Command } from "commander";
 import chalk from "chalk";
 import { clearMailCredentials } from "../../config/store.js";
 import { DoorayCliError } from "../../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
+import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 
 export async function authorizeMailLogout(
   skipConfirmation: boolean,
@@ -39,9 +39,12 @@ export const mailLogoutCommand = new Command("logout")
       return;
     }
 
-    const removed = await clearMailCredentials();
+    const result = await clearMailCredentials();
+    if (result.state === "failed") {
+      throw new DoorayCliError(result.reason, EXIT_CONFIG_ERROR);
+    }
     process.stderr.write(
-      removed
+      result.state === "cleared" && result.hadCredentials
         ? chalk.green("✓ 메일 인증정보를 제거했습니다.\n")
         : "저장된 메일 인증정보가 없습니다.\n",
     );

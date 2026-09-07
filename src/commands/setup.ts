@@ -18,7 +18,22 @@ export const setupCommand = new Command("setup")
       "@inquirer/prompts"
     );
 
-    const existing = await getConfig();
+    const existingResult = await getConfig();
+    const existing =
+      existingResult.state === "ok" ? existingResult.config : undefined;
+    if (existingResult.state === "unreadable") {
+      console.log(
+        chalk.yellow(
+          `  ⚠ 기존 설정 파일을 읽지 못했습니다. 저장도 실패할 수 있습니다: ${existingResult.reason}`,
+        ),
+      );
+    } else if (existingResult.state === "invalid") {
+      console.log(
+        chalk.yellow(
+          `  ⚠ 기존 설정 파일이 손상되어 기본값으로 쓰지 않습니다: ${existingResult.reason}`,
+        ),
+      );
+    }
 
     try {
       // 1. 테넌트명
