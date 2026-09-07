@@ -47,7 +47,7 @@ POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move
   `result` 가 `null` 인 응답에 그 타입을 쓴다.
 - `src/api/client.ts:325` 가 `set-parent-post` 를 `post` 로 부르는 선례다. 업무 쪽의 같은 성격 작업이다.
 - `src/commands/wiki/page-delete.ts` 가 `resolveWikiPageInput` 을 쓰고 네 입력 형태를 받는 완성된 예다.
-- `src/commands/wiki/index.ts` 가 `wiki page` 하위 명령을 등록한다. 새 명령을 여기 더한다.
+- `src/index.ts` 가 `wiki page` 하위 명령을 등록한다. 새 명령을 여기 더한다.
 - `src/formatters/file-output.ts` 의 `emitDeleteResult` 가 `--json` 과 `--quiet` 과 산문 셋을 가르는 헬퍼다.
 
 ## 의도 메모
@@ -56,8 +56,9 @@ POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move
   `src/commands/post/edit.ts` 가 본문 수정과 상위 변경을 한 명령에 담은 결과로 경고 둘을 내고 있다.
 - 확인 절차를 넣지 않는다. ADR-036 의 정책은 되돌릴 수 없는 삭제를 대상으로 하고 이동은 되돌려진다.
 - `beforePageId` 의 세 상태를 구별해 보낸다. 미지정과 `0` 과 특정 페이지 ID 다.
-  `0` 을 문자열로 보낼지 숫자로 보낼지는 공식 문서가 `"0"` 이라는 문자열 예시를 주지 않으므로
-  다른 필드와 같이 문자열로 보낸다. 서버가 거부하면 숫자로 바꿔 확인하고 그 결과를 ADR 에 덧붙인다.
+  공식 문서가 문자열 필드로 정의하므로 다른 ID 필드와 같이 문자열 `"0"` 으로 보낸다.
+  안전한 실측 대상이 없어 실제 이동 호출은 검증하지 않는다.
+  ADR-047 의 「감당할 것」에 특수값 `0` 에 의존하며 서버 동작을 실측하지 않았다는 한 줄을 더한다.
 - `--no-children` 은 Commander 의 부정 플래그다. `--children` 을 정의하지 않고 `--no-children` 만 두면
   기본값이 참이 된다. 공식 기본값과 같다.
 - 위키 간 이동에서 대상 위키 권한을 미리 확인하지 않는다. 4xx 로 드러난다.
@@ -98,6 +99,8 @@ export interface MoveWikiPageRequest {
 
 positional 과 입력 옵션은 `page-delete.ts` 와 같다.
 첫 positional 과 둘째 positional 을 선택으로 두고 `--id`, `--url`, `--project` 를 받는다.
+`--project` 는 선택이며 함께 주면 wikiId 해석 호출을 아낀다고 설명한다.
+`--id` 단독 입력은 plan059 의 resolver 변경에 의존한다. 이 plan 에서는 resolver 를 고치지 않는다.
 
 이동 옵션은 이렇다.
 
@@ -117,6 +120,7 @@ positional 과 입력 옵션은 `page-delete.ts` 와 같다.
 4. `--to-wiki` 가 있으면 값을 판정한다.
    15자리 이상 numeric 이면 위키 ID 로 보고 그대로 쓴다.
    그 밖이면 프로젝트 코드로 보고 `resolveWiki(client, 값)` 으로 위키 ID 를 얻는다.
+   `src/resolvers/project.ts` 의 비공개 `PROJECT_ID_RE` 를 export 로 바꾼다.
    판정에 쓰는 정규식은 `src/resolvers/project.ts` 의 `PROJECT_ID_RE` 를 가져다 쓴다.
 5. 본문을 만든다. `targetParentPageId` 는 `--parent` 값이다.
    `--to-wiki` 를 해석한 값이 있으면 `targetWikiId` 에 넣는다.
@@ -134,11 +138,17 @@ positional 과 입력 옵션은 `page-delete.ts` 와 같다.
   하위 페이지가 함께 이동했는지를 한 문장으로 덧붙인다.
   `--no-children` 을 주지 않았으면 하위도 함께 이동했다고 알린다.
 
-### 4. `src/commands/wiki/index.ts` 에 새 명령을 등록한다
+### 4. `src/index.ts` 에 새 명령을 등록한다
 
 `wiki page` 아래에 `move` 를 더한다. `delete` 를 등록하는 자리 근처에 둔다.
 
-### 5. `src/commands/wiki/page-move.test.ts` 로 본문 조립을 검증하는 테스트를 만든다
+### 5. ADR-047 에 미실측 기록을 더한다
+
+`docs/adr/047-wiki-page-move.md` 의 「감당할 것」에 다음 문장을 한 줄 더한다.
+
+> 맨 앞 이동은 공식 문서의 특수값 `0` 에 의존하며 서버 동작을 실측하지 않았다.
+
+### 6. `src/commands/wiki/page-move.test.ts` 로 본문 조립을 검증하는 테스트를 만든다
 
 명령 파일 전체를 돌리지 않고 본문을 만드는 부분을 순수 함수로 빼서 검증한다.
 `buildMoveBody(opts, resolvedTargetWikiId)` 를 `page-move.ts` 에서 export 한다.
@@ -220,6 +230,12 @@ bash scripts/check-pii.sh
 
 테스트와 예시에는 `scripts/check-pii.sh` 의 `OK_IDS` 에 있는 값을 쓴다.
 
+미실측 기록을 확인한다. 실제 이동 호출은 수행하지 않는다.
+
+```bash
+grep -c "서버 동작을 실측하지 않았다" docs/adr/047-wiki-page-move.md  # = 1
+```
+
 ## Critical Files
 
 | 파일 | 변경 |
@@ -228,4 +244,6 @@ bash scripts/check-pii.sh
 | `src/api/client.ts` | 수정 |
 | `src/commands/wiki/page-move.ts` | 신규 |
 | `src/commands/wiki/page-move.test.ts` | 신규 |
-| `src/commands/wiki/index.ts` | 수정 |
+| `src/index.ts` | 수정 |
+| `src/resolvers/project.ts` | 수정 |
+| `docs/adr/047-wiki-page-move.md` | 미실측 기록 추가 |

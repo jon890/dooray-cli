@@ -573,6 +573,13 @@ export interface UpdateWikiPageContentRequest {
   body: WikiPageBody;
 }
 
+export interface MoveWikiPageRequest {
+  targetParentPageId: string;
+  targetWikiId?: string;
+  withChildren?: boolean;
+  beforePageId?: string;
+}
+
 export type WikiPageFileType = "general" | "inline_image";
 
 export interface UploadWikiPageFileResult {
