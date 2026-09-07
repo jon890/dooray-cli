@@ -161,6 +161,7 @@ src/
       page-get.ts
       page-create.ts
       page-edit.ts          # $EDITOR + 비대화형 플래그(--title/--body/--body-file)
+      page-move.ts          # 부모 변경, 정렬 변경, 위키 간 이동을 공식 move endpoint 로 호출 (ADR-047)
       page-delete.ts        # 페이지 삭제 (비공식 DELETE endpoint, ADR-032) — 공통 confirm ADR-036, resolveWikiPageInput
       page-file/
         index.ts            # wikiPageFileCommand 조립

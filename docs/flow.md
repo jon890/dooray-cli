@@ -428,7 +428,13 @@ dooray wiki get my-project <page-id>             # 페이지 조회
 dooray wiki create my-project --title "설계" --body-file design.md
 dooray wiki edit my-project <page-id>            # $EDITOR 수정
 dooray wiki page delete my-project <page-id>     # 페이지 삭제 (confirm 기본, -y/--yes 로 생략)
+dooray wiki page move <project> <page-id> --parent <parent-page-id>
+dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
+dooray wiki page move --id <page-id> --parent <parent-page-id> --first
 ```
+
+하위 페이지는 기본으로 함께 이동한다.
+이동할 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
 
 ## 메신저 흐름 (Issue #88, ADR-033)
 

@@ -119,6 +119,8 @@ dooray post get <project> 42                 # 업무 상세
 dooray post create <project> --title "제목"  # 업무 생성
 dooray post comment add <project> 42 --body "댓글"
 dooray wiki pages <project>                  # 위키 페이지 목록
+dooray wiki page move --id <page-id> --parent <parent-page-id>
+dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
 dooray mail list --unread                    # 안 읽은 메일
 ```
 

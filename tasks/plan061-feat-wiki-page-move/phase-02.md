@@ -21,6 +21,10 @@ phase 01 이 만든 명령을 `README.md` 와 `skills/dooray-cli/` 와 `docs/` �
 
 ## 의도 메모
 
+- `--id` 단독 입력은 plan059 의 resolver 변경에 의존한다. 예시에 `--project` 를 추가하지 않는다.
+  `--project` 는 선택이며 함께 주면 wikiId 해석 호출을 아낀다고 설명한다.
+  이 plan 에서는 resolver 를 고치지 않는다.
+
 - `beforePageId` 의 `0` 이 맨 앞을 뜻한다는 것은 문서에 적지 않는다.
   `--first` 가 그것을 감싸므로 사용자가 알 필요가 없다. 근거는 ADR-047 이 담는다.
 - 하위 페이지가 기본으로 함께 이동한다는 것은 적는다. 기본값이 참이라 모르고 쓰면 트리가 통째로 움직인다.
@@ -30,7 +34,7 @@ phase 01 이 만든 명령을 `README.md` 와 `skills/dooray-cli/` 와 `docs/` �
 
 ### 1. `docs/adr/INDEX.md` 에 ADR-047 을 등재한다
 
-한 줄을 append 한다. 기존 줄을 고치지 않는다.
+이미 등재되어 있으면 중복 추가하지 않고 한 건인지 확인한다. 없으면 한 줄을 append 한다. 기존 줄을 고치지 않는다.
 동시에 도는 다른 planning 과 같은 줄을 건드리지 않기 위해서다.
 
 ### 2. `docs/code-architecture.md` 의 트리에 새 파일을 더한다
@@ -117,6 +121,8 @@ bash ~/.claude/scripts/korean-style-check.sh README.md skills/dooray-cli/SKILL.m
 # cwd: <repo root>
 bash scripts/check-public-refs.sh
 bash scripts/check-pii.sh
+pnpm tsc --noEmit
+pnpm run build
 pnpm test
 ```
 
