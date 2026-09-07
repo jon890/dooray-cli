@@ -26,8 +26,16 @@ B=~/.claude/scripts/browser-driver
 # open 은 핸들 앞에 위치 안내 한 줄을 함께 내므로 UUID 만 뽑아 쓴다
 PAGE=$($B open "<공식 문서 주소>" 60000 | grep -oE '[0-9a-f-]{36}' | head -1)
 $B waitjs "$PAGE" 'document.body.innerText.length > 2000' 60000
-$B js "$PAGE" 'document.body.innerText' > docs/api/official-page.txt
+$B js "$PAGE" 'document.body.innerText' > "$TMPDIR/dooray-official-page.txt"
 ```
+
+**중간 파일을 저장소 안에 두지 않는다.** `scripts/check-pii.sh` 의 `SCAN` 배열이 `docs/` 를 포함하고
+그 스크립트는 `.gitignore` 를 보지 않는다. 공식 문서 본문에는 예시 ID 와 도메인이 들어 있어
+15자리 이상 숫자와 화이트리스트 밖 도메인이 그대로 위반으로 잡힌다.
+그러면 이 phase 의 검증 절을 통과할 수 없다.
+
+저장소 밖 임시 경로에 두고 추출한 목록만 `docs/api/official-endpoints.txt` 로 넣는다.
+`.gitignore` 를 손댈 필요가 없다.
 
 공식 문서 주소는 `CLAUDE.md` 의 「API 스펙 확인 절차」가 소유한다.
 
@@ -60,19 +68,22 @@ $B js "$PAGE" 'document.body.innerText' > docs/api/official-page.txt
 
 파일 첫 줄에 주석으로 뽑은 날짜와 뽑은 방법을 적는다. `#` 로 시작하는 줄은 스크립트가 건너뛴다.
 
-목록은 137줄이다. 아래는 그중 이 저장소가 다루는 영역이고, 나머지 영역도 함께 넣는다.
-`calendar`, `contacts`, `drive`, `reservation`, `common`, `messenger`, `project`, `wiki` 여덟 영역이 있다.
+영역은 여덟이다.
+`calendar`, `common`, `contacts`, `drive`, `messenger`, `project`, `reservation`, `wiki` 다.
+
+줄 수를 기대값으로 쓰지 않는다. 추출 정규식에 따라 달라진다.
+같은 페이지에서 다른 정규식으로 뽑았을 때 137 과 145 가 나왔다.
+목록이 여덟 영역을 모두 담고 있는지로 판정한다.
 
 이 phase 를 실행하는 사람은 컨텍스트에 적힌 방법으로 공식 문서를 열어 목록을 직접 뽑는다.
 스냅샷을 손으로 적지 않는다. 뽑은 텍스트에서 정규식으로 추출한다.
 
 ```
 # cwd: <repo root>
-grep -oE '^(GET|POST|PUT|DELETE|PATCH) /[a-z0-9/{}?=.-]+' docs/api/official-page.txt | sort -u
+grep -oE '^(GET|POST|PUT|DELETE|PATCH) /[a-z0-9/{}?=.-]+' "$TMPDIR/dooray-official-page.txt" | sort -u
 ```
 
-`docs/api/official-page.txt` 는 저장소에 넣지 않는다. 추출한 목록만 넣는다.
-`.gitignore` 에 그 파일을 더한다.
+추출한 목록만 저장소에 넣는다.
 
 ### 2. `scripts/api-endpoint-inventory.mjs` 를 만든다
 
@@ -188,4 +199,3 @@ bash scripts/check-pii.sh
 | `scripts/api-endpoint-inventory.mjs` | 신규 |
 | `scripts/api-endpoint-inventory.test.mjs` | 신규 |
 | `package.json` | 수정 |
-| `.gitignore` | 수정 |
