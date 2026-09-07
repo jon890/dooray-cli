@@ -84,5 +84,17 @@ jobs:
       # Trusted publishing 이라 NODE_AUTH_TOKEN 을 주지 않는다.
       # npm 이 위 id-token 권한으로 받은 OIDC 신원을 직접 확인한다.
       # --provenance 는 어느 커밋과 워크플로에서 빌드됐는지를 패키지에 기록한다.
+      #
+      # 저장소 변수 NPM_TRUSTED_PUBLISHING 이 true 일 때만 돈다.
+      # npm 에 trust 설정을 등록하지 못한 상태에서 이 단계가 돌면 인증 실패로 끝나므로,
+      # 등록이 끝난 뒤 변수를 켠다:
+      #   gh variable set NPM_TRUSTED_PUBLISHING --body true
       - name: Publish to npm
+        if: vars.NPM_TRUSTED_PUBLISHING == 'true'
         run: npm publish --access public --provenance
+
+      - name: Report skipped publish
+        if: vars.NPM_TRUSTED_PUBLISHING != 'true'
+        run: |
+          echo "NPM_TRUSTED_PUBLISHING 이 켜져 있지 않아 게시를 건너뛰었다."
+          echo "검증 단계는 모두 통과했다. 게시는 로컬에서 수행한다."
