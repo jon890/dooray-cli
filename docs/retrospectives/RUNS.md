@@ -22,6 +22,8 @@
 | 2026-08-10 | review-fix | PR 120 | - | - | - | 3 | - | 없음 | 2 | PR #120 머지 |
 | 2026-08-11 | planning | 055-feat-dooray-persona-skill | - | 5 | - | - | - | 없음 | 2 | docs·task 작성, 설치 체계 확장 범위 철회 |
 | 2026-08-11 | review-fix | PR 128 | - | - | - | 4 | - | 없음 | 0 | 🟡 4건 반영, 스레드 4건 resolve |
+| 2026-08-19 | planning | 056-fix-mail-get-input | - | 2 | - | - | - | 없음 | 1 | docs·task 작성, 헤더 경로만 보고 매핑 불가로 오판 |
+| 2026-08-19 | planning | 056-fix-mail-get-input 재계획 | - | 3 | - | - | - | 없음 | 1 | id 가 시각을 담는 것을 실측, 매핑 포함해 ADR·phase 재작성 |
 | 2026-08-20 | planning | plan057-feat-project-tags-write | - | 3 | - | - | - | 없음 | 4 | docs·task 작성, API 문서 확인으로 지원 범위 한정, flow TTL 불일치 교정, 캐시 무효화 정책 ADR 신설 |
 | 2026-08-20 | build-with-teams | plan057-feat-project-tags-write | B | 3 | 1 | 1 | 0 | 없음 | 1 | 로컬 구현 완료, services 계열 신설, 테스트 범위 확장은 조율자 승인 |
 | 2026-08-20 | review-fix | PR 149 | - | - | - | 0 | - | 없음 | 0 | 리뷰 전 항목 🟢, 수정 사항 없음 |
