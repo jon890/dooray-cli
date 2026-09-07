@@ -1,0 +1,12 @@
+{
+  "name": "plan063-fix-config-read-and-error-wording",
+  "description": "getConfig 가 부재와 손상과 읽기 실패를 구분하게 하고, 오류 메시지에서 내부 ADR 번호를 뺀다",
+  "status": "pending",
+  "created_at": "2026-09-07",
+  "total_phases": 2,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "deep" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "standard" }
+  ]
+}
