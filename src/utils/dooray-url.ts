@@ -8,6 +8,10 @@ const TASK_PROJECT_TASKS_RE =
   /^https?:\/\/[\w.-]+\.dooray\.com\/project\/tasks\/(\d+)(?:[/?#].*)?$/;
 
 const WIKI_URL_RE = /^https?:\/\/[\w.-]+\.dooray\.com\/wiki\/(\d+)\/(\d+)(?:[/?#].*)?$/;
+const MAIL_SYSTEM_URL_RE =
+  /^https?:\/\/[\w.-]+\.dooray\.com\/mail\/systems\/([^/?#]+)\/(\d{15,})(?:[/?#].*)?$/;
+const MAIL_URL_RE =
+  /^https?:\/\/[\w.-]+\.dooray\.com\/mail(?:\/[^/?#]+)*\/(\d{15,})(?:[/?#].*)?$/;
 
 export function parseDoorayTaskUrl(input: string): string | null {
   const m1 = TASK_URL_RE.exec(input);
@@ -28,6 +32,25 @@ export function parseDoorayWikiUrl(input: string): ParsedWikiPageUrl | null {
   const m = WIKI_URL_RE.exec(input);
   if (!m) return null;
   return { wikiId: m[1], pageId: m[2] };
+}
+
+export interface ParsedMailUrl {
+  mailbox: string | null;
+  mailId: string;
+}
+
+export function parseDoorayMailUrl(input: string): ParsedMailUrl | null {
+  const systemsMatch = MAIL_SYSTEM_URL_RE.exec(input);
+  if (systemsMatch) {
+    return { mailbox: systemsMatch[1], mailId: systemsMatch[2] };
+  }
+
+  const mailMatch = MAIL_URL_RE.exec(input);
+  if (mailMatch) {
+    return { mailbox: null, mailId: mailMatch[1] };
+  }
+
+  return null;
 }
 
 export function isLikelyDoorayUrl(input: string): boolean {

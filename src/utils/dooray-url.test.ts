@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { parseDoorayTaskUrl, parseDoorayWikiUrl, isLikelyDoorayUrl } from "./dooray-url.js";
+import {
+  parseDoorayTaskUrl,
+  parseDoorayWikiUrl,
+  parseDoorayMailUrl,
+  isLikelyDoorayUrl,
+} from "./dooray-url.js";
 
 describe("parseDoorayTaskUrl", () => {
   it("정상 URL에서 postId 추출", () => {
@@ -80,6 +85,51 @@ describe("parseDoorayWikiUrl", () => {
   });
   it("task URL 은 wiki parser 에서 null", () => {
     expect(parseDoorayWikiUrl("https://x.dooray.com/task/123/456")).toBeNull();
+  });
+});
+
+describe("parseDoorayMailUrl", () => {
+  it("systems 주소에서 mailbox 와 mailId 를 추출한다", () => {
+    expect(
+      parseDoorayMailUrl("https://x.dooray.com/mail/systems/inbox/1234567890123456789"),
+    ).toEqual({ mailbox: "inbox", mailId: "1234567890123456789" });
+  });
+
+  it("sent 주소에서 mailbox 와 mailId 를 추출한다", () => {
+    expect(
+      parseDoorayMailUrl("https://x.dooray.com/mail/systems/sent/1234567890123456789"),
+    ).toEqual({ mailbox: "sent", mailId: "1234567890123456789" });
+  });
+
+  it("systems 가 없는 주소는 mailbox null 로 반환한다", () => {
+    expect(parseDoorayMailUrl("https://x.dooray.com/mail/1234567890123456789"))
+      .toEqual({ mailbox: null, mailId: "1234567890123456789" });
+  });
+
+  it("systems 폴더 형태가 아니어도 마지막 숫자 구간을 추출한다", () => {
+    expect(parseDoorayMailUrl("https://x.dooray.com/mail/systems/1234567890123456789"))
+      .toEqual({ mailbox: null, mailId: "1234567890123456789" });
+  });
+
+  it("query string, fragment, trailing slash 를 무시한다", () => {
+    expect(
+      parseDoorayMailUrl("https://x.dooray.com/mail/systems/inbox/1234567890123456789/?foo=bar#baz"),
+    ).toEqual({ mailbox: "inbox", mailId: "1234567890123456789" });
+  });
+
+  it("dooray.com 도메인이 아니면 null", () => {
+    expect(parseDoorayMailUrl("https://example.com/mail/systems/inbox/1234567890123456789"))
+      .toBeNull();
+  });
+
+  it("mail 경로가 아니면 null", () => {
+    expect(parseDoorayMailUrl("https://x.dooray.com/task/to/1234567890123456789"))
+      .toBeNull();
+  });
+
+  it("업무 URL 을 메일 URL 로 오인하지 않는다", () => {
+    expect(parseDoorayMailUrl("https://x.dooray.com/task/to/1234567890123456789"))
+      .toBeNull();
   });
 });
 
