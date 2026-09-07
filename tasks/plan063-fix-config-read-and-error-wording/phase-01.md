@@ -108,7 +108,8 @@ export type ConfigReadResult =
 - `absent` 이거나 `ok` 인데 `apiKey` 나 `baseUrl` 이 비었으면 지금 문구를 유지한다.
   「설정이 완료되지 않았습니다. 먼저 초기 설정을 진행하세요: `dooray setup`」 이다.
 - `invalid` 이면 설정 파일이 손상됐다는 것과 파일 경로와 `reason` 을 담는다.
-  `dooray setup` 으로 다시 만들 수 있다는 것도 적는다.
+  `dooray setup` 은 안내하지 않는다. 손상된 파일에 복구할 값이 남아 있을 수 있으므로
+  파일 경로와 이유를 보고 사용자가 먼저 판단하게 한다.
 - `unreadable` 이면 설정 파일을 읽지 못했다는 것과 파일 경로와 `reason` 을 담는다.
   권한을 확인하라는 안내를 넣는다. `dooray setup` 을 안내하지 않는다.
   저장도 같은 이유로 실패할 것이기 때문이다.

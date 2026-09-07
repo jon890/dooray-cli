@@ -166,7 +166,12 @@ program.parseAsync().catch(async (err) => {
     const sanitized = sanitizeArgv(process.argv.slice(2));
     const firstNonFlag = sanitized.find((a) => !a.startsWith("-"));
     const isFeedbackCommand = firstNonFlag === "feedback";
-    if (config?.trackLastRun && !isFeedbackCommand) {
+    // last-run 기록은 완성된 설정에서만 의미가 있어 ok 상태만 사용한다.
+    if (
+      config.state === "ok" &&
+      config.config.trackLastRun &&
+      !isFeedbackCommand
+    ) {
       await writeLastRun({
         argv: ["dooray", ...sanitized],
         exitCode,

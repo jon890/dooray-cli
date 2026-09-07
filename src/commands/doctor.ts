@@ -34,24 +34,51 @@ function formatSkillStatus(status: SkillStatus): string {
 
 export const doctorCommand = new Command("doctor")
   .description("설정 및 환경 진단")
-  .action(async () => {
+  .option("--json", "JSON 형식으로 출력")
+  .action(async (opts: { json?: boolean }, command: Command) => {
+    const config = await getConfig();
+    const apiKeyOk = config.state === "ok" && !!config.config.apiKey;
+    const baseUrlOk = config.state === "ok" && !!config.config.baseUrl;
+    const json = opts.json || !!command.parent?.opts().json;
+    if (json) {
+      console.log(
+        JSON.stringify(
+          {
+            configState: config.state,
+            apiKeyOk,
+            baseUrlOk,
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
     console.log(chalk.bold("\n🔍 Dooray CLI 진단\n"));
 
     // Config checks
-    const config = await getConfig();
-
-    const apiKeyOk = !!config?.apiKey;
-    const baseUrlOk = !!config?.baseUrl;
-
-    console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
-    console.log(`  Base URL: ${baseUrlOk ? chalk.green(`✅ ${config!.baseUrl}`) : chalk.red("❌ 미설정")}`);
+    if (config.state === "invalid") {
+      console.log(`  설정 파일: ${chalk.red("❌ 손상")}`);
+      console.log(`  이유:      ${config.reason}`);
+    } else if (config.state === "unreadable") {
+      console.log(`  설정 파일: ${chalk.red("❌ 읽기 실패")}`);
+      console.log(`  이유:      ${config.reason}`);
+      console.log("  파일 권한을 확인하세요.");
+    } else {
+      console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
+      console.log(`  Base URL: ${baseUrlOk ? chalk.green(`✅ ${config.state === "ok" ? config.config.baseUrl : ""}`) : chalk.red("❌ 미설정")}`);
+    }
 
     // API connection test
     if (apiKeyOk && baseUrlOk) {
       console.log(chalk.bold("\n🌐 API 연결 테스트\n"));
       try {
         const validConfig = await getConfigOrThrow();
-        const client = new DoorayApiClient(validConfig.apiKey, validConfig.baseUrl);
+        const client = new DoorayApiClient(
+          validConfig.apiKey,
+          validConfig.baseUrl,
+        );
         await client.getProjects({ page: 0, size: 1 });
         const me = await ensureMe(client);
         console.log(`  연결:     ${chalk.green("✅ 성공")} (${me.name})`);
@@ -94,6 +121,10 @@ export const doctorCommand = new Command("doctor")
     console.log();
     if (apiKeyOk && baseUrlOk) {
       console.log(chalk.green("✓ 기본 설정이 완료되었습니다."));
+    } else if (config.state === "invalid") {
+      console.log(chalk.yellow("⚠ 설정 파일이 손상되었습니다."));
+    } else if (config.state === "unreadable") {
+      console.log(chalk.yellow("⚠ 설정 파일을 읽지 못했습니다."));
     } else {
       console.log(chalk.yellow("⚠ 설정이 필요합니다:"));
       console.log(chalk.yellow("  dooray setup"));
