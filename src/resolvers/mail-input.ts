@@ -1,15 +1,14 @@
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import { parseDoorayMailUrl } from "../utils/dooray-url.js";
+import type { Config } from "../config/types.js";
+import { resolveUidByMailId } from "../api/imapClient.js";
 
 export type MailInputTokenType = "url" | "mailId" | "uid" | "invalid";
 
-export interface MailTarget {
-  kind: "uid" | "mailId";
-  uid?: number;
-  mailId?: string;
-  mailbox: string;
-}
+export type MailTarget =
+  | { kind: "uid"; uid: number; mailbox: string }
+  | { kind: "mailId"; mailId: string; mailbox: string };
 
 const MAIL_UID_MAX = 4294967295n;
 const MAIL_INPUT_HINT =
@@ -75,4 +74,20 @@ export function resolveMailTarget(token: string): MailTarget {
     `메일 입력 형식이 올바르지 않습니다: "${token}"\n${MAIL_INPUT_HINT}`,
     EXIT_PARAM_ERROR,
   );
+}
+
+export async function resolveMailUid(
+  config: Config,
+  token: string,
+): Promise<{ uid: number; mailbox: string }> {
+  const target = resolveMailTarget(token);
+
+  if (target.kind === "uid") {
+    return { uid: target.uid, mailbox: target.mailbox };
+  }
+
+  return {
+    uid: await resolveUidByMailId(config, target.mailId, target.mailbox),
+    mailbox: target.mailbox,
+  };
 }

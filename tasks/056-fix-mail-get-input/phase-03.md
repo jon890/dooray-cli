@@ -120,7 +120,7 @@ IMAP 설정이 있는 환경이면 실제 조회까지 확인한다. 설정이 �
 
 ```bash
 # cwd: <repo root>
-node dist/index.js mail list --limit 1 --json    # UID 와 도착 시각을 확인한다
+node dist/index.js mail list --size 1 --json    # UID 와 도착 시각을 확인한다
 ```
 
 이 UID 로 `mail get <uid>` 가 되던 메일을, 같은 메일의 웹 주소로도 조회해 같은 제목이 나오는지 대조한다.
