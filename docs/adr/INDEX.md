@@ -40,7 +40,7 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-029](029-wiki-page-file-multipart-order.md) — wiki page file multipart `type` 필드 순서 의존성 (Issue #70)
 - [ADR-030](030-resolveproject-numeric-fallback.md) — `resolveProject` numeric 입력 cache 우회 fallback (Issue #78)
 - [ADR-031](031-file-json-output-schema.md) — file 명령군 `--json` 출력 스키마 통일 (`post file`과 `wiki page file`, Issue #73)
-- [ADR-032](032-wiki-page-delete.md) — wiki page delete 비공식(미문서화) DELETE endpoint (Issue #87)
+- [ADR-032](032-wiki-page-delete.md) — wiki page delete 를 DELETE endpoint 로 구현 (Issue #87)
 - [ADR-033](033-messenger-send.md) — messenger send / channel-send Dooray Messenger API 래핑 (Issue #88)
 - [ADR-034](034-wiki-tree-drill-down.md) — wiki tree 레벨별 drill-down 재귀 조립 (flat list endpoint 부재, Issue #101)
 - [ADR-035](035-managed-skill-lifecycle.md) — Claude Code 스킬 명시 갱신과 버전·해시별 관리형 저장소
@@ -53,6 +53,7 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-043](043-wiki-name-search-and-project-column.md) — 위키를 이름으로 찾는 `wiki list --search` 와 목록의 project 열, `dooray://` 앞 숫자가 orgId 임을 알리는 오류 안내 (Issue #154)
 - [ADR-044](044-post-input-error-completed-command.md) — post 입력 오류가 실제 실행 인자를 고쳐 만든 완성 명령을 보여준다 (Issue #154)
 - [ADR-045](045-wiki-page-standalone-fetch.md) — 위키 페이지를 페이지 ID 하나로 조회하고 wikiId 를 응답에서 얻는다 (공식 `GET /wiki/v1/pages/{page-id}`, Issue #154)
+- [ADR-046](046-official-api-doc-precedence.md) — API 동작의 근거는 공식 문서이고 저장소 서술이 어긋나면 저장소를 고친다 (Issue #154)
 - [ADR-047](047-wiki-page-move.md) — 위키 페이지 이동을 공식 move endpoint 로 감싸 `wiki page move` 로 둔다 (Issue #148)
 - [ADR-048](048-checks-to-mjs.md) — 문서 검사 스크립트를 셸에서 `node:` 빌트인만 쓰는 `.mjs` 로 옮긴다
 - [ADR-049](049-config-read-result-states.md) — `getConfig` 가 파일 부재와 손상과 읽기 실패를 구분해 돌려준다 (Issue #151)

@@ -663,7 +663,7 @@ export class DoorayApiClient {
     }
   }
 
-  // 비공식(미문서화) endpoint — Dooray 공식 API 문서에 없으나 실측 확인 (ADR-032)
+  // Dooray 공식 API 문서에 있는 endpoint 다 (ADR-032)
   async deleteWikiPage(wikiId: string, pageId: string): Promise<DoorayApiUnitResponse> {
     try {
       return await this.api
