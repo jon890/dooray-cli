@@ -211,14 +211,15 @@ grep -c "wiki/v1/pages/" src/api/client.ts                    # = 1
 grep -c "resolveWikiPageInput" src/commands/wiki/page-get.ts  # >= 1
 grep -c 'argument("<' src/commands/wiki/page-get.ts           # = 0
 grep -c "page-only fetch" CLAUDE.md                           # = 0
-grep -rl 'd{15,}' src/resolvers/ | wc -l                      # = 1
+grep -c "PROJECT_ID_RE" src/resolvers/wiki.ts                  # >= 1
+grep -c 'd{15,}' src/resolvers/wiki.ts                        # = 0
 grep -c "orgId" src/resolvers/wiki.ts                         # >= 1
 ```
 
-일곱 기대값이 모두 맞아야 한다.
+여덟 기대값이 모두 맞아야 한다.
 `argument("<` 가 0 인 것은 필수 positional 이 사라졌다는 근거다.
 `page-only fetch` 가 0 인 것은 틀린 서술이 남지 않았다는 근거다.
-정규식을 담은 파일이 1개인 것은 `PROJECT_ID_RE` 를 가져다 썼고 같은 패턴을 다시 적지 않았다는 근거다.
+`PROJECT_ID_RE` 가 1 이상이고 `d{15,}` 가 0 인 것은 그 상수를 가져다 썼고 같은 패턴을 다시 적지 않았다는 근거다.
 
 `--id` 단독 경로가 도움말에 드러나는지 확인한다.
 

@@ -91,8 +91,14 @@ export function buildIdModeCommand(argv: string[], positionals: string[], postId
 
 `buildIdModeCommand` 는 이렇게 만든다.
 
-- `argv` 를 앞에서부터 훑는다. `--` 로 시작하는 토큰을 만나면 그 토큰과 **다음 토큰**을 그대로 유지하고 두 칸 건너뛴다.
+- `argv` 를 앞에서부터 훑는다. `--` 로 시작하는 토큰을 만나면 그 토큰을 유지하고, **다음 토큰이 `positionals` 에 없을 때만** 그것도 값으로 유지하고 두 칸 건너뛴다.
   이것이 옵션 값을 positional 로 착각하지 않게 하는 장치다. `--body-file 337` 처럼 옵션 값이 업무 번호와 같을 수 있다.
+- **다음 토큰이 `positionals` 에 있으면 값으로 보지 않고 한 칸만 건너뛴다.**
+  값을 받지 않는 flag 가 positional 앞에 올 수 있다.
+  post 계열은 `--dry-run` 과 `--yes` 를 받고 전역 `--json` 과 `--quiet` 도 받는다.
+  이 규칙이 없으면 `post comment add --dry-run my-project <postId> --body x` 에서
+  `--dry-run` 이 `my-project` 를 값으로 삼아 project 가 안내에 그대로 남는다.
+  값 없는 옵션 목록을 인자로 받는 방식을 기각한 이유는 옵션이 늘 때마다 그 목록도 고쳐야 하기 때문이다.
 - `--` 로 시작하지 않는 토큰은 `positionals` 에 있는 값과 비교한다.
   일치하면 결과에서 빼고 그 값을 `positionals` 에서도 하나 지운다. 같은 값이 두 번 와도 한 번만 지운다.
   일치하지 않으면 결과에 남긴다. 하위 명령 이름이 이 경로로 살아남는다.
@@ -130,8 +136,14 @@ positional 두 번째가 postId 인 경우의 문구는 이렇다.
 각 호출부에서 `resolvePostInput(client, { ..., argv: process.argv.slice(2) })` 로 인자 하나를 더한다.
 다른 인자는 그대로 둔다.
 
-`src/resolvers/task-link.ts` 와 `src/resolvers/comment-file-input.ts` 는 명령이 아니라 resolver 다.
-그 둘은 `argv` 를 넘기지 않는다. 그 경로의 오류는 사용자가 친 명령과 대응하지 않는다.
+`src/resolvers/comment-file-input.ts` 도 `argv` 를 받아 `resolvePostInput` 에 넘긴다.
+그것을 부르는 명령 파일이 넷이고 (`src/commands/post/comment/file/` 의 `list.ts`, `upload.ts`, `download.ts`, `delete.ts`)
+사용자가 실제로 `dooray post comment file list <project> <postId>` 를 친다.
+ADR-044 「적용 범위」가 post 하위 명령 전체를 대상으로 하므로 그 넷도 완성 명령을 받아야 한다.
+그 넷의 호출부에서 `comment-file-input` 에 `argv` 를 넘기고, `comment-file-input` 이 그것을 `resolvePostInput` 으로 전달한다.
+
+`src/resolvers/task-link.ts` 는 `argv` 를 넘기지 않는다.
+`--link-task` 옵션 값을 해석하는 경로라 그 오류가 사용자가 친 명령 전체와 대응하지 않는다.
 
 ### 4. `src/utils/command-hint.test.ts` 를 새로 만든다
 
@@ -139,6 +151,9 @@ positional 두 번째가 postId 인 경우의 문구는 이렇다.
   `dooray post comment add --body-file ./body.md --id <postId>` 가 나온다.
 - 옵션 값이 positional 과 같은 문자열인 경우를 본다.
   `post get my-project 337 --body-file 337` 에서 `--body-file 337` 이 유지되고 positional `337` 만 빠진다.
+- 값 없는 flag 가 positional 앞에 오는 경우를 본다.
+  `post comment add --dry-run my-project <postId> --body x` 에서 `--dry-run` 이 유지되고
+  `my-project` 와 `<postId>` 가 둘 다 빠진다. 결과에 `my-project` 가 남지 않는다.
 - `--opt=value` 형태가 한 토큰으로 유지된다.
 - 공백이 든 값이 단일 인용부호로 감싸진다.
 - 단일 인용부호가 든 값이 `'\''` 로 바뀐다.
@@ -180,25 +195,34 @@ pnpm vitest run src/utils/command-hint.test.ts src/resolvers/post-input.test.ts
 # resolvePostInput 을 부르는 명령 파일 수
 grep -rln "resolvePostInput" src/commands | wc -l
 
-# 그중 argv 를 넘기는 파일 수. 위와 같아야 한다
+# 그중 argv 를 넘기는 파일 수
 grep -rln "argv: process.argv.slice(2)" src/commands | wc -l
+
+# comment file 넷도 argv 를 넘기는지
+grep -rln "argv" src/commands/post/comment/file | wc -l
 ```
 
 첫 수는 18, 둘째 수는 16 이어야 한다. 차이 둘은 테스트 파일이다.
+셋째 수는 4 여야 한다. `list.ts`, `upload.ts`, `download.ts`, `delete.ts` 넷이다.
 
 안내가 실제로 완성 명령을 담는지 실행 결과로 판정한다.
 
 ```bash
 # cwd: <repo root>
-OUT=$(node dist/index.js post comment add my-project 1234567890123456789 --body-file ./x.md 2>&1); CODE=$?
+OUT=$(node dist/index.js post comment add my-project 1234567890123456789 --body x 2>&1); CODE=$?
 echo "$OUT" | grep -c "dooray post comment add"      # = 1
-echo "$OUT" | grep -c -- "--body-file ./x.md"        # = 1
+echo "$OUT" | grep -c -- "--body x"                  # = 1
 echo "$OUT" | grep -c -- "--id 1234567890123456789"  # = 1
-echo "$OUT" | grep -c "add my-project"                     # = 0
+echo "$OUT" | grep -c "add my-project"               # = 0
 echo "$CODE"                                          # = 3
 ```
 
 다섯 기대값이 모두 맞아야 한다. `grep -c "add my-project"` 가 0 이 아니면 project 값이 안내에 남아 있다.
+
+`--body-file` 대신 `--body` 를 쓴다.
+`src/commands/post/comment/add.ts` 는 본문을 먼저 읽고 그다음 `resolvePostInput` 을 부르므로,
+없는 파일을 `--body-file` 로 주면 그 읽기에서 끝나 입력 분류에 닿지 못한다.
+이 블록은 `~/.dooray/config.json` 이 있는 것을 전제한다. 없으면 설정 오류로 먼저 끝난다.
 
 개인 식별 정보 검사를 통과시킨다.
 
@@ -216,3 +240,5 @@ bash scripts/check-pii.sh
 | `src/resolvers/post-input.ts` | 수정 |
 | `src/resolvers/post-input.test.ts` | 수정 |
 | `src/commands/post/**` 의 `resolvePostInput` 호출부 | 수정 |
+| `src/resolvers/comment-file-input.ts` | 수정 |
+| `src/commands/post/comment/file/**` 넷 | 수정 |

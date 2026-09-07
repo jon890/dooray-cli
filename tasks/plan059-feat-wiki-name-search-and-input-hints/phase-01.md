@@ -5,7 +5,7 @@
 ## 목표
 
 `dooray wiki list --search <keyword>` 로 위키를 이름으로 찾을 수 있게 하고,
-표 출력에 project 열을 더해 그 값을 `wiki page get <project>` 에 그대로 넣을 수 있게 한다.
+표 출력에 project 열을 더해 그 값을 `wiki pages <project>` 나 `wiki tree <project>` 에 그대로 넣을 수 있게 한다.
 
 지금은 위키를 이름으로 찾는 수단이 없어 `--page` 를 올려 가며 전체를 순회해야 하고,
 찾아도 출력에 project 코드가 없어 다음 명령으로 이어지지 않는다.
@@ -34,7 +34,7 @@ post 입력 오류 안내는 phase 03 이다. README 와 스킬 문서 갱신은
 // src/api/types.ts
 export interface WikiProject { id: string }
 export interface Wiki { id: string; project: WikiProject; name: string; type: string; scope: string; home: WikiHome }
-export type WikiListResponse = DoorayApiResponse<Wiki[]>;
+export type WikiListResponse = DoorayApiResponse<Wiki[]>;   // totalCount 가 없다. 작업 항목 0 이 더한다
 
 // src/cache/types.ts
 export interface CachedProject { id: string; code: string; wikiId?: string }
@@ -54,6 +54,17 @@ export interface CachedProject { id: string; code: string; wikiId?: string }
 
 ## 작업 항목
 
+### 0. `src/api/types.ts` 의 `WikiListResponse` 에 `totalCount` 를 더한다
+
+지금 `WikiListResponse = DoorayApiResponse<Wiki[]>` 이고 `DoorayApiResponse` 는 `header` 와 `result` 둘만 갖는다.
+`totalCount` 로 순회를 끝내려면 그 필드가 타입에 있어야 한다. 없이 구현하면 `pnpm tsc --noEmit` 이 TS2339 로 실패한다.
+
+`src/api/types.ts:618` 의 `TemplateListResponse` 가 이미 같은 형태를 쓰고 있으므로 그것을 따른다.
+
+```ts
+export type WikiListResponse = DoorayApiResponse<Wiki[]> & { totalCount: number };
+```
+
 ### 1. `src/resolvers/wiki.ts` 에 전체 순회 함수를 만들고 `resolveWikiHomePageId` 가 그것을 쓰게 한다
 
 `fetchAllWikis(client: DoorayApiClient): Promise<Wiki[]>` 를 export 한다.
@@ -62,6 +73,10 @@ export interface CachedProject { id: string; code: string; wikiId?: string }
 - `page` 를 0 부터, `size` 는 100 으로 고정한다.
 - 매 응답의 `res.result` 를 누적한다.
 - 누적 길이가 `res.totalCount` 이상이면 멈추고, 그렇지 않으면 `page` 를 하나 올린다.
+- **`res.result` 가 빈 배열이면 그 자리에서 멈춘다.**
+  `GET wiki/v1/wikis` 응답에 `totalCount` 가 실제로 오는지는 확인하지 않았다.
+  오지 않으면 `all.length >= undefined` 가 항상 false 라 `page` 를 무한히 올려 API 호출이 끝나지 않는다.
+  이 조건이 그 경우에도 순회를 끝낸다.
 - 캐시를 읽거나 쓰지 않는다. 순수 수집 함수로 둔다.
 
 `resolveWikiHomePageId` 의 캐시 미스 경로에서 `client.getWikis({ size: 100 })` 대신 `fetchAllWikis(client)` 를 부른다.
@@ -108,6 +123,11 @@ export interface CachedProject { id: string; code: string; wikiId?: string }
   `--size` 도 같은 방식으로 본다.
 - `--search` 결과가 0건이면 stderr 에 `"<keyword>" 와 이름이 부분 일치하는 위키가 없습니다. 대소문자는 구분하지 않았습니다.` 를 낸다.
   표나 JSON 출력은 그대로 수행한다. 종료 코드는 0 을 유지한다.
+  **`--json` 은 stdout 에 `[]` 를 내고 `--quiet` 은 아무것도 내지 않는다.**
+  stderr 에 나가는 것은 데이터가 아니라 안내 한 줄뿐이다.
+  `docs/pitfalls/code-review/empty-result-to-stderr.md` 가 빈 결과를 stderr 로 보내는 것을 금지하지만,
+  여기서 stderr 로 가는 것은 결과가 아니라 대소문자를 구분하지 않았다는 안내다.
+  ADR-043 「적용 범위」가 이 안내를 stderr 로 내도록 명시 결정했다.
 
 `buildProjectCodeMap(client)` 를 불러 `formatWikiList` 의 세 번째 인자로 넘긴다.
 `--search` 여부와 무관하게 항상 넘긴다.
@@ -121,6 +141,8 @@ export interface CachedProject { id: string; code: string; wikiId?: string }
 
 - `fetchAllWikis` 가 `totalCount` 가 250 일 때 `getWikis` 를 세 번 부르고 250건을 모두 모은다.
 - `fetchAllWikis` 가 `totalCount` 가 0 일 때 빈 배열을 돌려주고 두 번째 호출을 하지 않는다.
+- `fetchAllWikis` 가 `totalCount` 없이 빈 `result` 를 받으면 그 자리에서 멈춘다.
+  응답에 `totalCount` 가 오지 않는 경우에도 순회가 끝난다는 근거다.
 - `filterWikisByName` 이 대소문자를 무시한다. 이름 `Design Wiki` 가 키워드 `design` 에 걸린다.
 - `filterWikisByName` 이 부분 일치를 본다. 이름 `Design Wiki` 가 키워드 `gn wi` 에 걸린다.
 - `filterWikisByName` 이 걸리지 않는 항목을 뺀다.
@@ -175,6 +197,7 @@ bash scripts/check-pii.sh
 
 | 파일 | 변경 |
 |---|---|
+| `src/api/types.ts` | 수정 |
 | `src/resolvers/wiki.ts` | 수정 |
 | `src/resolvers/project.ts` | 수정 |
 | `src/formatters/wiki.ts` | 수정 |
