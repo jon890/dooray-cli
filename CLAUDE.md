@@ -62,7 +62,7 @@ dooray                # 글로벌 링크 시
 
 ## 개인 식별 정보 / 사내 식별자 노출 금지 (public OSS)
 
-아래 식별자는 git 추적 대상 어디에도 넣지 않는다. 검사 범위는 `scripts/check-pii.sh` 의 `SCAN` 목록이다.
+아래 식별자는 git 추적 대상 어디에도 넣지 않는다. 검사 범위는 `scripts/check-pii.mjs` 의 `SCAN` 목록이다.
 `src/` 의 테스트 fixture 와 에러 메시지 예시, 이슈 본문도 포함한다. 항상 placeholder 를 쓴다.
 
 구체적인 사내 식별자는 이 파일에도 적지 않는다 — CLAUDE.md 자체가 public 이라 나열이 곧 노출이다.
@@ -83,13 +83,15 @@ dooray                # 글로벌 링크 시
 
 ```bash
 # cwd: <repo root>
-bash scripts/check-pii.sh
+node scripts/check-pii.mjs
 ```
 
 세 가지를 본다 — 공개 화이트리스트 밖의 도메인, 허용 목록 밖의 15자리 이상 숫자, 예시에 쓰인 낯선 project 값.
 위반을 출력하고 종료 코드 1 로 끝난다. 화이트리스트는 그 스크립트가 소유한다.
+필수 경로가 없거나 파일을 읽지 못하면 오류를 출력하고 종료 코드 2 로 끝난다.
 
 가상 예시를 새로 쓰려면 스크립트의 `OK_PROJECTS` 나 `OK_DOMAINS` 에 먼저 추가한다.
+도메인 화이트리스트는 정확한 호스트 단위라서 하위 도메인은 해당 호스트를 따로 추가해야 한다.
 CI 가 같은 스크립트를 돌리므로 통과하지 않으면 PR 이 막힌다.
 
 ## 공개 문서(README · 공개 SKILL) — 내부 참조 번호 제외
@@ -105,21 +107,22 @@ CI 가 같은 스크립트를 돌리므로 통과하지 않으면 PR 이 막힌�
 
 ```bash
 # cwd: <repo root>
-bash scripts/check-public-refs.sh
+node scripts/check-public-refs.mjs
 ```
 
 CI 가 같은 스크립트를 돌린다.
+필수 경로가 없거나 파일을 읽지 못하면 오류를 출력하고 종료 코드 2 로 끝난다.
 
 ## `tasks/` — 완료된 plan 은 실행 기록이다
 
 완료된 `tasks/{NNN}-*/` 는 그 plan 을 실행한 executor 에게 **실제로 전달된 지시의 기록**이다.
 문구를 바꾸면 당시 무엇을 시켰는지가 훼손되고, 나중에 결과와 지시를 대조할 수 없게 된다.
 
-- 문체·표기 일괄 교정, 용어 통일, 링크 정비 같은 **저장소 전역 sweep 의 대상에서 제외**한다
+- 문체·표기 일괄 교정, 용어 통일, 링크 정비 같은 **저장소 전역 전수 검사 대상에서 제외**한다
 - 오탈자 하나를 고치려고 완료된 phase 파일을 열지 않는다
 - 실행 중인 plan 은 예외다. 파이프라인이 `index.json` 상태를 갱신하고 재계획으로 phase 를 다시 쓰는 것은 정상 동작이다
 
-sweep 을 돌릴 때는 대상 경로를 `docs/`, `.claude/`, `README.md`, `skills/` 로 한정하고,
+전수 검사를 돌릴 때는 대상 경로를 `docs/`, `.claude/`, `README.md`, `skills/` 로 한정하고,
 제외한 건수와 이유를 보고에 남긴다. 조용히 빼면 전수 처리한 것으로 읽힌다.
 
 ## Git

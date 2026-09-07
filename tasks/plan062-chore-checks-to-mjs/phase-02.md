@@ -14,7 +14,7 @@ phase 01 이 끝난 시점에는 CI 가 깨진 상태이므로 이 phase 가 그
 
 **근거 문서**: `docs/adr/048-checks-to-mjs.md`.
 
-고칠 호출 지점은 저장소 안 7개 파일 14줄이다.
+고칠 호출 지점은 저장소 안 7개 파일 13줄이다.
 
 | 파일 | 줄 |
 | --- | --- |
@@ -83,6 +83,7 @@ grep -rn "check-pii\.sh\|check-public-refs\.sh" CLAUDE.md .claude/ .github/
 
 「가상 예시를 새로 쓰려면 스크립트의 `OK_PROJECTS` 나 `OK_DOMAINS` 에 먼저 추가한다」 문장은 그대로 둔다.
 새 파일이 같은 이름의 상수를 갖는다.
+화이트리스트가 정확한 호스트 단위이므로 하위 도메인을 쓰려면 해당 호스트를 따로 추가해야 한다는 문장을 한 줄 덧붙인다.
 
 ### 3. `.claude/` 아래 다섯 파일의 호출을 고친다
 
@@ -106,7 +107,7 @@ grep -rn "check-pii" CLAUDE.md .claude/ | grep -v "\.mjs"
 
 ### 4. `docs/adr/INDEX.md` 에 ADR-048 을 등재한다
 
-한 줄을 append 한다. 기존 줄을 고치지 않는다.
+등재되지 않았을 때만 한 줄을 append 한다. 이미 등재된 ADR-048 행은 보존한다.
 동시에 도는 다른 planning 과 같은 줄을 건드리지 않기 위해서다.
 
 ### 5. `docs/code-architecture.md` 의 기술 스택 절에 한 줄을 더한다
@@ -144,8 +145,8 @@ pnpm test
 
 ```bash
 # cwd: <repo root>
-grep -rc "check-pii\.sh" CLAUDE.md .claude/ .github/ docs/           # 각각 = 0
-grep -rc "check-public-refs\.sh" CLAUDE.md .claude/ .github/ docs/   # 각각 = 0
+grep -rc "check-pii\.sh" CLAUDE.md .claude/ .github/ docs/ --exclude=048-checks-to-mjs.md           # 각각 = 0
+grep -rc "check-public-refs\.sh" CLAUDE.md .claude/ .github/ docs/ --exclude=048-checks-to-mjs.md   # 각각 = 0
 grep -c "check-pii.mjs" .github/workflows/ci.yml                     # = 1
 grep -c "check-public-refs.mjs" .github/workflows/ci.yml             # = 1
 grep -c "Node 가 필요 없고" .github/workflows/ci.yml                  # = 0
@@ -153,6 +154,7 @@ grep -c "ADR-048" docs/adr/INDEX.md                                  # = 1
 ```
 
 여섯 기대값이 모두 맞아야 한다.
+ADR-048은 이전 파일명을 결정 근거로 기록하므로 역사적 인용을 보존하고 옛 호출 검사에서만 제외한다.
 다섯 번째가 0 인 것은 사실과 달라진 주석을 고쳤다는 근거다.
 
 CI 순서가 유지됐는지 확인한다.

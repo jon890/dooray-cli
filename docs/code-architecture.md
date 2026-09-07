@@ -15,6 +15,7 @@
 | IMAP 클라이언트 | imapflow (메일 조회)                  |
 | SMTP 클라이언트 | nodemailer (메일 발송)                |
 | 메일 파서       | mailparser (메일 본문 파싱)           |
+| 문서 검사       | `node:` 빌트인만 쓰는 `.mjs` 스크립트. CI 에서 의존성 설치 전에 실행한다 (ADR-048) |
 
 ## 디렉터리 구조
 
