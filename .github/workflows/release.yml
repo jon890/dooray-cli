@@ -1,0 +1,74 @@
+name: Release
+
+# 태그 push 로 발동한다. 릴리스 스킬의 7단계가 `v{version}` 태그를 만들어 올린다.
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  publish:
+    name: npm Publish
+    runs-on: ubuntu-latest
+
+    # OIDC 토큰을 발급받아 npm 에 신원을 증명한다. Trusted publishing 이 이것을 쓴다.
+    # 저장소 secret 에 npm 토큰을 두지 않는 이유가 이 권한이다.
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      # 의존성 설치 전에 돈다. setup-node 가 앞에 있어 Node 는 준비돼 있고,
+      # 공개 저장소라 식별자 노출은 한 번 새면 되돌리기 어렵다.
+      - name: Check for exposed identifiers
+        run: node scripts/check-pii.mjs
+
+      - name: Check public docs for internal references
+        run: node scripts/check-public-refs.mjs
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run type check
+        run: pnpm tsc --noEmit
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run build
+        run: pnpm build
+
+      - name: Verify package artifact
+        run: pnpm verify:package
+
+      # 태그가 가리키는 버전과 package.json 이 어긋난 채 게시되는 것을 막는다.
+      - name: Verify tag matches package version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          echo "tag=$TAG package.json=$PKG"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "태그와 package.json 버전이 다르다. 게시하지 않는다."
+            exit 1
+          fi
+
+      # Trusted publishing 이라 NODE_AUTH_TOKEN 을 주지 않는다.
+      # npm 이 위 id-token 권한으로 받은 OIDC 신원을 직접 확인한다.
+      # --provenance 는 어느 커밋과 워크플로에서 빌드됐는지를 패키지에 기록한다.
+      - name: Publish to npm
+        run: npm publish --access public --provenance

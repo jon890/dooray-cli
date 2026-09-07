@@ -47,48 +47,30 @@ git log ${LAST_TAG}..HEAD --pretty=format:"%s" | sort
 추가로 **해결된 GitHub 이슈**를 식별:
 
 ```bash
-# 열린 이슈 목록
 gh issue list --state open --json number,title --jq '.[] | "#\(.number)  \(.title)"'
-
-# task 디렉토리 / 커밋 메시지 / PR 본문에서 "Issue #N" 또는 "#N" 참조 추출
-grep -rE "Issue #[0-9]+|^#[0-9]+" tasks/ 2>/dev/null
 git log ${LAST_TAG}..HEAD --grep="#[0-9]" --oneline
 ```
 
-각 열린 이슈에 대해 "이번 릴리스로 해결되었는가?" 판단:
+열린 이슈마다 이번 릴리스가 그것을 해결했는지 판단한다.
+이슈가 요청한 것과 이번의 신규 명령·옵션을 짝지어 본다.
+후속 작업이 남은 이슈는 닫지 않는다.
 
-- 이슈 제목/본문 ↔ 이번 릴리스의 신규 명령/옵션 매핑
-- 후속 이슈(`feat(... ) follow-up`)는 release 시점에 close하지 않음 — 별도 task가 필요
+close 대상 목록을 사용자에게 제시해 확정받는다.
+그 목록이 7단계의 Release 노트 하단과 10단계의 자동 close 에 쓰인다.
 
-**결과를 사용자에게 제시**하고 close 대상 이슈 목록을 확정. 이 목록은:
+### 3. 문서 동기화 검증
 
-- GitHub Release 노트 하단에 `Closes #N, #M` 으로 기록
-- 10단계에서 release publish 후 자동 close
+2단계에서 뽑은 신규 명령과 옵션이 사용자 문서에 있는지 본다.
 
-이 결과는 다음 단계(문서 동기화 검증)와 GitHub Release 노트에 그대로 활용한다.
+```bash
+# cwd: <repo root>
+# 2단계의 각 문자열을 하나씩 넣는다. 플레이스홀더를 그대로 넣으면 0건이 나와 통과로 오독된다.
+grep -rn '<명령이나 옵션 문자열>' README.md skills/
+```
 
-### 3. 문서 동기화 검증 (README + dooray-cli 스킬)
+0건이면 누락이다. 누락 항목과 넣을 위치를 사용자에게 보고하고 보완 커밋을 따로 만든 뒤 다음 단계로 간다.
 
-신규 명령이나 옵션이 있으면 사용자 문서에 반영됐는지 확인한다.
-
-2단계에서 도출한 명령·옵션 문자열 **하나씩** `grep -rn '<그 문자열>' README.md skills/` 로 조회한다.
-히트가 0이면 누락이다. 플레이스홀더를 그대로 정규식에 넣으면 0건이 나와 통과로 오독된다.
-
-
-| 위치                              | 무엇을 확인                               |
-| ------------------------------- | ------------------------------------ |
-| `README.md`                     | "사용법" 섹션에 등장하는지. 새 명령은 알맞은 카테고리에 넣는다 |
-| `skills/dooray-cli/SKILL.md`    | 의도별 커맨드 표와 공통 규칙에 반영됐는지              |
-| `skills/dooray-cli/references/` | 해당 명령군 reference 에 동작과 함정이 들어갔는지     |
-
-
-**누락 발견 시**:
-
-- 사용자에게 누락 항목을 보고하고, 어느 위치에 어떤 문장으로 추가할지 제안
-- 보완 commit을 별도로 작성한 후 다음 단계 진행 (`docs(readme): document {feature}` 또는 `docs(skill): add {feature} to dooray-cli SKILL.md`)
-- 보완을 건너뛰면 사용자가 명시적으로 동의했을 때만 (예: "이번 릴리스는 인프라만, 기능 추가 없음")
-
-**버그 수정/리팩토링만 있는 릴리스**라면 본 단계는 통과 가능 — 사용자에게 그 사실을 명시하고 진행.
+새 명령이 없으면 이 단계를 통과로 본다. 그 사실을 사용자에게 밝힌다.
 
 ### 4. 개인 식별 정보 / 사내 식별자 노출 검증 (필수, 실패 시 중단)
 
@@ -156,7 +138,7 @@ git push origin v{version}
 
 릴리스 노트는 **2단계 분석 결과를 그대로 활용**해 작성한다 (Highlights / 신규 명령 / 신규 옵션 / 버그 수정 / **Closes** / Full Changelog 링크).
 
-**전달 방식: `--notes-file {path}` 필수** — 인라인 `--notes "..."` 또는 quoted heredoc 금지.
+**전달 방식은 `--notes-file {path}` 만 쓴다.** 인라인 `--notes "..."` 와 quoted heredoc 은 쓰지 않는다.
 
 ```bash
 # 1. 임시 파일에 본문 작성 (Write 도구 / cat / EDITOR 어느 쪽이든 OK)
@@ -173,7 +155,7 @@ gh release create v{version} --title "v{version} — {요약}" --notes-file /tmp
   - v0.10.0 릴리스에서 backtick 66개가 escape 된 형태로 출력되는 사고가 있었다
 - `--notes-file` 은 파일 경로만 넘기므로 shell quoting 과 escape 함정을 아예 피한다
 
-**자가 점검** — release create / edit 직후:
+**자가 점검.** release create 나 edit 직후에 확인한다.
 
 ```bash
 gh release view v{version} --json body -q .body | tr -cd '\\' | wc -c
@@ -185,13 +167,13 @@ gh release view v{version} --json body -q .body | tr -cd '\\' | wc -c
 릴리스 노트 본문 마지막에 close 대상 이슈를 적는다. 10단계에서 이 목록을 그대로 쓴다.
 
 ```markdown
-## Closes
+Closes
 
 이번 릴리스로 해결된 이슈 (release publish 후 자동 close):
 - #{번호} {이슈 제목}
 ```
 
-`--generate-notes` 는 쓰지 않는다 — 2단계에서 판단한 Closes 목록과 신규 명령·옵션 분류가 빠진다.
+`--generate-notes` 는 쓰지 않는다. 2단계에서 판단한 Closes 목록과 신규 명령·옵션 분류가 빠진다.
 
 ### 8. npm Publish
 
@@ -205,8 +187,14 @@ npm publish --access public --otp={code}
 
 ### 9. 최종 확인
 
-- `https://github.com/jon890/dooray-cli/releases/tag/v{version}` 릴리스 확인
-- `https://www.npmjs.com/package/@bifos/dooray-cli` 버전 확인 (반영에 수 분 소요)
+```bash
+# cwd: <repo root>
+gh release view "v{version}" --json tagName,isDraft -q '"\(.tagName) draft=\(.isDraft)"'
+npm view @bifos/dooray-cli version
+```
+
+첫 명령이 그 태그를 내고 `draft=false` 여야 한다.
+둘째가 방금 올린 버전을 내야 한다. npm 색인 반영에 수 분 걸리므로 값이 다르면 잠시 후 다시 조회한다.
 
 ### 10. 해결된 이슈 close
 
@@ -219,7 +207,7 @@ for n in {이슈번호 목록}; do
 done
 ```
 
-각 close에 release 링크 코멘트 첨부 — 이슈에서 release notes로 즉시 이동 가능.
+각 close 에 release 링크를 코멘트로 붙인다. 이슈에서 release 노트로 바로 이동할 수 있다.
 
 **close 금지 케이스**:
 
