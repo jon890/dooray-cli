@@ -91,19 +91,17 @@ TTY 확인, non-TTY 실행, `-y`와 `--yes` 사용법은 [SKILL.md](../SKILL.md#
 
 ## 페이지 삭제
 
-`wiki page delete` 는 Dooray 가 공식 문서화하지 않은 endpoint 를 쓴다.
-동작은 확인했지만 서버 정책이 바뀌면 깨질 수 있으니, 대량 삭제 전에 한 건으로 먼저 확인한다.
+`wiki page delete` 는 `DELETE /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 를 쓴다.
+공식 API 문서에 있는 endpoint 다.
 
 빈 제목·본문으로 덮는 soft delete 우회는 쓰지 않는다. 페이지가 트리에 남아 혼란을 준다.
 
 하위 페이지가 있는 페이지를 지우면 하위는 삭제한 페이지의 부모 아래로 재부착된다. orphan 은 생기지 않는다.
 
-## 위키 페이지 이동은 불가능하다
-
-`parentPageId` 를 바꾸는 이동은 API 로 할 수 없다. 수정 요청이 `parentPageId` 를 무시하고 전용 endpoint 도 없다.
-사용자가 이동을 요청하면 웹 UI 를 안내한다.
-
 ## 위키 페이지 이동 사용법
+
+`wiki page move` 는 `POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move` 를 쓴다.
+공식 API 문서에 있는 endpoint 다.
 
 페이지를 옮길 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
 

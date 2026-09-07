@@ -11,7 +11,7 @@ import type { OutputOptions } from "../../formatters/table.js";
 import { emitDeleteResult } from "../../formatters/file-output.js";
 
 export const wikiPageDeleteCommand = new Command("delete")
-  .description("위키 페이지 삭제 (비공식 endpoint)")
+  .description("위키 페이지 삭제")
   .argument("[arg1]", "프로젝트 코드, Dooray Wiki URL, 또는 (`--id`/`--url` 모드일 때) 미사용")
   .argument("[arg2]", "page-id (positional 2개 모드)")
   .option("--id <pageId>", "위키 페이지 ID")

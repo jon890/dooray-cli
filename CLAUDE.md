@@ -1,10 +1,12 @@
-# CLAUDE.md — dooray-cli
+# dooray-cli 프로젝트 지침
 
 ## 프로젝트 개요
 
 NHN Dooray REST API CLI 도구. TypeScript 와 Commander.js 기반.
 
-## API 스펙 확인 절차 (필수 — 신규 endpoint 사용 / 동작 검증 시)
+## API 스펙 확인 절차
+
+신규 endpoint 를 사용하거나 API 동작을 검증할 때는 아래 절차를 반드시 따른다.
 
 Dooray 공식 API 문서: [https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419](https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419)
 
@@ -13,6 +15,12 @@ Dooray 공식 API 문서: [https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO
 명령 목록과 유의할 점은 `browser-driver help` 의 출력이 소유한다.
 
 문서에 없거나 직관에 반하는 동작은 ADR 로 보존한다. 영역별 ADR 은 `docs/adr/INDEX.md` 에서 찾는다.
+
+저장소의 ADR 과 이 파일과 스킬 문서와 코드 주석에 적힌 API 서술은 근거가 아니라 그때의 확인 결과다.
+그 서술과 공식 문서가 어긋나면 공식 문서를 따르고 저장소 서술을 고친다. 자세한 내용은
+[ADR-046](docs/adr/046-official-api-doc-precedence.md)을 참고한다.
+
+구현된 endpoint 와 공식 목록을 대조하려면 `pnpm api:inventory` 를 돌린다.
 
 ## 빌드 & 실행
 
@@ -29,7 +37,7 @@ dooray                # 글로벌 링크 시
 
 ## 디렉토리 구조
 
-`docs/code-architecture.md` 가 단일 소스다 — 디렉터리 트리, 레이어, 의존 방향, API 전략을 담는다.
+`docs/code-architecture.md` 가 디렉터리 트리, 레이어, 의존 방향, API 전략을 담는 단일 소스다.
 
 ## 코드 컨벤션
 
@@ -66,7 +74,7 @@ dooray                # 글로벌 링크 시
 아래 식별자는 git 추적 대상 어디에도 넣지 않는다. 검사 범위는 `scripts/check-pii.mjs` 의 `SCAN` 목록이다.
 `src/` 의 테스트 fixture 와 에러 메시지 예시, 이슈 본문도 포함한다. 항상 placeholder 를 쓴다.
 
-구체적인 사내 식별자는 이 파일에도 적지 않는다 — CLAUDE.md 자체가 public 이라 나열이 곧 노출이다.
+구체적인 사내 식별자는 이 파일에도 적지 않는다. CLAUDE.md 자체가 public 이라 나열이 곧 노출이다.
 유형만 기술하고, 검증은 공개 화이트리스트 밖을 검출하는 방식으로 한다.
 
 
@@ -87,7 +95,7 @@ dooray                # 글로벌 링크 시
 node scripts/check-pii.mjs
 ```
 
-세 가지를 본다 — 공개 화이트리스트 밖의 도메인, 허용 목록 밖의 15자리 이상 숫자, 예시에 쓰인 낯선 project 값.
+공개 화이트리스트 밖의 도메인, 허용 목록 밖의 15자리 이상 숫자, 예시에 쓰인 낯선 project 값 세 가지를 본다.
 위반을 출력하고 종료 코드 1 로 끝난다. 화이트리스트는 그 스크립트가 소유한다.
 필수 경로가 없거나 파일을 읽지 못하면 오류를 출력하고 종료 코드 2 로 끝난다.
 
@@ -95,7 +103,7 @@ node scripts/check-pii.mjs
 도메인 화이트리스트는 정확한 호스트 단위라서 하위 도메인은 해당 호스트를 따로 추가해야 한다.
 CI 가 같은 스크립트를 돌리므로 통과하지 않으면 PR 이 막힌다.
 
-## 공개 문서(README · 공개 SKILL) — 내부 참조 번호 제외
+## 공개 문서의 내부 참조 번호 제외
 
 `README.md` 와 `skills/dooray-cli/SKILL.md` 에는 `ADR-NNN`, `Issue #NN`, `task NN` 같은 내부 추적 번호를 넣지 않는다.
 사용자는 ADR 맥락을 모르고, 이 문서를 그대로 LLM 에 붙여 실행을 요청하기도 한다.
