@@ -5,12 +5,14 @@ import { DEFAULTS } from "../config/types.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_API_ERROR, EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
 import { decodeDoorayIdTimeMs } from "../utils/dooray-id.js";
+import { sanitizeFileName } from "../utils/attachment-check.js";
 import { toMailConnectionError } from "./mailErrors.js";
 
 // ADR-040 실측의 약 0.3초 차이와 초 단위 도착 시각을 고려한 탐색 여유.
 const MAIL_ID_SEARCH_TIME_MARGIN_MS = 2000;
 // 탐색 위치의 메일과 앞뒤 8통을 확인한다(최대 17통).
 const MAIL_ID_CANDIDATE_NEIGHBORS = 8;
+const INBOX_SEARCH_HINT = '받은 메일함(INBOX) 대체 조회: dooray mail list --search "<제목 일부>"';
 
 export interface MailMessage {
   uid: number;
@@ -146,7 +148,7 @@ export async function getMail(
   config: Config,
   uid: number,
   mailbox = "INBOX",
-): Promise<MailMessage & { body: string }> {
+): Promise<MailMessage & { body: string; internalDate: Date | null }> {
   const client = createImapClient(config);
 
   try {
@@ -159,6 +161,7 @@ export async function getMail(
         flags: true,
         envelope: true,
         source: true,
+        internalDate: true,
       }, { uid: true });
 
       if (!msg) {
@@ -175,6 +178,9 @@ export async function getMail(
       const parsed: ParsedMail = await simpleParser(source);
       // parsed.html can be false (mailparser); || collapses false and empty string both → fallback
       const body: string = parsed.text || (parsed.html || "") || "(본문 없음)";
+      const internalDate = typeof msg.internalDate === "string"
+        ? new Date(msg.internalDate)
+        : msg.internalDate;
 
       return {
         uid: msg.uid,
@@ -186,6 +192,9 @@ export async function getMail(
           (t) => `${t.name || ""} <${t.address || ""}>`,
         ),
         date: envelope.date ?? null,
+        internalDate: internalDate instanceof Date && Number.isFinite(internalDate.getTime())
+          ? internalDate
+          : null,
         isRead: flags.has("\\Seen"),
         body,
       };
@@ -204,36 +213,41 @@ function formatEnvelopeAddress(
   return `${address.name || ""} <${address.address || ""}>`;
 }
 
-function readInternalDate(value: FetchMessageObject["internalDate"]): Date {
+function readInternalDate(value: FetchMessageObject["internalDate"], mailbox: string): Date {
   const date = typeof value === "string" ? new Date(value) : value;
   if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
-    throw buildIncompleteLookupError();
+    throw buildIncompleteLookupError(mailbox);
   }
   return date;
 }
 
-function buildMailIdCandidate(msg: FetchMessageObject): MailIdCandidate {
+function buildMailIdCandidate(msg: FetchMessageObject, mailbox: string): MailIdCandidate {
   const envelope = msg.envelope ?? null;
   return {
     uid: msg.uid,
     subject: envelope?.subject ?? "(제목 없음)",
     from: envelope?.from?.[0] ? formatEnvelopeAddress(envelope.from[0]) : "(unknown)",
-    date: readInternalDate(msg.internalDate),
+    date: readInternalDate(msg.internalDate, mailbox),
   };
+}
+
+function sanitizeCandidateText(value: string): string {
+  return sanitizeFileName(value).replace(/[\x80-\x9F\u2028\u2029]/g, "?");
 }
 
 function formatMailCandidate(candidate: MailIdCandidate): string {
   return [
     `  UID: ${candidate.uid}`,
     `  도착 시각: ${candidate.date?.toISOString() ?? "(unknown)"}`,
-    `  보낸사람: ${candidate.from}`,
-    `  제목: ${candidate.subject}`,
+    `  보낸사람: ${sanitizeCandidateText(candidate.from)}`,
+    `  제목: ${sanitizeCandidateText(candidate.subject)}`,
   ].join("\n");
 }
 
 async function fetchMailIdCandidates(
   client: ImapFlow,
   uidList: number[],
+  mailbox: string,
 ): Promise<MailIdCandidate[]> {
   const candidates: MailIdCandidate[] = [];
   if (uidList.length === 0) return candidates;
@@ -245,11 +259,11 @@ async function fetchMailIdCandidates(
     { uid: true, envelope: true, internalDate: true },
     { uid: true },
   )) {
-    if (!pendingUids.delete(msg.uid)) throw buildIncompleteLookupError();
-    candidates.push(buildMailIdCandidate(msg));
+    if (!pendingUids.delete(msg.uid)) throw buildIncompleteLookupError(mailbox);
+    candidates.push(buildMailIdCandidate(msg, mailbox));
   }
 
-  if (pendingUids.size > 0) throw buildIncompleteLookupError();
+  if (pendingUids.size > 0) throw buildIncompleteLookupError(mailbox);
 
   candidates.sort((a, b) => a.uid - b.uid);
   return candidates;
@@ -262,28 +276,41 @@ function isCandidateMatch(candidate: MailIdCandidate, wantSec: number): boolean 
   return sec === wantSec || sec === wantSec + 1;
 }
 
-function buildNoMatchError(mailId: string): DoorayCliError {
+function mailboxLookupHint(mailbox: string): string {
+  return mailbox.toUpperCase() === "INBOX"
+    ? INBOX_SEARCH_HINT
+    : `메일 웹 화면의 ${sanitizeCandidateText(mailbox)} 폴더에서 제목과 보낸사람으로 메일을 확인하세요.`;
+}
+
+function buildNoMatchError(mailId: string, mailbox: string): DoorayCliError {
   return new DoorayCliError(
-    `메일을 찾을 수 없습니다: mail id ${mailId}\n` +
+    `메일을 찾을 수 없습니다: mail id ${mailId}, 사서함 ${sanitizeCandidateText(mailbox)}\n` +
       "메일이 다른 폴더로 이동되었거나 삭제되었을 수 있습니다.\n" +
-      '대체 조회: dooray mail list --search "<제목 일부>"',
+      mailboxLookupHint(mailbox),
     EXIT_API_ERROR,
   );
 }
 
-function buildIncompleteLookupError(): DoorayCliError {
+function buildIncompleteLookupError(mailbox: string): DoorayCliError {
   return new DoorayCliError(
-    "메일의 도착 시각이나 조회 결과가 불완전해 UID를 결정할 수 없습니다. 다시 조회하세요.\n" +
-      '대체 조회: dooray mail list --search "<제목 일부>"',
+    `사서함 ${sanitizeCandidateText(mailbox)}의 도착 시각이나 조회 결과가 불완전해 UID를 결정할 수 없습니다. 다시 조회하세요.\n` +
+      mailboxLookupHint(mailbox),
     EXIT_API_ERROR,
   );
 }
 
-function buildAmbiguousError(mailId: string, candidates: MailIdCandidate[]): DoorayCliError {
+function buildAmbiguousError(
+  mailId: string,
+  mailbox: string,
+  candidates: MailIdCandidate[],
+): DoorayCliError {
   const details = candidates.map(formatMailCandidate).join("\n");
+  const safeMailbox = sanitizeCandidateText(mailbox);
+  const guidance = mailbox.toUpperCase() === "INBOX"
+    ? "받은 메일함(INBOX)의 후보 UID 하나를 골라 다시 조회하세요."
+    : mailboxLookupHint(mailbox);
   return new DoorayCliError(
-    `메일 id ${mailId} 에 대응하는 메일이 여러 건입니다.\n${details}\n` +
-      "UID 하나를 골라 다시 조회하세요.",
+    `사서함 ${safeMailbox}에서 메일 id ${mailId}에 대응하는 메일이 여러 건입니다.\n${details}\n${guidance}`,
     EXIT_API_ERROR,
   );
 }
@@ -304,7 +331,7 @@ export async function resolveUidByMailId(
     try {
       const uids = await client.search({ all: true }, { uid: true });
       if (!Array.isArray(uids) || uids.length === 0) {
-        throw buildNoMatchError(mailId);
+        throw buildNoMatchError(mailId, mailbox);
       }
 
       const sortedUids = [...uids].sort((a: number, b: number) => a - b);
@@ -318,8 +345,8 @@ export async function resolveUidByMailId(
           { uid: true, internalDate: true },
           { uid: true },
         );
-        if (!msg || msg.uid !== sortedUids[mid]) throw buildIncompleteLookupError();
-        const internalDateMs = readInternalDate(msg.internalDate).getTime();
+        if (!msg || msg.uid !== sortedUids[mid]) throw buildIncompleteLookupError(mailbox);
+        const internalDateMs = readInternalDate(msg.internalDate, mailbox).getTime();
 
         if (internalDateMs < wantMs - MAIL_ID_SEARCH_TIME_MARGIN_MS) {
           lo = mid + 1;
@@ -333,6 +360,7 @@ export async function resolveUidByMailId(
       const candidates = (await fetchMailIdCandidates(
         client,
         sortedUids.slice(start, end),
+        mailbox,
       )).filter((candidate) => isCandidateMatch(candidate, wantSec));
 
       if (candidates.length === 1) {
@@ -341,7 +369,7 @@ export async function resolveUidByMailId(
           throw new DoorayCliError(
             "조회 범위 밖에도 같은 시각의 메일이 있을 수 있어 UID를 결정할 수 없습니다.\n" +
               `${formatMailCandidate(candidates[0])}\n` +
-              '대체 조회: dooray mail list --search "<제목 일부>"',
+              mailboxLookupHint(mailbox),
             EXIT_API_ERROR,
           );
         }
@@ -349,10 +377,10 @@ export async function resolveUidByMailId(
       }
 
       if (candidates.length === 0) {
-        throw buildNoMatchError(mailId);
+        throw buildNoMatchError(mailId, mailbox);
       }
 
-      throw buildAmbiguousError(mailId, candidates);
+      throw buildAmbiguousError(mailId, mailbox, candidates);
     } finally {
       lock.release();
     }

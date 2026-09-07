@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Command } from "commander";
 import type { Config } from "../../config/types.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 
@@ -38,6 +39,7 @@ const mail = {
   from: "Sender <sender@example.com>",
   to: ["Receiver <receiver@example.com>"],
   date: new Date("2026-01-01T00:00:00Z"),
+  internalDate: new Date("2026-01-02T03:04:05Z"),
   isRead: true,
   body: "본문",
 };
@@ -61,6 +63,26 @@ afterEach(() => {
 });
 
 describe("mailGetCommand", () => {
+  it("JSON 날짜와 필드를 유지하고 내부 확인용 도착 시각은 출력하지 않는다", async () => {
+    vi.resetModules();
+    const { mailGetCommand } = await import("./get.js");
+    const program = new Command().option("--json").addCommand(mailGetCommand);
+
+    await program.parseAsync(["--json", "get", "337"], { from: "user" });
+
+    const output = vi.mocked(process.stdout.write).mock.calls
+      .map(([value]) => String(value)).join("");
+    expect(JSON.parse(output)).toEqual({
+      uid: 337,
+      subject: "메일 제목",
+      from: "Sender <sender@example.com>",
+      to: ["Receiver <receiver@example.com>"],
+      date: "2026-01-01T00:00:00.000Z",
+      isRead: true,
+      body: "본문",
+    });
+  });
+
   it.each([
     [""],
     ["0"],

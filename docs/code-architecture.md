@@ -193,6 +193,7 @@ src/
 
 ```
 commands/* → resolvers/* → cache/store + api/client   (읽기: 이름 → id 번역)
+commands/mail/{get,reply} → resolvers/mail-input → api/imapClient   (캐시 없이 mail id → UID 조회)
 commands/* → services/*  → cache/store + api/client + config/store   (쓰기: 변경과 캐시 무효화, ADR-042)
 commands/* → formatters/*
 commands/* → utils/errors
@@ -206,7 +207,8 @@ editor/    → api/client (현재 데이터 fetch) + resolvers/member
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
 - `api/client`는 순수 HTTP 래퍼. 비즈니스 로직 없음
 - `api/client`의 모든 요청은 `api/rate-limiter`의 토큰 버킷을 공유한다. 호출부는 요청 간격을 신경 쓰지 않는다 (ADR-039)
-- `resolvers/*`는 캐시 우선 조회, 만료 시 api/client 호출
+- 이름을 id 로 바꾸는 resolver 는 캐시를 우선 조회하고, 만료 시 `api/client` 를 호출한다.
+- `resolvers/mail-input` 은 입력 형태를 분류하고, mail id 는 캐시 없이 `api/imapClient` 에서 UID 로 조회한다.
 - `resolvers/*`는 읽기 전용이다. 쓰기 함수를 넣지 않는다
 - 캐시의 유효성을 깨는 변경은 `services/*`를 거친다. 그 함수가 성공 직후 무효해진 캐시를 지운다 (ADR-042)
   - 엔티티를 바꾸는 API 호출은 그 엔티티의 캐시 파일 하나를, `apiKey`·`baseUrl` 변경은 전체 캐시를 지운다

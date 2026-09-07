@@ -62,6 +62,8 @@ dooray                # 글로벌 링크 시
   - `config set <key> <value>` 의 값도 `-` 로 stdin 을 받는다 — 토큰이 셸 기록과 프로세스 목록에 남지 않게 하는 경로다
   - `post edit`, `wiki page edit`, `post`·`wiki page` 의 `comment add`/`edit` 는 둘 다 없으면 `$EDITOR` 가 열린다. 단 `post edit` 의 태그·참조자·담당자 변경 옵션은 제목·본문 없이도 비대화형 수정으로 실행한다. `create` 계열은 fallback 없이 에러가 된다
 - **mail 계열 입력**: `mail get`·`mail reply` 는 IMAP UID 외에 메일 웹 주소와 그 주소의 mail id 도 받는다. mail id 는 도착 시각으로 풀어 UID 를 이분 탐색한다 (ADR-040)
+  - 웹 주소와 mail id 로 추정한 메일의 답장은 원본 제목, 발신자, IMAP 도착 시각과 UID 를 보여주고 확인한다. TTY 기본값은 아니오이며 거절하면 발송 없이 정상 취소한다
+  - `-y`/`--yes` 로 확인을 생략한다. non-TTY 에서 옵션이 없으면 설정과 IMAP 조회 전에 `EXIT_PARAM_ERROR`(3)로 중단한다. UID 직접 입력은 확인 없이 보낸다
 - **resolver 매칭**: 정확일치 → 이름 부분일치 → 모호하면 에러와 후보 목록 출력
 - **출력**: `--json` 은 raw 유지, `--quiet` 은 식별자만
 - **파괴적 삭제 명령**: 확인을 기본으로 하고 `-y`/`--yes` 로 생략한다 (ADR-036)

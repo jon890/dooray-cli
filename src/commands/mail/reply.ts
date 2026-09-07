@@ -7,12 +7,19 @@ import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
 import { resolveMailTarget, resolveMailUid } from "../../resolvers/mail-input.js";
+import { DoorayCliError } from "../../utils/errors.js";
+import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
+import { sanitizeFileName } from "../../utils/attachment-check.js";
 import {
   closeImapClient,
   connectImapClient,
   createImapClient,
   getImapConfigOrThrow,
 } from "../../api/imapClient.js";
+
+function sanitizeReplyPreview(value: string): string {
+  return sanitizeFileName(value).replace(/[\x80-\x9F\u2028\u2029]/g, "?");
+}
 
 async function getMessageId(
   config: Parameters<typeof getImapConfigOrThrow>[0],
@@ -46,9 +53,18 @@ export const mailReplyCommand = new Command("reply")
   .option("--body-file <path>", "답장 본문 파일 경로")
   .option("--cc <addresses...>", "참조")
   .option("--html", "본문을 HTML로 전송")
+  .option("-y, --yes", "시간으로 찾은 원본 메일 확인 생략 (자동화용)")
   .action(async (target, opts) => {
     const globalOpts = mailReplyCommand.optsWithGlobals() as OutputOptions;
     const mailTarget = resolveMailTarget(target);
+    const needsConfirmation = mailTarget.kind === "mailId" && !opts.yes;
+    if (needsConfirmation && !process.stdin.isTTY) {
+      throw new DoorayCliError(
+        "non-TTY 환경에서는 시간으로 찾은 원본 메일을 확인할 수 없습니다. " +
+          "메일 웹 주소나 mail id로 답장하려면 --yes(-y) 플래그로 다시 실행하세요.",
+        EXIT_PARAM_ERROR,
+      );
+    }
     const config = await getConfigOrThrow();
 
     let body = opts.body ?? "";
@@ -82,6 +98,25 @@ export const mailReplyCommand = new Command("reply")
     const replyTo = fromMatch ? fromMatch[1] : original.from;
 
     stopSpinner(true, "원본 메일 조회 완료");
+
+    if (needsConfirmation) {
+      const { confirm } = await import("@inquirer/prompts");
+      const confirmed = await confirm({
+        message: [
+          "도착 시각으로 찾은 원본 메일입니다.",
+          `  제목: ${sanitizeReplyPreview(original.subject)}`,
+          `  보낸사람: ${sanitizeReplyPreview(original.from)}`,
+          `  IMAP 도착 시각: ${original.internalDate?.toISOString() ?? "알 수 없음"}`,
+          `  UID: ${original.uid}`,
+          "이 메일에 답장할까요?",
+        ].join("\n"),
+        default: false,
+      }, { output: process.stderr });
+      if (!confirmed) {
+        process.stderr.write("취소되었습니다.\n");
+        return;
+      }
+    }
 
     startSpinner("답장 발송 중...");
     let result: Awaited<ReturnType<typeof sendMail>>;

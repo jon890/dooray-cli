@@ -210,8 +210,13 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 제목 검색 | `dooray mail list --search "<keyword>"` |
 | 메일 상세 | `dooray mail get <uid\|url\|mail-id>` — `mail list` 의 UID, 메일 웹 주소, 그 주소의 19자리 id 를 모두 받는다 |
 | 메일 발송 | `dooray mail send --to "..." --subject "..." --body "..."` |
-| 메일 답장 | `dooray mail reply <uid> --body "..."` |
+| 메일 답장 | `dooray mail reply <uid\|url\|mail-id> --body "..."` |
 | 저장된 인증정보 제거 | `dooray mail logout` (비대화형 환경은 `--yes`) |
+
+메일 웹 주소와 mail id 는 도착 시각으로 원본을 추정하므로 다른 메일이 선택될 수 있다.
+이 입력으로 답장할 때는 제목, 발신자, 도착 시각과 UID 를 확인하며 기본값은 아니오다.
+자동화에서 추정한 메일에 답장하려면 원본이 맞는지 확인한 뒤 `-y` 또는 `--yes` 를 명시한다.
+비대화형 환경에서 이 옵션이 없으면 전송 전에 종료 코드 3으로 중단한다. UID 직접 입력은 확인 없이 보낸다.
 
 ## 메신저
 

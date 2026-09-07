@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getMail: vi.fn(),
   resolveUidByMailId: vi.fn(),
   sendMail: vi.fn(),
+  confirm: vi.fn(),
   startSpinner: vi.fn(() => ({ text: "" })),
   stopSpinner: vi.fn(),
   client: {
@@ -35,6 +36,8 @@ vi.mock("../../api/smtpClient.js", () => ({
   sendMail: mocks.sendMail,
 }));
 
+vi.mock("@inquirer/prompts", () => ({ confirm: mocks.confirm }));
+
 vi.mock("../../utils/spinner.js", () => ({
   startSpinner: mocks.startSpinner,
   stopSpinner: mocks.stopSpinner,
@@ -54,6 +57,7 @@ const originalMail = {
   from: "Sender <sender@example.com>",
   to: ["Receiver <receiver@example.com>"],
   date: new Date("2026-01-01T00:00:00Z"),
+  internalDate: new Date("2026-01-02T03:04:05Z"),
   isRead: false,
   body: "원본 본문",
 };
@@ -64,8 +68,16 @@ async function runMailReply(args: string[]): Promise<void> {
   await mailReplyCommand.parseAsync(args, { from: "user" });
 }
 
+const originalTTY = Object.getOwnPropertyDescriptor(process.stdin, "isTTY");
+
+function setTTY(isTTY: boolean): void {
+  Object.defineProperty(process.stdin, "isTTY", { value: isTTY, configurable: true });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  setTTY(true);
+  mocks.confirm.mockReset().mockResolvedValue(true);
   mocks.getConfigOrThrow.mockResolvedValue(config);
   mocks.getMail.mockResolvedValue(originalMail);
   mocks.resolveUidByMailId.mockResolvedValue(991);
@@ -84,6 +96,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  if (originalTTY) Object.defineProperty(process.stdin, "isTTY", originalTTY);
+  else Reflect.deleteProperty(process.stdin, "isTTY");
 });
 
 describe("mailReplyCommand", () => {
@@ -158,10 +172,12 @@ describe("mailReplyCommand", () => {
     expect(mocks.sendMail).toHaveBeenCalledOnce();
   });
 
-  it("UID 직접 입력은 mail id 조회를 생략하고 같은 사서함으로 조회한다", async () => {
+  it.each([true, false])("TTY %s에서 UID 직접 입력은 탐색과 확인을 생략한다", async (isTTY) => {
+    setTTY(isTTY);
     await runMailReply(["337", "--body", "답장 본문"]);
 
     expect(mocks.resolveUidByMailId).not.toHaveBeenCalled();
+    expect(mocks.confirm).not.toHaveBeenCalled();
     expect(mocks.getMail).toHaveBeenCalledWith(config, 337, "INBOX");
     expect(mocks.client.getMailboxLock).toHaveBeenCalledWith("INBOX");
     expect(mocks.client.fetchOne).toHaveBeenCalledWith(
@@ -169,6 +185,103 @@ describe("mailReplyCommand", () => {
       { uid: true, envelope: true },
       { uid: true },
     );
+    expect(mocks.sendMail).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    "1234567890123456789",
+    "https://example.dooray.com/mail/systems/inbox/1234567890123456789",
+  ])("non-TTY 추정 입력 %s은 설정 조회 전에 차단한다", async (target) => {
+    setTTY(false);
+
+    await expect(runMailReply([target, "--body", "답장 본문"]))
+      .rejects.toMatchObject({
+        exitCode: EXIT_PARAM_ERROR,
+        message: expect.stringContaining("--yes(-y)"),
+      });
+
+    expect(mocks.getConfigOrThrow).not.toHaveBeenCalled();
+    expect(mocks.resolveUidByMailId).not.toHaveBeenCalled();
+    expect(mocks.getMail).not.toHaveBeenCalled();
+    expect(mocks.connectImapClient).not.toHaveBeenCalled();
+    expect(mocks.confirm).not.toHaveBeenCalled();
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [true, "--yes"], [true, "-y"],
+    [false, "--yes"], [false, "-y"],
+  ] as const)("TTY %s에서 %s는 추정 원본 확인을 생략한다", async (isTTY, flag) => {
+    setTTY(isTTY);
+    mocks.confirm.mockResolvedValueOnce(false);
+
+    await runMailReply(["1234567890123456789", "--body", "답장 본문", flag]);
+
+    expect(mocks.confirm).not.toHaveBeenCalled();
+    expect(mocks.sendMail).toHaveBeenCalledOnce();
+  });
+
+  it("추정 원본 확인은 기본값이 아니오이고 IMAP 도착 시각을 보여준다", async () => {
+    await runMailReply(["1234567890123456789", "--body", "답장 본문"]);
+
+    expect(mocks.confirm).toHaveBeenCalledExactlyOnceWith({
+      message: [
+        "도착 시각으로 찾은 원본 메일입니다.",
+        "  제목: 원본 제목",
+        "  보낸사람: Sender <sender@example.com>",
+        "  IMAP 도착 시각: 2026-01-02T03:04:05.000Z",
+        "  UID: 991",
+        "이 메일에 답장할까요?",
+      ].join("\n"),
+      default: false,
+    }, { output: process.stderr });
+    expect(mocks.stopSpinner.mock.invocationCallOrder[0])
+      .toBeLessThan(mocks.confirm.mock.invocationCallOrder[0]);
+    expect(mocks.confirm.mock.invocationCallOrder[0])
+      .toBeLessThan(mocks.sendMail.mock.invocationCallOrder[0]);
+  });
+
+  it.each([null, undefined])("도착 시각이 %s이면 알 수 없음으로 표시한다", async (internalDate) => {
+    mocks.getMail.mockResolvedValueOnce({ ...originalMail, internalDate });
+
+    await runMailReply(["1234567890123456789", "--body", "답장 본문"]);
+
+    expect(mocks.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining("IMAP 도착 시각: 알 수 없음") }),
+      { output: process.stderr },
+    );
+    expect(mocks.sendMail).toHaveBeenCalledOnce();
+  });
+
+  it("확인 화면의 제목과 발신자로 행이나 터미널 명령을 위조하지 못한다", async () => {
+    mocks.getMail.mockResolvedValueOnce({
+      ...originalMail,
+      subject: "제목\r\n  UID: 999\x1b[31m\x9b2J\u2028끝",
+      from: "발신자\n  제목: 위조\x1b]0;title\x07\u2029끝 <sender@example.com>",
+    });
+    mocks.confirm.mockResolvedValueOnce(false);
+
+    await runMailReply(["1234567890123456789", "--body", "답장 본문"]);
+
+    const message = mocks.confirm.mock.calls[0][0].message;
+    expect(message).not.toMatch(/[\x00-\x09\x0B-\x1F\x7F-\x9F\u2028\u2029]/);
+    expect(message.split("\n").filter((line: string) => line.startsWith("  UID:")))
+      .toEqual(["  UID: 991"]);
+    expect(message.split("\n").filter((line: string) => line.startsWith("  제목:")))
+      .toHaveLength(1);
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+  });
+
+  it("원본 확인을 거절하면 정상 취소하고 SMTP를 호출하지 않는다", async () => {
+    mocks.confirm.mockResolvedValueOnce(false);
+
+    await expect(runMailReply(["1234567890123456789", "--body", "답장 본문"]))
+      .resolves.toBeUndefined();
+
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+    expect(process.stderr.write).toHaveBeenCalledWith("취소되었습니다.\n");
+    expect(process.stdout.write).not.toHaveBeenCalled();
+    expect(mocks.startSpinner).not.toHaveBeenCalledWith("답장 발송 중...");
   });
 
   it("본문이 없으면 UID 탐색이나 IMAP 연결 없이 종료한다", async () => {

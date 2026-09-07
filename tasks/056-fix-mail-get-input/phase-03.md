@@ -16,7 +16,7 @@ phase 1 과 2 의 산출물을 두 명령에 연결해, 메일 웹 주소와 19�
 
 ---
 
-## 작업 항목 (4)
+## 작업 항목 (5)
 
 ### 1. `src/resolvers/mail-input.ts`: UID 확정 헬퍼 추가
 
@@ -52,7 +52,24 @@ export async function resolveMailUid(config: Config, token: string): Promise<{ u
 - 인자 이름과 설명을 get.ts 와 같은 기준으로 바꾼다.
 - 본문 누락 검사(`--body` / `--body-file`)는 지금 위치를 유지한다. 형태 판정보다 뒤에 있어도 둘 다 IMAP 에 붙기 전이다.
 
-### 4. 명령 수준 테스트
+### 4. 시간으로 추정한 메일의 답장 확인
+
+독립 리뷰에서 대상 메일이 이동되거나 삭제된 뒤 같은 시각의 다른 메일 하나를 선택하는 경우를 재현했다.
+시간 추정 조회는 유지하되, 코디네이터 결정에 따라 추정한 메일에 답장할 때 원본 확인을 요구한다.
+
+- `mail reply` 에 `-y, --yes` 를 추가한다.
+- `mailId` 와 웹 주소 입력만 확인 대상이다. UID 직접 입력은 기존처럼 확인 없이 보낸다.
+- 추정 입력의 non-TTY 실행에 `--yes` 가 없으면 설정과 IMAP 조회 전에 `EXIT_PARAM_ERROR` 로 중단한다.
+- TTY 에서는 원본 제목, 발신자, IMAP 도착 시각과 UID 를 보여주고, 기본값이 아니오인 확인을 받는다.
+  기존 `@inquirer/prompts` 를 사용하고 스피너는 확인 전에 종료한다.
+- 거절하면 SMTP 를 호출하지 않고 정상 취소로 끝낸다. `--yes` 는 확인을 생략한다.
+- 확인 화면의 제목과 발신자는 제어문자를 정리해 다른 항목을 위조하지 못하게 한다.
+- `getMail` 은 확인 화면에 필요한 `internalDate` 를 추가로 요청하고 반환한다.
+  기존 `date` 의 의미와 get 명령의 JSON 출력은 바꾸지 않는다.
+
+이 변경은 ADR-040 의 한계와 결정 보정이며 별도 ADR 을 만들지 않는다.
+
+### 5. 명령 수준 테스트
 
 `src/commands/mail/logout.test.ts` 가 이 디렉터리의 `vi.mock` 사용 견본이다.
 
@@ -75,6 +92,9 @@ commander 의 action 이 던진 오류는 `parseAsync` 의 거부로 전달되�
 mail id 조회가 한 번만 실행되고, 반환된 UID 와 사서함이 원본 조회와 Message-ID 조회 양쪽에 전달되는지 확인한다.
 잘못된 입력은 설정 조회 전에 거절되고, UID 직접 입력은 mail id 조회를 생략하는지도 확인한다.
 SMTP 전송은 모의해 실제 메일을 보내지 않는다.
+추정 입력의 TTY 확인과 기본값 아니오, UID 입력의 확인 생략, 확인 거절 시 전송 없음,
+non-TTY 에서 플래그 없이 선차단, `-y` 와 `--yes` 의 확인 생략을 테스트한다.
+확인 시 표시하는 도착 시각은 envelope 의 날짜가 아닌 IMAP `internalDate` 인지 확인한다.
 
 `parseAsync` 구동이 이 레포에서 처음이라면 첫 케이스를 먼저 통과시켜 방식이 성립하는지 확인한 뒤 나머지를 쓴다.
 성립하지 않으면 `get.ts` 의 action 본문을 export 된 함수로 분리해 그 함수를 직접 부른다. 테스트를 위해 프로덕션 동작을 바꾸지는 않는다.
@@ -90,6 +110,8 @@ SMTP 전송은 모의해 실제 메일을 보내지 않는다.
 | `src/commands/mail/reply.ts` | 수정 |
 | `src/commands/mail/get.test.ts` | 신규 |
 | `src/commands/mail/reply.test.ts` | 신규 |
+| `src/api/imapClient.ts` | 수정 (확인용 도착 시각 반환) |
+| `src/api/imapClient.test.ts` | 수정 (도착 시각 반환 검증) |
 | `tasks/056-fix-mail-get-input/index.json` | 수정 (완료 마킹) |
 
 ## 검증
