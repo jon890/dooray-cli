@@ -1,4 +1,4 @@
-# planning 오버레이 — dooray-cli
+# dooray-cli planning 오버레이
 
 공용 코어(`~/.claude/skills/planning`)에 dooray-cli 특화를 주입한다.
 코어의 8단계 skeleton 을 이 레포의 도메인(TypeScript CLI)·docs 컨벤션·검증·실행기 스키마에 맞춰 채운다.
@@ -6,7 +6,9 @@
 ## 도메인: CLI (TypeScript / Commander.js)
 
 코어 `step-3` 부터 `step-6` 이 도메인 변형을 오버레이에 위임한다.
-각 단계가 대조할 소유 문서는 아래와 같다. 규약 본문을 여기 옮겨 적지 않는다 — 옮기면 갈라진다.
+각 단계가 대조할 소유 문서는 아래와 같다.
+규약 본문을 여기 옮겨 적지 않는다.
+옮기면 갈라진다.
 
 
 | 단계        | 대조할 곳                                                                                        |
@@ -19,7 +21,8 @@
 
 ### CLI 레포 전 규모 4단계 압축
 
-전 규모에서 8단계를 4단계로 압축 가능 — 단 압축된 각 단계 내부에서 모호함 제거는 동일하게 수행한다.
+전 규모에서 8단계를 4단계로 압축할 수 있다.
+단, 압축된 각 단계 내부에서 모호함 제거는 동일하게 수행한다.
 
 
 | 압축 단계 | 원 단계             |
@@ -30,7 +33,7 @@
 | (7+8) | docs 영향, task 생성 |
 
 
-### 변경 유형별 docs 영향 표 (필수 — 누락 0 화)
+### 변경 유형별 docs 영향 표
 
 신규 작업 시 해당 행을 찾아 표시된 모든 docs 를 손댄다. 표시 없으면 미손.
 
@@ -46,16 +49,17 @@
 | 신규 스킬 추가 (`skills/<name>/`)  | —                                    | 배포 정책, 스킬이 의존하는 API 함정 | — (src 레이어 무변경 시)      | MVP 범위 한 줄     | — (CLI 명령 흐름이 아니면 미손) | 스킬이 만드는 설정·산출물 스키마 | 내려받아 쓰는 방법   | —                          |
 
 
-### 공개 문서 내부 참조 제거 (필수 — README / SKILL 갱신 시)
+### 공개 문서 내부 참조 제거
 
-규칙은 `CLAUDE.md` "공개 문서(README · 공개 SKILL) — 내부 참조 번호 제외" 가, 검사는 `scripts/check-public-refs.mjs` 가 소유한다.
+규칙은 `CLAUDE.md` "공개 문서(README · 공개 SKILL)" 절이 소유한다.
+검사는 `scripts/check-public-refs.mjs` 가 소유한다.
 planning 에서는 README 와 `skills/` 를 손대는 phase 마다 그 grep 을 통과시킨다.
 
 ## 검증
 
 - **반복 함정 목록**: 코어가 요구하는 task 제출 전 self-check 의 대상은 `docs/pitfalls/` 다. 어느 카테고리를 볼지는 그 안의 `INDEX.md` 라우터가 정한다.
-- **docs-verifier 흡수 원칙**: docs-verifier(`.claude/agents/dooray-cli-docs-verifier.md`)의 반복 지적은 별도 회고 docs 를 신설하지 않는다.
+- **docs-verifier 흡수 원칙**: docs-verifier 의 반복 지적은 별도 회고 docs 를 신설하지 않는다.
   - 위 "변경 유형별 docs 영향 표"에 행 추가나 보강으로 흡수한다.
-  - 그 agent 가 이 표를 검증 기준으로 그대로 쓴다 — 표를 고치면 검증도 함께 달라진다.
+  - `docs-check` 는 `.claude/docs-audit-axes.md` 를 읽고 이 표를 검증 기준으로 그대로 쓴다.
+  - `build-with-teams` 의 검토 역할은 공용 코어의 `role-docs-verifier.md` 가 수행한다.
 - **개인 식별 정보 노출 금지**: task 파일 제출 전 `node scripts/check-pii.mjs` 를 실행해 통과시킨다.
-
