@@ -68,9 +68,10 @@ export async function resolveWikiPageInput(
 
   // 3. --id — project 가 있으면 그것으로 wikiId 해석, 없으면 page-only endpoint 로 wikiId 를 얻는다 (ADR-045)
   if (idOpt) {
-    const projectCode = project ?? projectArg;
-    if (projectCode) {
-      const wikiId = await resolveWiki(client, projectCode);
+    // projectArg 를 fallback 으로 두지 않는다. 위 가드가 --id 와 positional 동시 사용을
+    // 이미 EXIT_PARAM_ERROR 로 막으므로 이 지점의 projectArg 는 항상 undefined 다.
+    if (project) {
+      const wikiId = await resolveWiki(client, project);
       return { wikiId, pageId: idOpt };
     }
 

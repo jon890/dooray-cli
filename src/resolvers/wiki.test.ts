@@ -115,4 +115,11 @@ describe("filterWikisByName", () => {
     const filtered = filterWikisByName(wikis, "존재하지않는키워드");
     expect(filtered).toEqual([]);
   });
+
+  // 빈 키워드는 입력을 그대로 돌려준다. 그래서 명령 쪽에서 빈 --search 를
+  // 먼저 거부한다. 이 성질이 바뀌면 그 가드의 근거가 사라진다.
+  it("빈 키워드는 입력을 그대로 돌려준다", () => {
+    const filtered = filterWikisByName(wikis, "");
+    expect(filtered.map((w) => w.id)).toEqual(["w-1", "w-2"]);
+  });
 });

@@ -6,6 +6,8 @@ import { fetchAllWikis, filterWikisByName } from "../../resolvers/wiki.js";
 import { buildProjectCodeMap } from "../../resolvers/project.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import type { OutputOptions } from "../../formatters/table.js";
+import { DoorayCliError } from "../../utils/errors.js";
+import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 
 export const wikiListCommand = new Command("list")
   .description("위키 목록 조회")
@@ -23,8 +25,17 @@ export const wikiListCommand = new Command("list")
       () => new Map<string, string>(),
     );
 
+    // 빈 문자열을 검색 분기로 들이지 않는다. filterWikisByName 이 빈 키워드에 입력을
+    // 그대로 돌려주므로, 무거운 전체 순회를 돌고 전체 목록을 내는 결과가 된다.
+    if (opts.search != null && opts.search.trim() === "") {
+      throw new DoorayCliError(
+        "--search 에 빈 값을 줄 수 없습니다. 찾을 이름의 일부를 입력하세요.",
+        EXIT_PARAM_ERROR,
+      );
+    }
+
     let wikis;
-    if (opts.search != null) {
+    if (opts.search) {
       const pageGivenExplicitly = wikiListCommand.getOptionValueSource("page") === "cli";
       const sizeGivenExplicitly = wikiListCommand.getOptionValueSource("size") === "cli";
       if (pageGivenExplicitly || sizeGivenExplicitly) {
