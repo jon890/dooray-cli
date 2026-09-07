@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { resolvePostInput, classifyPostInputToken } from "./post-input.js";
 import { DoorayCliError } from "../utils/errors.js";
+import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 vi.mock("./project.js");
 vi.mock("./post.js");
@@ -173,5 +174,72 @@ describe("classifyPostInputToken", () => {
     expect(classifyPostInputToken("my-project")).toBe("project");
     expect(classifyPostInputToken("abc")).toBe("project");
     expect(classifyPostInputToken("my-project-code")).toBe("project");
+  });
+});
+
+// ADR-044 — positional 두 번째가 postId 일 때 완성 명령 안내
+describe("resolvePostInput 완성 명령 안내", () => {
+  const POST_ID = "1234567890123456789";
+
+  async function catchError(args: Parameters<typeof resolvePostInput>[1]) {
+    try {
+      await resolvePostInput(makeClient({}), args);
+    } catch (e) {
+      return e as DoorayCliError;
+    }
+    throw new Error("에러가 발생하지 않았다");
+  }
+
+  it("argv 를 주면 실행한 하위 명령 이름과 사용자 옵션이 안내에 남는다", async () => {
+    const err = await catchError({
+      projectArg: "my-project",
+      postNumberArg: POST_ID,
+      argv: ["post", "comment", "add", "my-project", POST_ID, "--body-file", "./body.md"],
+    });
+    expect(err).toBeInstanceOf(DoorayCliError);
+    expect(err.message).toContain("dooray post comment add");
+    expect(err.message).toContain("--body-file ./body.md");
+    expect(err.message).toContain(`--id ${POST_ID}`);
+  });
+
+  it("안내에 project 값이 남지 않는다", async () => {
+    const err = await catchError({
+      projectArg: "my-project",
+      postNumberArg: POST_ID,
+      argv: ["post", "comment", "add", "my-project", POST_ID, "--body", "x"],
+    });
+    const hintLine = err.message.split("\n").at(-1) ?? "";
+    expect(hintLine).not.toContain("my-project");
+    expect(hintLine.trim()).toBe(`dooray post comment add --body x --id ${POST_ID}`);
+  });
+
+  it("값 없는 flag 가 앞에 와도 project 가 남지 않는다", async () => {
+    const err = await catchError({
+      projectArg: "my-project",
+      postNumberArg: POST_ID,
+      argv: ["post", "comment", "add", "--dry-run", "my-project", POST_ID, "--body", "x"],
+    });
+    expect(err.message).toContain(`dooray post comment add --dry-run --body x --id ${POST_ID}`);
+    expect(err.message.split("\n").at(-1)).not.toContain("my-project");
+  });
+
+  it("argv 를 주지 않으면 기존 문구가 그대로 나온다", async () => {
+    const err = await catchError({ projectArg: "my-project", postNumberArg: POST_ID });
+    expect(err.message).toContain("--id 옵션을 사용하세요");
+    expect(err.message).toContain(`dooray post get --id ${POST_ID}`);
+  });
+
+  it("종료 코드가 EXIT_PARAM_ERROR 다", async () => {
+    const withArgv = await catchError({
+      projectArg: "my-project",
+      postNumberArg: POST_ID,
+      argv: ["post", "get", "my-project", POST_ID],
+    });
+    const withoutArgv = await catchError({
+      projectArg: "my-project",
+      postNumberArg: POST_ID,
+    });
+    expect(withArgv.exitCode).toBe(EXIT_PARAM_ERROR);
+    expect(withoutArgv.exitCode).toBe(EXIT_PARAM_ERROR);
   });
 });

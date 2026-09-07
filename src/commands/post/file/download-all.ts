@@ -27,6 +27,7 @@ export const fileDownloadAllCommand = new Command("download-all")
       postNumberArg: postNumberStr,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     const res = await client.getPostFiles(projectId, postId);
 

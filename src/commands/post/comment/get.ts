@@ -103,6 +103,7 @@ export const commentGetCommand = new Command("get")
         postNumberArg: parsed.postNumberArg,
         idOpt: parsed.idOpt,
         urlOpt: parsed.urlOpt,
+        argv: process.argv.slice(2),
       });
       projectId = resolved.projectId;
 

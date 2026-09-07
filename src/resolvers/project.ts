@@ -52,6 +52,24 @@ export async function ensurePrivateProjects(client: DoorayApiClient): Promise<Ca
   return items;
 }
 
+export async function buildProjectCodeMap(client: DoorayApiClient): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+
+  const projects = await ensureProjects(client);
+  for (const p of projects) {
+    map.set(p.id, p.code);
+  }
+
+  const privateCached = await getPrivateProjects();
+  if (privateCached && !isExpired(privateCached.updatedAt, PROJECTS_TTL_MS)) {
+    for (const p of privateCached.data) {
+      map.set(p.id, p.code);
+    }
+  }
+
+  return map;
+}
+
 export async function resolveProject(
   client: DoorayApiClient,
   input: string,
