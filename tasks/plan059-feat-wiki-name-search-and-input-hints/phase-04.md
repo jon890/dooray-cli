@@ -18,7 +18,8 @@
 
 ## 컨텍스트
 
-**근거 문서**: `docs/adr/043-wiki-name-search-and-project-column.md`,
+**근거 문서**: `docs/adr/045-wiki-page-standalone-fetch.md`,
+`docs/adr/043-wiki-name-search-and-project-column.md`,
 `docs/adr/044-post-input-error-completed-command.md`,
 `docs/flow.md` 의 「위키 흐름」 절.
 그 절에 이미 절차가 적혀 있으므로 공개 문서는 그것과 어긋나지 않게 쓴다.
@@ -52,30 +53,45 @@
 파일 맨 앞의 「페이지 계층 훑기」 절보다 앞에 새 절을 넣는다.
 페이지 ID 하나로 시작하는 것이 가장 흔한 출발점이라 먼저 읽혀야 한다.
 
-절 제목은 `페이지 ID 만 알 때 project 를 찾는다` 로 한다. 담을 내용은 이렇다.
+절 제목은 `페이지 ID 만 알 때` 로 한다. 담을 내용은 이렇다.
 
-- `wiki page get` 이 project 를 먼저 요구한다는 것.
-- 두 단계 절차와 명령 예시.
+- **project 를 찾을 필요가 없다.** `--id` 하나로 조회한다.
 
-  ```bash
+  ```
+  dooray wiki page get --id <page-id>
+  ```
+
+- 같은 방식이 `wiki page` 하위 명령 전체에 통한다.
+  `wiki page file`, `wiki page comment`, `wiki page delete` 도 `--id` 만으로 동작한다.
+- `--project` 는 선택이며 함께 주면 wikiId 를 해석하는 호출을 한 번 아낀다는 것.
+  반복 실행하는 자동화에 해당한다.
+- 위키를 이름으로 찾아야 하는 경우는 그다음 절이 다룬다.
+
+그다음 절을 하나 더 넣는다. 제목은 `위키를 이름으로 찾는다` 로 한다.
+페이지 ID 를 모르고 위키 자체를 찾아야 할 때, 또는 그 위키의 페이지 목록이나 트리를 보려 할 때가 여기 해당한다.
+
+- 명령 예시.
+
+  ```
   dooray wiki list --search <위키 이름 일부>   # Project 열의 값이 다음 명령의 project 인자다
-  dooray wiki page get <project> <page-id>
+  dooray wiki pages <project>
+  dooray wiki tree <project>
   ```
 
 - `--search` 가 이름을 대소문자 무시 부분 일치로 찾는다는 것.
   이름의 대소문자를 가정하지 않아도 된다는 것을 한 문장으로 적는다.
 - `--search` 는 전체 목록에서 찾으므로 `--page` 와 `--size` 를 무시한다는 것.
 - `--json` 은 서버 응답을 그대로 내므로 project 코드가 없다는 것.
-  자동화는 `project.id` 를 그대로 `wiki page get` 에 넣을 수 있다는 것.
+  자동화는 `project.id` 를 그대로 project 자리에 넣을 수 있다는 것.
 
 그다음 절을 하나 더 넣는다. 제목은 `위키 본문 링크의 앞 숫자는 project 가 아니다` 로 한다.
 
 - 위키 본문의 페이지 링크가 `dooray://<orgId>/pages/<pageId>` 형태라는 것.
 - 앞 숫자가 orgId 이고 project 도 위키 ID 도 아니라는 것.
 - 그 값을 project 자리에 넣으면 `프로젝트에 위키가 없습니다` 로 끝난다는 것.
-- pageId 는 뒤 숫자이므로 그것만 떼어 위 절차의 `<page-id>` 로 쓴다는 것.
+- pageId 는 뒤 숫자이므로 그것만 떼어 `--id` 에 넣으면 된다는 것.
 - 브라우저 주소창의 `https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>` 형태는
-  `--url` 로 그대로 넣을 수 있어 project 가 필요 없다는 것.
+  `--url` 로 그대로 넣을 수 있다는 것.
 
 `<tenant>` 는 placeholder 로 둔다. 실제 사내 도메인을 적지 않는다.
 
@@ -87,12 +103,19 @@
   `ID`, `Name`, `Project`, `Type` 네 열을 낸다는 것과 `--search` 로 이름을 찾는다는 것을 적는다.
 - `이름으로 위키 찾기` 행을 새로 더한다.
   커맨드는 `dooray wiki list --search <keyword>` 이고, 대소문자를 무시한 부분 일치이며 전체 목록에서 찾는다고 적는다.
-- `페이지 상세` 행에 네 가지 입력 형태를 받는다는 것을 더한다.
+- `페이지 상세` 행의 커맨드를 `dooray wiki page get --id <page-id>` 로 바꾼다.
+  project 없이 조회되며 positional 두 개와 `--url` 도 받는다고 적는다.
+- `페이지 ID 로 바로 조회` 행을 새로 더한다.
+  `wiki page file`, `wiki page comment`, `wiki page delete` 도 `--id` 만으로 동작한다는 것을 적는다.
 
-### 3. `skills/dooray-cli/SKILL.md` 의 입력 형태 목록에 `wiki page get` 을 더한다
+### 3. `skills/dooray-cli/SKILL.md` 의 입력 형태 목록을 고친다
 
 24번째 줄 근처의 문장을 고친다.
 지금 `wiki page file` 과 `wiki page comment` 전체와 `wiki page delete` 를 적고 있으므로 `wiki page get` 을 그 목록에 넣는다.
+
+같은 자리에 `--id` 모드가 `--project` 를 요구하지 않는다는 것을 적는다.
+그 문장이 지금 「위키 API 가 page-only fetch 를 지원하지 않는다」는 취지로 쓰여 있으면 그것을 지운다.
+사실과 다르다. `--project` 는 선택이며 함께 주면 호출 하나를 아낀다.
 
 ### 4. `skills/dooray-cli/SKILL.md` 에 post 입력 오류 안내를 한 줄 적는다
 
@@ -106,6 +129,7 @@ post 계열을 다루는 절에 한 문장을 더한다.
 위키를 다루는 예시가 있는 자리에 두 줄을 더한다.
 
 ```
+dooray wiki page get --id <page-id>     # 페이지 ID 하나로 조회 (project 불필요)
 dooray wiki list --search 설계          # 위키 이름으로 찾기 (대소문자 무시)
 dooray wiki page get --url "https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>"
 ```
@@ -139,11 +163,13 @@ pnpm test
 
 ```bash
 # cwd: <repo root>
-node dist/index.js wiki list --help | grep -- "--search"
-node dist/index.js wiki page get --help | grep -- "--url"
+node dist/index.js wiki list --help | grep -c -- "--search"        # >= 1
+node dist/index.js wiki page get --help | grep -c -- "--url"       # >= 1
+node dist/index.js wiki page get --help | grep -c -- "--id"        # >= 1
+grep -c "page-only fetch" skills/dooray-cli/SKILL.md               # = 0
 ```
 
-두 grep 이 모두 걸려야 한다. 걸리지 않으면 phase 01 이나 02 가 덜 끝난 것이다.
+넷 다 기대값이 맞아야 한다. 앞 셋이 걸리지 않으면 phase 01 이나 02 가 덜 끝난 것이다.
 
 문서에 내부 참조가 남지 않았는지 직접 본다.
 

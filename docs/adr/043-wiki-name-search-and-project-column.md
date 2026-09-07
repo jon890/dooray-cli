@@ -10,14 +10,21 @@
 - **맥락**: 위키 페이지를 읽으려는 작업에서 명령을 네 번 실패한 보고가 들어왔다 (Issue #154).
   CLI 는 정상 동작했고 종료 코드도 규약대로였다. 넷 다 위키를 찾아가는 경로가 없어서 생겼다.
 
-  조회의 흔한 출발점은 페이지 링크나 페이지 ID 하나인데 `wiki page get` 은 project 를 먼저 요구한다.
-  그런데 `wiki list` 에 이름 검색이 없어 `--page` 를 올려 가며 전체를 순회해야 했다.
+  당시 `wiki page get` 이 project 를 먼저 요구했고, 위키를 이름으로 찾을 수단이 없어
+  `wiki list --page` 를 올려 가며 전체를 순회해야 했다.
   `post list` 에는 `--subject` 가 있고 `mail list` 에는 `--search` 가 있다.
   이름의 대소문자를 잘못 가정해 목록에서 놓치는 실패도 함께 일어났다.
 
+  **페이지 ID 하나로 시작하는 경우는 이 ADR 이 다루지 않는다.**
+  `GET /wiki/v1/pages/{page-id}` 가 공개 API 에 있어 project 없이 조회된다 ([ADR-045](045-wiki-page-standalone-fetch.md)).
+  이 ADR 이 정하는 것은 위키를 **이름으로** 찾는 경로다.
+  페이지 ID 를 모르고 위키 자체를 찾아야 할 때, 또는 그 위키의 페이지 목록이나 트리를 보려 할 때가 여기 해당한다.
+
   목록을 순회해 위키를 찾아도 다음 명령으로 이어지지 않는다.
   출력이 `ID`, `Name`, `Type` 세 열이고 `Wiki` 응답은 `project.id` 만 담아 project 코드가 없다.
-  `wiki page get <project>` 에 넣을 값을 얻으려면 `--json` 으로 `project.id` 를 꺼내 프로젝트 목록과 다시 대조해야 한다.
+  `wiki pages <project>` 나 `wiki tree <project>` 에 넣을 값을 얻으려면
+  `--json` 으로 `project.id` 를 꺼내 프로젝트 목록과 다시 대조해야 한다.
+  이 두 명령은 페이지 ID 가 아니라 project 를 받으므로 ADR-045 의 경로로 대체되지 않는다.
 
   `dooray://<number>/pages/<pageId>` 의 앞 숫자는 orgId 다.
   `src/utils/task-link.ts` 와 `src/utils/mention.ts` 가 `dooray://${me.orgId}/...` 형태로 링크를 만든다.
@@ -48,8 +55,8 @@
   - 대소문자를 구분해 검색한다. 이슈의 네 번째 실패가 대소문자 착오였으므로 구분하면 그 실패가 남는다.
 
 - **결과**:
-  - 얻는 것: 페이지 ID 나 페이지 링크 하나만 아는 상태에서 `wiki list --search` 로 위키를 찾고,
-    그 표의 project 값을 `wiki page get` 에 그대로 넣어 조회를 끝낼 수 있다.
+  - 얻는 것: 위키 이름의 일부만 아는 상태에서 `wiki list --search` 로 그것을 찾고,
+    그 표의 project 값을 `wiki pages` 나 `wiki tree` 에 그대로 넣어 페이지 목록까지 갈 수 있다.
     위키가 100개를 넘는 조직에서도 `resolveWikiHomePageId` 가 뒤쪽 위키를 놓치지 않는다.
     orgId 를 project 로 넣은 실수는 오류 메시지 자체가 원인을 알려준다.
   - 감당할 것: `--search` 는 위키 수를 100으로 나눈 만큼 API 를 호출한다.
@@ -60,7 +67,7 @@
 - **적용 범위**: `wiki page get` 도 `resolveWikiPageInput` 을 쓰게 해
   `wiki page file`, `wiki page comment`, `wiki page delete` 와 입력 형태를 맞춘다.
   ADR-020 이 정한 입력 통합을 남은 명령 하나에 적용하는 것이고 새 결정은 아니다.
-  위키의 `--id` 모드가 `--project` 를 동반해야 하는 제약은 그대로다.
+  `--id` 모드가 `--project` 를 동반해야 하는지는 [ADR-045](045-wiki-page-standalone-fetch.md) 가 정한다.
 
   검색 결과가 0건이면 stderr 로 알린다.
   이슈의 네 번째 실패가 목록에서 놓친 것이라, 결과가 없는 것과 검색이 걸리지 않은 것을 구별해 준다.

@@ -52,3 +52,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-042](042-cache-invalidation-on-mutation.md) — 캐시의 유효성을 깨는 변경은 services 계열이 맡고 그 안에서 캐시를 지운다 (엔티티 mutation, config 의 계정·환경 변경)
 - [ADR-043](043-wiki-name-search-and-project-column.md) — 위키를 이름으로 찾는 `wiki list --search` 와 목록의 project 열, `dooray://` 앞 숫자가 orgId 임을 알리는 오류 안내 (Issue #154)
 - [ADR-044](044-post-input-error-completed-command.md) — post 입력 오류가 실제 실행 인자를 고쳐 만든 완성 명령을 보여준다 (Issue #154)
+- [ADR-045](045-wiki-page-standalone-fetch.md) — 위키 페이지를 페이지 ID 하나로 조회하고 wikiId 를 응답에서 얻는다 (공식 `GET /wiki/v1/pages/{page-id}`, Issue #154)
