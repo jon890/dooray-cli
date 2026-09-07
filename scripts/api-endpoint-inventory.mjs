@@ -33,13 +33,17 @@ function replaceInterpolations(raw) {
 }
 
 /**
- * placeholder 이름과 쿼리 문자열, 앞의 `/` 를 떼어 대조할 수 있는 형태로 만든다.
+ * placeholder 이름과 쿼리 문자열, 앞뒤의 `/` 를 떼어 대조할 수 있는 형태로 만든다.
+ *
+ * 뒤 `/` 를 떼는 이유가 있다. 공식 문서가 같은 경로를 슬래시 유무로 두 번 싣는 경우가 있어,
+ * 그대로 두면 한쪽만 매칭되고 다른 쪽이 미구현 목록에 남는다.
  */
 function normalizePath(path) {
   return path
     .replace(/\?.*$/, "")
     .replace(/\{[^}]*\}/g, "{id}")
-    .replace(/^\/+/, "");
+    .replace(/^\/+/, "")
+    .replace(/\/+$/, "");
 }
 
 /**
@@ -90,28 +94,46 @@ function readFirstStringArgument(source, start) {
  * - `this.api` 뒤에 줄바꿈을 건너 나오는 첫 메서드 호출의 첫 인자
  * - `${this.baseUrl}` 로 시작하는 템플릿 리터럴 경로와 그 뒤 raw `fetch` 의 `method`
  *
- * @returns {string[]} `"<METHOD> <경로>"` 형태의 고유 목록
+ * 경로를 변수나 함수 호출로 만든 호출은 읽을 수 없다. 그 수를 함께 낸다.
+ * 감사에 구멍이 있다는 것을 부르는 쪽이 알아야 한다.
+ *
+ * @returns {{ endpoints: string[], nonLiteral: number }}
  */
 export function extractImplEndpoints(source) {
   const found = new Set();
+  let nonLiteral = 0;
 
   const kyCall = new RegExp(String.raw`this\.api\s*\.\s*(${METHOD_NAMES.join("|")})\s*\(`, "g");
   for (const match of source.matchAll(kyCall)) {
     const path = readFirstStringArgument(source, match.index + match[0].length);
-    if (path == null) continue;
+    // 변수나 함수 호출로 경로를 만든 호출은 읽을 수 없다. 조용히 빠지지 않게 센다.
+    if (path == null) {
+      nonLiteral += 1;
+      continue;
+    }
     found.add(`${match[1].toUpperCase()} ${normalizePath(path)}`);
   }
 
   const rawFetchUrl = /`\$\{this\.baseUrl\}([^`]*)`/g;
   for (const match of source.matchAll(rawFetchUrl)) {
-    const tail = source.slice(match.index + match[0].length, match.index + match[0].length + 500);
+    const after = match.index + match[0].length;
+
+    // 탐색 범위를 다음 raw fetch URL 이 나오기 전까지로 자른다.
+    // 고정 길이로 자르면 재시도 경로처럼 raw fetch 가 나란히 있을 때
+    // 인접 블록의 method 를 집어와 조용히 오분류한다.
+    rawFetchUrl.lastIndex = after;
+    const next = rawFetchUrl.exec(source);
+    rawFetchUrl.lastIndex = after;
+    const end = next == null ? source.length : next.index;
+
+    const tail = source.slice(after, end);
     const method = /\bmethod\s*:\s*["'`]([A-Za-z]+)["'`]/.exec(tail);
     if (method == null) continue;
     const path = replaceInterpolations(match[1]);
     found.add(`${method[1].toUpperCase()} ${normalizePath(path)}`);
   }
 
-  return [...found].sort();
+  return { endpoints: [...found].sort(), nonLiteral };
 }
 
 /**
@@ -182,14 +204,19 @@ function main(argv) {
   const implSource = readFileSync(join(repoRoot, "src/api/client.ts"), "utf8");
   const officialContent = readFileSync(join(repoRoot, "docs/api/official-endpoints.txt"), "utf8");
 
-  const implEndpoints = extractImplEndpoints(implSource);
+  const { endpoints: implEndpoints, nonLiteral } = extractImplEndpoints(implSource);
   const officialEndpoints = parseOfficialEndpoints(officialContent);
   const result = compareEndpoints(implEndpoints, officialEndpoints);
 
   if (argv.includes("--json")) {
-    console.log(JSON.stringify(result, null, 2));
+    console.log(JSON.stringify({ ...result, nonLiteral }, null, 2));
   } else {
     printHuman(result, implEndpoints.length, officialEndpoints.length);
+    // 감사에 구멍이 있다는 것을 알린다. 경로를 변수나 함수 호출로 만든 호출은 읽을 수 없다.
+    if (nonLiteral > 0) {
+      console.warn(`\n주의: 경로가 리터럴이 아닌 호출 ${nonLiteral}건은 감사 대상에서 제외됐다.`);
+      console.warn("그 호출의 endpoint 는 이 대조에 나타나지 않는다.");
+    }
   }
 }
 
