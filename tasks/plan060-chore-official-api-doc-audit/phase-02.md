@@ -49,9 +49,11 @@ ADR-032 는 전체가 번복된 것이 아니다. 삭제 명령을 만든 결정
 
 ## Blocked 조건
 
-- `plan059` 가 머지되지 않았으면 `PHASE_BLOCKED: plan059 미머지` 를 출력하고 멈춘다.
-  `git log origin/main --oneline -30 | grep -c "plan059\|page-only"` 로 판정한다.
-  같은 자리를 두 plan 이 동시에 고치면 머지에서 부딪힌다.
+없다. `plan059` 를 기다리지 않는다.
+
+두 plan 이 `CLAUDE.md` 의 같은 자리를 고칠 수 있으므로 아래 항목 5 가 그것을 실측으로 가른다.
+이미 고쳐져 있으면 건너뛰고, 남아 있으면 이 phase 가 고친다.
+어느 쪽이든 결과는 같아 머지에서 부딪히지 않는다.
 
 ## 작업 항목
 
@@ -94,6 +96,11 @@ grep -rn "불가능\|지원하지 않\|없다\|endpoint 없" docs/adr/ CLAUDE.md
 `대체된 부분` 은 `docs/adr/046-official-api-doc-precedence.md` 를 가리킨다.
 ADR-046 에서도 ADR-032 를 링크해 양방향으로 찾을 수 있게 한다.
 
+**제목도 고친다.** 지금 제목이 `ADR-032: wiki page delete — 비공식(미문서화) DELETE endpoint` 다.
+결정만 읽고 지나가는 독자가 제목에서 낡은 판정을 얻는다.
+`비공식(미문서화)` 를 떼고 삭제 endpoint 를 감쌌다는 뜻으로 다시 쓴다.
+제목의 엠대시도 함께 없앤다. `check-readability.py` 가 제목의 엠대시를 위반으로 잡는다.
+
 결정 본문과 실측 관찰은 고치지 않는다. 삭제 명령을 만든 것과 하위 페이지 재부착은 그대로 유효하다.
 
 명령 도움말과 클라이언트 메서드 주석에 `비공식` 을 표기하라는 지시도 고친다.
@@ -124,12 +131,28 @@ grep -c "page-only fetch" src/resolvers/wiki-page-input.ts       # = 0
 ```
 
 둘 다 0 이면 `plan059` 가 고친 것이다. 아무것도 하지 않는다.
-0 이 아니면 이 phase 가 고친다. 고칠 내용은 `docs/adr/045-wiki-page-standalone-fetch.md` 가 소유한다.
+0 이 아니면 이 phase 가 고친다. 고칠 내용은 이렇다.
 
-### 6. `docs/adr/INDEX.md` 에 ADR-046 을 등재한다
+`CLAUDE.md` 의 입력 형식 항목에 wiki 의 `--id` 모드가 `--project` 동반 필수이며
+위키 API 가 page-only fetch 를 지원하지 않는다고 적은 줄이 있다.
+공식 API 에 `GET /wiki/v1/pages/{page-id}` 가 있어 사실이 아니다.
+`--id` 는 단독으로 동작하며 `--project` 는 선택이고 주면 wikiId 해석 호출을 아낀다는 내용으로 바꾼다.
+`src/resolvers/wiki-page-input.ts` 의 `INPUT_HELP` 에 같은 취지의 문구가 있으면 함께 고친다.
 
-한 줄을 append 한다. 기존 줄을 고치지 않는다.
-동시에 도는 다른 planning 과 같은 줄을 건드리지 않기 위해서다.
+**코드는 고치지 않는다.** 문구만 고친다.
+`--project` 요구를 실제로 없애는 구현은 `plan059` 가 맡는다.
+그 plan 이 머지되기 전이면 문서가 앞서 나간 상태가 되지만, 둘 다 같은 사실을 향하므로 어긋나지 않는다.
+이 phase 는 틀린 서술을 없애는 것이 목적이다.
+
+### 6. `docs/adr/INDEX.md` 에 ADR-046 을 등재하고 ADR-032 줄을 고친다
+
+ADR-046 은 한 줄을 append 한다.
+
+ADR-032 줄은 예외로 고친다. 지금 `wiki page delete 비공식(미문서화) DELETE endpoint` 로 적혀 있어
+제목과 같은 낡은 판정을 담고 있다. 위 항목 2 에서 고친 제목과 같은 문구로 맞춘다.
+
+다른 줄은 고치지 않는다. 동시에 도는 다른 planning 이 각자 자기 줄을 append 하고 있어
+기존 줄을 함께 손대면 머지에서 부딪힌다. ADR-032 줄 하나만 예외다.
 
 ### 7. `scripts/api-endpoint-inventory.test.mjs` 에 정정 대상 회귀 테스트를 더한다
 
@@ -162,13 +185,15 @@ pnpm vitest run scripts/api-endpoint-inventory.test.mjs
 ```bash
 # cwd: <repo root>
 grep -c "비공식 endpoint" src/commands/wiki/page-delete.ts   # = 0
+grep -c "비공식" docs/adr/032-wiki-page-delete.md             # = 0
+grep -c "미문서화" docs/adr/INDEX.md                          # = 0
 grep -c "대체된 부분" docs/adr/032-wiki-page-delete.md        # = 1
 grep -c "ADR-046" docs/adr/032-wiki-page-delete.md            # >= 1
 grep -c "ADR-032" docs/adr/046-official-api-doc-precedence.md # >= 1
 grep -c "ADR-046" docs/adr/INDEX.md                           # = 1
 ```
 
-다섯 기대값이 모두 맞아야 한다. 마지막 둘이 ADR 을 양방향으로 찾을 수 있게 했다는 근거다.
+일곱 기대값이 모두 맞아야 한다. 마지막 둘이 ADR 을 양방향으로 찾을 수 있게 했다는 근거다.
 
 `대체된 부분` 이 결정 바로 아래에 있는지 확인한다.
 

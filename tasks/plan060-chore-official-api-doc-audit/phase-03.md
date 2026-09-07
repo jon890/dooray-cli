@@ -20,6 +20,16 @@
 
 고칠 자리는 이렇다.
 
+공개 문서에서 고칠 자리가 둘 확인됐다.
+
+`skills/dooray-cli/references/wiki.md:53` 이 `wiki page delete` 를
+「Dooray 가 공식 문서화하지 않은 endpoint 를 쓴다」 고 적는다.
+공식 API 문서에 `DELETE /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 가 있어 사실이 아니다.
+그 문장과 뒤따르는 「서버 정책이 바뀌면 깨질 수 있으니」 경고를 함께 고친다.
+공식 API 이므로 그 경고의 근거가 사라진다.
+
+`skills/dooray-cli/SKILL.md` 에도 같은 취지의 서술이 있는지 위 훑기로 확인한다.
+
 `skills/dooray-cli/references/wiki.md` 의 마지막 절이 「위키 페이지 이동은 불가능하다」다.
 본문은 이렇게 적혀 있다.
 
@@ -66,7 +76,7 @@ CLI 에 없다는 것과 API 에 없다는 것을 구별해 주는 정보이기 
 
 ```bash
 # cwd: <repo root>
-grep -rn "불가능\|지원하지 않\|할 수 없\|없습니다\|없다" README.md skills/ | grep -iE "api|endpoint|이동|move" | head -20
+grep -rn "불가능\|지원하지 않\|할 수 없\|없습니다\|없다\|문서화하지 않은\|미문서화\|비공식" README.md skills/ | head -30
 ```
 
 찾은 자리마다 공식 문서로 확인한다. 저장소 문서를 근거로 삼지 않는다.
@@ -132,11 +142,13 @@ pnpm test
 # cwd: <repo root>
 grep -c "이동은 불가능하다" skills/dooray-cli/references/wiki.md      # = 0
 grep -c "pages/{page-id}/move" skills/dooray-cli/references/wiki.md   # >= 1
+grep -rc "문서화하지 않은" README.md skills/                            # 각각 = 0
+grep -rc "비공식" README.md skills/                                    # 각각 = 0
 grep -c "046-official-api-doc-precedence" CLAUDE.md                   # = 1
 grep -c "api:inventory" CLAUDE.md                                     # = 1
 ```
 
-넷 다 기대값이 맞아야 한다.
+여섯 다 기대값이 맞아야 한다.
 
 공개 문서에 내부 참조가 남지 않았는지 직접 본다.
 
