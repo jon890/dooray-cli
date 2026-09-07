@@ -20,9 +20,13 @@ phase 완료 조건은 `pnpm tsc --noEmit && pnpm run build && pnpm test` 다.
   스폰 시 `model` 은 `sonnet` 을 기본으로 넘기고,
   코어 `references/executor-routing.md` 의 규모별 등급 표가 상향 여부를 정한다.
   저장소 고유 지침은 [executor-notes.md](executor-notes.md)를 스폰 프롬프트에 함께 넘긴다.
-- **docs-verifier**: `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`)
+- **docs-verifier**: 전용 agent 를 쓰지 않는다.
+  공용 코어의 `references/role-docs-verifier.md` 가 docs-verifier 계약을 소유한다.
+  저장소 고유 문서 경로는 스폰 프롬프트에 함께 넘긴다.
 
-docs-verifier 의 동작은 그 파일이 단일 소스다.
+docs-verifier 에 추가로 넘기는 문서 경로는 `docs/prd.md`, `docs/flow.md`,
+`docs/code-architecture.md`, `docs/data-schema.md`, `docs/adr/` 다.
+`docs-check` 는 별도 계약인 [.claude/docs-audit-axes.md](docs-audit-axes.md)의 6축 판정 기준을 쓴다.
 
 ## planning 오버레이가 단일 소스인 항목
 
@@ -57,6 +61,7 @@ task metadata 와 phase 파일 형식은 공용 코어의 `references/task-creat
 ## 개인 식별 정보 노출 금지
 
 phase 완료 전과 PR 생성 전에 `node scripts/check-pii.mjs` 를 실행해 통과시킨다. CI 도 같은 스크립트를 돌린다.
+PR 생성 전에는 `node scripts/check-public-refs.mjs` 도 실행한다.
 
 ## PR 본문
 

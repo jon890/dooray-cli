@@ -1,23 +1,15 @@
-# docs-check 오버레이 — dooray-cli
+# dooray-cli docs-check 오버레이
 
 공용 코어(`~/.claude/skills/docs-check`)에 dooray-cli 특화를 주입한다.
 
 ## 검증 위임 (단일 소스)
 
-dooray-cli 의 6축 검증은 **반드시** custom agent `dooray-cli-docs-verifier` (`.claude/agents/dooray-cli-docs-verifier.md`)에 위임한다.
-agent 본문이 검증 항목·자동 grep 명령·도메인 지식(ADR 인덱스·캐시 규약·개인 식별 정보 검사 등)의 단일 소스 — main session 이 직접 6축 grep 을 따라 적으면 정의 두 곳 동기화 부담이 생긴다.
+dooray-cli 의 6축 검증은 [.claude/docs-audit-axes.md](docs-audit-axes.md)를 읽고 수행한다.
+그 문서가 검증 항목, 자동 grep 명령, 도메인 지식의 단일 소스다.
+하위 에이전트를 띄울 때도 그 문서 경로를 프롬프트에 담는다.
 
-```
-Agent({
-  subagent_type: "dooray-cli-docs-verifier",
-  description: "6-axis docs audit",
-  prompt: "전체 docs (docs/*.md, .claude/skills/*/SKILL.md, skills/*/ 공개 스킬) 6축 점검. Critical / Warning / Safe 분류 보고."
-})
-```
-
-agent 는 read-only (`disallowedTools: Write, Edit`) — team-lead 가 회신을 받아 Critical 부터 사용자 승인 후 수정한다.
-
-**Fallback**: agent 를 못 쓰는 환경에서는 코어 `docs-check` 의 6축 절차를 직접 따른다. 이때도 grep 명령의 단일 소스는 agent 본문이다.
+검토가 파일을 고치지 않는 것은 지시로 지키고, 실행 뒤 `git status` 로 확인한다.
+agent 파일은 없으므로 코어 `docs-check` 의 6축 절차와 `.claude/docs-audit-axes.md` 가 기본 경로다.
 
 ## docs 구조 + 문서 목록
 

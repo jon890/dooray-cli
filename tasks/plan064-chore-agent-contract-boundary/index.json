@@ -1,12 +1,12 @@
 {
   "name": "plan064-chore-agent-contract-boundary",
   "description": "전용 agent 가 덮은 공용 역할 계약을 되살리고 저장소 지침을 오버레이로 옮긴다",
-  "status": "pending",
+  "status": "completed",
   "created_at": "2026-09-07",
   "total_phases": 2,
-  "current_phase": 1,
+  "current_phase": 2,
   "phases": [
-    { "number": 1, "file": "phase-01.md", "execution_profile": "standard" },
-    { "number": 2, "file": "phase-02.md", "execution_profile": "standard" }
+    { "number": 1, "file": "phase-01.md", "execution_profile": "standard", "status": "completed" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "standard", "status": "completed" }
   ]
 }

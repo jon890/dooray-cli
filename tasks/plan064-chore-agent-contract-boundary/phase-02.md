@@ -74,7 +74,8 @@ F축 정의도 코어와 갈렸다.
 이 저장소에서 그 경로는 `docs/prd.md`, `docs/flow.md`, `docs/code-architecture.md`,
 `docs/data-schema.md`, `docs/adr/` 다.
 
-`docs-check` 는 계속 이 agent 를 쓴다는 것도 한 줄 적어, 두 경로가 다른 계약을 쓰는 것이 의도임을 밝힌다.
+`docs-check` 는 `.claude/docs-audit-axes.md` 의 6축 계약을 쓴다는 것도 한 줄 적어,
+두 경로가 다른 계약을 쓰는 것이 의도임을 밝힌다.
 
 ### 2. `.claude/docs-audit-axes.md` 로 6축 판정 기준을 옮긴다
 
@@ -126,8 +127,7 @@ F축 정의도 코어와 갈렸다.
 - 137행의 훅 서술을 고친다. 훅은 `Edit`·`Write`·`MultiEdit` 가 파일을 바꿨을 때만 돈다.
   Bash 로 만든 `.md` 는 거치지 않는다. 그러므로 「훅이 자동 검사하므로 형식만 본다」는 성립하지 않는다.
 - 그 자리에 검사기를 파일 경로로 직접 돌리라고 적는다.
-  `bash ~/.claude/scripts/korean-style-check.sh <파일>` 과
-  `python3 ~/.claude/scripts/check-readability.py <파일>` 이다.
+  새 소유자인 `korean-check` 의 `~/.claude/skills/korean-check/scripts/check.sh <파일>` 을 쓴다.
 - 괄호 중첩과 200자 초과 같은 항목을 목록에서 지운다. `check-readability.py` 가 그것을 소유한다.
   스크립트가 잡지 못하는 항목만 남긴다.
 
@@ -145,6 +145,11 @@ phase 01 이 executor 를 이미 지웠으므로 이 디렉터리가 비고, 빈
   그 보장이 성립하지 않았고 이제 그 필드도 없다.
   대신 검토가 파일을 고치지 않는 것은 지시로 지키고 `git status` 로 확인한다고 적는다.
 - 「Fallback: agent 를 못 쓰는 환경에서는」 문장을 고친다. 이제 agent 가 없으므로 fallback 이 기본 경로다.
+
+`.claude/planning-overlay.md` 의 「docs-verifier 흡수 원칙」도 정리한다.
+반복 지적을 별도 회고 문서로 만들지 않고 docs 영향 표에 흡수하는 내용은 유지한다.
+옛 agent 파일 참조는 `.claude/docs-audit-axes.md` 로 바꾸고,
+`build-with-teams` 의 검토 역할은 코어 `role-docs-verifier.md` 가 수행한다고 적는다.
 
 `tasks/**` 가 F축 검사 대상에서 빠져 있는지도 확인한다. 앞선 변경이 이미 그것을 했다.
 
@@ -239,4 +244,5 @@ grep -c '"current_phase": 2' $PLAN/index.json        # = 1
 | `.claude/docs-audit-axes.md` | 신규 |
 | `.claude/build-with-teams-overlay.md` | 수정 |
 | `.claude/docs-check-overlay.md` | 수정 |
+| `.claude/planning-overlay.md` | 수정 |
 | `tasks/plan064-chore-agent-contract-boundary/index.json` | 수정 |
