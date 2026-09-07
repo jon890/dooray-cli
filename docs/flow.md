@@ -421,13 +421,38 @@ dooray post workflow my-project 42 "review"     # 임의 상태로 (이름 또�
 ## 위키 흐름
 
 ```
-dooray wiki list my-project                      # 위키 페이지 목록
+dooray wiki list                                 # 위키 목록 (ID / Name / Project / Type)
+dooray wiki list --search 설계                    # 이름 부분 일치, 대소문자 무시 (ADR-043)
+dooray wiki pages my-project                     # root 페이지 목록
 dooray wiki tree my-project                      # 페이지 계층 트리 (root 부터 재귀)
 dooray wiki tree my-project --depth 2            # 손자까지만
-dooray wiki get my-project <page-id>             # 페이지 조회
-dooray wiki create my-project --title "설계" --body-file design.md
-dooray wiki edit my-project <page-id>            # $EDITOR 수정
+dooray wiki page get my-project <page-id>        # 페이지 조회
+dooray wiki page create my-project --title "설계" --body-file design.md
+dooray wiki page edit my-project <page-id>       # $EDITOR 수정
 dooray wiki page delete my-project <page-id>     # 페이지 삭제 (confirm 기본, -y/--yes 로 생략)
+```
+
+페이지 ID 나 페이지 링크 하나만 아는 상태에서 시작하는 경로다 (Issue #154).
+
+```
+# 1. 위키를 이름으로 찾는다. Project 열의 값이 다음 명령의 project 인자다
+dooray wiki list --search <위키 이름 일부>
+
+# 2. 그 값으로 페이지를 조회한다
+dooray wiki page get <project> <page-id>
+```
+
+위키 본문의 페이지 링크는 `dooray://<orgId>/pages/<pageId>` 형태다.
+앞 숫자는 orgId 이고 project 도 위키 ID 도 아니다.
+그 값을 project 자리에 넣으면 `프로젝트에 위키가 없습니다` 로 끝난다.
+`resolveProject` 가 15자리 이상 numeric 을 project ID 로 통과시킨 뒤(ADR-030) `resolveWiki` 가 캐시에서 찾지 못하기 때문이다.
+
+`wiki page get` 은 `wiki page file` 과 `wiki page comment` 와 같은 네 가지 입력 형태를 받는다 (ADR-020, ADR-043).
+`--id` 모드는 `--project` 를 함께 준다. 위키 API 가 page-only fetch 를 지원하지 않는다.
+
+```
+dooray wiki page get --url "https://x.dooray.com/wiki/<wikiId>/<pageId>"
+dooray wiki page get --id <page-id> --project my-project
 ```
 
 ## 메신저 흐름 (Issue #88, ADR-033)
