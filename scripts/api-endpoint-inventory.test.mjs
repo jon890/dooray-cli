@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,6 +9,11 @@ import {
   extractImplEndpoints,
   parseOfficialEndpoints,
 } from "./api-endpoint-inventory.mjs";
+
+const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..");
+const officialSnapshot = parseOfficialEndpoints(
+  readFileSync(join(repoRoot, "docs/api/official-endpoints.txt"), "utf8"),
+);
 
 describe("extractImplEndpoints", () => {
   it("평문 경로를 뽑는다", () => {
@@ -150,5 +159,19 @@ describe("compareEndpoints", () => {
       missingInImpl: [],
       missingInOfficial: [],
     });
+  });
+});
+
+describe("공식 목록 스냅샷의 정정 대상 endpoint", () => {
+  it("위키 페이지 이동 endpoint 가 들어 있다", () => {
+    expect(officialSnapshot).toContain("POST wiki/v1/wikis/{id}/pages/{id}/move");
+  });
+
+  it("위키 페이지 단건 조회(page-only fetch) endpoint 가 들어 있다", () => {
+    expect(officialSnapshot).toContain("GET wiki/v1/pages/{id}");
+  });
+
+  it("위키 페이지 삭제 endpoint 가 들어 있다", () => {
+    expect(officialSnapshot).toContain("DELETE wiki/v1/wikis/{id}/pages/{id}");
   });
 });

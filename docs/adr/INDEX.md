@@ -40,7 +40,7 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-029](029-wiki-page-file-multipart-order.md) — wiki page file multipart `type` 필드 순서 의존성 (Issue #70)
 - [ADR-030](030-resolveproject-numeric-fallback.md) — `resolveProject` numeric 입력 cache 우회 fallback (Issue #78)
 - [ADR-031](031-file-json-output-schema.md) — file 명령군 `--json` 출력 스키마 통일 (`post file`과 `wiki page file`, Issue #73)
-- [ADR-032](032-wiki-page-delete.md) — wiki page delete 비공식(미문서화) DELETE endpoint (Issue #87)
+- [ADR-032](032-wiki-page-delete.md) — wiki page delete 를 DELETE endpoint 로 구현 (Issue #87)
 - [ADR-033](033-messenger-send.md) — messenger send / channel-send Dooray Messenger API 래핑 (Issue #88)
 - [ADR-034](034-wiki-tree-drill-down.md) — wiki tree 레벨별 drill-down 재귀 조립 (flat list endpoint 부재, Issue #101)
 - [ADR-035](035-managed-skill-lifecycle.md) — Claude Code 스킬 명시 갱신과 버전·해시별 관리형 저장소
@@ -50,3 +50,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-039](039-rate-limit-token-bucket.md) — Dooray 요청 제한을 응답 헤더로 보정하는 클라이언트 토큰 풀
 - [ADR-041](041-project-tag-write-scope.md) — 프로젝트 태그 쓰기를 공식 문서 지원 범위(생성·그룹 속성)로 한정 (Issue #146)
 - [ADR-042](042-cache-invalidation-on-mutation.md) — 캐시의 유효성을 깨는 변경은 services 계열이 맡고 그 안에서 캐시를 지운다 (엔티티 mutation, config 의 계정·환경 변경)
+- [ADR-046](046-official-api-doc-precedence.md) — API 동작의 근거는 공식 문서이고 저장소 서술이 어긋나면 저장소를 고친다 (Issue #154)

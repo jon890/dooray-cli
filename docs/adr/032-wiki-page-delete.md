@@ -1,8 +1,16 @@
-## ADR-032: wiki page delete — 비공식(미문서화) DELETE endpoint
+## ADR-032: wiki page delete 를 DELETE endpoint 로 구현한다
 
 **결정**: `dooray wiki page delete` 를 `DELETE /wiki/v1/wikis/{wikiId}/pages/{pageId}` 로 구현한다.
 Dooray 공식 API 문서에 없는 **비공식 endpoint** 이며, 이 점을 명령 도움말과 클라이언트 메서드 주석에 표기해 이후 API 변경 시 추적을 돕는다.
 파괴적 명령이라 confirm 을 기본 적용하고 `--yes`(`-y`) 로 생략한다.
+
+**대체된 부분**: 위 결정이 「공식 문서에 없는 비공식 endpoint」 라고 적은 부분과,
+아래 「참고」 절이 `/move` 류 endpoint 가 없다고 적은 부분은 지금 사실과 다르다.
+`DELETE /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 와
+`POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move` 가 공식 API 문서에 있다.
+근거와 판정 갱신 절차는 [ADR-046](046-official-api-doc-precedence.md) 이 다룬다.
+명령 도움말과 클라이언트 메서드 주석에 비공식 표기를 남기라는 아래 지시는 더 이상 유효하지 않다.
+삭제 명령을 만든 결정과 하위 페이지 재부착 실측은 그대로 유효하다.
 
 **맥락**: `wiki page create` / `edit` 는 있으나 `delete` 가 없어 위키 재구성 자동화에서 페이지 삭제만 수동이었다 (Issue #87).
 공식 문서에 삭제 endpoint 가 없지만 위 경로가 동작함을 실측 확인:
@@ -24,4 +32,4 @@ Dooray 공식 API 문서에 없는 **비공식 endpoint** 이며, 이 점을 명
 - confirm: 기본 y/N, non-TTY abort, `--yes`/`-y` 로 생략.
 - 출력: `--json {pageId, status:"deleted"}` / `--quiet pageId` / 기본 prose.
 
-**참고**: 위키 페이지 "이동"(parentPageId 변경)은 API 로 불가 — 수정 PUT 이 `parentPageId` 를 무시하고 `/move` 류 endpoint 없음 (Issue #87 제보). 삭제와 무관하나 wiki API 제약으로 함께 기록.
+**참고**: 위키 페이지 "이동"(parentPageId 변경)을 수정 PUT 으로 시도하면 `parentPageId` 를 무시한다 (Issue #87 제보). 삭제와 무관하나 wiki API 제약으로 함께 기록.

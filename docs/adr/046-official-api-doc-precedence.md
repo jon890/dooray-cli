@@ -14,8 +14,8 @@
   | 저장소 서술 | 어디에 | 공식 문서 |
   | --- | --- | --- |
   | 위키 API 가 page-only fetch 를 지원하지 않는다 | `CLAUDE.md`, `src/resolvers/wiki-page-input.ts` | `GET /wiki/v1/pages/{page-id}` 가 있다 |
-  | 위키 페이지 이동 endpoint 가 없다 | `skills/dooray-cli/references/wiki.md`, ADR-032 의 참고 | `POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move` 가 있다 |
-  | 페이지 삭제는 미문서화 endpoint 다 | ADR-032 의 결정 | `DELETE /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 가 문서에 있다 |
+  | 위키 페이지 이동 endpoint 가 없다 | `skills/dooray-cli/references/wiki.md`, [ADR-032](032-wiki-page-delete.md) 의 참고 | `POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move` 가 있다 |
+  | 페이지 삭제는 미문서화 endpoint 다 | [ADR-032](032-wiki-page-delete.md) 의 결정 | `DELETE /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 가 문서에 있다 |
 
   첫 번째가 특히 비쌌다. 그 전제로 계획을 세워 「페이지 ID 만 알 때 project 를 찾는 절차」를 만들었는데,
   공식 endpoint 를 쓰면 그 절차 자체가 필요 없었다.
