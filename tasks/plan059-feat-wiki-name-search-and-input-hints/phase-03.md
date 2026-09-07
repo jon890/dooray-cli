@@ -45,6 +45,7 @@ $ dooray post comment add <project> --id <internal-id> --body-file ./body.md
   16개는 이렇다. `post/comment/` 의 `add.ts`, `delete.ts`, `edit.ts`, `get.ts`, `latest.ts`, `list.ts`,
   `post/` 의 `create.ts`, `done.ts`, `edit.ts`, `get.ts`, `workflow.ts`,
   `post/file/` 의 `delete.ts`, `download-all.ts`, `download.ts`, `list.ts`, `upload.ts` 다.
+  그중 `post/create.ts` 는 import 만 있고 호출이 없다. 살아 있는 호출부는 15 개다.
 - `src/utils/argv-sanitize.ts` 가 이미 argv 를 다루는 순수 함수다. 새 함수를 그 옆에 둔다.
 
 ADR-020 의 방향은 유지한다. 그 ADR 은 positional numeric 을 postId 로 자동 인식하는 것을 두 번 기각했다.
@@ -202,8 +203,17 @@ grep -rln "argv: process.argv.slice(2)" src/commands | wc -l
 grep -rln "argv" src/commands/post/comment/file | wc -l
 ```
 
-첫 수는 18, 둘째 수는 16 이어야 한다. 차이 둘은 테스트 파일이다.
-셋째 수는 4 여야 한다. `list.ts`, `upload.ts`, `download.ts`, `delete.ts` 넷이다.
+첫 수는 18, 둘째 수는 19, 셋째 수는 4 여야 한다.
+
+둘째가 첫째보다 큰 이유가 둘이다.
+
+`src/commands/post/create.ts` 는 `resolvePostInput` 을 import 만 하고 부르지 않는다.
+첫째 수 18 에는 들어가지만 `argv` 를 넘길 자리가 없다. 살아 있는 호출부는 15 개다.
+테스트 파일 둘도 첫째에만 들어간다.
+
+`src/commands/post/comment/file/` 넷도 `src/commands` 아래라 둘째에 함께 잡힌다.
+살아 있는 호출부 15 개와 그 넷을 더해 19 다.
+셋째 수는 그 넷을 따로 보는 것이라 둘째와 대상이 겹친다.
 
 안내가 실제로 완성 명령을 담는지 실행 결과로 판정한다.
 

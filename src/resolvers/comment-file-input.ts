@@ -29,6 +29,8 @@ interface CommentFileInputBaseArgs {
   commentIdOpt?: string;
   /** secondary positional 의 옵션 폴백 (file path / fileId 중 명령마다 다름) */
   secondaryOpt?: string;
+  /** 실행된 인자 배열 — resolvePostInput 의 완성 명령 안내에 그대로 전달 (ADR-044) */
+  argv?: string[];
 }
 
 /**
@@ -164,6 +166,7 @@ export async function resolveCommentFileInput(
     postNumberArg,
     idOpt: args.idOpt,
     urlOpt: args.urlOpt,
+    argv: args.argv,
   });
 
   return { projectId, postId, commentId, secondary };

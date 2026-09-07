@@ -4,6 +4,7 @@ import { resolvePost } from "./post.js";
 import { parseDoorayTaskUrl, isLikelyDoorayUrl } from "../utils/dooray-url.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+import { buildIdModeCommand } from "../utils/command-hint.js";
 
 export type PostInputTokenType = "postId" | "postNumber" | "url" | "project";
 
@@ -26,6 +27,11 @@ export interface PostInputArgs {
   postNumberArg?: string;
   idOpt?: string;
   urlOpt?: string;
+  /**
+   * 실행된 인자 배열 (`process.argv.slice(2)`).
+   * 주어지면 안내 오류가 실행한 명령을 고쳐 만든 완성 명령 한 줄을 보여준다 (ADR-044).
+   */
+  argv?: string[];
 }
 
 export interface ResolvedPostInput {
@@ -66,7 +72,7 @@ export async function resolvePostInput(
   client: DoorayApiClient,
   args: PostInputArgs,
 ): Promise<ResolvedPostInput> {
-  const { projectArg, postNumberArg, idOpt, urlOpt } = args;
+  const { projectArg, postNumberArg, idOpt, urlOpt, argv } = args;
   const hasPositional = !!projectArg || !!postNumberArg;
 
   // 1. --id + --url 동시 → 에러
@@ -135,10 +141,25 @@ export async function resolvePostInput(
   if (projectArg && postNumberArg) {
     const numType = classifyPostInputToken(postNumberArg);
     if (numType === "postId") {
+      const lead = `"${postNumberArg}" 는 내부 ID(postId)로 보입니다.\n`;
+      // argv 가 없는 호출은 기존 문구를 그대로 쓴다 (ADR-044 — 완성 명령은 argv 가 있을 때만).
+      if (!argv || argv.length === 0) {
+        throw new DoorayCliError(
+          lead +
+            `업무 번호(#N)가 아닌 내부 ID 로 조회하려면 --id 옵션을 사용하세요:\n` +
+            `  dooray post get --id ${postNumberArg}`,
+          EXIT_PARAM_ERROR,
+        );
+      }
+      const completed = buildIdModeCommand(
+        argv,
+        [projectArg, postNumberArg],
+        postNumberArg,
+      );
       throw new DoorayCliError(
-        `"${postNumberArg}" 는 내부 ID(postId)로 보입니다.\n` +
-          `업무 번호(#N)가 아닌 내부 ID 로 조회하려면 --id 옵션을 사용하세요:\n` +
-          `  dooray post get --id ${postNumberArg}`,
+        lead +
+          `업무 번호(#N)가 아닌 내부 ID 로 지정하려면 <project> 를 빼고 --id 를 씁니다:\n` +
+          `  ${completed}`,
         EXIT_PARAM_ERROR,
       );
     }

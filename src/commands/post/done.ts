@@ -20,6 +20,7 @@ export const postDoneCommand = new Command("done")
       postNumberArg: postNumberStr,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     await client.setPostDone(projectId, postId);
     stopSpinner(true, "업무 완료 처리 완료");
