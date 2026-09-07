@@ -1,0 +1,12 @@
+{
+  "name": "plan062-chore-checks-to-mjs",
+  "description": "문서 검사 스크립트 둘을 셸에서 .mjs 로 옮기고 단위 테스트를 붙인다",
+  "status": "pending",
+  "created_at": "2026-09-07",
+  "total_phases": 2,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "standard" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "standard" }
+  ]
+}
