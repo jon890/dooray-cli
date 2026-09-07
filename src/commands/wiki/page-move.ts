@@ -82,7 +82,17 @@ function emitMoveResult(
         ? "하위 페이지는 함께 이동하지 않았습니다.\n"
         : "하위 페이지도 함께 이동했습니다.\n",
     );
+    // beforePageId 가 없으면 정렬이 바뀌지 않았으므로 아무것도 알리지 않는다.
+    // "0" 은 맨 앞을 뜻하는 공식 API 의 특수값이다.
+    const orderMessage = describeOrderChange(body.beforePageId);
+    if (orderMessage) process.stdout.write(orderMessage);
   }
+}
+
+export function describeOrderChange(beforePageId?: string): string | null {
+  if (beforePageId == null) return null;
+  if (beforePageId === "0") return "형제 중 맨 앞으로 정렬되었습니다.\n";
+  return `형제 페이지(${beforePageId}) 바로 뒤로 정렬되었습니다.\n`;
 }
 
 export const wikiPageMoveCommand = new Command("move")

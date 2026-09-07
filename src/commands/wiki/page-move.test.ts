@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMoveBody, validateMoveOptions } from "./page-move.js";
+import { buildMoveBody, validateMoveOptions, describeOrderChange } from "./page-move.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 
@@ -78,5 +78,21 @@ describe("validateMoveOptions", () => {
 
   it("--parent 만 주면 던지지 않는다", () => {
     expect(() => validateMoveOptions({ parent: "9876543210987654321" })).not.toThrow();
+  });
+});
+
+describe("describeOrderChange", () => {
+  it("beforePageId 가 없으면 아무것도 알리지 않는다", () => {
+    expect(describeOrderChange(undefined)).toBeNull();
+  });
+
+  it('"0" 이면 맨 앞으로 정렬됐다고 알린다', () => {
+    expect(describeOrderChange("0")).toContain("맨 앞");
+  });
+
+  it("그 밖의 값이면 그 페이지 뒤로 정렬됐다고 알린다", () => {
+    const msg = describeOrderChange("1234567890123456789");
+    expect(msg).toContain("1234567890123456789");
+    expect(msg).toContain("바로 뒤");
   });
 });
