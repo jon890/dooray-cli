@@ -100,6 +100,9 @@ TTY 확인, non-TTY 실행, `-y`와 `--yes` 사용법은 [SKILL.md](../SKILL.md#
 
 ## 위키 페이지 이동 사용법
 
+`wiki page move` 는 `POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move` 를 쓴다.
+공식 API 문서에 있는 endpoint 다.
+
 페이지를 옮길 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
 
 ```bash
