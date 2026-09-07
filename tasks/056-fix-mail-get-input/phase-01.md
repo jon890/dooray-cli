@@ -1,6 +1,7 @@
 # Phase 01 — 메일 주소 파서와 id 디코더, 인자 분류기
 
 **Execution profile**: standard
+**근거 문서**: docs/adr/040-mail-url-to-uid-lookup.md
 
 ---
 
@@ -92,7 +93,7 @@ export function resolveMailTarget(token: string): MailTarget;
 
 - `uid` 는 `{ kind: "uid", uid: Number(token), mailbox: "INBOX" }` 를 돌려준다.
 - `mailId` 는 `{ kind: "mailId", mailId: token, mailbox: "INBOX" }` 를 돌려준다.
-- `url` 은 `parseDoorayMailUrl` 로 풀고, 실패하면 `DoorayCliError` 를 던진다.
+- `url` 은 `parseDoorayMailUrl` 로 풀고, 실패하면 `DoorayCliError` 를 `EXIT_PARAM_ERROR` 로 던진다.
   성공하면 `{ kind: "mailId", mailId, mailbox }` 이고 `mailbox` 는 아래 표로 옮긴다.
 - `invalid` 는 `DoorayCliError` 를 `EXIT_PARAM_ERROR` 로 던진다.
 

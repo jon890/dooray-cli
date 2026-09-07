@@ -1,6 +1,7 @@
 # Phase 02 — IMAP 계층의 mail id → UID 이분 탐색
 
 **Execution profile**: deep
+**근거 문서**: docs/adr/040-mail-url-to-uid-lookup.md
 
 ---
 

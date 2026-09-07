@@ -1,6 +1,7 @@
 # Phase 03 — mail get·reply 배선과 통합 검증
 
 **Execution profile**: standard
+**근거 문서**: docs/adr/040-mail-url-to-uid-lookup.md
 
 ---
 
