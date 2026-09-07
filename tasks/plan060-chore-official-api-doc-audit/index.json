@@ -1,0 +1,13 @@
+{
+  "name": "plan060-chore-official-api-doc-audit",
+  "description": "저장소 문서와 코드의 API 서술을 공식 Dooray API 문서와 전수 대조해 틀린 것을 고친다",
+  "status": "pending",
+  "created_at": "2026-09-07",
+  "total_phases": 3,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "deep" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "standard" },
+    { "number": 3, "file": "phase-03.md", "execution_profile": "standard" }
+  ]
+}
