@@ -67,6 +67,20 @@ jobs:
             exit 1
           fi
 
+      # pre-release 태그는 이 워크플로로 게시하지 않는다.
+      # `--tag` 없이 게시하면 dist-tag 가 항상 latest 라, 실수로 올린
+      # pre-release 를 stable 사용자가 받는다. 필요해지면 `--tag next` 분기를 붙인다.
+      - name: Reject pre-release version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          case "$VERSION" in
+            *-*)
+              echo "pre-release 버전($VERSION)은 이 워크플로로 게시하지 않는다."
+              exit 1
+              ;;
+          esac
+          echo "stable 버전: $VERSION"
+
       # Trusted publishing 이라 NODE_AUTH_TOKEN 을 주지 않는다.
       # npm 이 위 id-token 권한으로 받은 OIDC 신원을 직접 확인한다.
       # --provenance 는 어느 커밋과 워크플로에서 빌드됐는지를 패키지에 기록한다.
