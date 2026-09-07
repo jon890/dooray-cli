@@ -228,8 +228,11 @@ grep -c "A-Za-z" .claude/docs-audit-axes.md   # >= 1
 ```bash
 # cwd: <repo root>
 PLAN=tasks/plan064-chore-agent-contract-boundary
-sed -i '' 's/"status": "pending"/"status": "completed"/g' $PLAN/index.json
-sed -i '' 's/"current_phase": 1/"current_phase": 2/' $PLAN/index.json
+# `sed -i ''` 는 BSD 문법이다. GNU sed 는 `''` 를 파일명으로 읽어 실패한다.
+# `-i.bak` 는 양쪽에서 돌고, 남은 백업 파일을 지운다.
+sed -i.bak 's/"status": "pending"/"status": "completed"/g' $PLAN/index.json
+sed -i.bak 's/"current_phase": 1/"current_phase": 2/' $PLAN/index.json
+rm -f $PLAN/index.json.bak
 grep -c '"status": "completed"' $PLAN/index.json     # = 3 (최상위 1 + phase 2)
 grep -c '"current_phase": 2' $PLAN/index.json        # = 1
 ```

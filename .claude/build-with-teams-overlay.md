@@ -1,4 +1,4 @@
-# build-with-teams 오버레이
+# dooray-cli build-with-teams 오버레이
 
 공용 코어(`~/.claude/skills/build-with-teams`)에 dooray-cli 특화를 주입한다.
 
