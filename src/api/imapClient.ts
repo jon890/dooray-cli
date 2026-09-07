@@ -3,9 +3,14 @@ import { simpleParser, type ParsedMail } from "mailparser";
 import type { Config } from "../config/types.js";
 import { DEFAULTS } from "../config/types.js";
 import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
+import { EXIT_API_ERROR, EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
 import { decodeDoorayIdTimeMs } from "../utils/dooray-id.js";
 import { toMailConnectionError } from "./mailErrors.js";
+
+// ADR-040 실측의 약 0.3초 차이와 초 단위 도착 시각을 고려한 탐색 여유.
+const MAIL_ID_SEARCH_TIME_MARGIN_MS = 2000;
+// 탐색 위치의 메일과 앞뒤 8통을 확인한다(최대 17통).
+const MAIL_ID_CANDIDATE_NEIGHBORS = 8;
 
 export interface MailMessage {
   uid: number;
@@ -253,6 +258,7 @@ async function fetchMailIdCandidates(
 function isCandidateMatch(candidate: MailIdCandidate, wantSec: number): boolean {
   if (!candidate.date) return false;
   const sec = Math.floor(candidate.date.getTime() / 1000);
+  // id 시각이 도착보다 앞서므로 초 경계를 넘는 경우까지 두 초를 확인한다.
   return sec === wantSec || sec === wantSec + 1;
 }
 
@@ -261,7 +267,7 @@ function buildNoMatchError(mailId: string): DoorayCliError {
     `메일을 찾을 수 없습니다: mail id ${mailId}\n` +
       "메일이 다른 폴더로 이동되었거나 삭제되었을 수 있습니다.\n" +
       '대체 조회: dooray mail list --search "<제목 일부>"',
-    1,
+    EXIT_API_ERROR,
   );
 }
 
@@ -269,7 +275,7 @@ function buildIncompleteLookupError(): DoorayCliError {
   return new DoorayCliError(
     "메일의 도착 시각이나 조회 결과가 불완전해 UID를 결정할 수 없습니다. 다시 조회하세요.\n" +
       '대체 조회: dooray mail list --search "<제목 일부>"',
-    1,
+    EXIT_API_ERROR,
   );
 }
 
@@ -278,7 +284,7 @@ function buildAmbiguousError(mailId: string, candidates: MailIdCandidate[]): Doo
   return new DoorayCliError(
     `메일 id ${mailId} 에 대응하는 메일이 여러 건입니다.\n${details}\n` +
       "UID 하나를 골라 다시 조회하세요.",
-    1,
+    EXIT_API_ERROR,
   );
 }
 
@@ -315,15 +321,15 @@ export async function resolveUidByMailId(
         if (!msg || msg.uid !== sortedUids[mid]) throw buildIncompleteLookupError();
         const internalDateMs = readInternalDate(msg.internalDate).getTime();
 
-        if (internalDateMs < wantMs - 2000) {
+        if (internalDateMs < wantMs - MAIL_ID_SEARCH_TIME_MARGIN_MS) {
           lo = mid + 1;
         } else {
           hi = mid;
         }
       }
 
-      const start = Math.max(0, lo - 8);
-      const end = Math.min(sortedUids.length, lo + 9);
+      const start = Math.max(0, lo - MAIL_ID_CANDIDATE_NEIGHBORS);
+      const end = Math.min(sortedUids.length, lo + MAIL_ID_CANDIDATE_NEIGHBORS + 1);
       const candidates = (await fetchMailIdCandidates(
         client,
         sortedUids.slice(start, end),
@@ -336,7 +342,7 @@ export async function resolveUidByMailId(
             "조회 범위 밖에도 같은 시각의 메일이 있을 수 있어 UID를 결정할 수 없습니다.\n" +
               `${formatMailCandidate(candidates[0])}\n` +
               '대체 조회: dooray mail list --search "<제목 일부>"',
-            1,
+            EXIT_API_ERROR,
           );
         }
         return candidates[0].uid;
