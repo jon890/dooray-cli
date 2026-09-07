@@ -76,8 +76,11 @@ CLI 에 없다는 것과 API 에 없다는 것을 구별해 주는 정보이기 
 
 ```bash
 # cwd: <repo root>
-grep -rn "불가능\|지원하지 않\|할 수 없\|없습니다\|없다\|문서화하지 않은\|미문서화\|비공식" README.md skills/ | head -30
+grep -rn "불가능\|지원하지 않\|할 수 없\|없습니다\|없다\|문서화하지 않은\|미문서화\|비공식" README.md skills/
 ```
+
+실측으로 38건이 나온다. `head` 로 자르지 않는다. 자르면 뒤쪽 자리가 검토에서 빠진다.
+대부분은 API 와 무관한 서술이라 빠르게 넘길 수 있다. 전부 훑고 넘긴 근거를 보고에 적는다.
 
 찾은 자리마다 공식 문서로 확인한다. 저장소 문서를 근거로 삼지 않는다.
 공식 문서 주소는 `CLAUDE.md` 의 「API 스펙 확인 절차」가 소유하고,
@@ -142,13 +145,19 @@ pnpm test
 # cwd: <repo root>
 grep -c "이동은 불가능하다" skills/dooray-cli/references/wiki.md      # = 0
 grep -c "pages/{page-id}/move" skills/dooray-cli/references/wiki.md   # >= 1
-grep -rc "문서화하지 않은" README.md skills/                            # 각각 = 0
-grep -rc "비공식" README.md skills/                                    # 각각 = 0
+grep -rl "문서화하지 않은" README.md skills/ | wc -l                    # = 0
+grep -rl "미문서화" README.md skills/ | wc -l                           # = 0
 grep -c "046-official-api-doc-precedence" CLAUDE.md                   # = 1
 grep -c "api:inventory" CLAUDE.md                                     # = 1
 ```
 
 여섯 다 기대값이 맞아야 한다.
+
+`grep -rc` 를 쓰지 않는다. 그것은 파일별 개수를 내고 0 인 파일이 있으면 종료 코드 1 이 된다.
+통과 상태가 실패 코드를 내므로 판정이 뒤집힌다. `grep -rl ... | wc -l` 은 종료 코드가 안정적이다.
+
+`비공식` 은 이 검증에 넣지 않는다. 공개 문서에 처음부터 0건이라 빈 검증이 된다.
+위 훑기가 그 낱말을 포함하므로 새로 들어오면 그때 걸린다.
 
 공개 문서에 내부 참조가 남지 않았는지 직접 본다.
 

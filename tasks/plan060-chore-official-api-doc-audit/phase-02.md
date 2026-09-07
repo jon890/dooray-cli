@@ -23,11 +23,11 @@
 | 위키 페이지 이동 endpoint 가 없다 | `skills/dooray-cli/references/wiki.md`, `docs/adr/032-wiki-page-delete.md` 의 참고 절 | `POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move` 가 있다 |
 | 페이지 삭제가 비공식 미문서화 endpoint 다 | `docs/adr/032-wiki-page-delete.md` 의 결정 | `DELETE /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 가 문서에 있다 |
 
-**`plan059` 가 이미 고치는 자리는 건드리지 않는다.**
-그 plan 의 phase 02 가 `CLAUDE.md` 의 page-only fetch 서술과
+**`plan059` 를 기다리지 않는다.**
+그 plan 의 phase 02 도 `CLAUDE.md` 의 page-only fetch 서술과
 `src/resolvers/wiki-page-input.ts` 의 `INPUT_HELP` 를 고친다.
-`plan059` 가 머지된 뒤 이 phase 를 실행하고, 그 두 자리가 이미 고쳐졌는지 확인한다.
-아직 남아 있으면 이 phase 가 고친다.
+아래 항목 5 가 그 두 자리를 실측으로 판정한다.
+이미 고쳐져 있으면 건너뛰고 남아 있으면 이 phase 가 고친다. 어느 쪽이든 결과가 같다.
 
 `skills/dooray-cli/references/wiki.md` 는 `plan059` 의 phase 04 도 건드린다.
 그 파일의 이동 관련 절은 이 phase 가 아니라 phase 03 이 맡는다. 공개 문서이기 때문이다.
@@ -94,16 +94,28 @@ grep -rn "불가능\|지원하지 않\|없다\|endpoint 없" docs/adr/ CLAUDE.md
   `POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move` 가 공식 API 문서에 있다.
 
 `대체된 부분` 은 `docs/adr/046-official-api-doc-precedence.md` 를 가리킨다.
-ADR-046 에서도 ADR-032 를 링크해 양방향으로 찾을 수 있게 한다.
+ADR-046 에서도 ADR-032 를 **마크다운 링크로** 걸어 양방향으로 찾을 수 있게 한다.
+지금 그 파일에 `ADR-032` 가 평문으로 세 번 나오지만 링크는 0건이다.
+그래서 링크 형태를 검증한다. 문자열 등장 수를 세면 아무 작업 없이 통과한다.
 
-**제목도 고친다.** 지금 제목이 `ADR-032: wiki page delete — 비공식(미문서화) DELETE endpoint` 다.
+`비공식` 이 이 파일에 세 줄 있다. 실측으로 확인했다.
+1행 제목, 4행 결정 본문, 14행 「미확인」 절이다. 각각 다르게 다룬다.
+
+**제목은 고친다.** 지금 제목이 `ADR-032: wiki page delete — 비공식(미문서화) DELETE endpoint` 다.
 결정만 읽고 지나가는 독자가 제목에서 낡은 판정을 얻는다.
 `비공식(미문서화)` 를 떼고 삭제 endpoint 를 감쌌다는 뜻으로 다시 쓴다.
 제목의 엠대시도 함께 없앤다. `check-readability.py` 가 제목의 엠대시를 위반으로 잡는다.
 
-결정 본문과 실측 관찰은 고치지 않는다. 삭제 명령을 만든 것과 하위 페이지 재부착은 그대로 유효하다.
+**결정 본문 4행과 미확인 절 14행은 그대로 둔다.** 그것이 당시의 판단 기록이다.
+ADR 은 지우지 않는다는 규칙이 여기 적용된다. `대체된 부분` 이 그 둘을 가리켜 정정한다.
+그래서 이 파일에서 `비공식` 이 0건이 되지 않는다. 그것을 기대값으로 쓰지 않는다.
 
-명령 도움말과 클라이언트 메서드 주석에 `비공식` 을 표기하라는 지시도 고친다.
+4행이 「명령 도움말과 클라이언트 메서드 주석에 표기해」 라고 지시하는 부분은
+`대체된 부분` 에서 그 지시가 더 이상 유효하지 않다고 밝힌다. 4행 자체를 고치지 않는다.
+실제 코드의 표기를 없애는 것은 아래 항목 3 과 4 가 맡는다.
+
+**편집한 뒤 이 파일에 가독성 검사를 돌린다.** 실측으로 1행과 27행이 걸린다.
+27행은 아래에서 고칠 `/move` 참고 줄이므로 함께 해소된다.
 
 ### 3. `src/commands/wiki/page-delete.ts` 의 도움말을 고친다
 
@@ -184,16 +196,21 @@ pnpm vitest run scripts/api-endpoint-inventory.test.mjs
 
 ```bash
 # cwd: <repo root>
-grep -c "비공식 endpoint" src/commands/wiki/page-delete.ts   # = 0
-grep -c "비공식" docs/adr/032-wiki-page-delete.md             # = 0
-grep -c "미문서화" docs/adr/INDEX.md                          # = 0
-grep -c "대체된 부분" docs/adr/032-wiki-page-delete.md        # = 1
-grep -c "ADR-046" docs/adr/032-wiki-page-delete.md            # >= 1
-grep -c "ADR-032" docs/adr/046-official-api-doc-precedence.md # >= 1
-grep -c "ADR-046" docs/adr/INDEX.md                           # = 1
+grep -c "비공식 endpoint" src/commands/wiki/page-delete.ts        # = 0
+head -1 docs/adr/032-wiki-page-delete.md | grep -c "비공식"        # = 0
+head -1 docs/adr/032-wiki-page-delete.md | grep -c "—"             # = 0
+grep -c "미문서화" docs/adr/INDEX.md                               # = 0
+grep -c "대체된 부분" docs/adr/032-wiki-page-delete.md             # = 1
+grep -c "](046-official-api-doc-precedence.md)" docs/adr/032-wiki-page-delete.md   # >= 1
+grep -c "](032-wiki-page-delete.md)" docs/adr/046-official-api-doc-precedence.md   # >= 1
+grep -c "ADR-046" docs/adr/INDEX.md                                # = 1
+python3 ~/.claude/scripts/check-readability.py docs/adr/032-wiki-page-delete.md; echo $?   # = 0
 ```
 
-일곱 기대값이 모두 맞아야 한다. 마지막 둘이 ADR 을 양방향으로 찾을 수 있게 했다는 근거다.
+아홉 기대값이 모두 맞아야 한다.
+제목만 보는 두 줄이 본문의 역사 기록과 제목의 낡은 판정을 가른다.
+마크다운 링크를 세는 두 줄이 ADR 을 양방향으로 찾을 수 있게 했다는 근거다.
+문자열 등장 수로 세면 지금도 통과하므로 링크 형태를 본다.
 
 `대체된 부분` 이 결정 바로 아래에 있는지 확인한다.
 
@@ -203,6 +220,7 @@ grep -n "결정\|대체된 부분\|맥락" docs/adr/032-wiki-page-delete.md | he
 ```
 
 `대체된 부분` 의 줄 번호가 `결정` 보다 크고 `맥락` 보다 작아야 한다.
+결정만 읽고 지나가는 독자가 낡은 결론을 얻는 것을 막는 것이 그 위치의 목적이다.
 
 개인 식별 정보 검사를 통과시킨다.
 
