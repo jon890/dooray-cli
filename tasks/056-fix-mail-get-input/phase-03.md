@@ -1,4 +1,4 @@
-# Phase 03 — mail get·reply 배선과 통합 검증
+# Phase 03: mail get·reply 배선과 통합 검증
 
 **Execution profile**: standard
 **근거 문서**: docs/adr/040-mail-url-to-uid-lookup.md
@@ -18,7 +18,7 @@ phase 1 과 2 의 산출물을 두 명령에 연결해, 메일 웹 주소와 19�
 
 ## 작업 항목 (4)
 
-### 1. `src/resolvers/mail-input.ts` — UID 확정 헬퍼 추가
+### 1. `src/resolvers/mail-input.ts`: UID 확정 헬퍼 추가
 
 명령 두 곳이 같은 순서를 반복하지 않도록 분류와 조회를 잇는 함수를 이 파일에 둔다.
 
@@ -32,7 +32,7 @@ export async function resolveMailUid(config: Config, token: string): Promise<{ u
 
 이 함수만 `src/api/imapClient.ts` 를 참조한다. 분류 함수들은 순수한 채로 남긴다.
 
-### 2. `src/commands/mail/get.ts` — 인자 해석 삽입
+### 2. `src/commands/mail/get.ts`: 인자 해석 삽입
 
 `src/commands/mail/get.ts:17` 의 `await getMail(config, Number(uid))` 를 고친다.
 
@@ -43,7 +43,7 @@ export async function resolveMailUid(config: Config, token: string): Promise<{ u
 - mail id 로 들어온 경우 스피너 문구를 `"메일 찾는 중..."` 으로 두고, UID 를 얻은 뒤 `"메일 조회 중..."` 으로 바꾼다.
   UID 직접 입력은 지금처럼 `"메일 조회 중..."` 하나만 쓴다.
 
-### 3. `src/commands/mail/reply.ts` — 같은 배선
+### 3. `src/commands/mail/reply.ts`: 같은 배선
 
 `src/commands/mail/reply.ts:58` 의 `getMail(config, Number(uid))` 와 `:59` 의 `getMessageId(config, Number(uid))` 가 같은 결함을 갖는다.
 
@@ -71,6 +71,11 @@ commander 의 action 이 던진 오류는 `parseAsync` 의 거부로 전달되�
 
 `../../api/imapClient.js` 와 `../../config/store.js` 를 모의한다. 검증 대상인 분류 모듈은 모의하지 않는다.
 
+`src/commands/mail/reply.test.ts` 에서 답장 경로도 검증한다.
+mail id 조회가 한 번만 실행되고, 반환된 UID 와 사서함이 원본 조회와 Message-ID 조회 양쪽에 전달되는지 확인한다.
+잘못된 입력은 설정 조회 전에 거절되고, UID 직접 입력은 mail id 조회를 생략하는지도 확인한다.
+SMTP 전송은 모의해 실제 메일을 보내지 않는다.
+
 `parseAsync` 구동이 이 레포에서 처음이라면 첫 케이스를 먼저 통과시켜 방식이 성립하는지 확인한 뒤 나머지를 쓴다.
 성립하지 않으면 `get.ts` 의 action 본문을 export 된 함수로 분리해 그 함수를 직접 부른다. 테스트를 위해 프로덕션 동작을 바꾸지는 않는다.
 
@@ -84,6 +89,7 @@ commander 의 action 이 던진 오류는 `parseAsync` 의 거부로 전달되�
 | `src/commands/mail/get.ts` | 수정 |
 | `src/commands/mail/reply.ts` | 수정 |
 | `src/commands/mail/get.test.ts` | 신규 |
+| `src/commands/mail/reply.test.ts` | 신규 |
 | `tasks/056-fix-mail-get-input/index.json` | 수정 (완료 마킹) |
 
 ## 검증

@@ -1,4 +1,4 @@
-# Phase 01 — 메일 주소 파서와 id 디코더, 인자 분류기
+# Phase 01: 메일 주소 파서와 id 디코더, 인자 분류기
 
 **Execution profile**: standard
 **근거 문서**: docs/adr/040-mail-url-to-uid-lookup.md
@@ -21,7 +21,7 @@
 
 ## 작업 항목 (4)
 
-### 1. `src/utils/dooray-url.ts` — 메일 주소 파서 추가
+### 1. `src/utils/dooray-url.ts`: 메일 주소 파서 추가
 
 파일 상단의 `TASK_URL_RE` / `WIKI_URL_RE` 옆에 정규식을 두고 아래를 export 한다.
 
@@ -40,7 +40,7 @@ export function parseDoorayMailUrl(input: string): ParsedMailUrl | null;
 - 뒤에 붙는 `/`, `?query`, `#fragment` 는 무시한다. 기존 `TASK_URL_RE` 의 `(?:[/?#].*)?$` 꼬리 처리를 그대로 따른다.
 - 호스트가 `*.dooray.com` 이 아니거나 `/mail/` 경로가 아니면 `null` 을 돌려준다.
 
-### 2. `src/utils/dooray-id.ts` — 신규 파일, id 에서 시각 꺼내기
+### 2. `src/utils/dooray-id.ts`: 신규 파일, id 에서 시각 꺼내기
 
 Dooray id 는 아래 구조다. 이 사실은 ADR-040 이 소유하며, 실제 주소 두 건으로 오차 336ms 와 245ms 를 확인했다.
 
@@ -59,7 +59,7 @@ export function decodeDoorayIdTimeMs(id: string): number;
 
 이 파일을 `dooray-url.ts` 와 나누는 이유는 id 구조가 메일 전용이 아니어서다. postId 와 pageId 도 같은 체계다.
 
-### 3. `src/resolvers/mail-input.ts` — 신규 파일, 인자 분류
+### 3. `src/resolvers/mail-input.ts`: 신규 파일, 인자 분류
 
 `src/resolvers/post-input.ts` 의 `classifyPostInputToken` 을 형태 견본으로 삼되, API 클라이언트를 받지 않는 순수 모듈이다.
 
@@ -117,7 +117,9 @@ export function resolveMailTarget(token: string): MailTarget;
   기존 describe 들의 케이스 구성을 따라 `inbox` 주소, `sent` 주소, `systems` 가 없는 주소, query·fragment·후행 슬래시, 비 dooray 호스트, 업무 주소 오인식을 덮는다.
 - `src/utils/dooray-id.test.ts` 를 새로 만든다.
   `decodeDoorayIdTimeMs("1234567890123456789")` 이 `Number((1234567890123456789n >> 23n) + 1262304000000n)` 과 같은 값을 돌려주는지 확인한다.
-  같은 입력을 `Number()` 로 먼저 바꿔 계산한 값과는 다르다는 것도 함께 단언한다. 이 대조가 회귀를 잡는다.
+  이 예시에서는 `Number()` 로 먼저 바꿔도 밀리초 결과가 같으므로, 정밀도 회귀는 별도 경계값으로 확인한다.
+  `(((1735689600000n - 1262304000000n) << 23n) - 1n).toString()` 으로 경계 직전 id 를 생성한다.
+  이 입력의 결과가 `1735689599999` 이고, `Number()` 선변환 후 나눗셈과 내림으로 계산한 값과 다른지 단언한다.
 - `src/resolvers/mail-input.test.ts` 를 새로 만든다.
   분류 표의 네 판정을 모두 덮고, 경계값 `4294967295` 와 `4294967296` 을 각각 `uid` 와 `mailId` 로 확인한다.
   `sent` 주소가 `mailbox: "sent"` 로, 알 수 없는 폴더가 `INBOX` 로 떨어지는지 확인한다.
