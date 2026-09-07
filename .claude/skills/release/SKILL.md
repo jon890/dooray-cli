@@ -94,8 +94,8 @@ git log ${LAST_TAG}..HEAD --grep="#[0-9]" --oneline
 
 ```bash
 # cwd: <repo root>
-bash scripts/check-pii.sh
-bash scripts/check-public-refs.sh
+node scripts/check-pii.mjs
+node scripts/check-public-refs.mjs
 ```
 
 패턴과 화이트리스트는 두 스크립트가 소유한다. 본 skill 은 실행 시점과 후속 처리만 정의한다.
