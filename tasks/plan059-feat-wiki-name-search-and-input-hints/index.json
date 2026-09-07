@@ -1,0 +1,14 @@
+{
+  "name": "plan059-feat-wiki-name-search-and-input-hints",
+  "description": "위키를 이름으로 찾는 경로를 만들고 post 입력 오류가 완성 명령을 보여주게 한다 (Issue #154)",
+  "status": "pending",
+  "created_at": "2026-09-07",
+  "total_phases": 4,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "standard" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "standard" },
+    { "number": 3, "file": "phase-03.md", "execution_profile": "deep" },
+    { "number": 4, "file": "phase-04.md", "execution_profile": "standard" }
+  ]
+}
