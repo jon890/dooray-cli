@@ -26,7 +26,7 @@ src/
   api/
     client.ts               # DoorayApiClient — ky 기반 HTTP 래퍼
     rate-limiter.ts         # 요청 토큰 버킷. 응답 헤더로 서버 잔량과 동기화 (ADR-039)
-    imapClient.ts           # IMAP 메일 조회 (imapflow + mailparser)
+    imapClient.ts           # IMAP 메일 조회 (imapflow + mailparser). resolveUidByMailId — 도착 시각으로 UID 이분 탐색 (ADR-040)
     smtpClient.ts           # SMTP 메일 발송 (nodemailer)
     types.ts                # 모든 API 요청/응답 타입
 
@@ -50,6 +50,7 @@ src/
     post-tags.ts            # mergeTagIds pure helper — post edit 의 --tag/--tag-clear/--tag-remove 머지 (clear → remove → add → dedupe, Issue #66, ADR-019 확장)
     wiki-page-input.ts      # wiki page file 5 명령 입력 분기 (--id/--url/positional URL → {wikiId, pageId}, post-input.ts 패턴 mirror, ADR-020 확장)
     messenger-channel.ts    # messenger channel-send --channel 분기: channelId(15+자리) 직접 / 그 외 GET channels title 매칭 (ADR-033)
+    mail-input.ts           # mail get/reply 인자 분류 (classifyMailInputToken) + mail id → UID 해석. 32비트 경계로 UID 와 mail id 를 가르고 BigInt 로 비교 (ADR-040)
                             # 이 계열은 읽기 전용이다. 캐시되는 엔티티를 바꾸는 호출은 services/ 로 간다 (ADR-042)
 
   services/                 # 캐시의 유효성을 깨는 변경. 성공 직후 무효해진 캐시를 지운다 (ADR-042)
@@ -183,15 +184,16 @@ src/
 
     mail/
       list.ts               # 메일 목록 (--unread, --search)
-      get.ts                # 메일 상세 조회
+      get.ts                # 메일 상세 조회 (UID / 웹 주소 / mail id 입력 분기)
       send.ts               # 메일 발송 (--to, --cc, --bcc, --html)
-      reply.ts              # 메일 답장 (In-Reply-To 스레드 유지)
+      reply.ts              # 메일 답장 (In-Reply-To 스레드 유지, get.ts 와 입력 분기 공유)
 ```
 
 ## 모듈 의존 관계
 
 ```
 commands/* → resolvers/* → cache/store + api/client   (읽기: 이름 → id 번역)
+commands/mail/{get,reply} → resolvers/mail-input → api/imapClient   (캐시 없이 mail id → UID 조회)
 commands/* → services/*  → cache/store + api/client + config/store   (쓰기: 변경과 캐시 무효화, ADR-042)
 commands/* → formatters/*
 commands/* → utils/errors
@@ -205,7 +207,8 @@ editor/    → api/client (현재 데이터 fetch) + resolvers/member
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
 - `api/client`는 순수 HTTP 래퍼. 비즈니스 로직 없음
 - `api/client`의 모든 요청은 `api/rate-limiter`의 토큰 버킷을 공유한다. 호출부는 요청 간격을 신경 쓰지 않는다 (ADR-039)
-- `resolvers/*`는 캐시 우선 조회, 만료 시 api/client 호출
+- 이름을 id 로 바꾸는 resolver 는 캐시를 우선 조회하고, 만료 시 `api/client` 를 호출한다.
+- `resolvers/mail-input` 은 입력 형태를 분류하고, mail id 는 캐시 없이 `api/imapClient` 에서 UID 로 조회한다.
 - `resolvers/*`는 읽기 전용이다. 쓰기 함수를 넣지 않는다
 - 캐시의 유효성을 깨는 변경은 `services/*`를 거친다. 그 함수가 성공 직후 무효해진 캐시를 지운다 (ADR-042)
   - 엔티티를 바꾸는 API 호출은 그 엔티티의 캐시 파일 하나를, `apiKey`·`baseUrl` 변경은 전체 캐시를 지운다

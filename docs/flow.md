@@ -623,3 +623,47 @@ dooray mail get <uid>                                   # 메일 상세
 dooray mail send --to "recipient@example.com" --subject "제목" --body "본문"
 dooray mail reply <uid> --body "답장 내용"              # 스레드 유지
 ```
+
+`mail get` 과 `mail reply` 는 세 가지 입력을 받는다.
+
+```
+dooray mail get 6980                                                    # IMAP UID
+dooray mail get https://<tenant>.dooray.com/mail/systems/inbox/<mail-id>  # 메일 웹 주소
+dooray mail get <mail-id>                                               # 주소에서 뽑은 19자리 id
+```
+
+뒤의 두 형태는 id 에서 도착 시각을 꺼낸 뒤 UID 를 이분 탐색해 찾는다 (ADR-040).
+시간 일치는 원본 메일의 동일성을 보장하지 않는다.
+대상이 이동되거나 삭제된 뒤 같은 시각의 다른 메일만 남으면 그 메일이 조회될 수 있다.
+웹 주소나 mail id 로 답장할 때는 제목, 발신자, IMAP 도착 시각과 UID 를 확인한다.
+TTY 확인의 기본값은 아니오이며 거절하면 발송 없이 정상 취소한다.
+`-y` 또는 `--yes` 는 확인을 생략한다. non-TTY 에서 이 옵션이 없으면 설정과 IMAP 조회 전에 종료 코드 3으로 중단한다.
+UID 직접 입력의 답장은 기존처럼 확인 없이 보낸다.
+
+후보는 id 에서 복원한 시각의 초 또는 그 다음 초에 도착한 메일이다.
+이 두 초 안에 후보가 여럿이면 하나를 고르지 않고 후보를 보여준다.
+
+```
+$ dooray mail get <mail-id>
+오류: 사서함 INBOX에서 메일 id <mail-id>에 대응하는 메일이 여러 건입니다.
+  UID: 6979
+  도착 시각: 2026-08-18T10:52:00.000Z
+  보낸사람: sender <sender@example.com>
+  제목: 첫 번째 메일
+  UID: 6980
+  도착 시각: 2026-08-18T10:52:01.000Z
+  보낸사람: sender <sender@example.com>
+  제목: 두 번째 메일
+받은 메일함(INBOX)의 후보 UID 하나를 골라 다시 조회하세요.
+```
+
+시스템 폴더 `inbox`, `sent`, `draft`, `archive`, `spam`, `trash` 주소는 해당 사서함을 조회한다.
+`inbox` 는 `INBOX` 로 바꾸고, 폴더 이름의 대소문자는 구분하지 않는다.
+지원 목록 밖의 시스템 폴더는 지원 폴더 목록과 함께 거절한다.
+시스템 폴더 형식이 아닌 주소와 mail id 와 UID 직접 입력은 `INBOX` 를 조회한다.
+따라서 다른 사서함의 모호한 후보는 웹 메일의 해당 폴더에서 확인한다.
+
+조회 중 메일의 날짜나 일부 응답이 빠지면 UID 를 결정하지 않고 중단한다.
+조회 범위 끝의 단일 후보 뒤에 같은 시각의 메일이 더 있을 수 있는 경우에도 중단한다.
+받은 메일함의 실패 안내는 `mail list --search` 로 우회하도록 안내한다.
+다른 사서함의 실패 안내는 웹 메일의 해당 폴더에서 확인하도록 안내한다.
