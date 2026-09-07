@@ -1,9 +1,32 @@
 import { DoorayApiClient } from "../api/client.js";
+import type { Wiki } from "../api/types.js";
 import { getProjects, getWikis, setWikis, isExpired } from "../cache/store.js";
 import { PROJECTS_TTL_MS, WIKIS_TTL_MS, type CachedWiki } from "../cache/types.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR, EXIT_API_ERROR } from "../utils/exit-codes.js";
 import { resolveProject } from "./project.js";
+
+export async function fetchAllWikis(client: DoorayApiClient): Promise<Wiki[]> {
+  const all: Wiki[] = [];
+  let page = 0;
+  const size = 100;
+
+  while (true) {
+    const res = await client.getWikis({ page, size });
+    if (res.result.length === 0) break;
+    all.push(...res.result);
+    if (all.length >= res.totalCount) break;
+    page++;
+  }
+
+  return all;
+}
+
+export function filterWikisByName(wikis: Wiki[], keyword: string): Wiki[] {
+  if (keyword === "") return wikis;
+  const lowerKeyword = keyword.toLowerCase();
+  return wikis.filter((w) => w.name.toLowerCase().includes(lowerKeyword));
+}
 
 export async function resolveWiki(
   client: DoorayApiClient,
@@ -38,8 +61,8 @@ export async function resolveWikiHomePageId(
   if (fresh) {
     wikis = cached.data;
   } else {
-    const res = await client.getWikis({ size: 100 });
-    wikis = res.result.map((w) => ({
+    const all = await fetchAllWikis(client);
+    wikis = all.map((w) => ({
       id: w.id,
       projectId: w.project.id,
       name: w.name,

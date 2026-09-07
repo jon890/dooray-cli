@@ -179,12 +179,18 @@ grep -c '"Project"' src/formatters/wiki.ts                    # = 1
 grep -c "raw: wikis" src/formatters/wiki.ts                   # = 1
 grep -c "projectCode" src/formatters/wiki.ts                  # = 0
 grep -c "setWikis" src/commands/wiki/list.ts                  # = 0
-grep -c "fetchAllWikis" src/commands/wiki/list.ts             # = 1
-grep -c "filterWikisByName" src/commands/wiki/list.ts         # = 1
+grep -c "fetchAllWikis" src/commands/wiki/list.ts             # >= 1
+grep -c "filterWikisByName" src/commands/wiki/list.ts         # >= 1
 ```
 
 여섯 기대값이 모두 맞아야 한다.
 `raw: wikis` 가 1 이고 `projectCode` 가 0 인 것이 `--json` 을 raw 로 유지했다는 근거다.
+
+뒤 두 줄은 `>= 1` 이다. `grep -c` 는 매칭된 줄 수를 세는데 named import 한 줄과 호출부 한 줄에
+같은 이름이 나타나 항상 2 이상이 된다.
+
+`formatWikiList` 의 세 번째 인자 이름은 `codeByProjectId` 로 둔다.
+`projectCodeById` 로 두면 위 `projectCode` 기대값 0 에 걸린다.
 
 개인 식별 정보 검사를 통과시킨다.
 

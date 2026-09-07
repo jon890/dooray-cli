@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import type { WikiPage } from "../api/types.js";
-import { buildWikiTree, renderWikiTree } from "./wiki.js";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { Wiki, WikiPage } from "../api/types.js";
+import { buildWikiTree, formatWikiList, renderWikiTree } from "./wiki.js";
 
 function page(overrides: Partial<WikiPage> & Pick<WikiPage, "id" | "subject">): WikiPage {
   return {
@@ -92,5 +92,53 @@ describe("renderWikiTree", () => {
 
     expect(rendered.split("\n")).toHaveLength(1);
     expect(rendered).toContain("제목 줄바꿈");
+  });
+});
+
+function wikiFixture(overrides: Partial<Wiki> & Pick<Wiki, "id" | "name" | "project">): Wiki {
+  return {
+    type: "public",
+    scope: "public",
+    home: { pageId: "home-1" },
+    ...overrides,
+  };
+}
+
+describe("formatWikiList", () => {
+  let writes: string[];
+  beforeEach(() => {
+    writes = [];
+    vi.spyOn(process.stdout, "write").mockImplementation((s: any) => {
+      writes.push(String(s));
+      return true;
+    });
+  });
+
+  it("맵에 있는 project id 를 코드로 바꿔 낸다", () => {
+    const wikis = [wikiFixture({ id: "w-1", name: "Design Wiki", project: { id: "p-1" } })];
+    const map = new Map([["p-1", "PROJ"]]);
+
+    formatWikiList(wikis, {}, map);
+
+    expect(writes.join("")).toContain("PROJ");
+  });
+
+  it("맵에 없는 project id 는 그 id 를 그대로 낸다", () => {
+    const wikis = [wikiFixture({ id: "w-1", name: "Design Wiki", project: { id: "p-unknown" } })];
+
+    formatWikiList(wikis, {}, new Map());
+
+    expect(writes.join("")).toContain("p-unknown");
+  });
+
+  it("--json 출력에 project 코드가 섞이지 않는다 — 서버 응답 필드만 나온다", () => {
+    const wikis = [wikiFixture({ id: "w-1", name: "Design Wiki", project: { id: "p-1" } })];
+    const map = new Map([["p-1", "PROJ"]]);
+
+    formatWikiList(wikis, { json: true }, map);
+
+    const parsed = JSON.parse(writes.join(""));
+    expect(parsed).toEqual(wikis);
+    expect(JSON.stringify(parsed)).not.toContain("PROJ");
   });
 });
