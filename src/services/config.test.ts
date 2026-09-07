@@ -18,6 +18,7 @@ import {
   updateConfigValue,
   replaceConfig,
 } from "./config.js";
+import type { ConfigReadResult } from "../config/store.js";
 import { getConfig, setConfigValue, saveConfig } from "../config/store.js";
 import { clearCache } from "../cache/store.js";
 import { DoorayCliError } from "../utils/errors.js";
@@ -43,9 +44,17 @@ function config(over: Partial<Config> = {}): Config {
   };
 }
 
+function ok(over: Partial<Config> = {}): ConfigReadResult {
+  return { state: "ok", config: config(over) };
+}
+
 /** setConfigValue 의 알 수 없는 키 분기는 EXIT_CONFIG_ERROR 를 단 DoorayCliError 를 던진다 */
 function unknownKeyError(): DoorayCliError {
   return new DoorayCliError("알 수 없는 설정 키: nope", EXIT_CONFIG_ERROR);
+}
+
+function configReadError(reason: string): DoorayCliError {
+  return new DoorayCliError(reason, EXIT_CONFIG_ERROR);
 }
 
 /** clearCache 는 node:fs 의 rm 을 부르므로 실패하면 raw Error 가 올라온다 */
@@ -101,8 +110,8 @@ describe("updateConfigValue", () => {
   it("apiKey 가 바뀌면 저장 후 캐시를 지우고 cacheCleared 가 true 다", async () => {
     const order: string[] = [];
     mockedGetConfig
-      .mockResolvedValueOnce(config())
-      .mockResolvedValueOnce(config({ apiKey: KEY_B }));
+      .mockResolvedValueOnce(ok())
+      .mockResolvedValueOnce(ok({ apiKey: KEY_B }));
     mockedSetConfigValue.mockImplementation(async () => {
       order.push("save");
     });
@@ -122,8 +131,8 @@ describe("updateConfigValue", () => {
   it("같은 값을 다시 설정하면 캐시를 지우지 않는다", async () => {
     const same = config();
     mockedGetConfig
-      .mockResolvedValueOnce(same)
-      .mockResolvedValueOnce({ ...same });
+      .mockResolvedValueOnce({ state: "ok", config: same })
+      .mockResolvedValueOnce({ state: "ok", config: { ...same } });
 
     const res = await updateConfigValue("base-url", same.baseUrl);
 
@@ -133,8 +142,8 @@ describe("updateConfigValue", () => {
 
   it("캐시에 영향 없는 키만 바뀌면 캐시를 지우지 않는다", async () => {
     mockedGetConfig
-      .mockResolvedValueOnce(config())
-      .mockResolvedValueOnce(config({ tenantName: "other" }));
+      .mockResolvedValueOnce(ok())
+      .mockResolvedValueOnce(ok({ tenantName: "other" }));
 
     const res = await updateConfigValue("tenant-name", "other");
 
@@ -144,8 +153,8 @@ describe("updateConfigValue", () => {
 
   it("이전 설정이 없으면 캐시를 지우지 않는다", async () => {
     mockedGetConfig
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(config());
+      .mockResolvedValueOnce({ state: "absent" })
+      .mockResolvedValueOnce(ok());
 
     const res = await updateConfigValue("api-key", KEY_A);
 
@@ -155,8 +164,8 @@ describe("updateConfigValue", () => {
 
   it("지울 캐시가 없었으면 cacheCleared 가 false 다", async () => {
     mockedGetConfig
-      .mockResolvedValueOnce(config({ apiKey: "" }))
-      .mockResolvedValueOnce(config());
+      .mockResolvedValueOnce(ok({ apiKey: "" }))
+      .mockResolvedValueOnce(ok());
     mockedClearCache.mockResolvedValue(false);
 
     const res = await updateConfigValue("api-key", KEY_A);
@@ -168,8 +177,8 @@ describe("updateConfigValue", () => {
 
   it("캐시 삭제가 실패해도 정상 반환하고 cacheCleared 가 false 다", async () => {
     mockedGetConfig
-      .mockResolvedValueOnce(config())
-      .mockResolvedValueOnce(config({ apiKey: KEY_B }));
+      .mockResolvedValueOnce(ok())
+      .mockResolvedValueOnce(ok({ apiKey: KEY_B }));
     mockedClearCache.mockRejectedValue(fsError());
     const warn = vi.spyOn(process.stderr, "write").mockReturnValue(true);
     try {
@@ -183,7 +192,7 @@ describe("updateConfigValue", () => {
   });
 
   it("알 수 없는 키면 그대로 던지고 캐시를 지우지 않는다", async () => {
-    mockedGetConfig.mockResolvedValueOnce(config());
+    mockedGetConfig.mockResolvedValueOnce(ok());
     mockedSetConfigValue.mockRejectedValue(unknownKeyError());
 
     await expect(updateConfigValue("nope", "x")).rejects.toMatchObject({
@@ -194,8 +203,8 @@ describe("updateConfigValue", () => {
 
   it("저장 결과를 되읽지 못하면 경고하고 캐시를 지우지 않는다", async () => {
     mockedGetConfig
-      .mockResolvedValueOnce(config())
-      .mockResolvedValueOnce(null);
+      .mockResolvedValueOnce(ok())
+      .mockResolvedValueOnce({ state: "invalid", reason: "broken json" });
     const warn = vi.spyOn(process.stderr, "write").mockReturnValue(true);
     try {
       await expect(updateConfigValue("api-key", KEY_B)).resolves.toEqual({
@@ -207,12 +216,75 @@ describe("updateConfigValue", () => {
     }
     expect(mockedClearCache).not.toHaveBeenCalled();
   });
+
+  it("지속 invalid 상태라 setConfigValue 가 거부하면 캐시를 지우지 않는다", async () => {
+    mockedGetConfig.mockResolvedValueOnce({
+      state: "invalid",
+      reason: "broken json",
+    });
+    mockedSetConfigValue.mockRejectedValue(
+      configReadError("설정 파일이 손상되었습니다."),
+    );
+
+    await expect(updateConfigValue("api-key", KEY_A)).rejects.toMatchObject({
+      exitCode: EXIT_CONFIG_ERROR,
+      message: expect.stringContaining("손상"),
+    });
+    expect(mockedClearCache).not.toHaveBeenCalled();
+  });
+
+  it("지속 unreadable 상태라 setConfigValue 가 거부하면 캐시를 지우지 않는다", async () => {
+    mockedGetConfig.mockResolvedValueOnce({
+      state: "unreadable",
+      reason: "EACCES",
+    });
+    mockedSetConfigValue.mockRejectedValue(
+      configReadError("설정 파일을 읽지 못했습니다."),
+    );
+
+    await expect(updateConfigValue("api-key", KEY_A)).rejects.toMatchObject({
+      exitCode: EXIT_CONFIG_ERROR,
+      message: expect.stringContaining("읽지 못했습니다"),
+    });
+    expect(mockedClearCache).not.toHaveBeenCalled();
+  });
+
+  it("첫 읽기만 invalid 이고 저장 시점에 복구되면 보수적으로 캐시를 지운다", async () => {
+    mockedGetConfig
+      .mockResolvedValueOnce({ state: "invalid", reason: "broken json" })
+      .mockResolvedValueOnce(ok());
+    const warn = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    try {
+      await expect(updateConfigValue("api-key", KEY_A)).resolves.toEqual({
+        cacheCleared: true,
+      });
+      expect(mockedClearCache).toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("broken json"));
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("첫 읽기만 unreadable 이고 저장 시점에 복구되면 보수적으로 캐시를 지운다", async () => {
+    mockedGetConfig
+      .mockResolvedValueOnce({ state: "unreadable", reason: "EACCES" })
+      .mockResolvedValueOnce(ok());
+    const warn = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    try {
+      const res = await updateConfigValue("api-key", KEY_A);
+
+      expect(res).toEqual({ cacheCleared: true });
+      expect(mockedClearCache).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
 });
 
 describe("replaceConfig", () => {
   it("baseUrl 이 바뀌면 저장 후 캐시를 지우고 cacheCleared 가 true 다", async () => {
     const order: string[] = [];
-    mockedGetConfig.mockResolvedValue(config());
+    mockedGetConfig.mockResolvedValue(ok());
     mockedSaveConfig.mockImplementation(async () => {
       order.push("save");
     });
@@ -230,7 +302,7 @@ describe("replaceConfig", () => {
   });
 
   it("최초 설정이면 캐시를 지우지 않는다", async () => {
-    mockedGetConfig.mockResolvedValue(null);
+    mockedGetConfig.mockResolvedValue({ state: "absent" });
 
     const res = await replaceConfig(config());
 
@@ -239,9 +311,44 @@ describe("replaceConfig", () => {
     expect(mockedClearCache).not.toHaveBeenCalled();
   });
 
+  it("이전 설정이 invalid 이면 저장 후 캐시를 지운다", async () => {
+    mockedGetConfig.mockResolvedValue({
+      state: "invalid",
+      reason: "broken json",
+    });
+    const warn = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    try {
+      const res = await replaceConfig(config());
+
+      expect(res).toEqual({ cacheCleared: true });
+      expect(mockedSaveConfig).toHaveBeenCalled();
+      expect(mockedClearCache).toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("broken json"));
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("이전 설정이 unreadable 이면 저장 후 캐시를 지운다", async () => {
+    mockedGetConfig.mockResolvedValue({
+      state: "unreadable",
+      reason: "EACCES",
+    });
+    const warn = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    try {
+      const res = await replaceConfig(config());
+
+      expect(res).toEqual({ cacheCleared: true });
+      expect(mockedSaveConfig).toHaveBeenCalled();
+      expect(mockedClearCache).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it("같은 값으로 다시 저장하면 캐시를 지우지 않는다", async () => {
     const prev = config();
-    mockedGetConfig.mockResolvedValue(prev);
+    mockedGetConfig.mockResolvedValue({ state: "ok", config: prev });
 
     const res = await replaceConfig({ ...prev, trackLastRun: true });
 
@@ -250,7 +357,7 @@ describe("replaceConfig", () => {
   });
 
   it("지울 캐시가 없었으면 cacheCleared 가 false 다", async () => {
-    mockedGetConfig.mockResolvedValue(config());
+    mockedGetConfig.mockResolvedValue(ok());
     mockedClearCache.mockResolvedValue(false);
 
     const res = await replaceConfig(config({ apiKey: KEY_B }));
@@ -260,7 +367,7 @@ describe("replaceConfig", () => {
   });
 
   it("캐시 삭제가 실패해도 정상 반환하고 cacheCleared 가 false 다", async () => {
-    mockedGetConfig.mockResolvedValue(config());
+    mockedGetConfig.mockResolvedValue(ok());
     mockedClearCache.mockRejectedValue(fsError());
     const warn = vi.spyOn(process.stderr, "write").mockReturnValue(true);
     try {
@@ -274,7 +381,7 @@ describe("replaceConfig", () => {
   });
 
   it("저장이 실패하면 그대로 던지고 캐시를 지우지 않는다", async () => {
-    mockedGetConfig.mockResolvedValue(config());
+    mockedGetConfig.mockResolvedValue(ok());
     mockedSaveConfig.mockRejectedValue(new Error("EACCES: permission denied"));
 
     await expect(replaceConfig(config({ apiKey: KEY_B }))).rejects.toThrow(

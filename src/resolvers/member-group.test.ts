@@ -100,4 +100,18 @@ describe("resolveMemberGroup", () => {
       /dooray project groups|id 직접 입력/,
     );
   });
+
+  it("code 가 없는 그룹 제외 경고에 내부 번호 없이 제외 개수를 담는다", async () => {
+    const client = mockClient(fixtureFlat);
+    const write = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    try {
+      const result = await resolveMemberGroup(client, "p1", "all");
+      expect(result).toEqual({ id: "1111222233334444555", code: "all" });
+      const output = write.mock.calls.map((call) => String(call[0])).join("");
+      expect(output).toContain("2개 그룹에 code 가 없어 매칭에서 제외했습니다.");
+      expect(output).not.toContain("ADR");
+    } finally {
+      write.mockRestore();
+    }
+  });
 });

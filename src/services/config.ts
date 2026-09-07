@@ -1,4 +1,5 @@
 import { clearCache } from "../cache/store.js";
+import type { ConfigReadResult } from "../config/store.js";
 import { getConfig, saveConfig, setConfigValue } from "../config/store.js";
 import type { Config } from "../config/types.js";
 
@@ -42,6 +43,16 @@ async function invalidateAllCache(): Promise<boolean> {
   }
 }
 
+async function invalidateCacheForUnknownPreviousConfig(
+  prev: Extract<ConfigReadResult, { state: "invalid" | "unreadable" }>,
+): Promise<boolean> {
+  process.stderr.write(
+    `⚠  이전 설정을 읽지 못해 캐시를 비웁니다: ${prev.reason}\n` +
+      "   이전 계정·환경의 데이터가 남아 있을 수 있습니다.\n",
+  );
+  return invalidateAllCache();
+}
+
 /**
  * `config set <key> <value>` 한 건을 저장하고, 캐시가 무효해졌으면 지운다.
  *
@@ -49,7 +60,7 @@ async function invalidateAllCache(): Promise<boolean> {
  *
  * `cacheCleared` 는 판정 결과가 아니라 실제로 지운 것이 있었는지다.
  * `setConfigValue` 는 config 파일이 없을 때 `apiKey: ""` 인 뼈대를 만들어 저장하므로,
- * 새 설치에서 `base-url` 다음 `api-key` 를 넣으면 `prev` 가 `null` 이 아니고 판정이 `true` 가 된다.
+ * 새 설치에서 `base-url` 다음 `api-key` 를 넣으면 `prev.state` 가 `ok` 이고 판정이 `true` 가 된다.
  * 그 경우에도 지울 캐시가 없으면 `false` 라 안내가 나오지 않는다.
  */
 export async function updateConfigValue(
@@ -60,10 +71,9 @@ export async function updateConfigValue(
   await setConfigValue(key, value);
   const next = await getConfig();
 
-  // 방금 저장했는데 되읽지 못한 경우다. `getConfig` 가 모든 오류를 `null` 로 삼키므로
-  // 파일이 깨졌거나 읽을 수 없으면 여기 온다. 판정에 넘길 Config 가 없으니 지울 근거도 없다.
+  // 방금 저장했는데 되읽지 못한 경우다. 판정에 넘길 Config 가 없으니 지울 근거도 없다.
   // `as Config` 로 단언하면 이 상태가 그대로 판정에 들어가므로 단언하지 않는다.
-  if (next === null) {
+  if (next.state !== "ok") {
     process.stderr.write(
       "⚠  저장한 설정을 되읽지 못해 캐시 무효화 판정을 건너뜁니다.\n" +
         "   이전 계정·환경의 데이터가 남아 있을 수 있습니다: dooray cache clear\n",
@@ -71,7 +81,16 @@ export async function updateConfigValue(
     return { cacheCleared: false };
   }
 
-  if (!shouldInvalidateCache(prev, next)) return { cacheCleared: false };
+  if (prev.state === "absent") return { cacheCleared: false };
+  if (prev.state === "invalid" || prev.state === "unreadable") {
+    return {
+      cacheCleared: await invalidateCacheForUnknownPreviousConfig(prev),
+    };
+  }
+
+  if (!shouldInvalidateCache(prev.config, next.config)) {
+    return { cacheCleared: false };
+  }
   return { cacheCleared: await invalidateAllCache() };
 }
 
@@ -87,6 +106,13 @@ export async function replaceConfig(
   const prev = await getConfig();
   await saveConfig(next);
 
-  if (!shouldInvalidateCache(prev, next)) return { cacheCleared: false };
+  if (prev.state === "absent") return { cacheCleared: false };
+  if (prev.state === "invalid" || prev.state === "unreadable") {
+    return {
+      cacheCleared: await invalidateCacheForUnknownPreviousConfig(prev),
+    };
+  }
+
+  if (!shouldInvalidateCache(prev.config, next)) return { cacheCleared: false };
   return { cacheCleared: await invalidateAllCache() };
 }

@@ -62,7 +62,7 @@ src/
     last-run.ts             # ~/.dooray/last-run.json 단일 read/write (ADR-023, cache 디렉토리 외부 — cache clear 영향 없음)
 
   config/
-    store.ts                # ~/.dooray/config.json CRUD
+    store.ts                # ~/.dooray/config.json CRUD. getConfig 는 absent·invalid·unreadable·ok 상태를 돌려준다 (ADR-049)
     types.ts                # Config 인터페이스
 
   skill/
