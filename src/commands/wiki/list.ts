@@ -17,7 +17,11 @@ export const wikiListCommand = new Command("list")
     const config = await getConfigOrThrow();
     const client = new DoorayApiClient(config.apiKey, config.baseUrl);
 
-    const projectCodeMapPromise = buildProjectCodeMap(client);
+    // project 조회 실패 시 빈 Map fallback — 위키 목록 자체는 그대로 낸다.
+    // Project 열은 코드를 찾지 못하면 project id 를 그대로 낸다.
+    const projectCodeMapPromise = buildProjectCodeMap(client).catch(
+      () => new Map<string, string>(),
+    );
 
     let wikis;
     if (opts.search != null) {

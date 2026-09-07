@@ -150,4 +150,25 @@ describe("buildIdModeCommand", () => {
       `dooray post get --json --id ${POST_ID}`,
     );
   });
+
+  it("옵션이 positional 보다 앞에 와도 값을 잃지 않는다", () => {
+    const argv = ["post", "get", "--title", "hello", "my-project", POST_ID];
+    expect(buildIdModeCommand(argv, ["my-project", POST_ID], POST_ID)).toBe(
+      `dooray post get --title hello --id ${POST_ID}`,
+    );
+  });
+
+  it("옵션이 앞에 오고 그 값이 positional 과 같은 문자열이어도 값을 유지한다", () => {
+    const argv = ["post", "get", "--title", "my-project", "my-project", POST_ID];
+    expect(buildIdModeCommand(argv, ["my-project", POST_ID], POST_ID)).toBe(
+      `dooray post get --title my-project --id ${POST_ID}`,
+    );
+  });
+
+  it("옵션이 앞에 오고 그 값이 업무 번호와 같은 문자열이어도 값을 유지한다", () => {
+    const argv = ["post", "get", "--title", POST_ID, "my-project", POST_ID];
+    expect(buildIdModeCommand(argv, ["my-project", POST_ID], POST_ID)).toBe(
+      `dooray post get --title ${POST_ID} --id ${POST_ID}`,
+    );
+  });
 });

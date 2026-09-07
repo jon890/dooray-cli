@@ -52,6 +52,8 @@
   - 검색 대상에 project 코드를 함께 넣는다. 이름을 찾는 명령에 의도하지 않은 결과가 섞인다.
   - project 코드를 표 대신 `--json` 에 `projectCode` 필드로 넣는다. `--json` 을 raw 로 두는 출력 규약을 깬다.
   - `wiki page get` 이 페이지 ID 만으로 조회하게 한다. 위키 API 가 page-only fetch 를 지원하지 않아 wikiId 없이는 요청을 만들 수 없다.
+    **이 전제는 틀렸다.** [ADR-045](045-wiki-page-standalone-fetch.md) 가 공식 API 문서에서
+    `GET /wiki/v1/pages/{page-id}` 를 확인해 뒤집었고, 그 기각을 철회했다.
   - 대소문자를 구분해 검색한다. 이슈의 네 번째 실패가 대소문자 착오였으므로 구분하면 그 실패가 남는다.
 
 - **결과**:
