@@ -32,6 +32,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "api:inventory": "node scripts/api-endpoint-inventory.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:package": "node scripts/verify-package.mjs"
