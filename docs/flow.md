@@ -424,14 +424,58 @@ dooray post workflow my-project 42 "review"     # 임의 상태로 (이름 또�
 ## 위키 흐름
 
 ```
-dooray wiki list my-project                      # 위키 페이지 목록
+dooray wiki list                                 # 위키 목록 (ID / Name / Project / Type)
+dooray wiki list --search 설계                    # 이름 부분 일치, 대소문자 무시 (ADR-043)
+dooray wiki pages my-project                     # root 페이지 목록
 dooray wiki tree my-project                      # 페이지 계층 트리 (root 부터 재귀)
 dooray wiki tree my-project --depth 2            # 손자까지만
-dooray wiki get my-project <page-id>             # 페이지 조회
-dooray wiki create my-project --title "설계" --body-file design.md
-dooray wiki edit my-project <page-id>            # $EDITOR 수정
+dooray wiki page get my-project <page-id>        # 페이지 조회
+dooray wiki page create my-project --title "설계" --body-file design.md
+dooray wiki page edit my-project <page-id>       # $EDITOR 수정
 dooray wiki page delete my-project <page-id>     # 페이지 삭제 (confirm 기본, -y/--yes 로 생략)
+dooray wiki page move <project> <page-id> --parent <parent-page-id>
+dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
+dooray wiki page move --id <page-id> --parent <parent-page-id> --first
 ```
+
+페이지 ID 하나만 아는 상태에서 시작하는 경로다 (Issue #154, ADR-045).
+project 를 찾을 필요가 없다.
+
+```
+dooray wiki page get --id <page-id>
+```
+
+위키 자체를 이름으로 찾아야 할 때가 따로 있다 (ADR-043).
+페이지 ID 를 모르거나 그 위키의 페이지 목록이나 트리를 보려 할 때다.
+
+```
+# 1. 위키를 이름으로 찾는다. Project 열의 값이 다음 명령의 project 인자다
+dooray wiki list --search <위키 이름 일부>
+
+# 2. 그 값으로 페이지 목록이나 트리를 본다
+dooray wiki pages <project>
+dooray wiki tree <project>
+```
+
+위키 본문의 페이지 링크는 `dooray://<orgId>/pages/<pageId>` 형태다.
+앞 숫자는 orgId 이고 project 도 위키 ID 도 아니다.
+그 값을 project 자리에 넣으면 `프로젝트에 위키가 없습니다` 로 끝난다.
+`resolveProject` 가 15자리 이상 numeric 을 project ID 로 통과시킨 뒤(ADR-030) `resolveWiki` 가 캐시에서 찾지 못하기 때문이다.
+뒤 숫자가 페이지 ID 이므로 그것만 떼어 `--id` 에 넣으면 project 없이 조회된다. 오류 안내가 그 방법을 알려준다.
+
+`wiki page get` 은 `wiki page file` 과 `wiki page comment` 와 같은 네 가지 입력 형태를 받는다 (ADR-020, ADR-043).
+`--id` 모드는 project 없이 단독으로 동작한다 (ADR-045).
+`GET /wiki/v1/pages/{page-id}` 를 한 번 불러 응답의 wikiId 를 읽는다.
+`--project` 는 선택이며 함께 주면 그 해석 호출을 아낀다.
+`wiki page` 의 `file`, `comment`, `delete` 도 같은 방식으로 `--id` 만 받는다.
+
+```
+dooray wiki page get --id <page-id>
+dooray wiki page get --url "https://x.dooray.com/wiki/<wikiId>/<pageId>"
+dooray wiki page get --id <page-id> --project my-project
+```
+하위 페이지는 기본으로 함께 이동한다.
+이동할 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
 
 ## 메신저 흐름 (Issue #88, ADR-033)
 

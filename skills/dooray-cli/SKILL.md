@@ -21,10 +21,10 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 ## 대상 지정 방법
 
 `post get`/`edit`/`done`/`workflow`, `post comment` 전체, `post file` 전체, `post comment file` 전체,
-`wiki page file` 과 `wiki page comment` 전체, 그리고 `wiki page delete` 가 네 가지 형태를 모두 받는다.
+`wiki page get`, `wiki page file` 과 `wiki page comment` 전체, 그리고 `wiki page delete` 가 네 가지 형태를 모두 받는다.
 
 - `<project> <number>` — 업무는 번호, 위키는 `<project> <page-id>`
-- `--id <postId>` / `--id <pageId>` — 위키는 `--project` 를 함께 줘야 한다 (API 가 page 단독 조회를 지원하지 않는다)
+- `--id <postId>` / `--id <pageId>` — 위키는 `--project` 없이도 조회된다. 함께 주면 wikiId 를 해석하는 호출을 한 번 아낀다
 - `--url <url>`
 - 첫 인자에 Dooray URL 을 직접
 
@@ -145,6 +145,9 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` |
 | 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` — 확인 있음, `-y`/`--yes`로 생략 |
 
+내부 ID 를 positional 자리에 넣으면 입력 오류가 나지만, 그 오류가 `--id` 를 쓴 완성 명령을 그대로 보여준다.
+그 줄을 그대로 복사해 실행하면 되고, 자동화는 오류 출력을 읽어 재시도할 수 있다.
+
 ## 업무 첨부
 
 `--json` 출력 스키마는 [post.md](references/post.md) 를 읽는다.
@@ -174,14 +177,17 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 
 | 의도 | 커맨드 |
 | --- | --- |
-| 위키 목록 | `dooray wiki list` |
+| 위키 목록 | `dooray wiki list` — `ID`, `Name`, `Project`, `Type` 네 열을 낸다. 이름은 `--search` 로 찾는다 |
+| 이름으로 위키 찾기 | `dooray wiki list --search <keyword>` — 이름 부분 일치, 대소문자 무시, 전체 목록에서 찾는다 |
 | 페이지 목록 | `dooray wiki pages <project>` |
 | 페이지 트리 | `dooray wiki tree <project>` (`--depth N` 으로 상한, `--json` 은 flat) |
-| 페이지 상세 | `dooray wiki page get <project> <page-id>` |
+| 페이지 상세 | `dooray wiki page get --id <page-id>` — project 없이 조회된다. `<project> <page-id>` 와 `--url` 도 받는다 |
+| 페이지 ID 로 바로 조회 | `wiki page file`, `wiki page comment`, `wiki page delete` 도 `--id` 만으로 동작한다 |
 | 페이지 생성 | `dooray wiki page create <project> --title "..." [--parent <page-id>] [--body "..."]` — `--parent` 를 생략하면 위키 home 아래에 만든다 |
 | 페이지 제목 수정 | `dooray wiki page edit <project> <page-id> --title "..."` |
 | 페이지 본문 수정 | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` |
 | 페이지 에디터로 수정 | `dooray wiki page edit <project> <page-id>` — 플래그가 없으면 `$EDITOR` 가 열린다 |
+| 페이지 이동 | `dooray wiki page move <project> <page-id> --parent <parent-page-id>` — `--parent` 는 필수다. 하위 페이지는 기본으로 함께 이동하고, `--no-children` 으로 페이지 하나만 옮긴다. `--to-wiki <project-or-wiki-id>` 로 다른 위키로 옮기며, `--first` 와 `--before <page-id>` 로 형제 사이 정렬을 바꾼다 |
 | 페이지 삭제 | `dooray wiki page delete <project> <page-id>` — 확인 있음, `-y`/`--yes`로 생략. 하위 페이지는 삭제한 페이지의 부모 아래로 재부착되어 orphan 이 생기지 않는다 |
 | 첨부 목록 | `dooray wiki page file list <project> <page-id>` — general 과 inline 을 합쳐 보여준다 |
 | 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` |

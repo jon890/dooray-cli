@@ -38,6 +38,7 @@ export const listCommentFileCommand = new Command("list")
       arg1, arg2, arg3,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
       commentIdOpt: opts.commentId,
       requireSecondary: false,
     });
