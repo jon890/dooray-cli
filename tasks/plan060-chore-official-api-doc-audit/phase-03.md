@@ -30,6 +30,22 @@
 
 `skills/dooray-cli/SKILL.md` 에도 같은 취지의 서술이 있는지 위 훑기로 확인한다.
 
+**미리 확인해 둔 자리가 하나 있다. 고치지 않는다.**
+`skills/dooray-cli/references/post.md:155` 가
+「parent 해제는 API 가 지원하지 않아 CLI 로 할 수 없다」 고 적는다.
+공식 문서를 확인한 결과 그 서술은 맞다.
+`POST /project/v1/projects/{project-id}/posts/{post-id}/set-parent-post` 의 요청 본문이
+`parentPostId` 하나뿐이고 해제 경로가 없다. 훑기에서 걸리지만 그대로 둔다.
+
+**그 endpoint 에서 저장소에 없는 제약을 찾았다.** 공식 문서가 이렇게 적는다.
+「계층 구조 설정은 할 수 없습니다. 즉, 상위업무를 가진 하위업무를 상위 업무로 설정할 수 없습니다.」
+상위 업무가 두 단계를 넘지 못한다는 뜻이다.
+저장소 문서와 코드에 이 제약이 없다. `grep` 으로 확인했고 0건이다.
+
+이것을 `skills/dooray-cli/references/post.md` 의 그 절에 한 문장으로 더한다.
+`post edit --parent` 가 그 조건에서 실패할 수 있고, 사용자가 이유를 알 방법이 지금 없다.
+공개 문서이므로 ADR 번호를 달지 않고 무엇이 안 되는지만 적는다.
+
 `skills/dooray-cli/references/wiki.md` 의 마지막 절이 「위키 페이지 이동은 불가능하다」다.
 본문은 이렇게 적혀 있다.
 
@@ -76,11 +92,17 @@ CLI 에 없다는 것과 API 에 없다는 것을 구별해 주는 정보이기 
 
 ```bash
 # cwd: <repo root>
-grep -rn "불가능\|지원하지 않\|할 수 없\|없습니다\|없다\|문서화하지 않은\|미문서화\|비공식" README.md skills/
+grep -rn "불가능\|지원하지 않\|할 수 없\|없습니다\|없다\|문서화하지 않은\|미문서화\|비공식" README.md skills/dooray-cli/
 ```
 
-실측으로 38건이 나온다. `head` 로 자르지 않는다. 자르면 뒤쪽 자리가 검토에서 빠진다.
-대부분은 API 와 무관한 서술이라 빠르게 넘길 수 있다. 전부 훑고 넘긴 근거를 보고에 적는다.
+실측으로 20건이 나온다. `head` 로 자르지 않는다. 자르면 뒤쪽 자리가 검토에서 빠진다.
+
+**대상을 `skills/dooray-cli/` 로 좁혔다.** `skills/` 전체로 훑으면 38건이 나오는데
+그중 18건이 `skills/dooray-persona/` 다. 그 스킬은 Dooray API 를 다루지 않는다.
+업무 글 문체를 수집하는 워크플로이고, 걸린 것 다수가 `.mjs` 의 코드 문자열이다.
+이 plan 의 대상이 아니므로 훑기에서 뺀다.
+
+20건 중 상당수도 API 와 무관한 서술이다. 전부 훑고 넘긴 근거를 보고에 적는다.
 
 찾은 자리마다 공식 문서로 확인한다. 저장소 문서를 근거로 삼지 않는다.
 공식 문서 주소는 `CLAUDE.md` 의 「API 스펙 확인 절차」가 소유하고,
@@ -115,8 +137,8 @@ pnpm api:inventory
 # cwd: <repo root>
 bash scripts/check-public-refs.sh
 bash scripts/check-pii.sh
-bash ~/.claude/scripts/korean-style-check.sh README.md CLAUDE.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/wiki.md
-python3 ~/.claude/scripts/check-readability.py README.md CLAUDE.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/wiki.md
+bash ~/.claude/scripts/korean-style-check.sh README.md CLAUDE.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/wiki.md skills/dooray-cli/references/post.md
+python3 ~/.claude/scripts/check-readability.py README.md CLAUDE.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/wiki.md skills/dooray-cli/references/post.md
 ```
 
 넷 다 종료 코드 0 이어야 한다.
@@ -145,13 +167,14 @@ pnpm test
 # cwd: <repo root>
 grep -c "이동은 불가능하다" skills/dooray-cli/references/wiki.md      # = 0
 grep -c "pages/{page-id}/move" skills/dooray-cli/references/wiki.md   # >= 1
-grep -rl "문서화하지 않은" README.md skills/ | wc -l                    # = 0
-grep -rl "미문서화" README.md skills/ | wc -l                           # = 0
+grep -rl "문서화하지 않은" README.md skills/dooray-cli/ | wc -l          # = 0
+grep -rl "미문서화" README.md skills/dooray-cli/ | wc -l                 # = 0
+grep -c "상위업무를 가진" skills/dooray-cli/references/post.md            # >= 1
 grep -c "046-official-api-doc-precedence" CLAUDE.md                   # = 1
 grep -c "api:inventory" CLAUDE.md                                     # = 1
 ```
 
-여섯 다 기대값이 맞아야 한다.
+일곱 다 기대값이 맞아야 한다.
 
 `grep -rc` 를 쓰지 않는다. 그것은 파일별 개수를 내고 0 인 파일이 있으면 종료 코드 1 이 된다.
 통과 상태가 실패 코드를 내므로 판정이 뒤집힌다. `grep -rl ... | wc -l` 은 종료 코드가 안정적이다.
@@ -163,10 +186,10 @@ grep -c "api:inventory" CLAUDE.md                                     # = 1
 
 ```bash
 # cwd: <repo root>
-grep -cE "ADR-[0-9]{3}|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/wiki.md
+grep -cE "ADR-[0-9]{3}|Issue #[0-9]+|task [0-9]+" README.md skills/dooray-cli/SKILL.md skills/dooray-cli/references/wiki.md skills/dooray-cli/references/post.md
 ```
 
-세 파일 모두 0 이어야 한다. `CLAUDE.md` 는 내부 문서라 대상이 아니다.
+네 파일 모두 0 이어야 한다. `CLAUDE.md` 는 내부 문서라 대상이 아니다.
 
 ## plan 완료 마킹
 
@@ -189,6 +212,7 @@ grep -c '"current_phase": 3' $PLAN/index.json        # = 1
 | 파일 | 변경 |
 |---|---|
 | `skills/dooray-cli/references/wiki.md` | 수정 |
+| `skills/dooray-cli/references/post.md` | 수정 |
 | `README.md` | 수정 |
 | `skills/dooray-cli/SKILL.md` | 수정 |
 | `CLAUDE.md` | 수정 |
