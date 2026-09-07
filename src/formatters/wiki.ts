@@ -2,10 +2,19 @@ import type { Wiki, WikiPage, WikiPageDetail } from "../api/types.js";
 import type { OutputOptions } from "./table.js";
 import { output, printJson, printQuiet } from "./table.js";
 
-export function formatWikiList(wikis: Wiki[], opts: OutputOptions): void {
+export function formatWikiList(
+  wikis: Wiki[],
+  opts: OutputOptions,
+  codeByProjectId: Map<string, string>,
+): void {
   output(opts, {
-    headers: ["ID", "Name", "Type"],
-    rows: wikis.map((w) => [w.id, w.name, w.type]),
+    headers: ["ID", "Name", "Project", "Type"],
+    rows: wikis.map((w) => [
+      w.id,
+      w.name,
+      codeByProjectId.get(w.project.id) ?? w.project.id,
+      w.type,
+    ]),
     raw: wikis,
     ids: wikis.map((w) => w.id),
   });

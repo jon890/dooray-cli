@@ -23,6 +23,7 @@ export const postGetCommand = new Command("get")
       postNumberArg: postNumberStr,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     const res = await client.getPost(projectId, postId);
     stopSpinner(true, "업무 조회 완료");

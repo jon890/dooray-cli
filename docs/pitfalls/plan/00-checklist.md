@@ -8,7 +8,7 @@ source: [섹션 1 소진 체크리스트]
 related: []
 ---
 
-plan 제출 전 10개 패턴 모두 self-check:
+plan 제출 전 11개 패턴 모두 self-check:
 
 - [ ] **1-1**: 모든 수치가 실측 명령 결과
 - [ ] **1-2**: 파일 목록이 `--name-only` 결과와 일치
@@ -20,3 +20,4 @@ plan 제출 전 10개 패턴 모두 self-check:
 - [ ] **1-8**: 마지막 phase 에 index.json `completed` 마킹 지시
 - [ ] **1-9**: rename 시 `sed \b` 대신 `perl`
 - [ ] **1-10**: type 변경 phase 면 성공 기준에 `pnpm tsc --noEmit` 기준값 비교
+- [ ] **1-11**: grep 검증 기대값을 구현 후 상태로 실제로 돌려 확인

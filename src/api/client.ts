@@ -604,6 +604,16 @@ export class DoorayApiClient {
     }
   }
 
+  async getWikiPageStandalone(pageId: string): Promise<WikiPageResponse> {
+    try {
+      return await this.api
+        .get(`wiki/v1/pages/${pageId}`)
+        .json<WikiPageResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
   async createWikiPage(wikiId: string, body: CreateWikiPageRequest): Promise<CreateWikiPageResponse> {
     try {
       return await this.api

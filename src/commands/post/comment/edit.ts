@@ -97,6 +97,7 @@ export const commentEditCommand = new Command("edit")
       postNumberArg,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     const comments = await client.getPostComments(projectId, postId);
     const comment = comments.result.find((c) => c.id === commentId);

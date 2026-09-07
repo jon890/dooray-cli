@@ -85,6 +85,7 @@ export const commentDeleteCommand = new Command("delete")
       postNumberArg,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     await client.deletePostComment(projectId, postId, commentId);
     stopSpinner(true, "댓글 삭제 완료");

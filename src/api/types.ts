@@ -499,7 +499,7 @@ export interface Wiki {
   home: WikiHome;
 }
 
-export type WikiListResponse = DoorayApiResponse<Wiki[]>;
+export type WikiListResponse = DoorayApiResponse<Wiki[]> & { totalCount: number };
 
 export interface Creator {
   type: string;

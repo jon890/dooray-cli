@@ -57,6 +57,7 @@ export const commentAddCommand = new Command("add")
       postNumberArg: postNumberStr,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
 
     const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);

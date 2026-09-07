@@ -45,7 +45,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray post comment file` — 댓글 첨부 파일 목록·업로드·다운로드·삭제 (댓글 조회·수정 API와 post-level files API 조합, ADR-024)
   - 업로드는 이미지 파일을 인라인 이미지로, 그 외 파일을 클릭 가능한 링크로 댓글 본문에 추가한다.
   - 웹 UI에서 직접 첨부한 파일은 댓글 조회 API에 연결 정보가 없을 수 있어 댓글 단위 목록에서 제외될 수 있다.
-- `dooray wiki` — 목록·페이지 조회·생성·수정($EDITOR)·트리 조회 (`wiki tree` 레벨별 재귀 drill-down, ADR-034, Issue #101)
+- `dooray wiki` — 목록·페이지 조회·생성·수정($EDITOR)·트리 조회 (`wiki tree` 레벨별 재귀 drill-down, ADR-034, Issue #101). 목록은 `--search` 로 위키 이름을 대소문자 무시 부분 일치로 찾고 project 를 함께 보여준다 (ADR-043, Issue #154)
 - `dooray wiki page file` — 페이지 첨부 파일 목록·업로드·다운로드·전체다운로드·삭제 (multipart `type` 순서 의존 ADR-029, Issue #70)
 - `dooray wiki page comment` — 페이지 댓글 목록·최신·조회·추가·수정·삭제 (post comment 패턴 mirror, mention/cc/file 부재 — WikiComment 시그니처 차이)
 - `dooray mail` — 목록·조회·검색·발송·답장 (v0.2.0)
