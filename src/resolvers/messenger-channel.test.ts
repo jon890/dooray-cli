@@ -18,7 +18,7 @@ const fixture = [
   { id: "4444555566667777888", title: "", type: "direct" },
 ];
 
-describe("resolveMessengerChannel (ADR-033)", () => {
+describe("resolveMessengerChannel", () => {
   it("15자리 이상 숫자 → getMessengerChannels 호출 없이 그대로 channelId 반환", async () => {
     const client = mockClient(fixture);
     const result = await resolveMessengerChannel(client, "9999999999999999999");

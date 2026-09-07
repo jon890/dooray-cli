@@ -69,13 +69,13 @@ export async function resolveMemberGroup(
   }
 
   // 2. code 매칭 흐름 (기존)
-  // code 가 없는 그룹은 매칭 불가 — 사전 필터 (Dooray API 응답 mismatch, ADR-028)
+  // code 가 없는 그룹은 매칭 불가 — 사전 필터. Dooray API 응답 mismatch, ADR-028.
   const valid = groups.filter(hasValidCode);
   const skipped = groups.length - valid.length;
   if (skipped > 0) {
     process.stderr.write(
-      // ADR 번호 정정: ADR-026 → ADR-028
-      `⚠  ${skipped}개 그룹에 code 가 없어 매칭에서 제외했습니다 (ADR-028).\n` +
+      // code 누락 그룹 제외 근거는 ADR-028 이다.
+      `⚠  ${skipped}개 그룹에 code 가 없어 매칭에서 제외했습니다.\n` +
       `   id 직접 입력 (15+자리 numeric) 또는 UI 수동 cc / \`--cc <member>\` 우회 가능.\n`,
     );
   }
