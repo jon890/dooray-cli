@@ -31,8 +31,21 @@ function isNumericToken(token: string): boolean {
 }
 
 function mailboxFromDoorayFolder(folder: string | null): string {
+  // systems 경로가 아닌 주소는 폴더를 알 수 없어 INBOX 로 조회한다.
   if (!folder) return "INBOX";
-  return DOORAY_MAILBOX_MAP.get(folder) ?? "INBOX";
+
+  // 브라우저 주소창에서 복사한 주소는 /mail/systems/Sent/ 처럼 대문자가 섞여 온다.
+  const mailbox = DOORAY_MAILBOX_MAP.get(folder.toLowerCase());
+  if (mailbox) return mailbox;
+
+  // 매핑 밖 폴더를 INBOX 로 대체하면 사용자는 자기 폴더가 무시된 것을 모른 채
+  // INBOX 에 없다는 오류만 받는다. 지원 목록과 함께 거절한다.
+  throw new DoorayCliError(
+    `지원하지 않는 메일 폴더입니다: "${folder}"\n` +
+      `지원 폴더: ${[...DOORAY_MAILBOX_MAP.keys()].join(", ")}\n` +
+      "그 폴더의 메일은 UID 로 조회하세요: dooray mail list --search \"<제목 일부>\"",
+    EXIT_PARAM_ERROR,
+  );
 }
 
 export function classifyMailInputToken(token: string): MailInputTokenType {

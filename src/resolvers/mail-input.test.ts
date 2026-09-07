@@ -56,25 +56,39 @@ describe("resolveMailTarget", () => {
     });
   });
 
-  it("알 수 없는 폴더는 INBOX 로 옮긴다", () => {
-    expect(
-      resolveMailTarget("https://x.dooray.com/mail/systems/unknown/1234567890123456789"),
-    ).toEqual({
-      kind: "mailId",
-      mailId: "1234567890123456789",
-      mailbox: "INBOX",
-    });
-  });
+  it.each(["Sent", "INBOX", "TRASH", "Archive"])(
+    "폴더 %s 처럼 대문자가 섞여도 같은 사서함으로 옮긴다",
+    (folder) => {
+      const target = resolveMailTarget(
+        `https://x.dooray.com/mail/systems/${folder}/1234567890123456789`,
+      );
+      expect(target).toEqual({
+        kind: "mailId",
+        mailId: "1234567890123456789",
+        mailbox: folder.toLowerCase() === "inbox" ? "INBOX" : folder.toLowerCase(),
+      });
+    },
+  );
 
-  it("프로토타입 속성 이름 폴더도 INBOX 로 옮긴다", () => {
-    expect(
-      resolveMailTarget("https://x.dooray.com/mail/systems/constructor/1234567890123456789"),
-    ).toEqual({
-      kind: "mailId",
-      mailId: "1234567890123456789",
-      mailbox: "INBOX",
-    });
-  });
+  it.each(["unknown", "promotions", "constructor"])(
+    "지원하지 않는 폴더 %s 는 INBOX 로 대체하지 않고 거절한다",
+    (folder) => {
+      // INBOX 로 대체하면 사용자는 자기 폴더가 무시된 것을 모른 채
+      // INBOX 에 없다는 오류만 받는다.
+      try {
+        resolveMailTarget(
+          `https://x.dooray.com/mail/systems/${folder}/1234567890123456789`,
+        );
+        expect.unreachable("거절해야 한다");
+      } catch (error) {
+        expect(error).toBeInstanceOf(DoorayCliError);
+        const err = error as DoorayCliError;
+        expect(err.exitCode).toBe(EXIT_PARAM_ERROR);
+        expect(err.message).toContain(folder);
+        expect(err.message).toContain("지원 폴더");
+      }
+    },
+  );
 
   it("systems 가 없는 mail URL 은 마지막 숫자 구간만 쓴다", () => {
     expect(

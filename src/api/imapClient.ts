@@ -148,7 +148,7 @@ export async function getMail(
   config: Config,
   uid: number,
   mailbox = "INBOX",
-): Promise<MailMessage & { body: string; internalDate: Date | null }> {
+): Promise<MailMessage & { body: string; internalDate: Date | null; messageId: string | null }> {
   const client = createImapClient(config);
 
   try {
@@ -195,6 +195,8 @@ export async function getMail(
         internalDate: internalDate instanceof Date && Number.isFinite(internalDate.getTime())
           ? internalDate
           : null,
+        // 답장이 In-Reply-To 로 쓴다. 이미 받은 envelope 에서 꺼내 IMAP 연결을 한 번 아낀다.
+        messageId: envelope.messageId ?? null,
         isRead: flags.has("\\Seen"),
         body,
       };

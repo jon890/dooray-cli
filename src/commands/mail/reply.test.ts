@@ -60,6 +60,7 @@ const originalMail = {
   internalDate: new Date("2026-01-02T03:04:05Z"),
   isRead: false,
   body: "원본 본문",
+  messageId: "<original@example.com>",
 };
 
 async function runMailReply(args: string[]): Promise<void> {
@@ -114,15 +115,10 @@ describe("mailReplyCommand", () => {
       "1234567890123456789",
       "sent",
     );
-    expect(mocks.getMail).toHaveBeenCalledWith(config, 991, "sent");
-    expect(mocks.client.getMailboxLock).toHaveBeenCalledWith("sent");
-    expect(mocks.client.fetchOne).toHaveBeenCalledWith(
-      "991",
-      { uid: true, envelope: true },
-      { uid: true },
-    );
-    expect(mocks.release).toHaveBeenCalledOnce();
-    expect(mocks.closeImapClient).toHaveBeenCalledWith(mocks.client);
+    expect(mocks.getMail).toHaveBeenCalledExactlyOnceWith(config, 991, "sent");
+    // messageId 는 getMail 의 envelope 에서 온다. 이 명령이 IMAP 연결을 따로 열지 않는다.
+    expect(mocks.connectImapClient).not.toHaveBeenCalled();
+    expect(mocks.client.fetchOne).not.toHaveBeenCalled();
     expect(mocks.startSpinner.mock.results[0].value.text).toBe("원본 메일 조회 중...");
     expect(mocks.sendMail).toHaveBeenCalledWith(
       config,
@@ -162,13 +158,8 @@ describe("mailReplyCommand", () => {
       "1234567890123456789",
       "INBOX",
     );
-    expect(mocks.getMail).toHaveBeenCalledWith(config, 991, "INBOX");
-    expect(mocks.client.getMailboxLock).toHaveBeenCalledWith("INBOX");
-    expect(mocks.client.fetchOne).toHaveBeenCalledWith(
-      "991",
-      { uid: true, envelope: true },
-      { uid: true },
-    );
+    expect(mocks.getMail).toHaveBeenCalledExactlyOnceWith(config, 991, "INBOX");
+    expect(mocks.connectImapClient).not.toHaveBeenCalled();
     expect(mocks.sendMail).toHaveBeenCalledOnce();
   });
 
@@ -178,13 +169,10 @@ describe("mailReplyCommand", () => {
 
     expect(mocks.resolveUidByMailId).not.toHaveBeenCalled();
     expect(mocks.confirm).not.toHaveBeenCalled();
-    expect(mocks.getMail).toHaveBeenCalledWith(config, 337, "INBOX");
-    expect(mocks.client.getMailboxLock).toHaveBeenCalledWith("INBOX");
-    expect(mocks.client.fetchOne).toHaveBeenCalledWith(
-      "337",
-      { uid: true, envelope: true },
-      { uid: true },
-    );
+    expect(mocks.getMail).toHaveBeenCalledExactlyOnceWith(config, 337, "INBOX");
+    expect(mocks.connectImapClient).not.toHaveBeenCalled();
+    // 확인이 없는 경로는 조회 완료 문구를 그대로 쓴다.
+    expect(mocks.stopSpinner).toHaveBeenCalledWith(true, "원본 메일 조회 완료");
     expect(mocks.sendMail).toHaveBeenCalledOnce();
   });
 
@@ -239,6 +227,8 @@ describe("mailReplyCommand", () => {
       .toBeLessThan(mocks.confirm.mock.invocationCallOrder[0]);
     expect(mocks.confirm.mock.invocationCallOrder[0])
       .toBeLessThan(mocks.sendMail.mock.invocationCallOrder[0]);
+    // 확인을 물어볼 자리에서 "조회 완료" 를 내면 이미 답장까지 끝난 것으로 읽힌다.
+    expect(mocks.stopSpinner).toHaveBeenCalledWith(true, "원본 메일 확인 필요");
   });
 
   it.each([null, undefined])("도착 시각이 %s이면 알 수 없음으로 표시한다", async (internalDate) => {
@@ -312,16 +302,25 @@ describe("mailReplyCommand", () => {
     expect(mocks.stopSpinner).toHaveBeenCalledWith(false);
   });
 
-  it("Message-ID 조회에 실패하면 연결을 정리하고 답장을 실행하지 않는다", async () => {
+  it("원본 조회에 실패하면 스피너를 멈추고 답장을 실행하지 않는다", async () => {
     const error = new Error("ECONNRESET");
-    mocks.client.fetchOne.mockRejectedValueOnce(error);
+    mocks.getMail.mockRejectedValueOnce(error);
 
     await expect(runMailReply(["337", "--body", "답장 본문"]))
       .rejects.toBe(error);
 
-    expect(mocks.release).toHaveBeenCalledOnce();
-    expect(mocks.closeImapClient).toHaveBeenCalledWith(mocks.client);
     expect(mocks.sendMail).not.toHaveBeenCalled();
     expect(mocks.stopSpinner).toHaveBeenCalledWith(false);
+  });
+
+  it("messageId 가 없는 원본은 In-Reply-To 없이 답장한다", async () => {
+    mocks.getMail.mockResolvedValueOnce({ ...originalMail, messageId: null });
+
+    await runMailReply(["337", "--body", "답장 본문"]);
+
+    expect(mocks.sendMail).toHaveBeenCalledWith(
+      config,
+      expect.objectContaining({ inReplyTo: undefined, references: undefined }),
+    );
   });
 });

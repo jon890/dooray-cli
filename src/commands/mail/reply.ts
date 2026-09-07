@@ -10,40 +10,9 @@ import { resolveMailTarget, resolveMailUid } from "../../resolvers/mail-input.js
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { sanitizeFileName } from "../../utils/attachment-check.js";
-import {
-  closeImapClient,
-  connectImapClient,
-  createImapClient,
-  getImapConfigOrThrow,
-} from "../../api/imapClient.js";
 
 function sanitizeReplyPreview(value: string): string {
   return sanitizeFileName(value).replace(/[\x80-\x9F\u2028\u2029]/g, "?");
-}
-
-async function getMessageId(
-  config: Parameters<typeof getImapConfigOrThrow>[0],
-  uid: number,
-  mailbox: string,
-): Promise<string | null> {
-  const client = createImapClient(config);
-
-  try {
-    await connectImapClient(client, config);
-    const lock = await client.getMailboxLock(mailbox);
-    try {
-      const msg = await client.fetchOne(String(uid), {
-        uid: true,
-        envelope: true,
-      }, { uid: true });
-      if (!msg) return null;
-      return msg.envelope?.messageId ?? null;
-    } finally {
-      lock.release();
-    }
-  } finally {
-    await closeImapClient(client);
-  }
 }
 
 export const mailReplyCommand = new Command("reply")
@@ -86,8 +55,10 @@ export const mailReplyCommand = new Command("reply")
       if (mailTarget.kind === "mailId") {
         spinner.text = "원본 메일 조회 중...";
       }
+      // getMail 이 이미 envelope 를 받으므로 messageId 를 거기서 쓴다.
+      // 따로 조회하면 같은 envelope 를 위해 IMAP 연결을 하나 더 연다.
       original = await getMail(config, uid, mailbox);
-      messageId = await getMessageId(config, uid, mailbox);
+      messageId = original.messageId;
     } catch (error) {
       stopSpinner(false);
       throw error;
@@ -97,7 +68,8 @@ export const mailReplyCommand = new Command("reply")
     const fromMatch = original.from.match(/<(.+?)>/);
     const replyTo = fromMatch ? fromMatch[1] : original.from;
 
-    stopSpinner(true, "원본 메일 조회 완료");
+    // 확인을 물어볼 자리에서 "조회 완료" 를 내면 이미 답장까지 끝난 것으로 읽힌다.
+    stopSpinner(true, needsConfirmation ? "원본 메일 확인 필요" : "원본 메일 조회 완료");
 
     if (needsConfirmation) {
       const { confirm } = await import("@inquirer/prompts");
