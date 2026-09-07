@@ -53,6 +53,10 @@ function unknownKeyError(): DoorayCliError {
   return new DoorayCliError("알 수 없는 설정 키: nope", EXIT_CONFIG_ERROR);
 }
 
+function configReadError(reason: string): DoorayCliError {
+  return new DoorayCliError(reason, EXIT_CONFIG_ERROR);
+}
+
 /** clearCache 는 node:fs 의 rm 을 부르므로 실패하면 raw Error 가 올라온다 */
 function fsError(): Error {
   return Object.assign(new Error("EACCES: permission denied, rmdir"), {
@@ -213,7 +217,39 @@ describe("updateConfigValue", () => {
     expect(mockedClearCache).not.toHaveBeenCalled();
   });
 
-  it("이전 설정이 invalid 이면 보수적으로 캐시를 지우고 이유를 알린다", async () => {
+  it("지속 invalid 상태라 setConfigValue 가 거부하면 캐시를 지우지 않는다", async () => {
+    mockedGetConfig.mockResolvedValueOnce({
+      state: "invalid",
+      reason: "broken json",
+    });
+    mockedSetConfigValue.mockRejectedValue(
+      configReadError("설정 파일이 손상되었습니다."),
+    );
+
+    await expect(updateConfigValue("api-key", KEY_A)).rejects.toMatchObject({
+      exitCode: EXIT_CONFIG_ERROR,
+      message: expect.stringContaining("손상"),
+    });
+    expect(mockedClearCache).not.toHaveBeenCalled();
+  });
+
+  it("지속 unreadable 상태라 setConfigValue 가 거부하면 캐시를 지우지 않는다", async () => {
+    mockedGetConfig.mockResolvedValueOnce({
+      state: "unreadable",
+      reason: "EACCES",
+    });
+    mockedSetConfigValue.mockRejectedValue(
+      configReadError("설정 파일을 읽지 못했습니다."),
+    );
+
+    await expect(updateConfigValue("api-key", KEY_A)).rejects.toMatchObject({
+      exitCode: EXIT_CONFIG_ERROR,
+      message: expect.stringContaining("읽지 못했습니다"),
+    });
+    expect(mockedClearCache).not.toHaveBeenCalled();
+  });
+
+  it("첫 읽기만 invalid 이고 저장 시점에 복구되면 보수적으로 캐시를 지운다", async () => {
     mockedGetConfig
       .mockResolvedValueOnce({ state: "invalid", reason: "broken json" })
       .mockResolvedValueOnce(ok());
@@ -229,7 +265,7 @@ describe("updateConfigValue", () => {
     }
   });
 
-  it("이전 설정이 unreadable 이면 보수적으로 캐시를 지운다", async () => {
+  it("첫 읽기만 unreadable 이고 저장 시점에 복구되면 보수적으로 캐시를 지운다", async () => {
     mockedGetConfig
       .mockResolvedValueOnce({ state: "unreadable", reason: "EACCES" })
       .mockResolvedValueOnce(ok());
