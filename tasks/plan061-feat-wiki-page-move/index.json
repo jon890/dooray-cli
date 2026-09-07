@@ -1,0 +1,12 @@
+{
+  "name": "plan061-feat-wiki-page-move",
+  "description": "공식 move endpoint 로 dooray wiki page move 를 만든다 (Issue #148)",
+  "status": "pending",
+  "created_at": "2026-09-07",
+  "total_phases": 2,
+  "current_phase": 1,
+  "phases": [
+    { "number": 1, "file": "phase-01.md", "execution_profile": "standard" },
+    { "number": 2, "file": "phase-02.md", "execution_profile": "standard" }
+  ]
+}
