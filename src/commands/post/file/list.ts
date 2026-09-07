@@ -23,6 +23,7 @@ export const fileListCommand = new Command("list")
       postNumberArg: postNumberStr,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     const res = await client.getPostFiles(projectId, postId);
     stopSpinner(true, `첨부파일 ${res.result.length}개`);

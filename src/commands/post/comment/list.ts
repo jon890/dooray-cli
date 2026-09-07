@@ -122,6 +122,7 @@ export const commentListCommand = new Command("list")
       postNumberArg: postNumberStr,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
 
     const order = resolveOrder(opts);

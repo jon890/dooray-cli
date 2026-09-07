@@ -50,4 +50,8 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-039](039-rate-limit-token-bucket.md) — Dooray 요청 제한을 응답 헤더로 보정하는 클라이언트 토큰 풀
 - [ADR-041](041-project-tag-write-scope.md) — 프로젝트 태그 쓰기를 공식 문서 지원 범위(생성·그룹 속성)로 한정 (Issue #146)
 - [ADR-042](042-cache-invalidation-on-mutation.md) — 캐시의 유효성을 깨는 변경은 services 계열이 맡고 그 안에서 캐시를 지운다 (엔티티 mutation, config 의 계정·환경 변경)
+- [ADR-043](043-wiki-name-search-and-project-column.md) — 위키를 이름으로 찾는 `wiki list --search` 와 목록의 project 열, `dooray://` 앞 숫자가 orgId 임을 알리는 오류 안내 (Issue #154)
+- [ADR-044](044-post-input-error-completed-command.md) — post 입력 오류가 실제 실행 인자를 고쳐 만든 완성 명령을 보여준다 (Issue #154)
+- [ADR-045](045-wiki-page-standalone-fetch.md) — 위키 페이지를 페이지 ID 하나로 조회하고 wikiId 를 응답에서 얻는다 (공식 `GET /wiki/v1/pages/{page-id}`, Issue #154)
+- [ADR-047](047-wiki-page-move.md) — 위키 페이지 이동을 공식 move endpoint 로 감싸 `wiki page move` 로 둔다 (Issue #148)
 - [ADR-048](048-checks-to-mjs.md) — 문서 검사 스크립트를 셸에서 `node:` 빌트인만 쓰는 `.mjs` 로 옮긴다

@@ -6,7 +6,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 // resolveMember 의 MEMBER_ID_RE 와 동일 패턴 — ADR-030
-const PROJECT_ID_RE = /^\d{15,}$/;
+export const PROJECT_ID_RE = /^\d{15,}$/;
 
 async function fetchAllProjects(
   client: DoorayApiClient,
@@ -50,6 +50,24 @@ export async function ensurePrivateProjects(client: DoorayApiClient): Promise<Ca
   const items = await fetchAllProjects(client, { type: "private" });
   await setPrivateProjects(items);
   return items;
+}
+
+export async function buildProjectCodeMap(client: DoorayApiClient): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+
+  const projects = await ensureProjects(client);
+  for (const p of projects) {
+    map.set(p.id, p.code);
+  }
+
+  const privateCached = await getPrivateProjects();
+  if (privateCached && !isExpired(privateCached.updatedAt, PROJECTS_TTL_MS)) {
+    for (const p of privateCached.data) {
+      map.set(p.id, p.code);
+    }
+  }
+
+  return map;
 }
 
 export async function resolveProject(

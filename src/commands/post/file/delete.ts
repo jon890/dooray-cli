@@ -81,6 +81,7 @@ export const fileDeleteCommand = new Command("delete")
       postNumberArg,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     await client.deletePostFile(projectId, postId, fileId);
     stopSpinner(true, "삭제 완료");

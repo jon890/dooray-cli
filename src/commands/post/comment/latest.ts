@@ -37,6 +37,7 @@ export const commentLatestCommand = new Command("latest")
       postNumberArg: postNumberStr,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
     });
     const res = await client.getPostComments(projectId, postId, {
       page: 0, size: Math.min(n, 100), order: "-createdAt",

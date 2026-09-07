@@ -104,7 +104,7 @@ Claude 데스크톱 앱은 사용자 컴퓨터의 파일과 명령을 기본 상
 ```
 
 에이전트가 알맞은 `dooray` 명령으로 옮기고, 필요하면 프로젝트 코드나 업무 번호를 먼저 조회한다.
-업무 URL 을 그대로 붙여도 된다 — 에이전트가 URL 에서 대상을 찾아낸다.
+업무 URL 을 그대로 붙여도 된다. 에이전트가 URL 에서 대상을 찾아낸다.
 
 에이전트가 쓰는 명령 카탈로그와 판단 기준은 [스킬 문서](skills/dooray-cli/SKILL.md)에 있다.
 
@@ -119,6 +119,11 @@ dooray post get <project> 42                 # 업무 상세
 dooray post create <project> --title "제목"  # 업무 생성
 dooray post comment add <project> 42 --body "댓글"
 dooray wiki pages <project>                  # 위키 페이지 목록
+dooray wiki page get --id <page-id>          # 페이지 ID 하나로 조회 (project 불필요)
+dooray wiki list --search 설계               # 위키 이름으로 찾기 (대소문자 무시)
+dooray wiki page get --url "https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>"
+dooray wiki page move --id <page-id> --parent <parent-page-id>
+dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
 dooray mail list --unread                    # 안 읽은 메일
 ```
 

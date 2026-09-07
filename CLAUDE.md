@@ -9,7 +9,8 @@ NHN Dooray REST API CLI 도구. TypeScript 와 Commander.js 기반.
 Dooray 공식 API 문서: [https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419](https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419)
 
 공개 페이지지만 React 앱이라 `WebFetch` 로는 본문을 못 읽는다.
-Orca 내장 브라우저(`~/.claude/scripts/orca-browser.sh`)로 열어 endpoint 와 request·response 스키마, 동작 특이점을 확인한 뒤 코드를 작성한다.
+`~/.claude/scripts/browser-driver` 로 열어 endpoint 와 request·response 스키마, 동작 특이점을 확인한 뒤 코드를 작성한다.
+명령 목록과 유의할 점은 `browser-driver help` 의 출력이 소유한다.
 
 문서에 없거나 직관에 반하는 동작은 ADR 로 보존한다. 영역별 ADR 은 `docs/adr/INDEX.md` 에서 찾는다.
 
@@ -44,9 +45,9 @@ dooray                # 글로벌 링크 시
 
 명령별 옵션·동작은 `docs/adr/INDEX.md` 와 `README.md` 에서 찾는다. 여기에는 전 명령 공통 규약만 둔다.
 
-- **입력 형식** — post 계열, wiki page file, wiki page comment 명령이 공통으로 받는다
+- **입력 형식** — post 계열, wiki page get, wiki page file, wiki page comment 명령이 공통으로 받는다
   - `<project> <number>` / `--id <id>` / `--url <url>` / 첫 positional 에 Dooray URL 직접 입력
-  - wiki 의 `--id` 모드는 `--project` 동반 필수 — wiki API 가 page-only fetch 를 지원하지 않는다
+  - wiki 의 `--id` 모드는 project 없이 단독으로 동작한다. `--project` 는 선택이며 주면 wikiId 해석 호출을 아낀다
 - **옵션 이름**
   - 제목은 post·wiki 모두 `--title` (`--subject` 는 deprecated alias — stderr 경고 후 동작)
   - 본문은 `--body` / `--body-file` (둘 다 `-` 로 stdin 을 받는다)
@@ -112,18 +113,6 @@ node scripts/check-public-refs.mjs
 
 CI 가 같은 스크립트를 돌린다.
 필수 경로가 없거나 파일을 읽지 못하면 오류를 출력하고 종료 코드 2 로 끝난다.
-
-## `tasks/` — 완료된 plan 은 실행 기록이다
-
-완료된 `tasks/{NNN}-*/` 는 그 plan 을 실행한 executor 에게 **실제로 전달된 지시의 기록**이다.
-문구를 바꾸면 당시 무엇을 시켰는지가 훼손되고, 나중에 결과와 지시를 대조할 수 없게 된다.
-
-- 문체·표기 일괄 교정, 용어 통일, 링크 정비 같은 **저장소 전역 전수 검사 대상에서 제외**한다
-- 오탈자 하나를 고치려고 완료된 phase 파일을 열지 않는다
-- 실행 중인 plan 은 예외다. 파이프라인이 `index.json` 상태를 갱신하고 재계획으로 phase 를 다시 쓰는 것은 정상 동작이다
-
-전수 검사를 돌릴 때는 대상 경로를 `docs/`, `.claude/`, `README.md`, `skills/` 로 한정하고,
-제외한 건수와 이유를 보고에 남긴다. 조용히 빼면 전수 처리한 것으로 읽힌다.
 
 ## Git
 

@@ -499,7 +499,7 @@ export interface Wiki {
   home: WikiHome;
 }
 
-export type WikiListResponse = DoorayApiResponse<Wiki[]>;
+export type WikiListResponse = DoorayApiResponse<Wiki[]> & { totalCount: number };
 
 export interface Creator {
   type: string;
@@ -571,6 +571,13 @@ export interface UpdateWikiPageTitleRequest {
 
 export interface UpdateWikiPageContentRequest {
   body: WikiPageBody;
+}
+
+export interface MoveWikiPageRequest {
+  targetParentPageId: string;
+  targetWikiId?: string;
+  withChildren?: boolean;
+  beforePageId?: string;
 }
 
 export type WikiPageFileType = "general" | "inline_image";

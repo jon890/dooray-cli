@@ -46,6 +46,7 @@ export const deleteCommentFileCommand = new Command("delete")
       arg1, arg2, arg3, arg4,
       idOpt: opts.id,
       urlOpt: opts.url,
+      argv: process.argv.slice(2),
       commentIdOpt: opts.commentId,
       secondaryOpt: opts.fileId,
       requireSecondary: true,

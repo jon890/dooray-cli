@@ -129,7 +129,9 @@ done
 
 ## F. 가독성 — 모든 docs
 
-대상: `docs/*.md`, `CLAUDE.md`, `README.md`, `skills/`, `tasks/**/*.md`.
+대상: `docs/*.md`, `CLAUDE.md`, `README.md`, `skills/`.
+완료된 plan 은 교정 대상이 아니라 제거 대상이므로 `tasks/` 는 검사하지 않는다.
+제거 판정은 `harness-cleanup` 이 소유한다.
 코드 블록, 표, 디렉터리 트리는 대상이 아니다.
 
 한국어 표기 정책은 `korean-style-check` 훅이 저장 시점에 자동 검사하므로 본 agent 는 형식만 본다.
