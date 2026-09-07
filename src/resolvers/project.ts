@@ -6,7 +6,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 // resolveMember 의 MEMBER_ID_RE 와 동일 패턴 — ADR-030
-const PROJECT_ID_RE = /^\d{15,}$/;
+export const PROJECT_ID_RE = /^\d{15,}$/;
 
 async function fetchAllProjects(
   client: DoorayApiClient,

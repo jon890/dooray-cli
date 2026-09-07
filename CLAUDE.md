@@ -46,7 +46,7 @@ dooray                # 글로벌 링크 시
 
 - **입력 형식** — post 계열, wiki page get, wiki page file, wiki page comment 명령이 공통으로 받는다
   - `<project> <number>` / `--id <id>` / `--url <url>` / 첫 positional 에 Dooray URL 직접 입력
-  - wiki 의 `--id` 모드는 `--project` 동반 필수 — wiki API 가 page-only fetch 를 지원하지 않는다
+  - wiki 의 `--id` 모드는 project 없이 단독으로 동작한다. `--project` 는 선택이며 주면 wikiId 해석 호출을 아낀다
 - **옵션 이름**
   - 제목은 post·wiki 모두 `--title` (`--subject` 는 deprecated alias — stderr 경고 후 동작)
   - 본문은 `--body` / `--body-file` (둘 다 `-` 로 stdin 을 받는다)

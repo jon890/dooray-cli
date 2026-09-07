@@ -1,7 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
-import { fetchAllWikis, filterWikisByName } from "./wiki.js";
+import { fetchAllWikis, filterWikisByName, resolveWiki } from "./wiki.js";
 import type { DoorayApiClient } from "../api/client.js";
 import type { Wiki } from "../api/types.js";
+import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+
+vi.mock("../cache/store.js", () => ({
+  getProjects: vi.fn().mockResolvedValue({ data: [], updatedAt: 0 }),
+  setProjects: vi.fn().mockResolvedValue(undefined),
+  getPrivateProjects: vi.fn().mockResolvedValue(null),
+  setPrivateProjects: vi.fn().mockResolvedValue(undefined),
+  isExpired: vi.fn().mockReturnValue(true),
+  getWikis: vi.fn().mockResolvedValue(null),
+  setWikis: vi.fn().mockResolvedValue(undefined),
+}));
 
 function wiki(overrides: Partial<Wiki> & Pick<Wiki, "id" | "name">): Wiki {
   return {
@@ -53,6 +64,37 @@ describe("fetchAllWikis", () => {
 
     expect(all).toEqual([]);
     expect(client.getWikis).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("resolveWiki 오류 안내", () => {
+  function mockProjectClient(): DoorayApiClient {
+    return {
+      getProjects: vi.fn().mockResolvedValue({ result: [], totalCount: 0 }),
+    } as unknown as DoorayApiClient;
+  }
+
+  it("15자리 이상 numeric(orgId) 을 찾지 못하면 orgId 안내와 wiki page get --id 를 담는다", async () => {
+    const orgId = "1234567890123456789";
+    await expect(resolveWiki(mockProjectClient(), orgId)).rejects.toMatchObject({
+      exitCode: EXIT_PARAM_ERROR,
+      message: expect.stringContaining("orgId"),
+    });
+    await expect(resolveWiki(mockProjectClient(), orgId)).rejects.toMatchObject({
+      message: expect.stringContaining("wiki page get --id"),
+    });
+  });
+
+  it("비숫자 project 코드를 찾지 못하면 orgId 안내를 붙이지 않는다", async () => {
+    await expect(resolveWiki(mockProjectClient(), "not-found-project")).rejects.toMatchObject({
+      exitCode: EXIT_PARAM_ERROR,
+    });
+    try {
+      await resolveWiki(mockProjectClient(), "not-found-project");
+      throw new Error("resolveWiki 가 던지지 않았다");
+    } catch (e: any) {
+      expect(e.message).not.toContain("orgId");
+    }
   });
 });
 
