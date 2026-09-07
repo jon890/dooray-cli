@@ -153,6 +153,8 @@ dooray post edit --id "$CHILD_ID" --title "subtask A" --parent <project>/<parent
 
 `--parent` 를 쓸 때 `--title` 이 필수다. 제목을 바꾸지 않으려면 원래 제목을 그대로 넣는다.
 parent 해제는 API 가 지원하지 않아 CLI 로 할 수 없다 — 웹 UI 에서 처리한다.
+계층 구조는 두 단계를 넘지 못한다. 상위업무를 가진 하위업무를 상위 업무로 설정할 수 없고,
+그 조건에서 `--parent` 를 쓰면 실패한다.
 
 ## 태그만 바꾸기
 

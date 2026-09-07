@@ -13,6 +13,12 @@ Orca 내장 브라우저(`~/.claude/scripts/orca-browser.sh`)로 열어 endpoint
 
 문서에 없거나 직관에 반하는 동작은 ADR 로 보존한다. 영역별 ADR 은 `docs/adr/INDEX.md` 에서 찾는다.
 
+저장소의 ADR 과 이 파일과 스킬 문서와 코드 주석에 적힌 API 서술은 근거가 아니라 그때의 확인 결과다.
+그 서술과 공식 문서가 어긋나면 공식 문서를 따르고 저장소 서술을 고친다. 자세한 내용은
+[ADR-046](docs/adr/046-official-api-doc-precedence.md)을 참고한다.
+
+구현된 endpoint 와 공식 목록을 대조하려면 `pnpm api:inventory` 를 돌린다.
+
 ## 빌드 & 실행
 
 ```bash

@@ -24,7 +24,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 `wiki page file` 과 `wiki page comment` 전체, 그리고 `wiki page delete` 가 네 가지 형태를 모두 받는다.
 
 - `<project> <number>` — 업무는 번호, 위키는 `<project> <page-id>`
-- `--id <postId>` / `--id <pageId>` — 위키는 `--project` 를 함께 줘야 한다 (API 가 page 단독 조회를 지원하지 않는다)
+- `--id <postId>` / `--id <pageId>`: 위키는 `--project` 를 함께 줘야 한다 (wikiId 를 알아내는 데 project 가 필요한 CLI 구현이고, API 자체의 제약은 아니다)
 - `--url <url>`
 - 첫 인자에 Dooray URL 을 직접
 
