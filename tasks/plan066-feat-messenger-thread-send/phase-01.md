@@ -273,20 +273,16 @@ grep -c "createChannelThread" src/api/client.ts                # >= 1
 grep -c "createLogThread" src/api/client.ts                    # >= 1
 ```
 
-**실제 발송으로 한 번 확인한다.** 응답 모양은 서버만 알려준다.
+**실제 발송은 하지 않는다.** 이 phase 는 메시지를 보내지 않는다.
 
-본인과의 대화방에 스레드를 열고, 나온 `channelId` 로 메시지를 이어 본다.
+응답 모양은 이미 `docs/adr/052-messenger-thread-send.md` 가 실측으로 적어 두었다.
+경로와 요청 body 가 맞는지는 `buildThreadRequest` 의 단위 테스트가 판정하고,
+옵션 조합은 `checkThreadOptions` 의 테스트가 판정한다. 둘 다 서버로 나가지 않는다.
 
-```bash
-# cwd: <repo root>
-CH=$(node dist/index.js messenger thread-send --channel <본인 대화방> --body "스레드 확인" --thread-body "첫 메시지" --quiet)
-node dist/index.js messenger channel-send --channel "$CH" --body "이어 붙인 메시지"
-```
-
-둘 다 성공하고, 두 번째 메시지가 대화방 본문이 아니라 스레드 안에 붙어야 한다.
-
-**이 확인은 실제 메시지를 보낸다.** 본인에게 보내면 다른 사람에게 알림이 가지 않는다.
-설정이 없어 실행할 수 없으면 건너뛰고 그 사실을 보고한다.
+발송으로 확인하고 싶으면 사람이 대상을 직접 정해서 실행한다.
+이 문서에 대상 자리를 비워 두면 실행하는 쪽이 그 자리를 채우게 된다.
+`--channel` 은 이름 부분일치도 받고 목록에서 고를 수도 있어, 엉뚱한 대화방으로 나갈 수 있다.
+메신저 발송은 되돌리기 어렵다.
 
 개인 식별 정보를 확인한다.
 

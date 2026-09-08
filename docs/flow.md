@@ -477,7 +477,7 @@ dooray wiki page get --id <page-id> --project my-project
 하위 페이지는 기본으로 함께 이동한다.
 이동할 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
 
-## 메신저 흐름 (Issue #88, ADR-033)
+## 메신저 흐름 (Issue #88, ADR-033, 스레드는 ADR-052)
 
 빠른 알림·배포 요청을 CLI/에이전트가 메일보다 즉시성 있게 전송.
 
@@ -492,6 +492,22 @@ dooray messenger channel-send --channel <channelId> --body-file -   # stdin
 
 # body 미지정 시 $EDITOR 진입 (comment 와 동일)
 dooray messenger send --to <memberId>
+```
+
+대화방에 스레드를 열어 후속 보고를 그 안에 쌓는다.
+`--quiet` 이 내는 값은 log-id 가 아니라 새로 만들어진 스레드 채널의 channelId 다.
+
+```
+# 대화방에 메시지를 보내면서 스레드를 연다 (--thread-body 는 스레드 첫 메시지, 생략 가능)
+dooray messenger thread-send --channel "배포알림" --body "v1.2.3 배포" --thread-body "빌드 시작"
+
+# 이미 있는 메시지에 스레드를 연다 (--log 는 channel-send 가 낸 log-id)
+dooray messenger thread-send --channel "배포알림" --log <logId> --body "빌드 로그"
+
+# 연 스레드에 메시지를 잇는다 (스레드 채널 id 를 channel-send 의 --channel 로 준다)
+THREAD=$(dooray messenger thread-send --channel "배포알림" --body "v1.2.3 배포" --quiet)
+dooray messenger channel-send --channel "$THREAD" --body "테스트 통과"
+dooray messenger channel-send --channel "$THREAD" --body "배포 완료"
 ```
 
 ## 위키 페이지 첨부파일 흐름 (Issue #70, ADR-029)
