@@ -35,6 +35,11 @@ jobs:
       - name: Check public docs for internal references
         run: node scripts/check-public-refs.mjs
 
+      # plan 을 쓴 쪽이 스스로 훑으면 대조한 것과 대조했다고 적은 것이 구별되지 않는다.
+      # 미완료 plan 만 대상이라 완료된 것은 빠지고, 대상이 없으면 0 으로 끝난다.
+      - name: Check plan phase files
+        run: node scripts/check-plan.mjs
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

@@ -58,16 +58,27 @@ gh issue list --state open --json number,title --jq '.[] | "#\(.number)  \(.titl
 
 ### 2. 문서 동기화
 
-1단계에서 뽑은 명령과 옵션 문자열을 그대로 인자로 넘긴다.
+인자 없이 실행한다. 무엇을 검사할지는 검사기가 정한다.
 
 ```bash
-node .claude/skills/release/scripts/doc-sync-check.mjs "wiki page move" --search --no-children
+node .claude/skills/release/scripts/doc-sync-check.mjs
 ```
 
-`README.md` 와 `skills/` 의 문서를 읽어 고정 문자열로 찾고 발견 위치를 낸다.
-종료 코드 1 이면 누락이다. 누락 항목과 넣을 위치를 보고하고 보완 커밋을 따로 만든 뒤 다음으로 간다.
+직전 태그와 HEAD 사이의 `src/` diff 에서 새로 추가된 `new Command` 와 `.option` 을 뽑아
+`README.md` 와 `skills/` 의 문서에서 고정 문자열로 찾는다.
 
-새 명령과 옵션이 없으면 이 단계를 통과로 보고, 그 사실을 사용자에게 밝힌다.
+**1단계에서 뽑은 목록을 넘기지 않는다.** 그 목록에서 빠뜨린 것은 검사도 통과해,
+검사가 통과했다는 사실이 문서가 맞다는 근거가 되지 못한다.
+검사할 대상을 릴리스하는 쪽이 정하면 그 판정은 자가검토다.
+
+종료 코드 1 이면 누락이다. 누락 항목과 넣을 위치를 보고하고 보완 커밋을 따로 만든 뒤 다음으로 간다.
+diff 에 새 명령과 옵션이 없으면 검사기가 그 사실을 출력하고 0 으로 끝난다.
+
+특정 문자열만 확인하고 싶으면 인자로 줄 수 있다. 이것은 자동 추출을 대체하지 않는 보조 경로다.
+
+```bash
+node .claude/skills/release/scripts/doc-sync-check.mjs "wiki page move" --search
+```
 
 ### 3. 버전 올리기
 
