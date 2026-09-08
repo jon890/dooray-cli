@@ -7,6 +7,7 @@ import { normalizeDoorayMessage } from "../utils/dooray-message.js";
 import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "../utils/exit-codes.js";
 import { createTokenBucket, parseRateLimitHeaders } from "./rate-limiter.js";
 import { parseJsonPreservingLargeIntegers } from "./json-large-integer.js";
+import { buildThreadRequest } from "./messenger-thread-request.js";
 import type {
   ProjectListResponse,
   PostListResponse,
@@ -1064,6 +1065,32 @@ export class DoorayApiClient {
           json: { text } satisfies ChannelLogRequest,
         })
         .json<MessengerSendResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async createChannelThread(
+    channelId: string,
+    text: string,
+    threadText?: string,
+  ): Promise<MessengerSendResponse> {
+    try {
+      const req = buildThreadRequest(channelId, text, { threadText });
+      return await this.api.post(req.path, { json: req.json }).json<MessengerSendResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  async createLogThread(
+    channelId: string,
+    logId: string,
+    text: string,
+  ): Promise<MessengerSendResponse> {
+    try {
+      const req = buildThreadRequest(channelId, text, { logId });
+      return await this.api.post(req.path, { json: req.json }).json<MessengerSendResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);
     }

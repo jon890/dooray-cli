@@ -89,7 +89,46 @@ async createLogThread(
 
 `sendChannelMessage` 와 같은 형태로 쓴다. `try` 로 감싸고 `toDoorayCliError` 로 던진다.
 
-`threadText` 가 없으면 요청 body 에 그 키를 넣지 않는다. 빈 문자열을 보내면 빈 메시지가 스레드에 생긴다.
+**요청 경로와 body 는 항목 2-1 의 순수 함수가 만든다.** 클라이언트 메서드는 그 결과를 `post` 에 넘기기만 한다.
+
+### 2-1. 요청 경로와 body 를 만드는 순수 함수를 뺀다
+
+`src/api/messenger-thread-request.ts` 를 새로 만든다.
+
+```ts
+export interface ThreadRequest {
+  path: string;
+  json: ChannelThreadRequest | LogThreadRequest;
+}
+
+export function buildThreadRequest(
+  channelId: string,
+  text: string,
+  opts?: { logId?: string; threadText?: string },
+): ThreadRequest
+```
+
+- `logId` 가 있으면 `messenger/v1/channels/{channelId}/logs/{logId}/threads/create-and-send` 와 `{ text }` 를 낸다.
+  `threadText` 는 그 경로에서 무시한다
+- `logId` 가 없으면 `messenger/v1/channels/{channelId}/threads/create-and-send` 를 낸다.
+  `threadText` 가 있을 때만 그 키를 body 에 넣는다. 빈 문자열을 보내면 빈 메시지가 스레드에 생긴다
+
+`src/commands/wiki/page-move.ts` 의 `buildMoveBody` 가 같은 형태의 선례다.
+그 함수도 기본값일 때 키를 넣지 않는 것을 `page-move.test.ts` 가 직접 검사한다.
+
+### 2-2. `src/api/messenger-thread-request.test.ts` 를 만든다
+
+담을 것은 넷이다.
+
+| 확인할 것 | 입력 | 기대 |
+| --- | --- | --- |
+| 대화방 스레드 경로 | `channelId` 와 `text` | 경로가 `channels/{id}/threads/create-and-send` 다 |
+| `threadText` 생략 | `threadText` 를 주지 않음 | body 에 `threadText` 키가 없다 |
+| `threadText` 지정 | `threadText` 를 줌 | body 에 그 값이 들어간다 |
+| log 스레드 경로 | `logId` 를 줌 | 경로에 `logs/{logId}` 가 들어가고 body 는 `{ text }` 뿐이다 |
+
+`threadText` 생략 검사는 값 비교가 아니라 키 존재로 본다.
+`expect(json).not.toHaveProperty("threadText")` 형태여야 빈 문자열이 들어간 경우도 잡힌다.
 
 ### 3. 옵션 조합 판정을 순수 함수로 만든다
 
@@ -98,19 +137,30 @@ async createLogThread(
 명령 본체는 네트워크와 편집기를 타서 단위 테스트가 어렵다.
 갈리는 판정만 떼어 내면 테스트할 수 있다.
 
-판정할 것은 둘이다.
+판정할 것은 셋이다.
 
 - **`--log` 와 `--thread-body` 계열을 함께 주면** 경고할 대상이라고 알린다.
   `logs/{log-id}/threads/create-and-send` 는 `text` 만 받기 때문이다.
+- **`--thread-body` 와 `--thread-body-file` 을 함께 주면** 에러다.
+  `readBodyInputOrNull` 이 이 조합을 스스로 잡지 못한다. 아래 「필드명」 항목이 이유를 적는다.
 - **`--body-file -` 과 `--thread-body-file -` 을 함께 주면** 에러다.
   stdin 은 한 번만 읽을 수 있어 둘 다 받을 수 없다. `--body -` 와 `--thread-body -` 도 같다.
+
+**필드명**: `readBodyInputOrNull` 은 `{ body, bodyFile }` 두 이름만 읽는다 (`src/utils/body-input.ts`).
+스레드 첫 메시지를 읽을 때는 `{ body: opts.threadBody, bodyFile: opts.threadBodyFile }` 로 이름을 바꿔 넘긴다.
+그 함수가 내는 동시 지정 에러 문구는 `--body와 --body-file은 함께 사용할 수 없습니다.` 라서
+스레드 옵션에는 맞지 않는다. 그래서 판정 함수가 그 조합을 먼저 잡는다.
 
 함수는 입력한 옵션을 받아 판정 결과를 돌려준다. 던지지 않고 돌려준다.
 그래야 호출부가 경고와 에러를 각각 어떻게 낼지 정할 수 있고 테스트가 쉬워진다.
 
+반환 모양은 `{ warnings: string[]; error?: string }` 이다.
+문제가 없으면 `warnings` 가 빈 배열이고 `error` 가 없다.
+문구를 그대로 담아 호출부가 stderr 와 `DoorayCliError` 에 옮기기만 하게 한다.
+
 ### 4. `src/commands/messenger/thread-options.test.ts` 를 만든다
 
-담을 것은 아래 여섯이다.
+담을 것은 아래 일곱과, 표 아래 한 줄이 요구하는 한 건을 더해 여덟이다.
 
 | 확인할 것 | 입력 | 기대 |
 | --- | --- | --- |
@@ -119,6 +169,7 @@ async createLogThread(
 | log 분기 | `--channel` 과 `--log` 와 `--body` | 경고도 에러도 없다 |
 | log 와 스레드 본문 충돌 | `--log` 와 `--thread-body` | 경고 대상이다 |
 | log 와 스레드 본문 파일 충돌 | `--log` 와 `--thread-body-file` | 경고 대상이다 |
+| 스레드 본문 중복 지정 | `--thread-body` 와 `--thread-body-file` | 에러다 |
 | stdin 중복 | `--body -` 와 `--thread-body -` | 에러다 |
 
 `--body-file -` 과 `--thread-body-file -` 조합도 한 건 넣는다.
@@ -156,7 +207,9 @@ async createLogThread(
 출력은 세 형식이다.
 
 - `--json` — `res.result` 를 그대로 낸다
-- `--quiet` — `res.result.channelId` 를 낸다. 다른 messenger 명령과 다른 점이고 근거는 ADR-052 다
+- `--quiet` — `res.result.channelId` 를 낸다. 다른 messenger 명령과 다른 점이고 근거는 ADR-052 다.
+  타입이 `string | undefined` 라 값이 없으면 빈 줄을 내지 말고 `EXIT_API_ERROR` 로 끝낸다.
+  자동화가 그 값을 다음 호출에 넣기 때문에 빈 문자열이 흘러가면 엉뚱한 곳에 메시지가 간다
 - 기본 — 사람이 읽는 한 줄. log-id 와 스레드 채널 id 를 함께 보여준다.
   스레드에 메시지를 이으려면 뒤의 값이 필요하므로 둘을 구분해 적는다
 
@@ -181,7 +234,7 @@ pnpm test
 
 ```bash
 # cwd: <repo root>
-pnpm vitest run src/commands/messenger/thread-options.test.ts
+pnpm vitest run src/commands/messenger/thread-options.test.ts src/api/messenger-thread-request.test.ts
 ```
 
 명령이 실제로 등록됐는지 본다.
@@ -214,6 +267,7 @@ node dist/index.js messenger thread-send --body "x" ; echo "종료코드=$?"
 ```bash
 # cwd: <repo root>
 ls src/commands/messenger/thread-send.ts src/commands/messenger/thread-options.ts src/commands/messenger/thread-options.test.ts
+ls src/api/messenger-thread-request.ts src/api/messenger-thread-request.test.ts
 grep -c "threadSendCommand" src/commands/messenger/index.ts    # >= 1
 grep -c "createChannelThread" src/api/client.ts                # >= 1
 grep -c "createLogThread" src/api/client.ts                    # >= 1
@@ -249,6 +303,8 @@ node scripts/check-pii.mjs
 |---|---|
 | `src/api/types.ts` | 수정 — 요청 타입 둘 추가 |
 | `src/api/client.ts` | 수정 — 메서드 둘 추가 |
+| `src/api/messenger-thread-request.ts` | 신규 — 경로와 body 를 만드는 순수 함수 |
+| `src/api/messenger-thread-request.test.ts` | 신규 |
 | `src/commands/messenger/thread-options.ts` | 신규 |
 | `src/commands/messenger/thread-options.test.ts` | 신규 |
 | `src/commands/messenger/thread-send.ts` | 신규 |
