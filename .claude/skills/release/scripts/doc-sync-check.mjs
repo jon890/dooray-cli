@@ -2,12 +2,17 @@
 // 새 명령과 옵션이 사용자 문서에 있는지 본다.
 //
 // 사용법
-//   node doc-sync-check.mjs "wiki page move" --search --no-children
+//   node doc-sync-check.mjs                              직전 태그 이후 diff 에서 스스로 뽑는다
+//   node doc-sync-check.mjs "wiki page move" --search    준 문자열만 검사한다
+//
+// 인자를 주지 않으면 직전 태그와 HEAD 사이의 `src/` diff 에서 추가된
+// `new Command("...")` 와 `.option("--...")` 를 뽑아 검사 대상으로 삼는다.
+// 사람이 목록을 뽑아 넘기면 빠뜨린 것은 검사도 통과한다. 무엇을 검사할지를 검사기가 정한다.
 //
 // 종료 코드
-//   0  준 문자열이 모두 한 곳 이상에서 발견됐다
+//   0  검사 대상이 모두 한 곳 이상에서 발견됐다 (대상이 0건인 경우를 포함한다)
 //   1  0건인 문자열이 있다 (그 목록을 마지막에 나열한다)
-//   2  인자가 없거나 검사 대상 경로가 없다
+//   2  검사 대상 경로가 없거나 diff 를 읽지 못했다
 //
 // 인자를 셸의 grep 에 넘기지 않고 파일을 직접 읽어 고정 문자열로 찾는다.
 // grep 에 넘기면 `--search` 같은 값을 grep 자기 옵션으로 해석해
@@ -29,13 +34,46 @@ if (!root) {
 }
 process.chdir(root);
 
-// process.argv 로 받으므로 앞의 `--` 없이도 `--search` 가 그대로 들어온다.
-const targets = process.argv.slice(2);
-if (targets.length === 0) {
-  console.error("검사할 명령이나 옵션 문자열을 인자로 준다.");
-  console.error('  node doc-sync-check.mjs "wiki page move" --search');
-  process.exit(2);
+// 직전 태그 이후 `src/` diff 에서 새로 추가된 명령과 옵션을 뽑는다.
+// 추가된 줄만 본다. 지워진 줄까지 세면 이미 없앤 것을 문서에서 찾게 된다.
+function extractFromDiff() {
+  const tag = spawnSync("git", ["describe", "--tags", "--abbrev=0"], { encoding: "utf8" });
+  if (tag.status !== 0) {
+    console.error("직전 태그를 찾지 못했다. 검사할 문자열을 인자로 준다.");
+    process.exit(2);
+  }
+  const range = tag.stdout.trim() + "..HEAD";
+  const diff = spawnSync("git", ["diff", "-U0", range, "--", "src/"], { encoding: "utf8" });
+  if (diff.status !== 0) {
+    console.error("diff 를 읽지 못했다: " + range);
+    process.exit(2);
+  }
+
+  const commands = new Set();
+  const options = new Set();
+  for (const line of diff.stdout.split("\n")) {
+    if (!line.startsWith("+") || line.startsWith("+++")) continue;
+    for (const m of line.matchAll(/new Command\(\s*["'`]([^"'`]+)["'`]/g)) commands.add(m[1]);
+    for (const m of line.matchAll(/\.option\(\s*["'`](--[a-z0-9-]+)/gi)) options.add(m[1]);
+  }
+  return { range, targets: [...commands, ...options] };
 }
+
+// process.argv 로 받으므로 앞의 `--` 없이도 `--search` 가 그대로 들어온다.
+let targets = process.argv.slice(2);
+let source = "인자";
+if (targets.length === 0) {
+  const found = extractFromDiff();
+  targets = found.targets;
+  source = found.range + " 의 src/ diff";
+  if (targets.length === 0) {
+    console.log(source + " 에 새 명령과 옵션이 없다. 문서 동기화 검사를 통과로 본다.");
+    process.exit(0);
+  }
+}
+console.log("검사 대상 " + targets.length + "건 (출처: " + source + ")");
+for (const t of targets) console.log("  " + t);
+console.log("---------------");
 
 const SCAN = ["README.md", "skills"].filter((p) => existsSync(join(root, p)));
 if (SCAN.length === 0) {
@@ -76,11 +114,15 @@ for (const needle of targets) {
     missing.push(needle);
     continue;
   }
+  // 발견 위치는 앞의 몇 건만 낸다. 전역 옵션처럼 문서 곳곳에 있는 문자열은
+  // 수십 건이 잡혀, 정작 0건인 항목이 출력에 파묻힌다.
+  const SHOW = 3;
   console.log(`${hits.length}건  ${needle}`);
-  for (const h of hits) {
+  for (const h of hits.slice(0, SHOW)) {
     const text = h.text.length > 140 ? `${h.text.slice(0, 137)}...` : h.text;
     console.log(`      ${h.file}:${h.line}: ${text}`);
   }
+  if (hits.length > SHOW) console.log(`      ... 그 밖 ${hits.length - SHOW}건`);
 }
 
 console.log("---------------");
