@@ -119,11 +119,19 @@ export function checkGrepExpectation(lines) {
   return hits;
 }
 
-export function checkCompletionMarking(planName, files) {
-  // 마지막 phase 가 index.json 을 completed 로 바꾸라고 지시하는지 본다.
-  const phases = files.filter((f) => /^phase-\d+\.md$/.test(f)).sort();
-  if (phases.length === 0) return [{ file: planName, line: 0, code: "PHASE", text: "phase 파일이 없다" }];
-  return { last: phases[phases.length - 1] };
+// 마지막 phase 가 index.json 을 completed 로 바꾸라고 지시하는지 본다.
+//
+// `index.json` 문자열만 보면 예시나 다른 파일을 언급한 서술로도 통과한다.
+// 두 토큰이 같은 줄이나 인접한 줄에 있어야 마킹 지시로 본다.
+export function checkCompletionMarking(lines) {
+  const WINDOW = 3;
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i].includes("index.json")) continue;
+    const from = Math.max(0, i - WINDOW);
+    const to = Math.min(lines.length, i + WINDOW + 1);
+    if (lines.slice(from, to).some((l) => l.includes("completed"))) return [];
+  }
+  return [{ line: 0, code: "MARK", text: "마지막 phase 에 index.json 완료 마킹 지시가 없다" }];
 }
 
 function collectPlans(root, arg) {
@@ -201,9 +209,9 @@ export function main(argv = process.argv.slice(2)) {
 
     // 마지막 phase 가 index.json 마킹을 지시하는지 본다.
     const last = phases[phases.length - 1];
-    const lastText = readFileSync(join(dir, last), "utf8");
-    if (!/index\.json/.test(lastText)) {
-      violations.push(`${plan}/${last}  [MARK] 마지막 phase 에 index.json 완료 마킹 지시가 없다`);
+    const lastLines = readFileSync(join(dir, last), "utf8").split("\n");
+    for (const h of checkCompletionMarking(lastLines)) {
+      violations.push(`${plan}/${last}  [${h.code}] ${h.text}`);
     }
   }
 
