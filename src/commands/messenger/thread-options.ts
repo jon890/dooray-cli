@@ -35,13 +35,17 @@ export function checkThreadOptions(opts: ThreadSendOptions): ThreadOptionsCheck 
     };
   }
 
-  // stdin은 한 번만 읽을 수 있어 --body와 --thread-body 계열이 동시에 "-" 를 가리킬 수 없다.
-  const bodyIsStdin = opts.body === "-" || opts.bodyFile === "-";
-  const threadBodyIsStdin = opts.threadBody === "-" || opts.threadBodyFile === "-";
-  if (bodyIsStdin && threadBodyIsStdin) {
+  // stdin은 한 번만 읽을 수 있어 본문과 스레드 본문이 동시에 "-" 를 가리킬 수 없다.
+  // 실제로 준 옵션 이름을 문구에 넣는다. 계열 이름만 쓰면 --body-file 을 준
+  // 사용자가 --body 를 지적받아 어느 옵션을 고쳐야 할지 알 수 없다.
+  const bodyStdinOption =
+    opts.body === "-" ? "--body" : opts.bodyFile === "-" ? "--body-file" : null;
+  const threadStdinOption =
+    opts.threadBody === "-" ? "--thread-body" : opts.threadBodyFile === "-" ? "--thread-body-file" : null;
+  if (bodyStdinOption && threadStdinOption) {
     return {
       warnings,
-      error: "--body와 --thread-body는 동시에 stdin(-)을 지정할 수 없습니다.",
+      error: `${bodyStdinOption} 과 ${threadStdinOption} 에 동시에 "-" 를 줄 수 없습니다. stdin 은 한 번만 읽습니다.`,
     };
   }
 

@@ -52,14 +52,23 @@ describe("checkThreadOptions", () => {
   it("--body - 와 --thread-body - 를 함께 주면 에러다", () => {
     const result = checkThreadOptions({ body: "-", threadBody: "-" });
     expect(result.error).toBe(
-      "--body와 --thread-body는 동시에 stdin(-)을 지정할 수 없습니다.",
+      '--body 과 --thread-body 에 동시에 "-" 를 줄 수 없습니다. stdin 은 한 번만 읽습니다.',
     );
   });
 
-  it("--body-file - 와 --thread-body-file - 를 함께 주면 에러다", () => {
+  // 에러 문구가 실제로 준 옵션 이름을 낸다. 계열 이름으로 고정하면
+  // --body-file 을 준 사용자가 --body 를 지적받아 어느 옵션을 고칠지 알 수 없다.
+  it("--body-file - 와 --thread-body-file - 를 함께 주면 그 옵션 이름으로 에러를 낸다", () => {
     const result = checkThreadOptions({ bodyFile: "-", threadBodyFile: "-" });
     expect(result.error).toBe(
-      "--body와 --thread-body는 동시에 stdin(-)을 지정할 수 없습니다.",
+      '--body-file 과 --thread-body-file 에 동시에 "-" 를 줄 수 없습니다. stdin 은 한 번만 읽습니다.',
+    );
+  });
+
+  it("--body - 와 --thread-body-file - 처럼 계열이 섞여도 준 옵션을 낸다", () => {
+    const result = checkThreadOptions({ body: "-", threadBodyFile: "-" });
+    expect(result.error).toBe(
+      '--body 과 --thread-body-file 에 동시에 "-" 를 줄 수 없습니다. stdin 은 한 번만 읽습니다.',
     );
   });
 });
