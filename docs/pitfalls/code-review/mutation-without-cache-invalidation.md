@@ -5,7 +5,7 @@ title: 캐시된 엔티티를 바꾸고 캐시를 지우지 않음
 triggers: [캐시 무효화, clearTags, mutation, TTL, services 쓰기 함수, ADR-042]
 tool_catchable: false
 source: [Issue #146, ADR-042]
-related: [cache-atomic-write-consistency, missing-four-surface-guard]
+related: [missing-four-surface-guard]
 ---
 
 **증상**: 캐시되는 엔티티(프로젝트, 멤버, 워크플로우, 태그, 단계, 멤버그룹, 템플릿, 위키)를 바꾸는
