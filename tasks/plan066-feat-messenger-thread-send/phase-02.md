@@ -175,3 +175,11 @@ node scripts/check-pii.mjs
 | `docs/flow.md` | 수정 — 사용자 흐름 예시 |
 | `README.md` | 수정 — 메신저 절 신설 |
 | `skills/dooray-cli/SKILL.md` | 수정 — 빠른 참조 표와 시나리오 예시 |
+
+## 완료 마킹
+
+이 plan 의 마지막 phase 다. 검증을 통과하면 `index.json` 을 완료 상태로 바꾼다.
+
+- 최상위 `status` 를 `completed` 로 바꾼다
+- `phases` 의 각 항목 `status` 를 `completed` 로 바꾼다
+- `current_phase` 를 마지막 phase 번호로 둔다

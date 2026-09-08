@@ -1,12 +1,22 @@
 {
   "name": "plan065-fix-json-large-integer-precision",
   "description": "응답 JSON 의 큰 정수를 공통 파서로 문자열 보존해 messenger send 의 log-id 손실을 없앤다",
-  "status": "pending",
+  "status": "completed",
   "created_at": "2026-09-08",
   "total_phases": 2,
-  "current_phase": 1,
+  "current_phase": 2,
   "phases": [
-    { "number": 1, "file": "phase-01.md", "execution_profile": "standard", "status": "pending" },
-    { "number": 2, "file": "phase-02.md", "execution_profile": "standard", "status": "pending" }
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "status": "completed"
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "status": "completed"
+    }
   ]
 }

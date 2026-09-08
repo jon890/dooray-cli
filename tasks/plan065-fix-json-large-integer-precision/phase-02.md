@@ -175,3 +175,11 @@ node scripts/check-pii.mjs
 | `src/api/types.ts` | 수정 — `MessengerSendResult` 주석을 실측에 맞춤 |
 | `docs/code-architecture.md` | 수정 — api 절에 새 모듈 한 줄 |
 | `src/api/client.test.ts` | 신규 — `parseJson` 연결 검증 |
+
+## 완료 마킹
+
+이 plan 의 마지막 phase 다. 검증을 통과하면 `index.json` 을 완료 상태로 바꾼다.
+
+- 최상위 `status` 를 `completed` 로 바꾼다
+- `phases` 의 각 항목 `status` 를 `completed` 로 바꾼다
+- `current_phase` 를 마지막 phase 번호로 둔다

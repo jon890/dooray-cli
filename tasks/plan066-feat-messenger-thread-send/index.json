@@ -1,12 +1,22 @@
 {
   "name": "plan066-feat-messenger-thread-send",
   "description": "메신저 스레드 생성을 messenger thread-send 한 명령에 --log 분기로 추가한다",
-  "status": "pending",
+  "status": "completed",
   "created_at": "2026-09-08",
   "total_phases": 2,
-  "current_phase": 1,
+  "current_phase": 2,
   "phases": [
-    { "number": 1, "file": "phase-01.md", "execution_profile": "standard", "status": "pending" },
-    { "number": 2, "file": "phase-02.md", "execution_profile": "standard", "status": "pending" }
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "status": "completed"
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "status": "completed"
+    }
   ]
 }
