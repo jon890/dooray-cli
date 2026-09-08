@@ -17,7 +17,7 @@ related: []
 
 **4면 검사 체크리스트** (load-bearing 불변식인 경우 필수):
 1. **Schema / Type**: `src/api/types.ts` / `src/cache/types.ts` 에 정의
-2. **Cache writer & reader**: `src/cache/store.ts` 양쪽 모두 신 필드 처리와 atomic write
+2. **Cache writer & reader**: `src/cache/store.ts` 양쪽 모두 신 필드 처리
 3. **Resolver / Mapper**: 입력 매퍼가 새 필드를 드랍하지 않는지 (`grep` 확인)
 4. **Command / Formatter**: 사용자 가시 출력에서 일관 처리
 
