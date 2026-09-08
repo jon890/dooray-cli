@@ -47,10 +47,15 @@ export const messengerThreadSendCommand = new Command("thread-send")
     }
 
     // 스레드 첫 메시지는 선택이다. 생략을 허용하기 위해 에디터를 열지 않는다.
-    const threadBodyContent = await readBodyInputOrNull({
-      body: opts.threadBody,
-      bodyFile: opts.threadBodyFile,
-    });
+    //
+    // `--log` 분기는 이 값을 쓰지 않는다. 그런데도 읽으면 없는 파일을 준 경우
+    // 「무시됩니다」 경고를 낸 직후 ENOENT 로 죽는다. 경고와 동작이 어긋난다.
+    const threadBodyContent = opts.log
+      ? null
+      : await readBodyInputOrNull({
+          body: opts.threadBody,
+          bodyFile: opts.threadBodyFile,
+        });
 
     startSpinner("스레드 생성 중...");
     try {
