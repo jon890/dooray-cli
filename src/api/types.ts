@@ -635,7 +635,8 @@ export interface ChannelLogRequest {
   text: string;
 }
 
-// direct-send 응답은 { id } 만, channel logs 응답은 { id, channelId } — 하나의 타입으로 흡수
+// direct-send 응답은 id·channelId·senderId·sentAt·seq·text 를 함께 준다 (실측, ADR-051).
+// channel logs 응답은 { id, channelId }. 쓰는 필드만 선언해 하나의 타입으로 흡수한다.
 export interface MessengerSendResult {
   id: string;
   channelId?: string;

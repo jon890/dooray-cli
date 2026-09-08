@@ -111,4 +111,23 @@ describe('parseJsonPreservingLargeIntegers', () => {
   it('잘못된 JSON 은 오류를 던진다', () => {
     expect(() => parseJsonPreservingLargeIntegers('{invalid')).toThrow();
   });
+
+  // 감싸기는 잘못된 리터럴을 유효한 문자열로 바꿔 오류를 없앨 수 있다.
+  // JSON 숫자 문법을 통과한 정수만 감싸서, 깨진 응답이 그대로 오류로 드러나게 한다.
+  it('숫자가 없는 부호는 감싸지 않고 오류로 남긴다', () => {
+    expect(() => parseJsonPreservingLargeIntegers('{"a": -}')).toThrow();
+  });
+
+  it('선행 0 이 붙은 리터럴은 감싸지 않고 오류로 남긴다', () => {
+    expect(() => parseJsonPreservingLargeIntegers('{"a": 007}')).toThrow();
+  });
+
+  it('0 과 -0 은 유효한 정수라 그대로 숫자로 남는다', () => {
+    const result = parseJsonPreservingLargeIntegers('{"a": 0, "b": -0}') as {
+      a: unknown;
+      b: unknown;
+    };
+    expect(result.a).toBe(0);
+    expect(result.b).toBe(-0);
+  });
 });

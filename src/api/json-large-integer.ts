@@ -18,8 +18,24 @@
  * 자세한 배경은 docs/adr/051-json-large-integer-precision.md 를 참고한다.
  */
 
+// JSON 숫자 문법의 정수부다. 선행 0 과 숫자 없는 부호는 JSON 에서 불법이므로 감싸지 않는다.
+// 감싸면 잘못된 응답이 유효한 값으로 파싱돼 오류가 드러나지 않는다.
+const JSON_INTEGER = /^-?(?:0|[1-9]\d*)$/;
+
 function isDigit(ch: string | undefined): boolean {
-  return ch !== undefined && ch >= '0' && ch <= '9';
+  return ch !== undefined && ch >= "0" && ch <= "9";
+}
+
+/**
+ * 이 정수 리터럴을 Number 로 담으면 값이 달라지는지 본다.
+ *
+ * 문자열끼리 비교하면 `-0` 처럼 표기만 다르고 값은 같은 것을 손실로 잘못 본다.
+ * `BigInt` 로 값끼리 비교해 표기 차이를 판정에서 뺀다.
+ */
+function losesPrecision(literal: string): boolean {
+  const asNumber = Number(literal);
+  if (!Number.isInteger(asNumber)) return true;
+  return BigInt(literal) !== BigInt(asNumber);
 }
 
 /**
@@ -27,7 +43,7 @@ function isDigit(ch: string | undefined): boolean {
  * 문자열 리터럴 구간은 그대로 통과시켜 본문 안의 숫자는 건드리지 않는다.
  */
 function quoteLossyIntegers(text: string): string {
-  let result = '';
+  let result = "";
   let i = 0;
   const n = text.length;
 
@@ -38,7 +54,7 @@ function quoteLossyIntegers(text: string): string {
       const start = i;
       i++;
       while (i < n) {
-        if (text[i] === '\\') {
+        if (text[i] === "\\") {
           i += 2;
           continue;
         }
@@ -52,28 +68,28 @@ function quoteLossyIntegers(text: string): string {
       continue;
     }
 
-    if (ch === '-' || isDigit(ch)) {
+    if (ch === "-" || isDigit(ch)) {
       const start = i;
-      if (ch === '-') i++;
+      if (ch === "-") i++;
       while (isDigit(text[i])) i++;
 
       let isInteger = true;
 
-      if (text[i] === '.') {
+      if (text[i] === ".") {
         isInteger = false;
         i++;
         while (isDigit(text[i])) i++;
       }
 
-      if (text[i] === 'e' || text[i] === 'E') {
+      if (text[i] === "e" || text[i] === "E") {
         isInteger = false;
         i++;
-        if (text[i] === '+' || text[i] === '-') i++;
+        if (text[i] === "+" || text[i] === "-") i++;
         while (isDigit(text[i])) i++;
       }
 
       const literal = text.slice(start, i);
-      if (isInteger && String(Number(literal)) !== literal) {
+      if (isInteger && JSON_INTEGER.test(literal) && losesPrecision(literal)) {
         result += `"${literal}"`;
       } else {
         result += literal;
