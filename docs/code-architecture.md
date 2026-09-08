@@ -29,6 +29,7 @@ src/
     imapClient.ts           # IMAP 메일 조회 (imapflow + mailparser). resolveUidByMailId — 도착 시각으로 UID 이분 탐색 (ADR-040)
     smtpClient.ts           # SMTP 메일 발송 (nodemailer)
     types.ts                # 모든 API 요청/응답 타입
+    json-large-integer.ts   # 응답 JSON 의 19자리 식별자가 손실되는 정수 리터럴만 문자열로 보존해 파싱 (ADR-051)
 
   resolvers/
     me.ts                   # /common/v1/members/me → CachedMe (id·name·orgId; orgId 없으면 캐시 갱신)

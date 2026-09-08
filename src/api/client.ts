@@ -6,6 +6,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { normalizeDoorayMessage } from "../utils/dooray-message.js";
 import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "../utils/exit-codes.js";
 import { createTokenBucket, parseRateLimitHeaders } from "./rate-limiter.js";
+import { parseJsonPreservingLargeIntegers } from "./json-large-integer.js";
 import type {
   ProjectListResponse,
   PostListResponse,
@@ -160,6 +161,8 @@ export class DoorayApiClient {
       headers: {
         Authorization: this.authHeader,
       },
+      // 19자리 식별자를 Number 로 읽으면 정밀도가 깨진다. 손실 나는 리터럴만 문자열로 보존한다 (ADR-051).
+      parseJson: (text) => parseJsonPreservingLargeIntegers(text),
       // 429 는 재시도할 가치가 있지만, 동시 요청이 한꺼번에 재시도하면 같은 결과가 반복된다.
       // jitter 로 재시도 시점을 흩고, 아래 훅이 재시도분도 버킷을 거치게 한다.
       retry: {

@@ -59,3 +59,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-048](048-checks-to-mjs.md) — 문서 검사 스크립트를 셸에서 `node:` 빌트인만 쓰는 `.mjs` 로 옮긴다
 - [ADR-049](049-config-read-result-states.md) — `getConfig` 가 파일 부재와 손상과 읽기 실패를 구분해 돌려준다 (Issue #151)
 - [ADR-050](050-agent-overlay-boundary.md) — 전용 agent 를 두지 않고 저장소 고유 지침은 오버레이가 문서 경로로 실어 코어 역할 계약에 얹는다
+- [ADR-051](051-json-large-integer-precision.md) — 응답 JSON 의 큰 정수를 `ky` 의 `parseJson` 공통 파서로 문자열 보존 (`direct-send` 의 log-id 손실)
