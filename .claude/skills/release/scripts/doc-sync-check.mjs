@@ -54,7 +54,12 @@ function extractFromDiff() {
   for (const line of diff.stdout.split("\n")) {
     if (!line.startsWith("+") || line.startsWith("+++")) continue;
     for (const m of line.matchAll(/new Command\(\s*["'`]([^"'`]+)["'`]/g)) commands.add(m[1]);
-    for (const m of line.matchAll(/\.option\(\s*["'`](--[a-z0-9-]+)/gi)) options.add(m[1]);
+    // 옵션 선언은 `--json` 처럼 긴 이름만 있기도 하고 `-y, --yes` 처럼 짧은 플래그가
+    // 앞서기도 한다. 따옴표 안 전체를 잡아 그 안에서 긴 이름을 다시 훑는다.
+    // 여는 따옴표 바로 뒤에 `--` 를 요구하면 short-first 선언이 통째로 빠진다 (실측).
+    for (const m of line.matchAll(/\.option\(\s*["'`]([^"'`]+)["'`]/g)) {
+      for (const o of m[1].matchAll(/--[a-z0-9-]+/gi)) options.add(o[0]);
+    }
   }
   return { range, targets: [...commands, ...options] };
 }
