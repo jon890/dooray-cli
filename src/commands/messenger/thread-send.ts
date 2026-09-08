@@ -66,24 +66,25 @@ export const messengerThreadSendCommand = new Command("thread-send")
             bodyContent,
             threadBodyContent ?? undefined,
           );
-      stopSpinner(
-        true,
-        `스레드를 열었습니다 (log-id: ${res.result.id}, thread-channel-id: ${res.result.channelId})`,
-      );
+      // `channelId` 는 타입상 optional 이다. 문구를 만들기 전에 한 곳에서 검증해
+      // 세 출력 경로가 같은 실패로 모이게 한다. 검증을 quiet 경로에만 두면
+      // 나머지 둘이 `thread-channel-id: undefined` 를 그대로 낸다.
+      const threadChannelId = res.result.channelId;
+      if (!threadChannelId) {
+        throw new DoorayCliError(
+          "응답에 channelId가 없어 스레드 채널을 특정할 수 없습니다.",
+          EXIT_API_ERROR,
+        );
+      }
+
+      const summary = `스레드를 열었습니다 (log-id: ${res.result.id}, thread-channel-id: ${threadChannelId})`;
+      stopSpinner(true, summary);
       if (globalOpts.json) {
         printJson(res.result);
       } else if (globalOpts.quiet) {
-        if (!res.result.channelId) {
-          throw new DoorayCliError(
-            "응답에 channelId가 없어 --quiet로 출력할 값이 없습니다.",
-            EXIT_API_ERROR,
-          );
-        }
-        process.stdout.write(`${res.result.channelId}\n`);
+        process.stdout.write(`${threadChannelId}\n`);
       } else {
-        process.stdout.write(
-          `스레드를 열었습니다 (log-id: ${res.result.id}, thread-channel-id: ${res.result.channelId})\n`,
-        );
+        process.stdout.write(`${summary}\n`);
       }
     } catch (e) {
       stopSpinner(false);
