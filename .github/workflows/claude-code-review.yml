@@ -133,15 +133,16 @@ jobs:
             echo 'PROMPT_EOF'
           } >> "$GITHUB_OUTPUT"
 
-      # 단일 opus 리뷰어 — 일관성·정확도 우선 (4 병렬 specialist 대비).
-      # 일반 코드 리뷰 + 프로젝트 특화 4관점을 한 에이전트가 직접 검토.
-      - name: Claude 코드 리뷰 실행 (단일 opus 에이전트 + 인라인 리뷰)
+      - name: Claude 코드 리뷰 실행
         uses: anthropics/claude-code-action@v1.0.133
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_bots: "*"
           prompt: ${{ steps.prompt.outputs.text }}
-          claude_args: '--model opus --allowedTools "Bash,Read,Grep,Glob" --disallowedTools "Write,Edit"'
+          # Agent 는 프롬프트의 「거르기는 검토한 쪽이 하지 않는다」가 쓴다 (Task 는 그 레거시 별칭).
+          # allowedTools 는 허용 목록이라 여기 없으면 위임 절이 조용히 자가검토로 떨어진다.
+          # 서브 에이전트는 부모 권한을 상속하므로 disallowedTools 의 read-only 도 함께 적용된다.
+          claude_args: '--model opus --allowedTools "Bash,Read,Grep,Glob,Agent,Task" --disallowedTools "Write,Edit"'
 
       # 게시된 인라인 댓글 중 dummy / 길이 미달 / 마커 부재 entry 를 자동 정리
       # — Claude action 이 자연어 sanity check 를 무시하고 "test body" / "test2"
