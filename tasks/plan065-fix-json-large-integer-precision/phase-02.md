@@ -101,6 +101,30 @@ grep -n ": number" src/api/types.ts
 
 같은 절의 다른 항목들이 쓰는 형식을 그대로 따른다.
 
+### 6. `src/api/client.test.ts` 를 만들어 연결을 검증한다
+
+**이 phase 의 목표는 파서를 `ky` 인스턴스에 연결하는 것이므로, 그 연결 자체를 자동으로 검증한다.**
+`grep` 은 문자열이 있는지만 보고 `pnpm test` 의 기존 테스트는 큰 정수를 다루지 않아,
+둘 다 연결이 실제로 동작하는지 판정하지 못한다.
+
+`vitest` 를 쓴다. `vi.stubGlobal("fetch", ...)` 로 응답을 흉내 낸다.
+`ky` 는 전역 `fetch` 를 쓰므로 서버 없이 `DoorayApiClient` 를 통째로 거칠 수 있다.
+
+담을 것은 둘이다.
+
+| 확인할 것 | 흉내 낼 응답 본문 | 기대 |
+| --- | --- | --- |
+| 19자리 식별자가 문자열로 온다 | `{"header":{"resultCode":0,"resultMessage":"","isSuccessful":true},"result":{"id":1234567890123456789,"channelId":2222333344445555666,"sentAt":1788834599820,"seq":259}}` | `result.id` 가 문자열 `"1234567890123456789"`, `result.channelId` 가 문자열 `"2222333344445555666"` |
+| 안전 범위 값은 숫자로 남는다 | 위와 같은 응답 | `result.sentAt` 과 `result.seq` 가 숫자 |
+
+`client.sendDirectMessage("<memberId>", "메시지")` 로 호출한다.
+`DoorayApiClient` 의 생성자는 `(apiKey, baseUrl)` 을 받으므로 가짜 값을 준다.
+
+`afterEach` 에서 `vi.unstubAllGlobals()` 로 전역을 되돌린다.
+되돌리지 않으면 같은 파일의 다른 테스트와 뒤 파일이 흉내 낸 `fetch` 를 그대로 쓴다.
+
+**`parseJson` 을 떼면 이 테스트가 실패해야 한다.** 그것이 이 항목의 통과 조건이다.
+
 ## 검증
 
 ```bash
@@ -124,6 +148,13 @@ grep -c "ADR-051" docs/code-architecture.md                    # >= 1
 ```
 
 넷이 모두 맞아야 한다.
+
+연결을 검증하는 테스트를 따로 돌려 확인한다.
+
+```bash
+# cwd: <repo root>
+pnpm vitest run src/api/client.test.ts
+```
 
 주석이 실측에 맞게 고쳐졌는지 본다.
 
@@ -151,3 +182,4 @@ node scripts/check-pii.mjs
 | `src/api/client.ts` | 수정 — `ky.create` 에 `parseJson` 추가 |
 | `src/api/types.ts` | 수정 — `MessengerSendResult` 주석을 실측에 맞춤 |
 | `docs/code-architecture.md` | 수정 — api 절에 새 모듈 한 줄 |
+| `src/api/client.test.ts` | 신규 — `parseJson` 연결 검증 |

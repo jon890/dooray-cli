@@ -35,7 +35,10 @@ JSON.parse   1234567890123456800
 ## 의도 메모
 
 - **판정과 변환을 이 모듈 하나가 소유한다.** 호출부는 함수 하나만 부른다.
-  ADR-051 이 이것을 `ky` 의 `parseJson` 에 꽂는 형태로 쓰기로 정했고, 그 시그니처는 `(text: string) => unknown` 이다.
+  ADR-051 이 이것을 `ky` 의 `parseJson` 에 꽂는 형태로 쓰기로 정했다.
+  그 시그니처는 `node_modules/ky/distribution/types/options.d.ts:68` 이 정의하는
+  `(text: string, context: { request: Request; response: Response }) => unknown` 이다.
+  두 번째 인자는 이 파서가 쓰지 않으므로 받지 않는다. 인자가 적은 함수도 그 자리에 대입된다.
 - 문자열 리터럴 안의 숫자를 건드리면 본문이 바뀐다. 스캐너가 문자열 구간을 반드시 건너뛰어야 한다.
 - 실수와 지수 표기는 대상이 아니다. 식별자가 아니고, 문자열로 바꾸면 오히려 타입이 달라진다.
 
