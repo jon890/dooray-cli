@@ -28,6 +28,7 @@ src/
     rate-limiter.ts         # 요청 토큰 버킷. 응답 헤더로 서버 잔량과 동기화 (ADR-039)
     imapClient.ts           # IMAP 메일 조회 (imapflow + mailparser). resolveUidByMailId — 도착 시각으로 UID 이분 탐색 (ADR-040)
     smtpClient.ts           # SMTP 메일 발송 (nodemailer)
+    messenger-thread-request.ts # 스레드 생성 요청 경로·body 를 만드는 순수 함수. --log 유무로 channels/{id}/threads/create-and-send 와 logs/{log-id}/threads/create-and-send 를 가른다 (ADR-052)
     types.ts                # 모든 API 요청/응답 타입
     json-large-integer.ts   # 응답 JSON 의 19자리 식별자가 손실되는 정수 리터럴만 문자열로 보존해 파싱 (ADR-051)
 
@@ -114,6 +115,8 @@ src/
       index.ts              # messengerCommand 조립
       send.ts               # 1:1 DM — direct-send (--to id/email + body, resolveMember id/email 공유)
       channel-send.ts       # 대화방 — channels/{id}/logs (--channel id/이름 resolveMessengerChannel + body)
+      thread-send.ts        # 스레드 생성 — --log 유무로 두 endpoint 를 가르고 --quiet 은 스레드 채널 channelId 를 낸다 (ADR-052)
+      thread-options.ts     # thread-send 옵션 조합 판정 — --log 와 --thread-body 충돌 경고, stdin 중복 지정 차단 (ADR-052)
 
     project/
       list.ts

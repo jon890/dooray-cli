@@ -635,8 +635,19 @@ export interface ChannelLogRequest {
   text: string;
 }
 
+export interface ChannelThreadRequest {
+  text: string;
+  threadText?: string;
+}
+
+export interface LogThreadRequest {
+  text: string;
+}
+
 // direct-send 응답은 id·channelId·senderId·sentAt·seq·text 를 함께 준다 (실측, ADR-051).
 // channel logs 응답은 { id, channelId }. 쓰는 필드만 선언해 하나의 타입으로 흡수한다.
+// 스레드 생성 응답(threads/create-and-send)에서는 channelId 가 요청에 넣은 대화방 id 가 아니라
+// 새로 만들어진 스레드 채널의 id 다 (ADR-052)
 export interface MessengerSendResult {
   id: string;
   channelId?: string;

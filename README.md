@@ -203,6 +203,36 @@ dooray project tags group <project> "배포환경" --select-one        # 그룹�
 
 태그 이름·색상 수정과 태그 삭제는 Dooray API 에 경로가 없어 웹 설정 화면에서 한다.
 
+### 메신저로 알리기
+
+작업 결과를 메신저로 바로 보낸다.
+
+```bash
+dooray messenger send --to user@example.com --body "배포 완료됐습니다"   # 1:1 메시지
+dooray messenger channel-send --channel "배포알림" --body "v1.2.3 배포"  # 대화방 메시지
+```
+
+`send` 의 `--to` 는 멤버 ID 나 이메일을 받고 이름은 받지 않는다.
+`channel-send` 의 `--channel` 은 channelId 나 대화방 이름을 받고, 이름으로는 자신이 속한 방만 찾는다.
+`--body` 대신 `--body-file` 로 파일을 주거나 둘 다 생략해 `$EDITOR` 에서 쓸 수 있다.
+
+진행 상황을 여러 번 보고할 때는 스레드를 열어 그 안에 쌓는다.
+`thread-send` 에 `--quiet` 을 붙이면 새로 만들어진 스레드 채널의 id 가 나오고,
+그 값을 `channel-send` 의 `--channel` 에 주면 메시지가 스레드에 붙는다.
+
+```bash
+THREAD=$(dooray messenger thread-send --channel "배포알림" --body "v1.2.3 배포" --quiet)
+dooray messenger channel-send --channel "$THREAD" --body "테스트 통과"
+```
+
+`--thread-body` 로 스레드 첫 메시지를 함께 보낼 수 있고, 생략하면 스레드만 열린다.
+
+이미 올라간 메시지에 스레드를 열려면 그 메시지의 log-id 를 `--log` 로 준다.
+
+```bash
+dooray messenger thread-send --channel "배포알림" --log <logId> --body "빌드 로그"
+```
+
 ## 프로젝트 구조
 
 ```

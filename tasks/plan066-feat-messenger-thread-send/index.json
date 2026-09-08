@@ -1,6 +1,6 @@
 {
-  "name": "plan065-fix-json-large-integer-precision",
-  "description": "응답 JSON 의 큰 정수를 공통 파서로 문자열 보존해 messenger send 의 log-id 손실을 없앤다",
+  "name": "plan066-feat-messenger-thread-send",
+  "description": "메신저 스레드 생성을 messenger thread-send 한 명령에 --log 분기로 추가한다",
   "status": "completed",
   "created_at": "2026-09-08",
   "total_phases": 2,

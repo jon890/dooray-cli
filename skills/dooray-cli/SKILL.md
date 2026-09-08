@@ -224,6 +224,17 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | --- | --- |
 | 1:1 다이렉트 메시지 | `dooray messenger send --to "<id\|email>" --body "..."` — `--to` 는 ID 나 이메일만 받고 이름은 지원하지 않는다 |
 | 대화방 메시지 | `dooray messenger channel-send --channel "<channelId\|이름>" --body "..."` — 이름으로는 자신이 속한 방만 찾는다 |
+| 대화방 스레드 열기 | `dooray messenger thread-send --channel "<channelId\|이름>" --body "..."` — `--thread-body` 로 첫 메시지를 함께 보내고, `--log <log-id>` 로 이미 올라간 메시지에 연다 |
+
+진행 상황을 여러 번 보고할 때는 대화방 본문에 늘어놓지 말고 스레드에 쌓는다.
+`thread-send --quiet` 이 내는 값은 log-id 가 아니라 새로 만들어진 스레드 채널의 id 이고,
+그 값을 `channel-send --channel` 에 주면 메시지가 스레드에 붙는다.
+
+```bash
+THREAD=$(dooray messenger thread-send --channel "배포알림" --body "v1.2.3 배포" --quiet)
+dooray messenger channel-send --channel "$THREAD" --body "빌드 통과"
+dooray messenger channel-send --channel "$THREAD" --body "배포 완료"
+```
 
 ## 옵션 이름
 
