@@ -78,23 +78,23 @@ editor/    → api/client (현재 데이터 fetch) + resolvers/member
 
 ## API Client 구조
 
-```typescript
-class DoorayApiClient {
-  constructor(apiKey: string, baseUrl: string);
+`src/api/client.ts` 의 `DoorayApiClient` 하나가 모든 REST 호출을 들고 있다.
+메서드 목록은 여기 적지 않는다. 메서드가 늘 때마다 낡고, 그 파일을 열면 바로 보인다.
 
-  // 각 메서드는 ky 호출 + 에러 시 DoorayCliError throw
-  getMe(): Promise<MemberDetailResponse>;
-  getMemberDetail(memberId): Promise<MemberDetailResponse>;
-  getProjects(params?): Promise<ProjectListResponse>;
-  getProjectMemberGroups(projectId, params?): Promise<MemberGroupListResponse>;
-  getPosts(projectId, params?): Promise<PostListResponse>;
-  getPost(projectId, postId): Promise<PostDetailResponse>;
-  getPostStandalone(postId): Promise<PostDetailResponse>;  // GET /project/v1/posts/{postId} — projectId 불명일 때 (ADR-020)
-  createPost(projectId, body): Promise<CreatePostResponse>;
-  updatePost(projectId, postId, body): Promise<void>;
-  // ... (dooray-mcp-server DoorayClient 인터페이스와 1:1 대응)
-}
+```bash
+grep -n "^  async " src/api/client.ts
 ```
+
+메서드가 지키는 규약은 넷이다.
+
+- 생성자는 `apiKey` 와 `baseUrl` 만 받는다. 비즈니스 로직을 두지 않는다
+- 요청은 `api/rate-limiter` 의 토큰 버킷을 공유한다. 호출부는 요청 간격을 신경 쓰지 않는다
+- 응답 JSON 은 `parseJson` 에 물린 `json-large-integer` 파서를 거친다.
+  19자리 식별자가 정수로 파싱되면서 손실되는 것을 막는다
+- 실패는 `toDoorayCliError` 를 거쳐 `DoorayCliError` 로 바뀐다. ky 예외를 밖으로 내보내지 않는다
+
+새 endpoint 를 더할 때는 공식 문서를 먼저 확인한다. 절차는 `CLAUDE.md` 가 소유한다.
+공식 문서에 없는 경로를 쓰는 조건은 `docs/adr/062-undocumented-endpoint-policy.md` 가 소유한다.
 
 ## 커맨드 실행 흐름 (예: `dooray post done my-project 42`)
 
