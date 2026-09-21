@@ -21,191 +21,34 @@
 
 ```
 src/
-  index.ts                  # CLI entrypoint, Commander 루트 설정 + 등록이 끝난 명령 나무에 오류 안내 후크 걸기 (ADR-058)
-  version.ts                # CLI_VERSION — tsup 이 빌드 때 주입하는 `__DOORAY_CLI_VERSION__` 를 읽고, 없으면 "0.0.0-dev"
+  index.ts        # CLI entrypoint. Commander 루트와 명령 나무 조립
+  version.ts      # 빌드 때 주입된 CLI_VERSION
 
-  api/
-    client.ts               # DoorayApiClient — ky 기반 HTTP 래퍼
-    rate-limiter.ts         # 요청 토큰 버킷. 응답 헤더로 서버 잔량과 동기화 (ADR-039)
-    imapClient.ts           # IMAP 메일 조회 (imapflow + mailparser). resolveUidByMailId — 도착 시각의 일자로 SEARCH 해 UID 결정 (ADR-040)
-    smtpClient.ts           # SMTP 메일 발송 (nodemailer)
-    mailErrors.ts           # IMAP·SMTP 예외를 DoorayCliError 로 변환. 인증 실패는 exitCode 2, 연결 실패는 exitCode 1
-    messenger-thread-request.ts # 스레드 생성 요청 경로·body 를 만드는 순수 함수. --log 유무로 channels/{id}/threads/create-and-send 와 logs/{log-id}/threads/create-and-send 를 가른다 (ADR-052)
-    types.ts                # 모든 API 요청/응답 타입
-    json-large-integer.ts   # 응답 JSON 의 19자리 식별자가 손실되는 정수 리터럴만 문자열로 보존해 파싱 (ADR-051)
-
-  resolvers/
-    me.ts                   # /common/v1/members/me → CachedMe (id·name·orgId; orgId 없으면 캐시 갱신)
-    project.ts              # code·id → projectId. 입력 자동 분기: numeric 15+자리 → cache 우회 + 그대로 반환 / 그 외 → cache 매칭 (code+id). 공용 목록에서 못 찾으면 private 목록을 받아 다시 찾는다 (ADR-054). 권한 검증은 후속 API 4xx 위임 (ADR-030, Issue #78)
-    member.ts               # 입력 자동 분기: 15자리 숫자 / 이메일 / 이름. lookupMemberName + buildMemberNameMap (ADR-021) + buildOrganizationMemberNameMap — project 스코프 없는 곳(messenger)의 id→이름, 중복 제거 후 병렬 조회 (ADR-061)
-    workflow.ts             # name·class → workflowId
-    post.ts                 # postNumber → postId (API 호출)
-    wiki.ts                 # projectCode → wikiId / wikiId → homePageId (캐시). 공용과 private 두 프로젝트 캐시를 모두 보고, 거기서도 못 찾으면 private 목록을 받아 다시 찾는다 (ADR-054). fetchAllWikis 가 size 100 씩 totalCount 까지 순회 (ADR-043)
-    postRef.ts              # "code/number" 또는 raw postId → postId (post create / post edit --parent 공용)
-    tag.ts                  # name[] → tagIds + mandatory/selectOne 검증, 그룹 이름 → groupId (태그 목록의 tagGroup 에서 파생, ADR-041). attachTagNames 로 업무 응답의 태그 id 에 캐시의 이름을 붙임 (ADR-056)
-    milestone.ts            # name → milestoneId
-    match.ts                # 공용 매칭: 정확일치 → 부분일치 → 모호 시 에러. helpHint 옵션 + name 가드 (ADR-028)
-    post-input.ts           # --id / --url / positional / Dooray URL → {projectId, postId, ...} 단일 헬퍼 (ADR-020). 입력 토큰 타입 판별 (classifyPostInputToken) + 진입점별 검증 (ADR-020 보강)
-    comment-file-input.ts   # comment file 4개 명령 입력 분기 헬퍼 (parseCommentFilePositional pure + resolveCommentFileInput orchestrator, ADR-020 확장)
-    task-link.ts            # --link-task ref[] → TaskLinkInput[] (resolvePostInput + getPost detail 합성, post create/edit 인라인 변환)
-    member-group.ts         # projectId → CachedMemberGroup[] (캐시 우선). 응답 nested array 정규화 (`res.result.flat()`) + 입력 자동 분기 (15+자리 numeric → id 직접 / 그 외 → code matchByName) + 개별 code 누락 가드 (ADR-028, Issue #65 #76)
-    post-users.ts           # parseUserSpec + mergeUsers + resolveUserAdditions — post edit/create 의 cc/to 멤버·그룹 입력 분기 + 기존 users 와 append/clear/dedupe (ADR-025)
-    template.ts             # ensureTemplates + resolveTemplate (ADR-027, TTL 24h)
-    post-tags.ts            # mergeTagIds pure helper — post edit 의 --tag/--tag-clear/--tag-remove 머지 (clear → remove → add → dedupe, Issue #66, ADR-019 확장)
-    wiki-page-input.ts      # wiki page file 5 명령 입력 분기 (--id/--url/positional URL → {wikiId, pageId}, post-input.ts 패턴 mirror, ADR-020 확장)
-    messenger-channel.ts    # messenger channel-send --channel 분기: channelId(15+자리) 직접 / 그 외 GET channels title 매칭 (ADR-033)
-    mail-input.ts           # mail get/reply 인자 분류 (classifyMailInputToken) + mail id → UID 해석. 32비트 경계로 UID 와 mail id 를 가르고 BigInt 로 비교 (ADR-040)
-                            # 이 계열은 읽기 전용이다. 캐시되는 엔티티를 바꾸는 호출은 services/ 로 간다 (ADR-042)
-
-  services/                 # 캐시의 유효성을 깨는 변경. 성공 직후 무효해진 캐시를 지운다 (ADR-042)
-    tag.ts                  # createTag / updateTagGroup — POST tags, PUT tag-groups 후 clearTags
-    config.ts               # updateConfigValue / replaceConfig — apiKey·baseUrl 이 바뀌면 전체 캐시 삭제
-
-  cache/
-    store.ts                # ~/.dooray/cache/ 디렉토리 기반 CRUD + TTL 체크
-                            #   MEMBER_GROUPS_DIR = ~/.dooray/cache/member-groups/
-    types.ts                # CacheEntry·Cached* 인터페이스
-    last-run.ts             # ~/.dooray/last-run.json 단일 read/write (ADR-023, cache 디렉토리 외부 — cache clear 영향 없음)
-
-  config/
-    store.ts                # ~/.dooray/config.json CRUD. getConfig 는 absent·invalid·unreadable·ok 상태를 돌려준다 (ADR-049)
-    types.ts                # Config 인터페이스
-
-  skill/
-    context.ts              # dataRoot 결정 — 절대 경로 XDG_DATA_HOME 우선, 없으면 homeDir/.local/share/dooray-cli
-    manager.ts              # 설치 상태 판정 + 안전한 install/update + 활성 링크 전환
-    manifest.ts             # 관리형 저장소 매니페스트 타입 가드 + 콘텐츠 SHA-256
-
-  editor/
-    index.ts                # $EDITOR 실행 + YAML frontmatter 직렬화·파싱
-
-  formatters/
-    table.ts                # cli-table3 기반 테이블 출력
-    post.ts                 # Post 전용 포맷 (workflow 이름 등)
-    wiki.ts                 # Wiki 전용 포맷 (formatWikiTree — flat 배열 → parentPageId 로 트리 조립 후 ├─└─ 렌더, ADR-034). formatWikiList 는 project 열을 받아 표에 낸다 (ADR-043)
-    member.ts               # Member 상세/목록 포맷 (ADR-021)
-    comment.ts              # PostComment 상세 포맷 (table/JSON/quiet, Issue #45)
-    wiki-comment.ts         # WikiComment 전용 포맷 — page.id + creator.member 시그니처 차이 (post comment 와 mailUsers/files/mention 부재)
-    file-output.ts          # file 명령군 emit 헬퍼 (ADR-031) — download/download-all/delete 3종
-
-  utils/
-    errors.ts               # DoorayCliError (message + exitCode)
-    spinner.ts              # ora 래퍼 + setQuiet (--json/--quiet 시 noop proxy 반환, Issue #35 item 1)
-    exit-codes.ts           # 0 성공 / 1 API오류 / 2 인증실패 / 3 파라미터오류 / 4 설정오류
-    body-input.ts           # --body / --body-file → string (stdin "-" + 충돌 가드) + BODY_MIME_TYPES / resolveBodyMimeType / warnUnconvertedBody — --mime-type 의 우선순위와 경고를 한 곳에 둔다 (ADR-053)
-    dooray-url.ts           # task URL (/task/to/<postId> + /task/<projectId>/<postId> + /project/tasks/<postId>) + wiki URL (/wiki/<wikiId>/<pageId>) parser (ADR-020)
-    comment-enrich.ts       # PostComment[] Creator 이름 채우기 (ADR-021, immutable)
-    body-markup.ts          # 본문 형식별 링크 문법과 지원 판정 (buildLink / checkMarkupSupport / escapeLinkText, ADR-055) — 아래 셋이 이것을 쓴다
-    mention.ts              # 멤버·그룹 멘션 마크업 빌더 + prependMentions — 선택 형식 인자 (Issue #25, ADR-055)
-    task-link.ts            # 업무 링크 빌더 (buildTaskLink / appendTaskLinks / parseLinkRef) — 선택 형식 인자, escapeLinkText 는 body-markup 재export (Issue #33, ADR-055)
-    feedback-meta.ts        # CLI 버전·환경 수집 + GitHub issue body 빌더 + buildLastRunBlock (ADR-022, ADR-023)
-    argv-sanitize.ts        # argv 시크릿 패턴 마스킹 (--api-key/--token/--password/Authorization, ADR-023)
-    command-hint.ts         # 실행된 argv 에서 positional 을 빼고 --id 를 끼운 완성 명령 문자열 빌더 (ADR-044)
-    comment-files.ts        # 확장자별 이미지/일반 링크 생성 + 두 형식 제거 — 선택 형식 인자와 removed 반환 (ADR-024, ADR-055)
-    wiki-snippet.ts         # wiki inline_image 본문 삽입용 markdown reference 빌더 (ADR-031 보강, Issue #81)
-    dooray-message.ts       # resultMessage URL-encoding 디코드 정규화 (API 에러 메시지 표시용)
-    attachment-check.ts     # 본문 markdown 의 attachment 참조(fileId 와 라벨) 추출 (post edit 누락 confirm, comment file list 병합)
-    format-size.ts          # 바이트 → B/KB/MB 표기, 값 없으면 "-" (file list 3 명령 공용)
-    comment-file-merge.ts   # 댓글 files 와 본문 참조 합집합 + 업무 첨부 목록으로 이름·크기 보강 (ADR-024)
-    delete-confirmation.ts  # 삭제 공통 확인 정책: -y/--yes 우회, TTY 기본 아니오, non-TTY 선차단 (ADR-036)
-    config-value.ts         # `config set <key> <value>` 의 값 확정 — "-" 는 stdin 에서 읽고 양끝 공백을 제거하며 빈 값은 에러
-    dooray-id.ts            # Dooray 식별자의 상위 비트에 담긴 생성 시각을 밀리초로 푼다 (BigInt, mail id → UID 조회에 사용)
-    inline-file-refs.ts     # 본문에서 /files/<id> 참조를 뽑는다 — 순서 유지, 중복 제거 (ADR-057)
-    sanitize.ts             # sanitizeForTerminal — 서버 문자열의 control char 를 출력 직전 ? 로 바꾼다. attachment-check 의 sanitizeFileName 과 messenger logs 표가 공유
-    unknown-option-hint.ts  # 알 수 없는 옵션 오류에 인자 사용법을 붙이고, 명령 나무 전체에 그 후크를 건다 (ADR-058)
-
-  commands/
-    setup.ts                # dooray setup — 대화형 초기 설정 마법사 (스킬 설치 포함)
-    skill.ts                # dooray skill status|install|update
-    config.ts               # dooray config set|get
-    doctor.ts               # dooray doctor
-    cache.ts                # dooray cache clear|refresh
-    feedback.ts             # dooray feedback — gh CLI 로 GitHub 이슈 생성 (ADR-022, --last 는 ADR-023)
-    messenger/              # dooray messenger (ADR-033)
-      index.ts              # messengerCommand 조립
-      send.ts               # 1:1 DM — direct-send (--to id/email + body, resolveMember id/email 공유)
-      channel-send.ts       # 대화방 — channels/{id}/logs (--channel id/이름 resolveMessengerChannel + body)
-      thread-send.ts        # 스레드 생성 — --log 유무로 두 endpoint 를 가르고 --quiet 은 스레드 채널 channelId 를 낸다 (ADR-052)
-      thread-options.ts     # thread-send 옵션 조합 판정 — --log 와 --thread-body 충돌 경고, stdin 중복 지정 차단 (ADR-052)
-      logs.ts               # 대화방 읽기 — GET channels/{id}/logs. -n 상한 1000 초과는 거부, 표·--quiet 은 대화 순서로 뒤집고 --json 은 서버 순서 유지, hasMore 는 stderr 안내 (ADR-061)
-
-    project/
-      list.ts
-      members.ts
-      workflows.ts
-      groups.ts               # dooray project groups <project>
-      tags.ts                 # dooray project tags — 그룹 명령 조립 + list 동작 (인자 있는 기존 호출 호환)
-      tags-create.ts          # dooray project tags create — 이름·color 정규화 후 services/tag 의 createTag 호출 (ADR-041, ADR-042)
-      tags-group.ts           # dooray project tags group — mandatory/selectOne 현재값 병합 후 services/tag 의 updateTagGroup 호출 (ADR-041, ADR-042)
-      templates.ts            # dooray project templates — 프로젝트 템플릿 목록 조회 (resolvers/template 의 캐시 활용, ADR-027)
-
-    member/
-      index.ts              # member 서브커맨드 등록
-      get.ts                # dooray member get <member-id> (cache 우회, ADR-021)
-      list.ts               # dooray member list <project> (project 캐시 활용)
-      search.ts             # dooray member search (org-wide, ad-hoc, 캐시 미사용)
-
-    post/
-      list.ts               # --tag <name> 반복 지정 → tagIds 필터 (여러 개면 모두 가진 업무, ADR-056)
-      search.ts
-      get.ts                # --with-tag-names 로 --json 의 tags[] 에 name 을 채움 (ADR-056)
-      create.ts
-      edit.ts               # $EDITOR 또는 제목·본문·태그·참조자·담당자·--mime-type 옵션 기반 비대화형 수정
-      done.ts
-      workflow.ts
-      comment/
-        list.ts
-        latest.ts             # 최신 댓글 N개 단축 조회
-        get.ts                # 단일 댓글 상세 (positional 3 / --id / --url + --comment-id, Issue #45)
-        add.ts
-        edit.ts               # 댓글 수정 — --body / --body-file / $EDITOR fallback, --mime-type 단독 지정은 본문을 유지한 채 비대화형 수정
-        delete.ts             # 댓글 삭제 (공통 confirm ADR-036)
-        file/
-          index.ts            # commentFileCommand 조립
-          list.ts             # 댓글 files + 본문 파일 링크 병합·메타데이터 보강 (ADR-024)
-          upload.ts           # 파일 업로드 + 댓글 reference append
-          download.ts         # post-level 다운로드 wrapper (UX 일관성, ADR-024)
-          delete.ts           # 공통 confirm 후 reference 제거 + 파일 삭제 (atomic 보장 X, ADR-024/036)
-      file/
-        list.ts               # 첨부파일 목록
-        download.ts           # 단일 파일 다운로드 (--json/--quiet 스키마 ADR-031)
-        download-all.ts       # 전체 파일 다운로드 (--json: count/succeeded/failed, ADR-031)
-        upload.ts             # 파일 업로드 (--json: res.result raw, --quiet: id, ADR-031)
-        delete.ts             # 파일 삭제 (공통 confirm ADR-036, --json/--quiet 스키마 ADR-031)
-
-    wiki/
-      list.ts
-      pages.ts
-      tree.ts               # 페이지 계층 트리 (root 부터 레벨별 재귀 drill-down, --depth 상한, ADR-034) — text 트리 / --json flat(parentPageId)
-      page-get.ts
-      page-create.ts
-      page-edit.ts          # $EDITOR + 비대화형 플래그(--title/--body/--body-file/--mime-type)
-      page-move.ts          # 부모 변경, 정렬 변경, 위키 간 이동을 공식 move endpoint 로 호출 (ADR-047)
-      page-delete.ts        # 페이지 삭제 (공식 DELETE endpoint, ADR-032) — 공통 confirm ADR-036, resolveWikiPageInput
-      page-file/
-        index.ts            # wikiPageFileCommand 조립
-        list.ts             # 페이지 첨부 목록 (getWikiPage 응답의 files[] + images[] 합성)
-        upload.ts           # 파일 업로드 (multipart type 먼저 → file, ADR-029) + --type general|inline_image (--json/--quiet 스키마 ADR-031)
-        download.ts         # 단일 파일 다운로드 (307 redirect, ADR-015 패턴) (--json 스키마 ADR-031)
-        download-all.ts     # 페이지 모든 첨부 + inline image 일괄 다운로드 (--json: count/succeeded/failed, ADR-031)
-        delete.ts           # 파일 삭제 (공통 confirm ADR-036, --json 스키마 ADR-031)
-      page-comment/
-        index.ts            # wikiPageCommentCommand 조립
-        list.ts             # 댓글 목록 (size/page/--latest 지원, 최신순)
-        latest.ts           # 최신 댓글 1건 shortcut (= list --latest 1)
-        get.ts              # 단일 댓글 본문 + creator + 메타
-        add.ts              # 댓글 추가 — --body / --body-file / $EDITOR fallback (post comment add mirror, mention 없음)
-        edit.ts             # 댓글 수정 — --body / --body-file / $EDITOR fallback
-        delete.ts           # 댓글 삭제 (공통 confirm ADR-036)
-        parse-args.ts       # page-comment 7 명령 공용 인자 분류 — positional 과 --id/--url 을 {wikiId, pageId, commentId} 로 나눈다
-
-    mail/
-      list.ts               # 메일 목록 (--unread, --search)
-      get.ts                # 메일 상세 조회 (UID / 웹 주소 / mail id 입력 분기)
-      send.ts               # 메일 발송 (--to, --cc, --bcc, --html)
-      reply.ts              # 메일 답장 (In-Reply-To 스레드 유지, get.ts 와 입력 분기 공유)
-      logout.ts             # 저장된 메일 인증정보 제거 (공통 confirm ADR-036)
+  api/            # HTTP·IMAP·SMTP 래퍼와 API 요청·응답 타입
+  resolvers/      # 사람이 준 이름·URL·부분 입력을 식별자로 바꾼다. 읽기 전용
+  services/       # 캐시의 유효성을 깨는 변경. 성공 직후 해당 캐시를 지운다
+  cache/          # ~/.dooray/cache/ 파일 CRUD 와 TTL
+  config/         # ~/.dooray/config.json CRUD
+  skill/          # 번들 스킬의 설치 상태 판정과 install/update
+  editor/         # $EDITOR 실행과 frontmatter 직렬화
+  formatters/     # 엔티티별 표·JSON·quiet 출력
+  utils/          # 오류, 종료 코드, 본문 입력, 마크업, 확인 절차 같은 공용 조각
+  commands/       # 명령 하나에 파일 하나. 위 계층을 조합한다
+    messenger/  project/  member/  post/  wiki/  mail/
 ```
+
+파일 하나하나가 무엇을 하는지는 여기 적지 않는다.
+같은 사실을 코드 주석과 ADR 과 이 문서 셋에 두면 갱신 지점이 셋이 되고, 그중 하나가 낡는다.
+
+| 알고 싶은 것 | 보는 곳 |
+| --- | --- |
+| 이 파일이 무엇을 하는가 | 그 파일의 머리말 주석 |
+| 왜 이렇게 만들었는가 | `docs/adr/INDEX.md` 에서 찾은 ADR |
+| 어느 계층에 두어야 하는가 | 아래 「모듈 의존 관계」 |
+| 어떤 명령과 옵션이 있는가 | `README.md` 와 `dooray <명령> --help` |
+
+새 파일을 더할 때 이 절에 줄을 더하지 않는다. 디렉터리가 새로 생길 때만 고친다.
+
 
 ## 모듈 의존 관계
 

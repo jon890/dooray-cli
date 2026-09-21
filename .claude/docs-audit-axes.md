@@ -24,7 +24,7 @@
 | [docs/flow.md](../docs/flow.md) | 사용자 흐름, 명령 사용 패턴 |
 | [docs/adr/](../docs/adr/) | 기술 의사결정, 왜, 대안 기각 |
 | [docs/data-schema.md](../docs/data-schema.md) | 캐시 구조, TTL, resolver 로직 |
-| [docs/code-architecture.md](../docs/code-architecture.md) | 디렉터리 트리, 레이어, 의존 방향, API 전략 |
+| [docs/code-architecture.md](../docs/code-architecture.md) | 디렉터리 책임, 레이어, 의존 방향 |
 | [CLAUDE.md](../CLAUDE.md) | 코드 작업 지침 |
 | [README.md](../README.md), [skills/dooray-cli/](../skills/dooray-cli/) | 사용자와 에이전트 대상 사용 가이드 |
 
@@ -33,9 +33,9 @@
 코드와 docs 가 맞는지, 제거된 엔티티가 docs 에 남아 있는지 본다.
 
 ```bash
-# code-architecture.md 의 resolvers 트리 vs 실제
-DOC=$(sed -n '/^  resolvers\/$/,/^  services\//p' docs/code-architecture.md | grep -E '^    [A-Za-z][A-Za-z0-9-]*\.ts' | awk '{print $1}' | sort -u)
-SRC=$(find src/resolvers -maxdepth 1 -type f -name '*.ts' -exec basename {} \; | grep -v '\.test\.ts$' | sort -u)
+# code-architecture.md 의 디렉터리 트리 vs 실제 (파일이 아니라 디렉터리만 본다)
+DOC=$(grep -oE '^  [a-z][a-z-]*/' docs/code-architecture.md | tr -d ' /' | sort -u)
+SRC=$(find src -maxdepth 1 -mindepth 1 -type d -exec basename {} \; | sort -u)
 diff <(printf '%s\n' "$DOC") <(printf '%s\n' "$SRC")
 
 # data-schema.md 캐시 목록 vs src/cache/store.ts 의 상수
@@ -57,8 +57,9 @@ grep -oE '\([0-9]+-[a-z0-9-]+\.md\)' docs/adr/INDEX.md | tr -d '()' | while read
 done
 ```
 
-A축의 resolver 대조 명령은 `docs/code-architecture.md` 의 `resolvers/` 절만 검사한다.
-`postRef.ts` 처럼 대문자가 들어간 파일은 걸리고, `services/` 절 이후 파일은 제외되어야 한다.
+A축의 트리 대조는 디렉터리까지만 본다.
+`docs/code-architecture.md` 는 파일 하나하나를 적지 않기로 했으므로 파일 목록을 대조하지 않는다.
+파일이 무엇을 하는지는 그 파일의 머리말 주석이, 왜 그런지는 ADR 이 소유한다.
 
 ## B. 과대화
 
