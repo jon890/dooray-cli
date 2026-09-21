@@ -371,7 +371,7 @@ src/
 | --- | --- |
 | [docs/prd.md](docs/prd.md) | 제품 목적과 범위 |
 | [docs/flow.md](docs/flow.md) | 사용자 흐름 |
-| [docs/code-architecture.md](docs/code-architecture.md) | 디렉터리 트리, 레이어, API 전략 |
+| [docs/code-architecture.md](docs/code-architecture.md) | 디렉터리 책임, 레이어, 의존 방향 |
 | [docs/data-schema.md](docs/data-schema.md) | 캐시 구조와 TTL |
 | [docs/adr/INDEX.md](docs/adr/INDEX.md) | 기술 의사결정 기록 |
 

@@ -25,7 +25,7 @@ ls docs/*.md docs/adr/*.md docs/api/* docs/pitfalls/**/*.md docs/retrospectives/
 | `docs/flow.md`                                               | 사용자 흐름·명령 사용 패턴                |
 | `docs/adr/` (ADR 1개 = 파일 1개, 목록은 `docs/adr/INDEX.md`) | 기술 의사결정·왜·대안 기각                |
 | `docs/data-schema.md`                                        | `~/.dooray/cache/` 구조·TTL·resolver 로직 |
-| `docs/code-architecture.md`                                  | 디렉터리 트리·레이어·API 전략             |
+| `docs/code-architecture.md`                                  | 디렉터리 책임·레이어·의존 방향             |
 | `docs/pitfalls/` (라우터는 `INDEX.md`)                          | 반복 실패 패턴 카탈로그                   |
 | `docs/retrospectives/` (색인은 `INDEX.md`, 실행 기록은 `RUNS.md`)  | plan 실행 회고                            |
 | `docs/api/official-endpoints.txt`                            | 공식 API endpoint 목록 (`pnpm api:inventory` 의 대조 기준) |
