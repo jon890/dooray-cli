@@ -14,15 +14,15 @@ description: dooray-cli 의 새 버전을 npm 에 내보낸다. "/release", "릴
 
 ## 워크플로 개요
 
-| 단계 | 이름 | 통과 조건 |
-| --- | --- | --- |
-| 1 | 변경 분석 | 직전 태그 이후 커밋을 분류했고 close 대상 이슈를 사용자가 확정했다 |
-| 2 | 문서 동기화 | `doc-sync-check.mjs` 가 종료 코드 0 으로 끝났다 |
-| 3 | 버전 올리기 | `main` 에서 `package.json` 의 `version` 을 올렸다 |
-| 4 | 검증 | `preflight.mjs` 가 종료 코드 0 으로 끝났다 |
-| 5 | 태그와 Release | 태그를 밀었고 Release 를 만들었다 |
-| 6 | 게시 | npm 에 새 버전이 올라갔다 |
-| 7 | 마감 | `verify-release.mjs` 가 종료 코드 0 으로 끝났고 close 대상 이슈가 닫혔다 |
+| 단계 | 이름 | 통과 조건 | reference |
+| --- | --- | --- | --- |
+| 1 | 변경 분석 | 직전 태그 이후 커밋을 분류했고 close 대상 이슈를 사용자가 확정했다 | |
+| 2 | 문서 동기화 | `doc-sync-check.mjs` 가 종료 코드 0 으로 끝났다 | |
+| 3 | 버전 올리기 | `main` 에서 `package.json` 의 `version` 을 올렸다 | |
+| 4 | 검증 | `preflight.mjs` 가 종료 코드 0 으로 끝났다 | |
+| 5 | 태그와 Release | 태그를 밀었고 Release 를 만들었다 | |
+| 6 | 게시 | npm 에 새 버전이 올라갔다 | `references/publish.md` |
+| 7 | 마감 | `verify-release.mjs` 가 종료 코드 0 으로 끝났고 close 대상 이슈가 닫혔다 | |
 
 단계마다 실패하면 즉시 멈추고 사용자에게 보고한다.
 

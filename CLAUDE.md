@@ -140,17 +140,22 @@ CI 가 같은 스크립트를 돌린다.
 
 ## 저장소 스킬 작성 규약
 
-`.claude/skills/` 의 스킬은 셋을 순서대로 둔다.
-목표 한 문장, 단계와 통과 조건을 담은 워크플로 개요 표, 그리고 워크플로 상세다.
+`.claude/skills/` 의 스킬은 목표 한 문장, 워크플로 개요 표, 워크플로 상세를 이 순서로 둔다.
+개요 표의 열은 단계, 이름, 통과 조건, reference 다. 통과 조건은 종료 코드처럼 관측할 수 있는 사실로 쓴다.
+명령 카탈로그처럼 순서가 없는 스킬은 개요 표를 두지 않는다.
 
 - **반복되는 절차와 판정은 그 스킬의 `scripts/*.mjs` 로 옮긴다.**
-  이 저장소는 Node 기반이고 `.claude/skills/release/scripts/preflight.mjs` 가 선례다.
-  저장소 전체가 쓰는 검사는 root 의 `scripts/` 에 둔다. `scripts/check-pii.mjs` 와 `scripts/verify-package.mjs` 가 그쪽 선례다
-- **실행 함정은 스크립트가 흡수한다.** 사람이 읽고 지켜야 하는 규칙으로 문서에 남기지 않는다.
-  예로 옵션 문자열을 `grep` 에 넘기면 자기 옵션으로 해석되므로, 스크립트가 파일을 직접 읽어 찾는다
+  선례는 `.claude/skills/release/scripts/preflight.mjs` 다.
+  저장소 전체가 쓰는 검사는 root 의 `scripts/` 에 두고, `scripts/check-pii.mjs` 와 `scripts/verify-package.mjs` 가 그쪽 선례다
+- **스크립트로 막을 수 있는 실행 함정은 스크립트가 처리한다.**
+  옵션 문자열을 `grep` 에 넘기면 자기 옵션으로 해석되므로 스크립트가 파일을 직접 읽어 찾는다.
+  스크립트로 막을 수 없는 함정은 그 단계 절에 실패 조건과 관측 결과를 함께 적는다
 - 스킬 스크립트는 저장소 root 를 스스로 찾아 이동하고, 각 명령의 종료 코드를 그 자리에서 읽는다.
   출력을 `tail` 이나 `head` 로 잇지 않는다. 파이프 뒤의 `$?` 는 마지막 명령의 것이라 실패가 0 으로 보인다
-- 판단이 갈리는 배경 지식만 `references/` 에 둔다. 절차는 본문이 소유한다
+- pnpm 과 npm 은 Windows 에서 `.cmd` 라서 `shell` 없이 spawn 하면 ENOENT 로 실패한다.
+  `process.platform === "win32"` 일 때 `shell: true` 로 부른다
+- `references/` 에는 특정 상황에서만 필요한 것, 한 단계 안에서만 쓰는 상세 절차, 길고 자주 바뀌는 목록을 둔다.
+  본문에는 그 파일을 읽을 조건과 경로만 남기고 내용을 요약하지 않는다
 
 ## Git
 

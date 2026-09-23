@@ -46,7 +46,8 @@ const failed = [];
 
 for (const { name, cmd, args } of CHECKS) {
   console.log(`\n=== ${name} ===`);
-  const r = spawnSync(cmd, args, { stdio: "inherit", shell: false });
+  // Windows 에서는 pnpm 이 pnpm.cmd 라서 shell 없이 spawn 하면 ENOENT 가 난다.
+  const r = spawnSync(cmd, args, { stdio: "inherit", shell: process.platform === "win32" });
   if (r.error) {
     console.log(`실패: ${name} (${r.error.message})`);
     failed.push(name);
