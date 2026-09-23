@@ -5,7 +5,7 @@ description: dooray-cli 의 새 버전을 npm 에 내보낸다. "/release", "릴
 
 # release
 
-**목표: 검증을 통과한 커밋에 버전을 붙여 npm 에 내보내고, 그 릴리스가 무엇을 담았는지 사용자가 읽을 수 있게 남긴다.**
+**목표: 검증을 통과한 커밋을 npm 에 내보내고, 릴리스 내용이 기록됐으며 확정한 이슈가 닫혔다.**
 
 - 검증에 실패하면 게시하지 않는다.
 - 태그가 가리키는 버전과 `package.json` 이 같아야 한다.
@@ -16,6 +16,7 @@ description: dooray-cli 의 새 버전을 npm 에 내보낸다. "/release", "릴
 
 | 단계 | 이름 | 통과 조건 | reference |
 | --- | --- | --- | --- |
+| 시작 전 | main 최신화 | `main` 으로 옮겨 origin 최신 커밋 위에 로컬 커밋을 올렸다 | |
 | 1 | 변경 분석 | 직전 태그 이후 커밋을 분류했고 close 대상 이슈를 사용자가 확정했다 | |
 | 2 | 문서 동기화 | `doc-sync-check.mjs` 가 종료 코드 0 으로 끝났다 | |
 | 3 | 버전 올리기 | `main` 에서 `package.json` 의 `version` 을 올렸다 | |
@@ -24,12 +25,26 @@ description: dooray-cli 의 새 버전을 npm 에 내보낸다. "/release", "릴
 | 6 | 게시 | npm 에 새 버전이 올라갔다 | `references/publish.md` |
 | 7 | 마감 | `verify-release.mjs` 가 종료 코드 0 으로 끝났고 close 대상 이슈가 닫혔다 | |
 
-단계마다 실패하면 즉시 멈추고 사용자에게 보고한다.
+2단계와 4단계의 실패는 그 절의 복구를 따른다.
+태그를 민 뒤인 5~7단계에서 실패하면 멈추고 사용자에게 보고한다.
 
-스크립트는 모두 `<repo root>` 에서 돌린다.
+명령 블록은 저장소 root 에서 붙여넣는다. 스크립트는 그 뒤 root 를 스스로 확인한다.
 실행 규약은 `CLAUDE.md` 의 "저장소 스킬 작성 규약" 이 소유한다.
 
 ## 워크플로 상세
+
+### 시작 전. main 최신화
+
+`main` 이 아닌 곳에서 분석과 문서 보완을 시작하면 커밋이 릴리스 밖에 남을 수 있다.
+
+```bash
+git switch main
+git fetch origin
+git rebase origin/main
+```
+
+`pull --ff-only` 를 쓰지 않는 이유는 릴리스 직전에 로컬 미push 커밋이 남아 있을 수 있어서다.
+`rebase` 는 그 커밋을 origin 최신 커밋 위로 옮긴다.
 
 ### 1. 변경 분석
 
@@ -63,22 +78,9 @@ gh issue list --state open --json number,title --jq '.[] | "#\(.number)  \(.titl
 node .claude/skills/release/scripts/doc-sync-check.mjs
 ```
 
-**1단계에서 뽑은 목록을 넘기지 않는다.** 추출 규칙과 종료 코드는 그 스크립트의 머리말이 소유한다.
-
 종료 코드 1 이면 누락이다. 누락 항목과 넣을 위치를 보고하고 보완 커밋을 따로 만든 뒤 다음으로 간다.
 
 ### 3. 버전 올리기
-
-`main` 이 아닌 곳에서 올리면 커밋이 다른 브랜치에 남고 태그가 엉뚱한 커밋을 가리킨다.
-
-```bash
-git switch main
-git fetch origin
-git rebase origin/main
-```
-
-`pull --ff-only` 를 쓰지 않는 이유는 릴리스 직전에 로컬 미push 커밋이 남아 있을 수 있어서다.
-`rebase` 는 그것을 origin 최신 위로 올린다.
 
 **`package.json` 의 `version` 필드만 바꾼다.** `src/index.ts` 는 손대지 않는다.
 CLI 버전은 빌드 시 `package.json` 에서 주입되고, 4단계가 둘이 같은지 확인한다.
@@ -92,27 +94,31 @@ CLI 버전은 빌드 시 `package.json` 에서 주입되고, 4단계가 둘이 �
 node .claude/skills/release/scripts/preflight.mjs
 ```
 
-검사 목록은 그 스크립트가 소유하고 CI 의 release 워크플로와 같은 집합이다.
+검사 목록은 그 스크립트가 소유한다.
+CI release 워크플로의 태그-버전 일치와 pre-release 거부는 게시 단계에서 따로 검사한다.
 실패한 것을 마지막에 나열한다.
 
-**종료 코드가 0 이 아니면 게시하지 않는다.**
 개인 식별 정보 검사가 걸리면 `CLAUDE.md` 의 대체 표를 따라 교체하고 보완 커밋을 만든 뒤 다시 돌린다.
 사용자가 명시로 동의하지 않는 한 릴리스를 막는다.
 
 통과하면 커밋하고 push 한다. 버전 올리기와 다른 관심사를 한 커밋에 담지 않는다.
 
 ```bash
+VERSION="" # package.json 에 넣은 버전에서 v를 뺀 값을 넣는다.
+: "${VERSION:?VERSION을 넣는다}"
 [ "$(git branch --show-current)" = "main" ] || { echo "STOP: main 이 아니다"; exit 1; }
 git add package.json
-git commit -m "chore(release): <version> 으로 버전을 올린다"
+git commit -m "chore(release): $VERSION 으로 버전을 올린다"
 git push origin main
 ```
 
 ### 5. 태그와 Release
 
 ```bash
-git tag -a "v<version>" -m "v<version>"
-git push origin "v<version>"
+VERSION="" # package.json 에 넣은 버전에서 v를 뺀 값을 넣는다.
+: "${VERSION:?VERSION을 넣는다}"
+git tag -a "v$VERSION" -m "v$VERSION"
+git push origin "v$VERSION"
 ```
 
 기존 태그를 force-update 하지 않는다. 새 태그만 만든다.
@@ -124,8 +130,11 @@ git push origin "v<version>"
 7단계가 본문의 escape 잔재를 확인한다.
 
 ```bash
-~/.claude/skills/korean-check/scripts/check.sh <노트 파일>
-gh release create "v<version>" --title "v<version>" --notes-file <노트 파일> --verify-tag
+VERSION="" # package.json 에 넣은 버전에서 v를 뺀 값을 넣는다.
+NOTES="" # 작성하고 검사한 릴리스 노트 파일 경로를 넣는다.
+: "${VERSION:?VERSION을 넣는다}" "${NOTES:?NOTES를 넣는다}"
+~/.claude/skills/korean-check/scripts/check.sh "$NOTES"
+gh release create "v$VERSION" --title "v$VERSION" --notes-file "$NOTES" --verify-tag
 ```
 
 `--verify-tag` 는 태그가 올라가지 않은 상태에서 릴리스가 만들어지는 것을 막는다.
@@ -140,18 +149,21 @@ gh release create "v<version>" --title "v<version>" --notes-file <노트 파일>
 ### 7. 마감
 
 ```bash
-node .claude/skills/release/scripts/verify-release.mjs <version>
+VERSION="" # package.json 에 넣은 버전에서 v를 뺀 값을 넣는다.
+: "${VERSION:?VERSION을 넣는다}"
+node .claude/skills/release/scripts/verify-release.mjs "$VERSION"
 ```
 
-로컬과 origin 의 태그, Release 의 draft 상태, 본문의 escape 잔재,
-npm 이 내는 최신 버전 넷을 확인한다. npm 색인 반영에 수 분 걸리므로
-마지막 항목만 실패하면 잠시 후 다시 돌린다.
+npm 색인 반영만 실패하면 잠시 후 같은 명령을 다시 실행한다.
 
 **종료 코드 0 을 받은 뒤에만** 1단계에서 확정한 이슈를 닫는다.
 
 ```bash
-RELEASE_URL="https://github.com/jon890/dooray-cli/releases/tag/v<version>"
-for n in <이슈 번호 목록>; do
-  gh issue close "$n" --comment "v<version> 에서 구현이 끝나 닫는다. ${RELEASE_URL}"
+VERSION="" # package.json 에 넣은 버전에서 v를 뺀 값을 넣는다.
+ISSUES=(12 34) # 1단계에서 확정한 이슈 번호로 바꾼다.
+: "${VERSION:?VERSION을 넣는다}"
+RELEASE_URL="https://github.com/jon890/dooray-cli/releases/tag/v$VERSION"
+for n in "${ISSUES[@]}"; do
+  gh issue close "$n" --comment "v$VERSION 에서 구현이 끝나 닫는다. ${RELEASE_URL}"
 done
 ```

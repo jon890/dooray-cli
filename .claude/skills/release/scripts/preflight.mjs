@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// 릴리스 전 검증을 한 번에 돌린다. CI 의 release 워크플로와 같은 집합이다.
+// 릴리스 전에 코드, 문서, 패키지 산출물과 빌드된 CLI 버전을 검사한다.
+// CI release 워크플로의 태그-버전 일치와 pre-release 거부는 게시 단계에서 따로 검사한다.
 //
 // 종료 코드
 //   0  전부 통과
@@ -9,15 +10,9 @@
 // 검사마다 자식 프로세스의 종료 코드를 그 자리에서 읽는다.
 // 셸에서 파이프로 이어 붙이면 $? 가 파이프 마지막 명령의 것이 되어 실패가 0 으로 보인다.
 
-import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-
-function repoRoot() {
-  const r = spawnSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" });
-  if (r.status !== 0) return null;
-  return r.stdout.trim() || null;
-}
+import { repoRoot, run } from "./lib.mjs";
 
 const root = repoRoot();
 if (!root) {
@@ -46,13 +41,12 @@ const failed = [];
 
 for (const { name, cmd, args } of CHECKS) {
   console.log(`\n=== ${name} ===`);
-  // Windows 에서는 pnpm 이 pnpm.cmd 라서 shell 없이 spawn 하면 ENOENT 가 난다.
-  const r = spawnSync(cmd, args, { stdio: "inherit", shell: process.platform === "win32" });
+  const r = run(cmd, args, { stdio: "inherit" });
   if (r.error) {
     console.log(`실패: ${name} (${r.error.message})`);
     failed.push(name);
   } else if (r.status !== 0) {
-    console.log(`실패: ${name} (종료 코드 ${r.status})`);
+    console.log(`실패: ${name} (${r.signal ? `시그널 ${r.signal}` : `종료 코드 ${r.status}`})`);
     failed.push(name);
   } else {
     console.log(`통과: ${name}`);
@@ -63,7 +57,7 @@ for (const { name, cmd, args } of CHECKS) {
 // 주입된다. 문서에 적힌 다른 버전 숫자는 기능의 최소 버전 하한일 수 있어 대상이 아니다.
 console.log("\n=== 버전 일치 ===");
 const pkgVersion = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version;
-const built = spawnSync("node", ["dist/index.js", "--version"], { encoding: "utf8" });
+const built = run(process.execPath, ["dist/index.js", "--version"]);
 const builtVersion = built.status === 0 ? built.stdout.trim() : "읽지 못함";
 console.log(`package.json=${pkgVersion}  dist=${builtVersion}`);
 if (pkgVersion !== builtVersion) {

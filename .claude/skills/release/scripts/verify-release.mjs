@@ -18,7 +18,8 @@
 //   1  하나 이상 실패
 //   2  인자가 없거나 저장소 root 를 찾지 못했다
 
-import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { repoRoot, run } from "./lib.mjs";
 
 const version = process.argv[2]?.replace(/^v/, "");
 if (!version) {
@@ -27,14 +28,12 @@ if (!version) {
 }
 const tag = `v${version}`;
 
-const root = spawnSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" });
-if (root.status !== 0) {
+const root = repoRoot();
+if (!root) {
   console.error("git 저장소 안에서 실행한다.");
   process.exit(2);
 }
-process.chdir(root.stdout.trim());
-
-const run = (cmd, args) => spawnSync(cmd, args, { encoding: "utf8" });
+process.chdir(root);
 const failed = [];
 
 const check = (name, ok, detail) => {
@@ -66,7 +65,7 @@ if (rel.status !== 0) {
 }
 
 // 4. npm
-const pkgName = JSON.parse(run("cat", ["package.json"]).stdout).name;
+const pkgName = JSON.parse(readFileSync("package.json", "utf8")).name;
 const npmVersion = run("npm", ["view", pkgName, "version"]).stdout.trim();
 check(
   "npm 최신 버전",
