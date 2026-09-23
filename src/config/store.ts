@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import type { Config } from "./types.js";
-import { DEFAULTS } from "./types.js";
+import { CONFIG_SET_KEYS, DEFAULTS } from "./types.js";
 
 const DOORAY_DIR = join(homedir(), ".dooray");
 const CONFIG_PATH = join(DOORAY_DIR, "config.json");
@@ -232,7 +232,7 @@ export async function setConfigValue(
       break;
     default:
       throw new DoorayCliError(
-        `알 수 없는 설정 키: ${key}\n사용 가능한 키: api-key, base-url, tenant-name, imap-host, imap-port, imap-username, imap-password, smtp-host, smtp-port, track-last-run`,
+        `알 수 없는 설정 키: ${key}\n사용 가능한 키: ${Object.keys(CONFIG_SET_KEYS).join(", ")}`,
         EXIT_CONFIG_ERROR,
       );
   }

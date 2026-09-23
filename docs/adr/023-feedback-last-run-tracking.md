@@ -5,6 +5,8 @@
 2. **에러시만**: `src/index.ts` 최상위 `catch` 에서만 `~/.dooray/last-run.json` 작성
 3. **최소 세트**: argv (sanitized), exitCode, errorMessage, timestamp. `cwd`/`env` 제외
 4. **argv 패턴 마스킹**: `--api-key=*` / `--token=*` / `--password=*` / `Authorization: Bearer *`
+   - `config set <key> <value>` 에서 key 가 비밀값(`api-key`, `imap-password`)이면 value 를 `***` 로 바꾼다. 비밀값 여부는 `src/config/types.ts` 의 `CONFIG_SET_KEYS` 가 정하고, value 가 stdin 표시 `-` 면 그대로 둔다
+5. **첨부 전 확인**: `feedback --last` 는 `--title` 이 있어도 본문 미리보기를 stderr 로 내고 확인을 받는다(기본값 아니오). non-TTY 에서 `--yes` 가 없으면 `EXIT_PARAM_ERROR` 로 중단한다. 마스킹은 패턴 기반이라 놓친 값이 공개 이슈에 올라갈 수 있다
 
 `feedback` 자체는 기록 안 함 (재귀 방지).
 단일 파일 덮어쓰기 — use case 는 직전 1건만.

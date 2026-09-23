@@ -3,15 +3,36 @@
  * ADR-023 sanitization 룰 표 기준.
  */
 
+import { isSecretConfigKey } from "../config/types.js";
+
 const KEY_VALUE_PATTERNS = [
   /^(--api-key|--token|--password)=(.+)$/,
 ];
 const SEPARATED_KEYS = new Set(["--api-key", "--token", "--password"]);
 
+/**
+ * `config set <key> <value>` 에서 key 가 비밀값이면 value 의 위치를 돌려준다.
+ * `-` 는 stdin 에서 읽으라는 표시라 값이 아니므로 가리지 않는다.
+ */
+function secretConfigValueIndexes(argv: string[]): Set<number> {
+  const indexes = new Set<number>();
+  for (let i = 0; i + 3 < argv.length; i++) {
+    if (argv[i] !== "config" || argv[i + 1] !== "set") continue;
+    if (isSecretConfigKey(argv[i + 2]) && argv[i + 3] !== "-") indexes.add(i + 3);
+  }
+  return indexes;
+}
+
 export function sanitizeArgv(argv: string[]): string[] {
   const out: string[] = [];
+  const secretValues = secretConfigValueIndexes(argv);
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
+
+    if (secretValues.has(i)) {
+      out.push("***");
+      continue;
+    }
 
     // --key=value 형태
     let kvMatch: RegExpMatchArray | null = null;
