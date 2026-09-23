@@ -6,7 +6,8 @@ import { openInEditor } from "../../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { readBodyInputOrNull, BODY_MIME_TYPES, resolveBodyMimeType, warnUnconvertedBody } from "../../../utils/body-input.js";
 import { DoorayCliError } from "../../../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import { EXIT_API_ERROR, EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import type { PostComment } from "../../../api/types.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js";
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";
@@ -97,21 +98,28 @@ export const commentEditCommand = new Command("edit")
     }
 
     startSpinner("댓글 조회 중...");
-    const { projectId, postId, projectCode } = await resolvePostInput(client, {
-      projectArg,
-      postNumberArg,
-      idOpt: opts.id,
-      urlOpt: opts.url,
-      argv: process.argv.slice(2),
-    });
-    const comments = await client.getPostComments(projectId, postId);
-    const comment = comments.result.find((c) => c.id === commentId);
-    stopSpinner(true, "댓글 조회 완료");
-
-    if (!comment) {
-      process.stderr.write(`댓글을 찾을 수 없습니다: ${commentId}\n`);
-      process.exit(1);
+    let resolved: Awaited<ReturnType<typeof resolvePostInput>>;
+    let comment: PostComment | undefined;
+    try {
+      resolved = await resolvePostInput(client, {
+        projectArg,
+        postNumberArg,
+        idOpt: opts.id,
+        urlOpt: opts.url,
+        argv: process.argv.slice(2),
+      });
+      // 목록 조회는 첫 페이지만 돌려주므로 단건 조회로 가져온다. 없는 댓글이면 client 가 API 오류로 바꿔 던진다.
+      comment = (await client.getPostComment(resolved.projectId, resolved.postId, commentId)).result;
+    } catch (e) {
+      stopSpinner(false);
+      throw e;
     }
+    if (!comment) {
+      stopSpinner(false);
+      throw new DoorayCliError(`댓글을 찾을 수 없습니다: ${commentId}`, EXIT_API_ERROR);
+    }
+    stopSpinner(true, "댓글 조회 완료");
+    const { projectId, postId, projectCode } = resolved;
 
     // 멘션 옵션 처리
     const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);

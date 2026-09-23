@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   startSpinner: vi.fn(),
   stopSpinner: vi.fn(),
   client: {
+    getPostComment: vi.fn(),
     getPostComments: vi.fn(),
     updatePostComment: vi.fn(),
   },
@@ -124,7 +125,7 @@ beforeEach(() => {
 
 describe("post comment edit mimeType 보존", () => {
   it("text/html 댓글을 수정해도 text/html 로 나간다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/html")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/html") });
     const program = await createCommandTree();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 
@@ -152,7 +153,7 @@ describe("post comment edit mimeType 보존", () => {
   });
 
   it("markdown 댓글은 그대로 text/x-markdown 으로 나간다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/x-markdown")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/x-markdown") });
     const program = await createCommandTree();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 
@@ -194,7 +195,7 @@ describe("post comment edit --mime-type", () => {
   ];
 
   it("지정하면 기존 형식 대신 그 값으로 나간다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/html")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/html") });
     const program = await createCommandTree();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 
@@ -210,7 +211,7 @@ describe("post comment edit --mime-type", () => {
   });
 
   it("단독 지정하면 $EDITOR 없이 기존 본문을 그대로 두고 형식만 바꾼다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/html")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/html") });
     mocks.readBodyInputOrNull.mockResolvedValue(null);
     const program = await createCommandTree();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
@@ -228,7 +229,7 @@ describe("post comment edit --mime-type", () => {
   });
 
   it("--dry-run 미리보기에 지정한 형식이 나온다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/x-markdown")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/x-markdown") });
     const program = await createCommandTree();
     let output = "";
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
@@ -260,7 +261,7 @@ describe("post comment edit --mime-type", () => {
   });
 
   it("허용하지 않는 값이면 Commander 가 거부한다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/html")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/html") });
     const program = await createCommandTree();
     exitOverrideAll(program);
 
@@ -273,8 +274,8 @@ describe("post comment edit --mime-type", () => {
 
 describe("post comment edit mimeType 폴백", () => {
   it("body.mimeType 이 없으면 text/x-markdown 으로 나간다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({
-      result: [{ id: "comment-1", body: { content: "기존 댓글" }, files: [] }],
+    mocks.client.getPostComment.mockResolvedValue({
+      result: { id: "comment-1", body: { content: "기존 댓글" }, files: [] },
     });
     const program = await createCommandTree();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
@@ -310,7 +311,7 @@ describe("post comment edit 본문 형식별 마크업", () => {
   ];
 
   it("마크다운 댓글의 멘션은 종전 문자열을 본문 앞에 붙인다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/x-markdown")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/x-markdown") });
     const program = await createCommandTree();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 
@@ -331,7 +332,7 @@ describe("post comment edit 본문 형식별 마크업", () => {
   });
 
   it("HTML 댓글의 멘션은 표기가 없어 EXIT_PARAM_ERROR 로 거절한다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/html")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/html") });
     const program = await createCommandTree();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 
@@ -344,7 +345,7 @@ describe("post comment edit 본문 형식별 마크업", () => {
   });
 
   it("HTML 댓글의 업무 링크도 같은 종료 코드로 거절한다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/html")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/html") });
     const program = await createCommandTree();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 
@@ -357,7 +358,7 @@ describe("post comment edit 본문 형식별 마크업", () => {
   });
 
   it("거절은 멤버와 업무를 해석하기 전에 한다", async () => {
-    mocks.client.getPostComments.mockResolvedValue({ result: [comment("text/html")] });
+    mocks.client.getPostComment.mockResolvedValue({ result: comment("text/html") });
     const program = await createCommandTree();
     const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
 
@@ -368,5 +369,65 @@ describe("post comment edit 본문 형식별 마크업", () => {
     expect(mocks.resolveMember).not.toHaveBeenCalled();
     expect(mocks.resolveTaskLinks).not.toHaveBeenCalled();
     stdout.mockRestore();
+  });
+});
+
+describe("post comment edit 댓글 조회", () => {
+  const baseArgs = [
+    "node", "dooray", "post", "comment", "edit",
+    "--id", "post-1", "--comment-id", "comment-99", "--body", "수정된 댓글",
+  ];
+
+  it("목록의 첫 페이지가 아니라 댓글 ID 로 단건 조회한다", async () => {
+    mocks.client.getPostComment.mockResolvedValue({
+      result: { ...comment("text/x-markdown"), id: "comment-99" },
+    });
+    const program = await createCommandTree();
+    const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+
+    await program.parseAsync(baseArgs);
+
+    expect(mocks.client.getPostComment).toHaveBeenCalledWith("project-1", "post-1", "comment-99");
+    expect(mocks.client.getPostComments).not.toHaveBeenCalled();
+    expect(mocks.client.updatePostComment).toHaveBeenCalledWith(
+      "project-1",
+      "post-1",
+      "comment-99",
+      { body: { mimeType: "text/x-markdown", content: "수정된 댓글" } },
+    );
+    stdout.mockRestore();
+  });
+
+  it("단건 조회의 API 오류는 종료 코드를 유지한 채 전역 핸들러로 넘긴다", async () => {
+    const { DoorayCliError } = await import("../../../utils/errors.js");
+    mocks.client.getPostComment.mockRejectedValue(
+      new DoorayCliError("API 호출 실패: 댓글이 없습니다", 1),
+    );
+    const program = await createCommandTree();
+    const exit = vi.spyOn(process, "exit");
+
+    await expect(program.parseAsync(baseArgs)).rejects.toMatchObject({
+      name: "DoorayCliError",
+      exitCode: 1,
+    });
+    expect(exit).not.toHaveBeenCalled();
+    expect(mocks.stopSpinner).toHaveBeenCalledWith(false);
+    expect(mocks.client.updatePostComment).not.toHaveBeenCalled();
+    exit.mockRestore();
+  });
+
+  it("응답에 댓글이 없으면 process.exit 대신 DoorayCliError 를 던진다", async () => {
+    mocks.client.getPostComment.mockResolvedValue({ result: null });
+    const program = await createCommandTree();
+    const exit = vi.spyOn(process, "exit");
+
+    await expect(program.parseAsync(baseArgs)).rejects.toMatchObject({
+      name: "DoorayCliError",
+      exitCode: 1,
+      message: expect.stringContaining("comment-99"),
+    });
+    expect(exit).not.toHaveBeenCalled();
+    expect(mocks.client.updatePostComment).not.toHaveBeenCalled();
+    exit.mockRestore();
   });
 });
