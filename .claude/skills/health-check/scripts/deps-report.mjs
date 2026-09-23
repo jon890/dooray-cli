@@ -15,12 +15,13 @@
 //   2  저장소 root 나 pnpm 을 찾지 못했거나 pnpm 출력을 읽지 못했다
 
 import { readFileSync } from "node:fs";
-import { enterRepoRoot, majorOf, parseJsonOrNull, run, severityRank } from "./lib.mjs";
+import { classifyAdvisories, enterRepoRoot, majorOf, parseAuditReport, parseJsonOrNull, run } from "./lib.mjs";
 
-enterRepoRoot();
-const asJson = process.argv.includes("--json");
+function main() {
+  enterRepoRoot();
+  const asJson = process.argv.includes("--json");
 
-const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+  const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 
 // pnpm outdated 는 낡은 것이 있으면 종료 코드 1 을 낸다. 1 은 정상 결과로 본다.
 const outdatedRun = run("pnpm", ["outdated", "--format", "json"]);
@@ -51,41 +52,12 @@ const outdated = Object.entries(outdatedRaw).map(([name, o]) => {
 
 // pnpm audit 도 취약점이 있으면 1 을 낸다.
 const auditRun = run("pnpm", ["audit", "--json"]);
-const audit = parseJsonOrNull(auditRun.stdout);
-if (!audit || typeof audit !== "object") {
+const audit = parseAuditReport(auditRun.stdout);
+if (!audit) {
   console.error(`pnpm audit 의 JSON 출력을 읽지 못했다 (종료 코드 ${auditRun.status})\n${auditRun.stderr}`);
   process.exit(2);
 }
-
-const directDeps = new Set([
-  ...Object.keys(pkg.dependencies ?? {}),
-  ...Object.keys(pkg.devDependencies ?? {}),
-]);
-
-const advisories = Object.values(audit.advisories ?? {}).map((a) => {
-  const findings = a.findings ?? [];
-  const paths = findings.flatMap((f) => f.paths ?? []);
-  // 경로는 ".>tsup>postcss" 형태다. 두 번째 조각이 직접 의존성이다.
-  const via = [...new Set(paths.map((p) => p.split(">")[1]).filter(Boolean))];
-  return {
-    id: a.github_advisory_id ?? String(a.id),
-    module: a.module_name,
-    severity: a.severity,
-    title: a.title,
-    installed: [...new Set(findings.map((f) => f.version))].join(", "),
-    patched: a.patched_versions,
-    scope: findings.some((f) => f.dev === false) ? "runtime" : "dev",
-    via,
-    direct: directDeps.has(a.module_name),
-    url: a.url,
-  };
-});
-advisories.sort(
-  (x, y) =>
-    (x.scope === y.scope ? 0 : x.scope === "runtime" ? -1 : 1) ||
-    severityRank(x.severity) - severityRank(y.severity) ||
-    x.module.localeCompare(y.module),
-);
+const advisories = classifyAdvisories(audit, pkg);
 
 const result = {
   engines: pkg.engines ?? {},
@@ -143,4 +115,12 @@ if (asJson) {
   console.log(lines.join("\n"));
 }
 
-process.exit(outdated.length + advisories.length > 0 ? 1 : 0);
+  process.exit(outdated.length + advisories.length > 0 ? 1 : 0);
+}
+
+try {
+  main();
+} catch (error) {
+  console.error(`의존성 측정을 실행하지 못했다: ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(2);
+}

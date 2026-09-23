@@ -2,8 +2,8 @@
 // 의존성 갱신을 임시 워크트리에서 시험한다. 작업 중인 checkout 은 건드리지 않는다.
 //
 //   node .claude/skills/health-check/scripts/trial-update.mjs --range
-//   node .claude/skills/health-check/scripts/trial-update.mjs --pkg imapflow@^2 --pkg nodemailer@^10
-//   node .claude/skills/health-check/scripts/trial-update.mjs --range --dev-pkg vite@^8.3.0 --keep
+//   node .claude/skills/health-check/scripts/trial-update.mjs --pkg NAME@SPEC
+//   node .claude/skills/health-check/scripts/trial-update.mjs --range --dev-pkg NAME@SPEC --keep
 //
 // 옵션
 //   --range         pnpm update 로 package.json 범위 안 최신까지 올린다
@@ -29,7 +29,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { enterRepoRoot, parseJsonOrNull, run } from "./lib.mjs";
+import { classifyAdvisories, enterRepoRoot, parseAuditReport, run } from "./lib.mjs";
 
 const argv = process.argv.slice(2);
 const pkgs = [];
@@ -54,7 +54,7 @@ if (!range && pkgs.length === 0 && devPkgs.length === 0) {
   process.exit(2);
 }
 if ([...pkgs, ...devPkgs].some((p) => !p || !/^(@[^/]+\/)?[^@]+@.+$/.test(p))) {
-  console.error("--pkg 와 --dev-pkg 는 NAME@SPEC 형식이다. 예: --pkg imapflow@^2.0.5");
+  console.error("--pkg 와 --dev-pkg 는 NAME@SPEC 형식이다.");
   process.exit(2);
 }
 
@@ -79,9 +79,9 @@ if (add.status !== 0) {
 const steps = [];
 function step(name, cmd, args, { judge = true } = {}) {
   const r = run(cmd, args, { cwd: wt });
-  const log = join(outDir, `${steps.length + 1}-${name.replace(/[^\w-]+/g, "_")}.log`);
+  const log = join(outDir, `${name.replace(/[^\w-]+/g, "_")}.log`);
   writeFileSync(log, `$ ${cmd} ${args.join(" ")}\n\n${r.stdout}\n${r.stderr}`);
-  steps.push({ name, status: r.status, log, judge });
+  steps.push({ name, status: r.status, signal: r.signal, log, judge });
   return r;
 }
 
@@ -107,7 +107,9 @@ try {
   }
 
   const audit = step("audit", "pnpm", ["audit", "--json"], { judge: false });
-  const vulns = parseJsonOrNull(audit.stdout)?.metadata?.vulnerabilities ?? null;
+  const auditReport = parseAuditReport(audit.stdout);
+  const updatedPkg = JSON.parse(readFileSync(join(wt, "package.json"), "utf8"));
+  const advisories = auditReport ? classifyAdvisories(auditReport, updatedPkg) : null;
 
   const diff = run("git", ["diff", "--", "package.json", "pnpm-lock.yaml"], { cwd: wt });
   const patch = join(outDir, "changes.patch");
@@ -124,12 +126,22 @@ try {
   lines.push("| --- | --- | --- |");
   for (const s of steps) {
     const mark = s.judge ? (s.status === 0 ? "통과" : "실패") : "보고만";
-    lines.push(`| ${s.name} | ${s.status} (${mark}) | \`${s.log}\` |`);
+    const status = s.signal ? `${s.status}, ${s.signal}` : String(s.status);
+    lines.push(`| ${s.name} | ${status} (${mark}) | \`${s.log}\` |`);
   }
   lines.push("");
-  if (vulns) {
-    const v = Object.entries(vulns).filter(([, n]) => n > 0).map(([k, n]) => `${k} ${n}`).join(", ");
-    lines.push(`갱신 후 취약점: ${v || "없음"}`);
+  if (!auditReport) {
+    lines.push("갱신 후 취약점: 읽지 못함");
+    lines.push("");
+  } else if (advisories.length === 0) {
+    lines.push("갱신 후 취약점: 없음", "");
+  } else {
+    lines.push("## 갱신 후 남은 advisory", "");
+    lines.push("| 패키지 | 등급 | 거쳐 오는 직접 의존성 |");
+    lines.push("| --- | --- | --- |");
+    for (const advisory of advisories) {
+      lines.push(`| \`${advisory.module}\` | ${advisory.severity} | ${advisory.via.map((name) => `\`${name}\``).join(", ") || "직접 의존성"} |`);
+    }
     lines.push("");
   }
   if (pkgDiff.length > 0) {
