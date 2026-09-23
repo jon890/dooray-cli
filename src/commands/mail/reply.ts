@@ -1,5 +1,4 @@
 import { Command } from "commander";
-import { readFile } from "node:fs/promises";
 import { getConfigOrThrow } from "../../config/store.js";
 import { getMail } from "../../api/imapClient.js";
 import { sendMail } from "../../api/smtpClient.js";
@@ -10,6 +9,7 @@ import { resolveMailTarget, resolveMailUid } from "../../resolvers/mail-input.js
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { sanitizeFileName } from "../../utils/attachment-check.js";
+import { readBodyInput } from "../../utils/body-input.js";
 
 function sanitizeReplyPreview(value: string): string {
   return sanitizeFileName(value).replace(/[\x80-\x9F\u2028\u2029]/g, "?");
@@ -18,8 +18,8 @@ function sanitizeReplyPreview(value: string): string {
 export const mailReplyCommand = new Command("reply")
   .description("메일 답장")
   .argument("<target>", "메일 UID / 메일 웹 주소 / 웹 주소의 mail id")
-  .option("--body <text>", "답장 본문")
-  .option("--body-file <path>", "답장 본문 파일 경로")
+  .option("--body <text>", "답장 본문 (- 입력 시 stdin)")
+  .option("--body-file <path>", "답장 본문 파일 경로 (- 입력 시 stdin)")
   .option("--cc <addresses...>", "참조")
   .option("--html", "본문을 HTML로 전송")
   .option("-y, --yes", "원본 메일 확인 생략 (자동화용)")
@@ -36,13 +36,9 @@ export const mailReplyCommand = new Command("reply")
     }
     const config = await getConfigOrThrow();
 
-    let body = opts.body ?? "";
-    if (opts.bodyFile) {
-      body = await readFile(opts.bodyFile, "utf-8");
-    }
+    const body = await readBodyInput(opts);
     if (!body) {
-      process.stderr.write("오류: --body 또는 --body-file을 지정하세요\n");
-      process.exit(3);
+      throw new DoorayCliError("--body 또는 --body-file을 지정하세요", EXIT_PARAM_ERROR);
     }
 
     const spinner = startSpinner(

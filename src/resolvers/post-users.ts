@@ -2,6 +2,18 @@ import type { DoorayApiClient } from "../api/client.js";
 import type { CreatePostUser } from "../api/types.js";
 import { resolveMember } from "./member.js";
 import { resolveMemberGroup } from "./member-group.js";
+import { DoorayCliError } from "../utils/errors.js";
+import { EXIT_API_ERROR } from "../utils/exit-codes.js";
+
+/**
+ * 어느 이름에서 실패했는지 접두사를 붙이되 종료 코드는 원래 오류의 것을 이어받는다.
+ * 인증 실패(2)나 입력 오류(3)가 1 로 바뀌면 호출하는 스크립트가 원인을 구분하지 못한다.
+ */
+export function wrapLookupError(prefix: string, err: unknown): DoorayCliError {
+  const msg = err instanceof Error ? err.message : String(err);
+  const exitCode = err instanceof DoorayCliError ? err.exitCode : EXIT_API_ERROR;
+  return new DoorayCliError(`${prefix}: ${msg}`, exitCode, { cause: err });
+}
 
 // PURE — member-id 와 group-id 의 sync 변환. mock 없이 단위 테스트.
 export function parseUserSpec(
@@ -56,16 +68,14 @@ export async function resolveUserAdditions(
   const memberIds = await Promise.all(
     names.map((n) =>
       resolveMember(client, projectId, n).catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        throw new Error(`멤버 '${n}' 조회 실패: ${msg}`);
+        throw wrapLookupError(`멤버 '${n}' 조회 실패`, err);
       }),
     ),
   );
   const groups = await Promise.all(
     groupCodes.map((c) =>
       resolveMemberGroup(client, projectId, c).catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : String(err);
-        throw new Error(`그룹 '${c}' 조회 실패: ${msg}`);
+        throw wrapLookupError(`그룹 '${c}' 조회 실패`, err);
       }),
     ),
   );

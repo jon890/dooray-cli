@@ -33,20 +33,12 @@ configCommand
   .argument("<key>", "설정 키 (api-key, base-url)")
   .argument("<value>", "설정 값 (`-` 이면 stdin 에서 읽음)")
   .action(async (key: string, value: string) => {
-    try {
-      const { cacheCleared } = await updateConfigValue(
-        key,
-        await resolveConfigValue(value),
-      );
-      console.log(chalk.green(`✓ ${key} 설정 완료`));
-      if (cacheCleared) console.log(chalk.gray(cacheClearedNotice(key)));
-    } catch (err) {
-      if (err instanceof DoorayCliError) {
-        console.error(chalk.red(err.message));
-        process.exit(err.exitCode);
-      }
-      throw err;
-    }
+    const { cacheCleared } = await updateConfigValue(
+      key,
+      await resolveConfigValue(value),
+    );
+    console.log(chalk.green(`✓ ${key} 설정 완료`));
+    if (cacheCleared) console.log(chalk.gray(cacheClearedNotice(key)));
   });
 
 configCommand
@@ -57,8 +49,10 @@ configCommand
     const result = await getConfig();
     if (result.state !== "ok") {
       // config get 은 값 표시 명령이라 읽기 실패 원인은 세부 복구 흐름 없이 같은 오류로 다룬다.
-      console.error(chalk.red("설정 파일이 없습니다. dooray config set 으로 설정하세요."));
-      process.exit(EXIT_CONFIG_ERROR);
+      throw new DoorayCliError(
+        "설정 파일이 없습니다. dooray config set 으로 설정하세요.",
+        EXIT_CONFIG_ERROR,
+      );
     }
     const config = result.config;
 
@@ -70,8 +64,10 @@ configCommand
     if (key) {
       const val = display[key];
       if (val === undefined) {
-        console.error(chalk.red(`알 수 없는 설정 키: ${key}\n사용 가능한 키: api-key, base-url`));
-        process.exit(EXIT_CONFIG_ERROR);
+        throw new DoorayCliError(
+          `알 수 없는 설정 키: ${key}\n사용 가능한 키: api-key, base-url`,
+          EXIT_CONFIG_ERROR,
+        );
       }
       console.log(`${key}: ${val}`);
     } else {
