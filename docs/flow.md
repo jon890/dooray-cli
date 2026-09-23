@@ -1,725 +1,1183 @@
-# dooray-cli User Flow
+# dooray-cli 명령 동작 흐름
+
+이 문서는 명령 입력이 검증, 분기, API 호출을 거쳐 출력으로 바뀌는 경로를 정리한다. 명령 문법과 옵션은 README.md, 에이전트의 명령 선택 기준은 skills/dooray-cli/SKILL.md, 결정 근거와 기각한 대안은 docs/adr/에서 다룬다.
 
 ## 최초 설정: `dooray setup`
 
-대화형 마법사로 필수 설정을 한 번에 완료한다.
+### `setup`
 
-```
-dooray setup
-
-? 회사 테넌트명을 입력하세요 (Dooray 접속 URL에서 확인: https://{tenant}.dooray.com) (<tenant>)
-? API Endpoint를 선택하세요 (화살표로 선택)
-❯ 민간 클라우드      https://api.dooray.com
-  공공 클라우드      https://api.gov-dooray.com
-  공공 업무망 클라우드 https://api.gov-dooray.co.kr
-  금융 클라우드      https://api.dooray.co.kr
-? API Key를 입력하세요 (발급: https://<tenant>.dooray.com/setting/api/token) ****
-
-✓ API 연결 성공 (홍길동)
-
-? 메일 기능을 사용하시겠습니까? (Y/n) Y
-? IMAP 사용자 이메일 (설정 확인: https://<tenant>.dooray.com/setting/mail/general/read) user@example.com
-? IMAP 비밀번호 ****
-
-? Claude Code 스킬을 설치하시겠습니까? (Y/n) Y
-✓ 스킬 설치 완료: ~/.claude/skills/dooray-cli
-
-✓ 설정 완료. dooray doctor로 상태를 확인할 수 있습니다.
+```mermaid
+flowchart TD
+    A["setup 시작"] --> B["기존 설정 읽기"]
+    B --> C["테넌트·API 주소·키 입력"]
+    C --> D["GET project/v1/projects"]
+    D -->|성공| E["GET common/v1/members/me"]
+    D -->|실패| C
+    E --> F{"메일 사용"}
+    F -->|예| G["메일 인증정보 입력"]
+    F -->|아니오| H{"스킬 설치"}
+    G --> H
+    H -->|예| I["공용 스킬 설치 흐름"]
+    H -->|아니오| J["전체 설정 저장"]
+    I --> J
+    J --> K["필요하면 캐시 삭제"]
+    K --> L["완료 출력"]
 ```
 
-플로우:
-1. 테넌트명 입력 (기본값: `<tenant>`) → API Key 발급·메일 설정 링크에 자동 반영
-2. API Endpoint 선택 (4개 환경 중 택 1, 기본: 민간)
-3. API Key 입력 (마스킹, 발급 링크 안내)
-4. API 연결 테스트 → 실패 시 재입력 유도
-5. 메일 사용 여부 → Y: IMAP 계정·비밀번호 입력 / n: 건너뛰기
-6. Claude Code 스킬 설치 여부 → Y: `dooray skill install`과 같은 공용 설치 흐름 실행 / n: 건너뛰기
-7. 모든 입력 완료 후 config.json에 한 번에 저장 (Ctrl+C 시 저장 안 됨)
+- API 연결이 실패하면 설정을 저장하지 않고 API 키 입력부터 다시 받는다.
+- 입력 중 `Ctrl+C`가 들어오면 설정 파일을 쓰지 않고 끝난다.
+- `~/.claude`가 없거나 `npx`로 실행한 경우에는 스킬 설치 질문을 건너뛴다. 스킬 설치가 실패해도 경고만 내고 설정은 저장한다.
+- 기존 설정이 없으면 캐시를 지우지 않는다. 기존 설정을 읽을 수 없거나 API 키·API 주소가 바뀌면 저장 후 전체 캐시를 지우며, 삭제 실패는 경고로 남긴다.
 
-재실행 시 기존 설정값이 기본값으로 표시된다.
+### `config set`
 
-config 미설정 상태에서 다른 커맨드 실행 시:
-
-```
-설정이 완료되지 않았습니다. 먼저 초기 설정을 진행하세요:
-  dooray setup
-```
-
-### 수동 설정 (개별 키)
-
-기존 `dooray config set/get` 커맨드로도 개별 설정이 가능하다.
-
-```
-dooray config set api-key <token>
-dooray config set base-url https://api.dooray.com
-dooray doctor
+```mermaid
+flowchart TD
+    A["키와 값 입력"] --> B{"값이 - 인가"}
+    B -->|예| C["표준 입력 읽기"]
+    B -->|아니오| D["인자 값 사용"]
+    C & D --> E["키와 빈 값 검증"]
+    E --> F["기존 설정 읽기"]
+    F --> G["설정 저장"]
+    G --> H{"API 키·주소 변경"}
+    H -->|예| I["전체 캐시 삭제"]
+    H -->|아니오| J["완료 출력"]
+    I --> J
 ```
 
-`api-key` 나 `base-url` 을 바꾸면 캐시 전체를 함께 지우고 그 사실을 알린다 (ADR-042).
-이전 계정이나 이전 접속 환경의 프로젝트·멤버·태그가 남아 잘못 매칭되는 것을 막는다.
-같은 값을 다시 설정하는 경우와 최초 설정에서는 지우지 않는다.
-설정 파일이 손상됐거나 읽히지 않으면 `dooray config set` 은 기존 파일을 덮지 않고 오류로 끝난다.
-`dooray setup` 으로 전체 설정을 저장하는 데 성공하면 이전 계정을 알 수 없으므로 캐시 전체를 지운다.
-
-값에 `-` 를 주면 stdin 에서 읽는다. 토큰을 명령 인자로 넘기지 않으려는 경로다.
-
-```
-printf '%s' "$TOKEN" | dooray config set api-key -
-```
-
-인자로 넘기면 셸 기록과 프로세스 목록에 값이 남는다.
-stdin 으로 받은 값은 양끝 공백을 지운 뒤 저장하고, 비어 있으면 저장하지 않고 종료 코드 3 으로 끝낸다.
+- 지원하지 않는 키나 공백을 제거한 뒤 빈 값이면 종료 코드 3으로 끝난다.
+- 기존 설정 파일이 손상됐거나 읽히지 않으면 덮어쓰지 않고 끝난다.
+- API 키나 API 주소가 실제로 바뀔 때만 캐시를 지운다. 캐시 삭제가 실패해도 경고만 내고 설정 변경은 성공으로 끝낸다.
 
 ## Claude Code 스킬 관리 흐름
 
-스킬 관리는 API·메일 설정과 독립적으로 실행한다.
+### `skill status`
 
-```bash
-dooray skill status          # 설치 상태와 CLI·스킬 버전 확인
-dooray skill install         # 미설치 상태에서 설치
-dooray skill update          # 현재 CLI 패키지에 포함된 스킬로 갱신
-dooray skill update --force  # 관리되지 않은 기존 파일을 백업한 뒤 교체
+```mermaid
+flowchart TD
+    A["설치 대상 검사"] --> B{"대상 종류"}
+    B -->|없음| C["missing 판정"]
+    B -->|끊긴 링크| D["broken 판정"]
+    B -->|관리 밖 항목| E["unmanaged 판정"]
+    B -->|관리형 링크| F["매니페스트와 해시 검사"]
+    F --> G["current·outdated·modified·corrupt 판정"]
+    C & D & E & G --> H{"출력 형식"}
+    H --> I["설명·JSON·상태 토큰 출력"]
 ```
 
-`status`는 상태 조회 자체가 성공하면 종료 코드 0을 반환한다.
-기본 출력은 사람이 읽는 설명, `--json`은 아래 구조, `--quiet`은 상태 토큰 하나를 출력한다.
+- 상태 조회 자체가 끝나면 설치 상태와 관계없이 종료 코드 0을 반환한다.
+- 관리형 콘텐츠의 실제 해시가 매니페스트와 다르면 `modified`, 매니페스트가 없거나 형식·경로가 맞지 않으면 `corrupt`다.
+- 절대 경로인 `XDG_DATA_HOME`이 있으면 그 아래 `dooray-cli`, 아니면 `~/.local/share/dooray-cli`를 관리 저장소로 쓴다.
 
-```json
-{
-  "schemaVersion": 1,
-  "status": "current",
-  "destination": "/home/user/.claude/skills/dooray-cli",
-  "source": "/package/skills/dooray-cli",
-  "currentVersion": "0.14.1",
-  "installedVersion": "0.14.1",
-  "linkTarget": "/home/user/.local/share/dooray-cli/skills/0.14.1-<64hex>",
-  "managed": true
-}
+### `skill install`과 `skill update`
+
+```mermaid
+flowchart TD
+    A["현재 상태 검사"] --> B{"current 인가"}
+    B -->|예| C["변경 없이 출력"]
+    B -->|아니오| D{"보호 대상인가"}
+    D -->|예, force 없음| E["종료 코드 3"]
+    D -->|아니오| F["버전·해시 저장소 준비"]
+    D -->|예, force 있음| F
+    F --> G["임시 링크 생성"]
+    G --> H["기존 대상 백업"]
+    H --> I["활성 링크 교체"]
+    I -->|실패| J["백업 복구 후 오류"]
+    I -->|성공| K["설치 상태 재검사"]
+    K --> L["결과 출력"]
 ```
 
-상태 토큰은 다음과 같다.
-
-- `missing`: 설치되지 않음
-- `current`: 현재 CLI 패키지와 일치
-- `outdated`: 이전 패키지 또는 이전 관리 저장소를 가리킴
-- `broken`: 심볼릭 링크 대상이 없음
-- `unmanaged`: 사용자가 직접 만든 파일·디렉터리 또는 알 수 없는 링크
-- `modified`: 관리형 설치의 콘텐츠 해시가 매니페스트와 다름
-- `corrupt`: 관리형 매니페스트가 없거나 스키마 검증에 실패
-
-관리형 링크의 상세 판정은 다음과 같다.
-
-| 조건 | 상태 |
-|---|---|
-| 매니페스트가 유효하고 경로의 버전·digest, 실제 콘텐츠 digest, 현재 package source의 버전·digest가 모두 일치 | `current` |
-| 매니페스트와 경로·실제 콘텐츠가 유효하지만 현재 package source의 버전 또는 digest와 다름 | `outdated` |
-| 매니페스트가 유효하고 경로의 version+digest와 일치하지만 실제 콘텐츠 digest가 매니페스트와 다름 | `modified` |
-| 매니페스트 누락·형식 오류·package 식별자 불일치·경로의 version/digest 불일치 | `corrupt` |
-| 관리 루트 밖의 npm package 직접 링크 | package 메타데이터가 유효하면 `outdated`, 아니면 `unmanaged` |
-
-`install`과 `update`는 `current`에서 아무것도 바꾸지 않는다.
-기존 패키지 경로를 가리키는 `outdated`·`broken` 링크는 안전하게 교체한다.
-`unmanaged`·`modified`·`corrupt` 상태는 기본적으로 보존하고 종료 코드 3으로 실패한다.
-`--force`를 지정하면 기존 항목을 같은 디렉터리에 백업한 뒤 교체하며, 활성 링크 전환에 실패하면 백업을 복구한다.
-
-같은 version+digest의 canonical 저장 디렉터리가 수정되거나 손상된 경우에는 활성 링크 전환보다 먼저 저장 디렉터리를 `.backup-<UTC timestamp>-<basename>`으로 격리한다.
-새 저장 디렉터리 전환에 실패하면 격리본을 복구하며, 성공하면 격리본을 보존한다.
-저장 디렉터리 격리와 활성 링크 백업은 서로 다른 단계이며, 어느 단계든 실패하면 사용자 콘텐츠를 삭제하지 않는다.
-
-스킬 본문은 `dataRoot/skills/<packageVersion>-<contentDigestHex>/`에 버전별로 보존한다.
-`dataRoot`는 절대 경로 `XDG_DATA_HOME`이 있으면 `$XDG_DATA_HOME/dooray-cli`, 없거나 상대 경로이면 `~/.local/share/dooray-cli`다.
-`contentDigestHex`는 매니페스트 `contentDigest`의 `sha256:` 접두사를 제거한 64자리 lowercase hex다.
-`~/.claude/skills/dooray-cli`는 이 안정 저장소를 가리키므로 Node 버전별 npm 전역 경로가 바뀌어도 기존 설치가 끊어지지 않는다.
-자동 `postinstall`, 이전 버전 자동 삭제, 자동 롤백 명령은 제공하지 않는다.
+- `unmanaged`, `modified`, `corrupt`는 `--force`가 없으면 보존하고 종료 코드 3으로 끝난다.
+- 같은 버전·해시 저장소가 수정됐거나 손상됐으면 `--force`에서 먼저 별도 백업으로 격리한다.
+- 링크 전환이나 사후 검증이 실패하면 가능한 범위에서 기존 링크와 격리한 저장소를 복구한다.
 
 ## 일반 조회 흐름
 
-```
-dooray project list                         # 1) 프로젝트 목록 (캐시 자동 갱신)
-dooray post list my-project                 # 2) 업무 목록 (postNumber 포함)
-dooray post list my-project --tag "<태그 이름>"  # 2-1) 태그로 거르기 (여러 번 주면 모두 가진 업무)
-dooray post get my-project 42              # 3) 업무 상세 (#42번)
-dooray post get --id <postId>              # 3-1) internal postId 로 (create 출력값)
-dooray post get https://x.dooray.com/task/to/<postId>        # 3-2) URL 직접 입력 (task/to)
-dooray post get https://x.dooray.com/project/tasks/<postId>  # 3-3) URL 직접 입력 (project/tasks, #83)
-dooray post get my-project 42 --json --with-tag-names        # 3-4) 태그 이름까지 채워서 (ADR-056)
-dooray post search my-project "스프린트"   # 4) 제목 검색
-```
+### `project list`
 
-`post create` 출력의 긴 숫자는 internal postId 다 (업무 번호 #N 아님).
-후속 조회·수정은 `--id <postId>` 로 한다. positional `<project> <number>` 자리에 넣으면 안내 에러로 거부된다 (#82).
-
-### projectId 직접 입력 (member=me 응답 외 프로젝트, ADR-030, Issue #78)
-
-`member=me` 응답에 없는 프로젝트 (다른 팀 프로젝트 등) 는 코드로 resolve 안 됨.
-projectId (15+자리 numeric) 를 직접 입력하면 cache 를 우회하고 후속 API 호출에 그대로 사용.
-
-```
-dooray post search 1234567890123456789 "keyword"
-dooray post list 1234567890123456789
-dooray member list 1234567890123456789
+```mermaid
+flowchart TD
+    A["유형과 검색어 입력"] --> B["설정 검증"]
+    B --> C{"프로젝트 캐시 유효"}
+    C -->|예| D["캐시 읽기"]
+    C -->|아니오| E["GET project/v1/projects"]
+    E --> F{"다음 페이지 존재"}
+    F -->|예| E
+    F -->|아니오| G["캐시 저장"]
+    D & G --> H["검색어로 필터"]
+    H --> I["표·JSON·ID 출력"]
 ```
 
-권한 검증은 후속 API 호출 시점에 이뤄지고, 권한이 없으면 4xx 가 발생한다.
+- 프로젝트 캐시 TTL은 1시간이고 API 페이지 크기는 100이다.
+- `private` 유형은 API에 `type=private`을 보내며, 검색어는 프로젝트 코드에서 대소문자를 구분하지 않고 찾는다.
+
+### `post list`와 `post search`
+
+```mermaid
+flowchart TD
+    A["프로젝트와 조건 입력"] --> B["프로젝트 해석"]
+    B --> C{"태그 이름 조건"}
+    C -->|예| D["태그 캐시로 ID 해석"]
+    C -->|아니오| E{"명령 종류"}
+    D --> E
+    E -->|list| F["GET projects/{id}/posts"]
+    E -->|search| G["GET projects/{id}/posts?subjects"]
+    F --> H{"--all 과 다음 페이지"}
+    H -->|예| F
+    H -->|아니오| I["결과 모으기"]
+    G --> I
+    I --> J["표·JSON·ID 출력"]
+```
+
+- 프로젝트 해석이 실패하거나 이름이 여러 프로젝트와 맞으면 후보를 보여 주고 종료 코드 3으로 끝난다. 15자리 이상 숫자는 프로젝트 ID로 바로 쓴다.
+- `list`의 기본 페이지는 0, 크기는 20이다. `--all`은 크기 100으로 전체 페이지를 읽는다.
+- 두 명령 모두 생성 시각 내림차순으로 요청한다. 태그 캐시 TTL은 24시간이고 페이지 크기는 100이다.
+
+### `post get`
+
+```mermaid
+flowchart TD
+    A["대상 지정"] --> B{"입력 형태"}
+    B -->|id·URL| C["GET project/v1/posts/{postId}"]
+    B -->|project number| D["프로젝트 해석"]
+    D --> E["GET projects/{id}/posts?postNumber"]
+    C & E --> F["GET projects/{id}/posts/{postId}"]
+    F --> G{"태그 이름 연결"}
+    G -->|필요| H["태그 캐시 조회"]
+    G -->|불필요| I["표·JSON 출력"]
+    H --> I
+```
+
+- `--id`, `--url`, 위치 인자를 함께 쓰거나 필요한 값이 없으면 종료 코드 3으로 끝난다.
+- 일반 출력은 태그 이름 연결에 실패해도 경고 후 ID를 남긴다. `--json --with-tag-names`는 연결 실패를 오류로 처리한다.
+- `--with-tag-names`를 `--json` 없이 주면 효력이 없다는 경고를 내며, 일반 출력은 원래 태그 이름을 연결한다.
 
 ## 업무 생성 흐름
 
-```
-dooray post create my-project \
-  --title "기능 구현" \
-  --to "김철수" \                           # 이름 or 이메일로 멤버 지정
-  --body-file task.md                       # 또는 --body - (stdin)
+### `post create`
+
+```mermaid
+flowchart TD
+    A["생성 입력"] --> B["프로젝트 해석"]
+    B --> C{"템플릿 지정"}
+    C -->|예| D["템플릿 목록·상세 조회"]
+    C -->|아니오| E["제목·본문 조합"]
+    D --> E
+    E --> F["멘션·업무 링크 조합"]
+    F --> G["멤버·태그·부모·마일스톤 해석"]
+    G --> H{"dry-run"}
+    H -->|예| I["요청 예정값 출력"]
+    H -->|아니오| J["POST projects/{id}/posts"]
+    J --> K{"워크플로우 지정"}
+    K -->|예| L["POST set-workflow"]
+    K -->|아니오| M["생성 결과 출력"]
+    L --> M
 ```
 
-`--to` 멤버가 모호할 때:
-
-```
-Error: '김' matches multiple members:
-  - 김철수 (1234567890123456789)
-  - 김영희 (9876543210987654321)
-Use full name or ID.
-```
+- 제목이 사용자 입력과 템플릿 모두에 없으면 종료 코드 3으로 끝난다. 사용자 입력은 템플릿의 제목·본문·담당자·참조자·태그보다 우선한다.
+- 그룹 멘션은 공개 프로젝트 코드가 있어야 만들 수 있다. 멤버·그룹·태그·부모·마일스톤이 없거나 모호하면 후보와 함께 종료 코드 3으로 끝난다.
+- 템플릿·태그·마일스톤·멤버 그룹 캐시 TTL은 24시간이다. 템플릿 상세는 `interpolation=true`로 조회한다.
+- 생성 뒤 워크플로우 변경이 실패하면 생성된 업무는 남고, 경고와 업무 ID를 출력한 뒤 성공으로 끝난다.
 
 ## 업무 수정 흐름 ($EDITOR)
 
-```
-dooray post edit my-project 42
-```
+### 대화형 `post edit`
 
-1. API로 현재 업무 조회
-2. 임시 파일 생성 (YAML frontmatter와 본문):
-
-```yaml
----
-subject: 현재 제목
-priority: normal
-due_date: 2026-04-30T18:00:00+09:00
-to:
-  - user@example.com
-cc: []
----
-본문 마크다운...
+```mermaid
+flowchart TD
+    A["수정 대상 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B --> B2["GET projects/{id}/posts/{postId}"]
+    B2 --> C["멤버 캐시 준비"]
+    C --> D["YAML 머리말과 본문 생성"]
+    D --> E["편집기 실행"]
+    E --> F{"내용 변경"}
+    F -->|아니오| G["변경 없음 출력"]
+    F -->|예| H["머리말·첨부 참조 검증"]
+    H --> I["멤버 해석"]
+    I --> J["PUT projects/{id}/posts/{postId}"]
+    J --> K["수정 결과 출력"]
 ```
 
-3. `$EDITOR` 실행 → 저장·종료
-4. frontmatter 파싱 후:
-   - member resolver 실행
-   - API PUT 호출
+- `$EDITOR`가 없으면 API 수정 전에 오류로 끝난다.
+- 본문에서 기존 첨부 참조가 사라지면 경고하고 확인한다. 비대화형 환경에서는 `--no-confirm`이 없으면 종료 코드 3으로 끝난다.
+- 대화형 경로에서는 멘션, 업무 링크, 상위 업무 옵션을 적용하지 않고 경고한다.
 
-`$EDITOR` 미설정 시:
+### 비대화형 `post edit`
 
+```mermaid
+flowchart TD
+    A["수정 옵션 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B --> B2["GET projects/{id}/posts/{postId}"]
+    B2 --> C["본문·참여자·태그 병합"]
+    C --> D["필수 태그와 첨부 참조 검증"]
+    D --> E{"dry-run"}
+    E -->|예| F["요청 예정값 출력"]
+    E -->|아니오| G["PUT projects/{id}/posts/{postId}"]
+    G --> H{"상위 업무 지정"}
+    H -->|예| I["POST set-parent-post"]
+    H -->|아니오| J["수정 결과 출력"]
+    I --> J
 ```
-Error: $EDITOR is not set. Set it with: export EDITOR=vim
-```
+
+- 제목, 본문, 본문 파일, 태그, 담당자·참조자 변경, MIME 형식 중 하나가 있어야 비대화형 경로로 들어간다. 멘션, 그룹 멘션, 업무 링크, 상위 업무만 단독으로 지정하면 대화형 경로로 들어가며 해당 옵션을 적용하지 않고 경고한다.
+- HTML 업무에서 마크다운 멘션이나 업무 링크를 넣으면 API 호출 전에 종료 코드 3으로 끝난다.
+- MIME 형식만 바꾸면 본문을 변환하지 않는다는 경고를 내고 기존 본문을 그대로 보낸다.
+- 업무 수정 후 상위 업무 설정이 실패하면 앞선 수정은 남으며, 부분 성공 경고를 내고 오류로 끝난다.
 
 ## 캐시 흐름
 
-- 커맨드 실행 시 캐시 자동 확인 → TTL 만료 시 자동 갱신
-- 수동 조작:
+### 조회 명령의 캐시 사용
 
+```mermaid
+flowchart TD
+    A["캐시 대상 조회"] --> B{"파일이 있고 TTL 이내"}
+    B -->|예| C["캐시 결과 반환"]
+    B -->|아니오| D["API 페이지 조회"]
+    D --> E["캐시 파일 저장"]
+    E --> F["조회 결과 반환"]
 ```
-dooray cache refresh     # 즉시 갱신
-dooray cache clear       # 전체 삭제
+
+- 프로젝트와 멤버 캐시 TTL은 1시간이다. 내 정보, 워크플로우, 태그, 마일스톤, 멤버 그룹, 위키, 템플릿 캐시 TTL은 24시간이다.
+- 설정의 API 키나 API 주소가 바뀌거나, 읽지 못한 기존 설정을 `setup`으로 교체하면 전체 캐시를 지운다. 태그 생성·그룹 변경 뒤에는 해당 프로젝트 태그 캐시만 지운다.
+
+### `cache clear`와 `cache refresh`
+
+```mermaid
+flowchart TD
+    A["clear 또는 refresh"] --> B["캐시 디렉터리 삭제"]
+    B -->|성공·없음| C["완료 출력"]
+    B -->|실패| D["종료 코드 5"]
 ```
 
-TTL: projects·members 1시간, 나머지 24시간. 엔티티별 값과 근거는 `docs/data-schema.md` 의 TTL 설계 근거 표가 소유한다.
-
-TTL 을 기다리지 않고 비워지는 경우가 세 가지 있다.
-
-- 태그를 만들거나 태그 그룹 속성을 바꾸면 그 프로젝트의 태그 캐시를 지운다.
-- `api-key` 나 `base-url` 이 실제로 바뀌면 캐시 전체를 지운다. 계정이나 접속 환경이 바뀌면
-  남아 있는 모든 파일이 다른 곳의 데이터이기 때문이다.
-- `dooray setup` 이 이전 설정 파일이 손상됐거나 읽히지 않는 상태에서 전체 설정을 저장하면 캐시 전체를 지운다.
-  이전 계정을 알 수 없어 남은 캐시가 맞는지 판단할 수 없기 때문이다.
-
-`dooray cache clear` 는 사용자가 명시적으로 요청한 작업이라 삭제에 실패하면 에러로 끝난다.
-위 경우의 무효화는 부수 작업이라 실패해도 경고만 내고 원래 명령을 성공으로 끝낸다.
+- 두 명령 모두 API를 호출하지 않고 캐시 파일만 지운다. `refresh`는 다음 조회 때 API에서 다시 채우게 하는 이름이다.
+- 명시적인 캐시 삭제가 실패하면 경고로 넘기지 않고 종료 코드 5로 끝난다.
 
 ## 멤버 조회 흐름 (ADR-021)
 
-```
-dooray member list my-project              # 프로젝트 멤버 (이름·이메일·id)
-dooray member get <member-id>              # 단건 조회
+### `member list`와 `project members`
+
+```mermaid
+flowchart TD
+    A["프로젝트 입력"] --> B["프로젝트 해석"]
+    B --> C{"멤버 캐시 유효"}
+    C -->|예| D["캐시 읽기"]
+    C -->|아니오| E["GET projects/{id}/members"]
+    E --> F["각 ID로 GET common/v1/members/{id}"]
+    F --> G["멤버 캐시 저장"]
+    D & G --> H["ID와 이름 출력"]
 ```
 
-`post comment list` 의 Creator 컬럼은 자동으로 표시명으로 채워진다 (`--json` 은 파이프라인 호환을 위해 raw 를 유지한다).
+- 멤버 캐시 TTL은 1시간이고 프로젝트 멤버 API 페이지 크기는 100이다.
+- 개별 상세 조회가 실패한 멤버는 이름을 비운 채 목록에 남긴다. 이 목록은 이메일을 출력하지 않는다.
+
+### `member get`과 `member search`
+
+```mermaid
+flowchart TD
+    A["조회 조건 입력"] --> B{"명령 종류"}
+    B -->|get| C["GET common/v1/members/{id}"]
+    B -->|search| D["조건 조합 검증"]
+    D --> E["GET common/v1/members"]
+    C & E --> F["표·JSON·ID 출력"]
+```
+
+- 검색 조건이 하나도 없거나 위치 이름과 이메일·사용자 코드 조건을 함께 주면 종료 코드 3으로 끝난다.
+- 검색 페이지는 0 이상으로, 크기는 1에서 100 사이로 맞춘 뒤 API에 보낸다.
+
+### `project groups`
+
+```mermaid
+flowchart TD
+    A["프로젝트 입력"] --> B["프로젝트 해석"]
+    B --> C{"그룹 캐시 유효"}
+    C -->|예| D["캐시 읽기"]
+    C -->|아니오| E["GET projects/{id}/member-groups"]
+    E --> F["전체 페이지를 펼쳐 캐시 저장"]
+    D & F --> G["표·JSON·ID 출력"]
+```
+
+- 멤버 그룹 캐시 TTL은 24시간이고 API 페이지 크기는 100이다.
 
 ## 댓글 흐름
 
-```
-dooray post comment list my-project 42         # 댓글 목록
-dooray post comment add my-project 42 \         # 댓글 추가
-  --body "확인했습니다" \
-  --mention "김철수" \                          # @멘션 prepend
-  --link-task my-project/41                     # 다른 업무 링크 append
-dooray post comment edit my-project 42 \        # 댓글 수정 ($EDITOR)
-  --comment-id <comment-id>
-dooray post comment delete my-project 42 \      # 댓글 삭제 (confirm 기본, -y/--yes 로 생략)
-  --comment-id <comment-id>
+### `post comment list`, `latest`, `get`
+
+```mermaid
+flowchart TD
+    A["댓글 조회 입력"] --> B["옵션과 대상 검증"]
+    B --> B2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B2 --> C{"명령 종류"}
+    C -->|get| D["GET logs/{logId}"]
+    C -->|latest| E["GET logs?size=count"]
+    C -->|list| F{"since 지정"}
+    F -->|예| G["100개씩 최신순 조회"]
+    F -->|아니오| H["GET logs?page&size&order"]
+    D & E & G & H --> I{"JSON 출력"}
+    I -->|예| J["원본 출력"]
+    I -->|아니오| K["발신자 이름 보강 후 출력"]
 ```
 
-post `--id`/`--url` 모드도 같이 지원한다. `dooray post comment list --id <postId>` 또는 첫 positional 에 Dooray URL 을 직접 넣는다.
+- `latest` 개수는 1에서 100 사이다. `latest`와 페이지·크기·정렬·기간 조건을 함께 쓰면 종료 코드 3으로 끝난다.
+- `since`는 100개씩 최신순으로 읽다가 기준보다 오래된 댓글을 만나면 멈춘다. 오름차순 출력은 모은 뒤 뒤집는다.
+- 이름 보강이 실패하면 경고하고 멤버 ID를 남긴다. JSON은 파이프라인 호환을 위해 원본을 유지한다.
+
+### `post comment add`
+
+```mermaid
+flowchart TD
+    A["본문 입력"] --> B{"본문 제공"}
+    B -->|아니오| C["편집기 실행"]
+    B -->|예| D["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    C -->|빈 본문| E["변경 없이 종료"]
+    C -->|본문 있음| D
+    D --> F["멘션·업무 링크 조합"]
+    F --> G{"dry-run"}
+    G -->|예| H["요청 예정값 출력"]
+    G -->|아니오| I["POST posts/{postId}/logs"]
+    I --> J["생성 결과 출력"]
+```
+
+- HTML 댓글에 마크다운 멘션이나 업무 링크를 넣으면 종료 코드 3으로 끝난다.
+
+### `post comment edit`
+
+```mermaid
+flowchart TD
+    A["댓글 대상 입력"] --> A2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    A2 --> B["GET posts/{postId}/logs"]
+    B --> C["댓글 ID 찾기"]
+    C --> D{"본문 또는 MIME 제공"}
+    D -->|아니오| E["편집기 실행"]
+    D -->|예| H{"dry-run"}
+    E -->|변경 없음| G["변경 없이 종료"]
+    E -->|변경 있음| H
+    H -->|예| I["요청 예정값 출력"]
+    H -->|아니오| F["첨부 참조 검증"]
+    F --> J["PUT logs/{logId}"]
+    J --> K["수정 결과 출력"]
+```
+
+- 댓글 ID를 찾지 못하면 오류 메시지를 쓰고 종료 코드 1로 끝난다.
+- MIME 형식만 바꾸면 기존 본문을 다시 보낸다. HTML과 마크다운 합성 옵션을 함께 쓰면 종료 코드 3으로 끝난다.
+- 기존 첨부 참조가 사라지면 업무 수정과 같은 확인 정책을 적용한다.
+
+### `post comment delete`
+
+```mermaid
+flowchart TD
+    A["삭제 입력"] --> B{"yes 지정"}
+    B -->|아니오| C["TTY 확인"]
+    B -->|예| D["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    C -->|거절| E["취소 출력"]
+    C -->|승인| D
+    D --> F["DELETE logs/{logId}"]
+    F --> G["삭제 결과 출력"]
+```
+
+- `--yes`가 없는 비대화형 환경에서는 설정이나 API를 읽기 전에 종료 코드 3으로 끝난다.
+- 확인의 기본값은 아니오이며, 거절은 API를 호출하지 않고 성공으로 끝난다.
 
 ## 댓글 첨부파일 흐름 (ADR-024)
 
-`post comment file *` 4 명령의 사용자 멘탈 모델은 "댓글 첨부"다.
-댓글 전용 첨부 엔드포인트가 없어 댓글 조회·수정 API와 post-level files API를 명령별로 조합한다.
+### `post comment file list`
 
+```mermaid
+flowchart TD
+    A["댓글 대상 입력"] --> A2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    A2 --> B["GET logs/{logId}"]
+    B --> C["응답 파일과 본문 참조 합치기"]
+    C --> D{"파일 존재"}
+    D -->|예| E["GET posts/{postId}/files"]
+    D -->|아니오| F["빈 목록 출력"]
+    E -->|성공| G["이름·크기·MIME 보강"]
+    E -->|실패| H["경고 후 원본 유지"]
+    G & H --> I["목록 출력"]
 ```
-dooray post comment file list my-project 42 <comment-id>            # 댓글 첨부 목록
-dooray post comment file upload my-project 42 <comment-id> ./img.png   # 업로드
-dooray post comment file download my-project 42 <comment-id> <file-id>  # 다운로드
-dooray post comment file delete my-project 42 <comment-id> <file-id>    # 삭제 (confirm 기본, -y/--yes 로 생략)
+
+- 댓글 응답의 파일과 본문 `/files/{id}` 참조를 ID 기준으로 합친다. 메타데이터 보강 실패는 목록 조회를 실패시키지 않는다.
+
+### `post comment file upload`
+
+```mermaid
+flowchart TD
+    A["댓글과 파일 입력"] --> A2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    A2 --> B["GET logs/{logId}"]
+    B --> C{"댓글이 HTML"}
+    C -->|예| D["종료 코드 3"]
+    C -->|아니오| E["POST posts/{postId}/files"]
+    E --> F["본문에 파일 참조 추가"]
+    F --> G["PUT logs/{logId}"]
+    G --> H["업로드 결과 출력"]
 ```
 
-`upload`는 파일명 확장자를 대소문자 구분 없이 판별해 댓글 본문 참조 형식을 정한다.
+- 이미지 확장자는 이미지 마크다운으로, 나머지는 일반 링크로 본문에 추가한다.
+- 파일 업로드 뒤 댓글 수정이 실패하면 참조되지 않은 파일이 업무에 남는다. 정리 방법을 경고하고 0이 아닌 종료 코드로 끝난다.
 
-- `png`, `jpg`, `jpeg`, `gif`, `webp`, `bmp`, `svg`, `avif`, `heic`는 이미지 마크다운 `![파일명](/files/<file-id>)`을 추가한다.
-- 그 외 확장자와 확장자 없는 파일은 일반 링크 `[파일명](/files/<file-id>)`를 추가한다.
+### `post comment file download`
 
-`upload`은 파일을 올리기 전에 댓글을 조회해 본문 형식을 판정한다 (ADR-055).
-`text/html` 이면 그 형식의 첨부 표기가 확인되지 않아 종료 코드 3으로 멈춘다.
-업로드 뒤에 멈추면 어디에도 참조되지 않는 파일이 업무에 남기 때문에 판정이 업로드보다 앞선다.
+```mermaid
+flowchart TD
+    A["댓글·파일 ID 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B --> C["GET files/{fileId}?media=raw"]
+    C --> D["리다이렉트 URL 다운로드"]
+    D --> E["안전한 파일명으로 저장"]
+    E --> F["저장 경로 출력"]
+```
 
-`delete`는 두 참조 형식을 모두 제거한 뒤 post-level 파일을 삭제한다.
-본문에서 참조를 찾지 못하면 본문도 파일도 건드리지 않고 종료 코드 3으로 멈춘다 (ADR-055).
-`text/html` 본문에서도 마크다운 정규식으로 찾는다.
-ADR-055 이전의 CLI가 `text/html` 댓글에 마크다운 참조를 평문으로 남겼고, 그것을 지울 경로가 여기뿐이다.
-두 단계의 원자성은 보장하지 않으며 부분 성공 시 stderr 안내와 0이 아닌 종료 코드로 종료한다.
+- 댓글 ID는 입력 형태를 통일하기 위해 받지만 다운로드 API 경로에는 쓰지 않는다.
 
-`list`는 첨부 경로가 둘로 갈리므로 두 출처를 합쳐서 보여준다.
+### `post comment file delete`
 
-- 웹 UI에서 첨부한 파일은 댓글 단건 조회 응답의 `files`에 들어온다. 본문 참조는 생기지 않는다.
-- CLI `upload`가 올린 파일은 본문 마크다운 참조로만 남는다. 댓글의 `files`에는 들어가지 않는다.
+```mermaid
+flowchart TD
+    A["삭제 입력"] --> B["공통 삭제 확인"]
+    B --> B2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B2 --> C["GET logs/{logId}"]
+    C --> D{"본문 참조 존재"}
+    D -->|아니오| E["종료 코드 3"]
+    D -->|예| F["참조를 뺀 본문 PUT"]
+    F --> G["DELETE posts/{postId}/files/{fileId}"]
+    G --> H["삭제 결과 출력"]
+```
 
-`list`는 두 목록을 `id` 기준으로 합치고 `출처` 열로 어느 경로인지 구분한다.
-댓글 응답의 `files`는 `name`과 `size`가 `null`이라, 업무 단위 첨부 목록을 한 번 더 조회해 이름·크기·MIME을 채운다.
-이 보강 조회가 실패해도 목록 자체는 그대로 출력하고 채우지 못한 값만 `-`로 표시한다.
+- HTML 댓글에서도 과거 CLI가 남긴 마크다운 참조를 찾아 제거한다.
+- 본문 수정과 파일 삭제는 원자적이지 않다. 어느 단계에서 실패했는지와 남은 정리 작업을 경고하고 오류로 끝난다.
 
 ## 참조자(cc) / 담당자(to) 변경 흐름 (ADR-025)
 
-기존 업무의 참조자·담당자에 멤버 또는 그룹 추가/제거.
-자동화 시나리오: 신규 업무 생성 후 후속으로 특정 그룹을 참조에 첨부.
-참여자 옵션이나 `--mime-type` 하나만 지정해도 비대화형 수정으로 실행하며 `$EDITOR` 를 열지 않는다.
-이때 조회한 기존 제목과 본문을 `updatePost` 요청에 다시 사용하고, 태그 변경 옵션이 없으면 `tagIds` 를 보내지 않아 기존 태그를 보존한다.
+### `post create`의 참여자 처리
 
-```
-# 멤버/그룹 추가 (append + dedupe)
-dooray post edit my-project 42 \
-  --cc 홍길동 --cc-group dev-team               # 이름·코드 부분일치
-  --to 김철수
-
-# 전체 비우고 신규만 (clear + 신규 입력)
-dooray post edit my-project 42 \
-  --cc-clear --cc 홍길동                         # 기존 cc 전부 제거 + 홍길동만
-
-# 신규 업무 생성 시 그룹 cc 동봉
-dooray post create my-project \
-  --title "주간 audit 리포트" \
-  --cc 홍길동 --cc-group dev-team               # post create 는 clear 없음
-
-# 입력 형식 자동 분기 (Issue #58): 이름 / 이메일 / 15자리 이상 organizationMemberId
-dooray post edit my-project 42 \
-  --cc user@example.com \                       # 이메일 (동명이인 우회)
-  --cc 1234567890123456789                       # organizationMemberId 직접
+```mermaid
+flowchart TD
+    A["멤버·그룹 입력"] --> B["프로젝트 멤버·그룹 캐시 조회"]
+    B --> C["이름·이메일·ID 해석"]
+    C --> D["그룹 멤버 펼치기"]
+    D --> E["중복 제거"]
+    E --> F["POST 요청의 to·cc 구성"]
 ```
 
-`--mention`, `--mention-group`, `--link-task`, `--parent` 는 참여자 옵션과 별개의 비대화형 진입 조건이다.
-이 옵션들의 단독 호출 지원 여부는 각각의 흐름에서 다루며, 참여자 옵션 정책을 확장해 암묵적으로 바꾸지 않는다.
+- 15자리 이상 숫자는 조직 멤버 ID로 바로 쓰고, 이메일은 정확히 일치해야 한다. 이름·그룹 코드의 일치 결과가 여러 개면 후보와 함께 종료 코드 3으로 끝난다.
+
+### `post edit`의 참여자 처리
+
+```mermaid
+flowchart TD
+    A["기존 업무 조회"] --> B["기존 to·cc 읽기"]
+    B --> C{"clear 지정"}
+    C -->|예| D["기존 목록 비우기"]
+    C -->|아니오| E["기존 목록 유지"]
+    D & E --> F["입력 멤버·그룹 해석"]
+    F --> G["추가·제거와 중복 제거"]
+    G --> H["PUT 요청의 to·cc 구성"]
+```
+
+- 참여자 변경 옵션 하나만 있어도 비대화형 수정 경로로 들어간다.
+- 태그 변경 옵션이 없으면 `tagIds`를 보내지 않아 기존 태그를 보존한다.
 
 ## 템플릿으로 정형 업무 생성 흐름 (ADR-027)
 
-자동화 시나리오: 프로젝트의 정형 task (릴리스 플랜, 요청서, 공지 등) 를 매번 templateName 으로 인스턴스화.
+### `project templates`
 
-```
-# 1. 사용 가능한 템플릿 목록 (이름·ID 확인)
-dooray project templates my-project
-
-# 2. 템플릿으로 업무 생성 (body/users/tags 자동 채움 + ${year} 같은 시스템 매크로 치환)
-dooray post create my-project --template "릴리스 플랜"
-
-# 3. 사용자 옵션 override — 템플릿 위에 일부 필드만 다르게
-dooray post create my-project --template "릴리스 플랜" \
-  --title "v0.9 릴리스 계획" \
-  --tag "p0"                       # 템플릿 tags 를 덮음
+```mermaid
+flowchart TD
+    A["프로젝트 입력"] --> B["프로젝트 해석"]
+    B --> C{"템플릿 캐시 유효"}
+    C -->|예| D["캐시 읽기"]
+    C -->|아니오| E["GET projects/{id}/templates"]
+    E --> F["전체 페이지를 캐시 저장"]
+    D & F --> G["목록 출력"]
 ```
 
-`interpolation=true` 가 기본이다. Dooray 가 `${year}`, `${month}` 같은 시스템 매크로를 응답에서 자동으로 치환한다.
-사용자 정의 변수 (`--field key=value`) 는 본 release scope 외 (별도 후속).
-사용자 옵션이 명시 입력되면 템플릿 값을 override.
+- 템플릿 캐시 TTL은 24시간이고 API 페이지 크기는 100이다.
+
+### 템플릿을 지정한 `post create`
+
+```mermaid
+flowchart TD
+    A["템플릿 이름 입력"] --> B["템플릿 캐시에서 해석"]
+    B --> C["GET templates/{templateId}?interpolation=true"]
+    C --> D["템플릿 필드 읽기"]
+    D --> E["사용자 입력으로 항목별 덮어쓰기"]
+    E --> F["일반 post create 흐름"]
+```
+
+- 템플릿 이름이 없거나 여러 개와 맞으면 후보와 함께 종료 코드 3으로 끝난다.
+- 사용자 제목·본문·담당자·참조자·태그가 있으면 해당 템플릿 값을 대신한다.
 
 ## 상위 업무 변경 흐름 (Issue #60)
 
-자동화 시나리오: 자식 업무를 먼저 만든 뒤 후속으로 부모를 지정하거나, 진행 중 부모-자식 관계 재구성.
+### `post edit --parent`
 
+```mermaid
+flowchart TD
+    A["상위 업무 입력"] --> B{"다른 비대화형 옵션"}
+    B -->|없음| C["대화형 경로에서 경고 후 무시"]
+    B -->|있음| D["대상 업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    D --> E["PUT posts/{postId}"]
+    E --> E2["상위 업무 해석"]
+    E2 --> F["POST set-parent-post"]
+    F --> G["수정 결과 출력"]
 ```
-# 상위 업무 설정/변경
-dooray post edit my-project 42 --parent my-project/40    # project/number
-dooray post edit --id <postId> --parent <parentPostId>   # 직접 postId
-```
 
-내부적으로 `client.updatePost` (subject/body/users) → `client.setPostParent` (별도 `POST .../set-parent-post` endpoint) 순차 호출.
-둘 다 무관 endpoint 라 atomic 을 보장하지 않는다. 일부만 실패하면 stderr 로 안내한 뒤 non-zero 로 끝난다.
-
-**한계**: Dooray API 가 `unset-parent-post` 미제공 → CLI 로 parent 해제 (top-level 화) 불가. 웹 UI 에서 수동 처리.
-
-interactive ($EDITOR) 모드에서는 이 옵션들 무시 후 stderr 경고 (mention/link-task 와 동일 패턴).
+- 상위 업무는 `project/number` 또는 업무 ID로 해석한다. 없거나 모호하면 종료 코드 3으로 끝난다.
+- 업무 본문 수정과 상위 업무 설정은 서로 다른 요청이다. 두 번째 요청이 실패하면 첫 번째 수정은 남고 오류로 끝난다.
+- 상위 업무 해제 API는 없어 이 명령으로 최상위 업무로 바꿀 수 없다.
 
 ## 업무 메타데이터 흐름 (ADR-019)
 
-```
-dooray post create my-project \
-  --title "기능 구현" \
-  --tag "frontend" --tag "p0" \                  # 반복 가능, mandatory-tag 그룹은 사전 검증
-  --parent my-project/41 \                       # code/number 또는 raw postId
-  --workflow "진행 중" \                         # 이름 lookup 후 setPostWorkflow 후속 호출
-  --milestone "Sprint 17"                        # 이름 lookup
-```
+### 메타데이터를 지정한 `post create`
 
-resolver 모호성 (이름 부분일치 복수 매칭) 시 에러와 후보 목록 출력.
-
-`post edit` 에서 사후 태그 변경 (`--tag`/`--tag-clear`/`--tag-remove`) 도 동일 정책 (Issue #66, ADR-019 확장):
-
-```
-# 기존 태그 유지 + 신규 추가 (dedupe)
-dooray post edit --id <postId> --tag "분류: <name>"
-
-# 기존 태그 전부 비우고 신규만
-dooray post edit --id <postId> --tag-clear --tag "분류: <name>"
-
-# 특정 태그만 제거 (기존 유지)
-dooray post edit --id <postId> --tag-remove "분류: <name>"
+```mermaid
+flowchart TD
+    A["태그·부모·워크플로우·마일스톤 입력"] --> B["프로젝트 해석"]
+    B --> C["태그·부모·마일스톤 병렬 해석"]
+    C --> D["필수·단일 선택 태그 검증"]
+    D --> E["POST projects/{id}/posts"]
+    E --> F{"워크플로우 지정"}
+    F -->|예| G["POST set-workflow"]
+    F -->|아니오| H["결과 출력"]
+    G --> H
 ```
 
-`--title`/`--body` 없이 단독으로 호출할 수 있고, 그때는 기존 본문을 자동으로 다시 보낸다.
-mandatory tag 그룹 위반 시 친절한 에러.
+- 태그, 마일스톤, 워크플로우 캐시 TTL은 24시간이다. 이름이 없거나 모호하면 후보와 함께 종료 코드 3으로 끝난다.
+- 필수 태그 그룹이 비었거나 단일 선택 그룹에 여러 태그가 있으면 생성 API를 호출하지 않는다.
+
+### 태그를 바꾸는 `post edit`
+
+```mermaid
+flowchart TD
+    A["기존 업무 조회"] --> B["기존 태그 읽기"]
+    B --> C{"tag-clear"}
+    C -->|예| D["기존 태그 비우기"]
+    C -->|아니오| E["기존 태그 유지"]
+    D & E --> F["tag-remove 제거"]
+    F --> G["tag 추가와 중복 제거"]
+    G --> H["필수·단일 선택 검증"]
+    H --> I["PUT posts/{postId}"]
+```
+
+- 태그 변경 옵션만으로 비대화형 수정 경로에 들어가며, 기존 제목과 본문을 함께 다시 보낸다.
 
 ## 프로젝트 태그 관리 흐름 (ADR-041)
 
-태그를 업무에 붙이는 것과 별개로, 붙일 태그를 만드는 흐름이다.
+### `project tags`와 `project tags list`
 
+```mermaid
+flowchart TD
+    A["프로젝트 입력"] --> B["프로젝트 해석"]
+    B --> C{"태그 캐시 유효"}
+    C -->|예| D["캐시 읽기"]
+    C -->|아니오| E["GET projects/{id}/tags"]
+    E --> F["전체 페이지를 캐시 저장"]
+    D & F --> G["태그 목록 출력"]
 ```
-dooray project tags my-project                              # 목록 (기존 호출 그대로 동작)
-dooray project tags list my-project                         # 같은 동작
 
-dooray project tags create my-project --name "배포환경:staging"
-dooray project tags create my-project --name "배포환경:production" --color c6eab3
-dooray project tags create my-project --name "긴급"          # 그룹 없는 개별 태그
+- 두 명령은 같은 목록 흐름을 사용한다. 태그 캐시 TTL은 24시간이고 API 페이지 크기는 100이다.
 
-dooray project tags group my-project "배포환경" --select-one  # 그룹에서 하나만 선택하게
+### `project tags create`
+
+```mermaid
+flowchart TD
+    A["이름과 색 입력"] --> B["프로젝트 해석"]
+    B --> C["이름과 6자리 색 검증"]
+    C --> D["POST projects/{id}/tags"]
+    D --> E["프로젝트 태그 캐시 삭제"]
+    E --> F["생성 결과 출력"]
 ```
 
-`--name` 은 `"그룹명:태그명"` 이고 그룹명은 생략할 수 있다.
-같은 그룹명으로 여러 번 만들면 그 그룹에 태그가 쌓인다.
-`--color` 를 생략하면 `e0e0e0` 이 붙고, `#c6eab3` 처럼 `#` 을 붙여 넣어도 벗겨서 보낸다.
+- 색을 생략하면 `e0e0e0`을 쓰고 앞의 `#`은 제거한다. 6자리 16진수가 아니면 종료 코드 3으로 끝난다.
+- 생성 뒤 캐시 삭제가 실패해도 경고만 내고 생성은 성공으로 끝난다.
 
-생성 직후 그 프로젝트의 태그 캐시를 지운다.
-지우지 않으면 방금 만든 태그를 `post create --tag` 가 최대 24시간 찾지 못한다.
+### `project tags group`
 
-`group` 은 그룹의 필수 여부(`--mandatory`)와 단일 선택 여부(`--select-one`)만 바꾼다.
-해제는 `--no-mandatory`, `--no-select-one` 이고, 지정하지 않은 쪽은 현재 값을 유지한다.
-그룹 이름은 태그 목록에서 파생하므로 태그가 하나도 없는 그룹은 찾을 수 없다.
+```mermaid
+flowchart TD
+    A["그룹 이름과 변경값 입력"] --> B["변경값 존재 검증"]
+    B --> C["프로젝트와 태그 캐시 조회"]
+    C --> D["그룹 해석"]
+    D --> E["지정하지 않은 현재 값 유지"]
+    E --> F["PUT tag-groups/{groupId}"]
+    F --> G["프로젝트 태그 캐시 삭제"]
+    G --> H["변경 결과 출력"]
+```
 
-태그 이름·색상 수정과 태그 삭제는 공식 API 에 경로가 없어 제공하지 않는다.
-그 두 가지는 웹 설정 화면에서 한다.
+- 필수 여부와 단일 선택 여부를 하나도 지정하지 않으면 종료 코드 3으로 끝난다.
+- 태그가 하나도 없는 그룹은 태그 목록에서 찾을 수 없다. 캐시 삭제 실패는 경고만 남긴다.
 
 ## 업무 워크플로우 변경 흐름
 
-```
-dooray post done my-project 42                  # 완료 상태로
-dooray post workflow my-project 42 "review"     # 임의 상태로 (이름 또는 class)
+### `post done`
+
+```mermaid
+flowchart TD
+    A["업무 대상 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B --> C["POST posts/{postId}/set-done"]
+    C --> D["완료 결과 출력"]
 ```
 
-`post done` 은 `set-done` endpoint 를 불러 완료 클래스의 대표 워크플로우로 옮기고,
-완료 이전 담당자들의 상태도 함께 바꾼다. `post workflow` 는 `set-workflow` 로 임의 워크플로우로 옮기므로
-완료 클래스로 옮기고 싶으면 `post done` 을, 그 밖의 상태로 옮기고 싶으면 `post workflow` 를 쓴다.
+- 입력 형태가 충돌하거나 업무를 찾지 못하면 API 호출 전에 종료 코드 3으로 끝난다.
+
+### `post workflow`
+
+```mermaid
+flowchart TD
+    A["업무와 워크플로우 입력"] --> B["입력 형태 정규화"]
+    B --> C["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    C --> D["워크플로우 캐시 조회"]
+    D --> E["class 또는 이름 해석"]
+    E --> F["POST posts/{postId}/set-workflow"]
+    F --> G["변경 결과 출력"]
+```
+
+- 워크플로우 값이 없거나 이름이 여러 개와 맞으면 후보와 함께 종료 코드 3으로 끝난다. class는 이름보다 먼저 정확히 일치시킨다.
+- 워크플로우 캐시 TTL은 24시간이다.
 
 ## 위키 흐름
 
-```
-dooray wiki list                                 # 위키 목록 (ID / Name / Project / Type)
-dooray wiki list --search 설계                    # 이름 부분 일치, 대소문자 무시 (ADR-043)
-dooray wiki pages my-project                     # root 페이지 목록
-dooray wiki tree my-project                      # 페이지 계층 트리 (root 부터 재귀)
-dooray wiki tree my-project --depth 2            # 손자까지만
-dooray wiki page get my-project <page-id>        # 페이지 조회
-dooray wiki page create my-project --title "설계" --body-file design.md
-dooray wiki page edit my-project <page-id>       # $EDITOR 수정
-dooray wiki page delete my-project <page-id>     # 페이지 삭제 (confirm 기본, -y/--yes 로 생략)
-dooray wiki page move <project> <page-id> --parent <parent-page-id>
-dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
-dooray wiki page move --id <page-id> --parent <parent-page-id> --first
-```
+### `wiki list`
 
-페이지 ID 하나만 아는 상태에서 시작하는 경로다 (Issue #154, ADR-045).
-project 를 찾을 필요가 없다.
-
-```
-dooray wiki page get --id <page-id>
+```mermaid
+flowchart TD
+    A["목록 조건 입력"] --> B{"검색어 지정"}
+    B -->|아니오| C["GET wiki/v1/wikis?page&size"]
+    B -->|예| D["100개씩 전체 위키 조회"]
+    D --> E["이름 부분 일치 필터"]
+    C & E --> F["프로젝트 코드 지도 준비"]
+    F -->|성공| G["프로젝트 코드 연결"]
+    F -->|실패| H["프로젝트 ID 유지"]
+    G & H --> I["목록 출력"]
 ```
 
-위키 자체를 이름으로 찾아야 할 때가 따로 있다 (ADR-043).
-페이지 ID 를 모르거나 그 위키의 페이지 목록이나 트리를 보려 할 때다.
+- 검색어는 이름에서 대소문자를 구분하지 않고 찾는다. 검색과 함께 명시한 페이지·크기는 무시하고 경고한다.
+- 검색 결과가 없으면 경고한 뒤 빈 목록을 출력한다. 프로젝트 코드 조회가 실패해도 위키 목록은 실패시키지 않는다.
 
-```
-# 1. 위키를 이름으로 찾는다. Project 열의 값이 다음 명령의 project 인자다
-dooray wiki list --search <위키 이름 일부>
+### `wiki pages`
 
-# 2. 그 값으로 페이지 목록이나 트리를 본다
-dooray wiki pages <project>
-dooray wiki tree <project>
-```
-
-개인 프로젝트도 프로젝트 코드로도 projectId 로도 같은 명령을 쓴다 (ADR-054).
-`resolveProject` 가 공용 목록에서 못 찾으면 private 목록을 받아 다시 찾고,
-`resolveWiki` 는 공용과 private 두 캐시를 모두 본 뒤 거기서도 못 찾으면 private 목록을 받아 다시 찾는다.
-사람이 `dooray project list --type private` 를 미리 부를 필요가 없다.
-
-위키 본문의 페이지 링크는 `dooray://<orgId>/pages/<pageId>` 형태다.
-앞 숫자는 orgId 이고 project 도 위키 ID 도 아니다.
-그 값을 project 자리에 넣으면 `프로젝트에 위키가 없습니다` 로 끝난다.
-`resolveProject` 가 15자리 이상 numeric 을 project ID 로 통과시키는데(ADR-030)
-orgId 는 공용 목록에도 private 목록에도 없어 `resolveWiki` 가 끝내 찾지 못하기 때문이다.
-뒤 숫자가 페이지 ID 이므로 그것만 떼어 `--id` 에 넣으면 project 없이 조회된다. 오류 안내가 그 방법을 알려준다.
-
-`wiki page get` 은 `wiki page file` 과 `wiki page comment` 와 같은 네 가지 입력 형태를 받는다 (ADR-020, ADR-043).
-`--id` 모드는 project 없이 단독으로 동작한다 (ADR-045).
-`GET /wiki/v1/pages/{page-id}` 를 한 번 불러 응답의 wikiId 를 읽는다.
-`--project` 는 선택이며 함께 주면 그 해석 호출을 아낀다.
-`wiki page` 의 `edit`, `file`, `comment`, `delete` 도 같은 방식으로 `--id` 만 받는다.
-
-```
-dooray wiki page get --id <page-id>
-dooray wiki page get --url "https://x.dooray.com/wiki/<wikiId>/<pageId>"
-dooray wiki page get --id <page-id> --project my-project
-```
-하위 페이지는 기본으로 함께 이동한다.
-이동할 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
-
-## 메신저 흐름 (Issue #88, ADR-033, 스레드는 ADR-052, 읽기는 ADR-061)
-
-빠른 알림·배포 요청을 CLI/에이전트가 메일보다 즉시성 있게 전송.
-
-```
-# 1:1 DM — 받는 사람은 organizationMemberId 또는 이메일 (이름 미지원)
-dooray messenger send --to user@example.com --body "배포 완료됐습니다"
-dooray messenger send --to <memberId> --body-file ./notice.md
-
-# 대화방 — channelId 또는 대화방 이름 (내가 속한 방)
-dooray messenger channel-send --channel "배포알림" --body "v1.2.3 배포"
-dooray messenger channel-send --channel <channelId> --body-file -   # stdin
-
-# body 미지정 시 $EDITOR 진입 (comment 와 동일)
-dooray messenger send --to <memberId>
+```mermaid
+flowchart TD
+    A["프로젝트와 부모 입력"] --> B["프로젝트 해석"]
+    B --> C["프로젝트의 wikiId 해석"]
+    C --> D["GET wikis/{wikiId}/pages"]
+    D --> E["목록 출력"]
 ```
 
-대화방에 스레드를 열어 후속 보고를 그 안에 쌓는다.
-`--quiet` 이 내는 값은 log-id 가 아니라 새로 만들어진 스레드 채널의 channelId 다.
+- 프로젝트에 위키가 없으면 종료 코드 3으로 끝난다. 부모 페이지가 있으면 `parentPageId`로 보낸다.
 
-```
-# 대화방에 메시지를 보내면서 스레드를 연다 (--thread-body 는 스레드 첫 메시지, 생략 가능)
-dooray messenger thread-send --channel "배포알림" --body "v1.2.3 배포" --thread-body "빌드 시작"
+### `wiki tree`
 
-# 이미 있는 메시지에 스레드를 연다 (--log 는 channel-send 가 낸 log-id)
-dooray messenger thread-send --channel "배포알림" --log <logId> --body "빌드 로그"
-
-# 연 스레드에 메시지를 잇는다 (스레드 채널 id 를 channel-send 의 --channel 로 준다)
-THREAD=$(dooray messenger thread-send --channel "배포알림" --body "v1.2.3 배포" --quiet)
-dooray messenger channel-send --channel "$THREAD" --body "테스트 통과"
-dooray messenger channel-send --channel "$THREAD" --body "배포 완료"
-```
-
-대화방에 쌓인 메시지를 읽는다. 대상은 `channel-send` 와 같게 channelId 나 대화방 이름을 받는다.
-
-```
-# 최근 N건 (기본 20, 상한 1000). 표는 오래된 것이 위, 최신이 아래
-dooray messenger logs "배포알림"
-dooray messenger logs <channelId> -n 200
-
-# 전문이 필요하면 --json. 표의 내용 열은 60자에서 자른다
-dooray messenger logs "배포알림" --json
+```mermaid
+flowchart TD
+    A["프로젝트와 깊이 입력"] --> B["깊이 검증"]
+    B --> C["wikiId 해석"]
+    C --> D["최상위 페이지 GET"]
+    D --> E{"깊이 도달 또는 자식 없음"}
+    E -->|아니오| F["현재 레벨 자식 병렬 GET"]
+    F --> E
+    E -->|예| G["계층 트리 출력"]
 ```
 
-가져오는 범위는 최근 1000건이 전부다. 페이징도 날짜 필터도 API 에 없어
-`-n` 상한 초과는 클램프하지 않고 `EXIT_PARAM_ERROR` 로 거부한다.
-더 오래된 메시지가 남아 있다는 `hasMore` 는 stderr 로만 알려 stdout 파싱을 건드리지 않는다.
+- 깊이는 1 이상의 정수여야 하며 아니면 종료 코드 3으로 끝난다.
+- 같은 레벨의 자식 조회는 10개씩 병렬로 처리한다.
 
-발신자는 id 로만 오므로 표 모드에서만 `common/v1/members/{id}` 를 불러 이름으로 바꾼다.
-고유 id 마다 한 번씩 병렬로 부르고, 실패한 id 는 그 자리에 id 를 그대로 둔다.
-`--json` 은 서버 응답 원형이라 이름을 끼워넣지 않고 정렬도 서버가 준 대로 최신이 앞이다.
+### `wiki page get`
+
+```mermaid
+flowchart TD
+    A["페이지 대상 입력"] --> B{"입력 형태"}
+    B -->|URL| C["URL에서 wikiId·pageId 추출"]
+    B -->|id와 project| D["프로젝트에서 wikiId 해석"]
+    B -->|id만| E["GET wiki/v1/pages/{pageId}<br/>wikiId 해석"]
+    B -->|project pageId| D
+    C & D --> F["GET wikis/{wikiId}/pages/{pageId}"]
+    E --> F
+    F --> G["페이지 출력"]
+```
+
+- 입력 형태가 충돌하거나 빠지면 종료 코드 3으로 끝난다. 15자리 이상 숫자 프로젝트 값은 프로젝트 ID로 바로 쓴다.
+- `dooray://.../pages/{pageId}`에서 앞 숫자는 프로젝트 ID가 아니다. 페이지 ID만 `--id`에 주는 경로를 사용한다.
+
+### `wiki page create`
+
+```mermaid
+flowchart TD
+    A["프로젝트와 페이지 입력"] --> B["wikiId 해석"]
+    B --> C{"부모 지정"}
+    C -->|예| D["입력 부모 사용"]
+    C -->|아니오| E["위키 캐시에서 홈 페이지 해석"]
+    D & E --> F["POST wikis/{wikiId}/pages"]
+    F --> G["생성 결과 출력"]
+```
+
+- 본문이 없으면 빈 본문으로 생성한다. 위키 캐시 TTL은 24시간이다.
+
+### `wiki page edit`
+
+```mermaid
+flowchart TD
+    A["수정 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    B --> C{"제목·본문·MIME 제공"}
+    C -->|없음| D["페이지 GET 후 편집기 실행"]
+    D -->|변경 있음| E["PUT pages/{pageId}"]
+    D -->|변경 없음| F["변경 없이 종료"]
+    C -->|있음| G{"변경 조합"}
+    G -->|제목만| H["PUT pages/{pageId}/title"]
+    G -->|본문만| I["현재 MIME GET"]
+    G -->|MIME만| J["현재 본문 GET"]
+    G -->|본문과 MIME| M["PUT pages/{pageId}/content"]
+    G -->|제목과 본문| N["현재 MIME GET"]
+    G -->|제목과 MIME| O["현재 본문 GET"]
+    G -->|제목·본문·MIME| E
+    I & J --> M
+    N & O --> E
+    E & H & M --> K["수정 결과 출력"]
+```
+
+- 본문과 MIME을 함께 주면 기존 페이지를 조회하지 않고 콘텐츠를 수정한다. 둘 중 하나만 주면 빠진 값을 조회한다.
+- MIME만 지정했거나 제목과 MIME만 지정했는데 기존 본문이 없으면 PUT하지 않고 종료 코드 3으로 끝난다.
+- 편집기 내용이 바뀌지 않으면 API를 호출하지 않는다.
+
+### `wiki page delete`
+
+```mermaid
+flowchart TD
+    A["삭제 입력"] --> B["공통 삭제 확인"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    C --> D["DELETE wikis/{wikiId}/pages/{pageId}"]
+    D --> E["삭제 결과 출력"]
+```
+
+- 확인은 설정·대상 해석보다 먼저 한다. 자식 페이지는 서버가 삭제한 페이지의 부모로 다시 연결한다.
+
+### `wiki page move`
+
+```mermaid
+flowchart TD
+    A["페이지·새 부모 입력"] --> B["옵션 조합 검증"]
+    B --> C["현재 페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    C --> D{"대상 위키 지정"}
+    D -->|이름·코드| E["대상 wikiId 해석"]
+    D -->|숫자 ID·없음| F["대상 또는 현재 wikiId 사용"]
+    E & F --> G["POST pages/{pageId}/move"]
+    G --> H["이동 결과 출력"]
+```
+
+- 새 부모는 필수다. 특정 앞 페이지와 맨 앞 배치를 함께 지정하면 종료 코드 3으로 끝난다.
+- 하위 페이지도 기본으로 함께 옮긴다. 제외 옵션은 `withChildren=false`, 맨 앞 배치는 `beforePageId=0`으로 보낸다.
+
+## 메신저 흐름
+
+### `messenger send`
+
+```mermaid
+flowchart TD
+    A["수신자와 본문 입력"] --> B{"수신자 형태"}
+    B -->|15자리 이상 ID| C["GET common/v1/members/{id}"]
+    B -->|이메일| D["GET common/v1/members 검색"]
+    B -->|그 밖| E["종료 코드 3"]
+    C & D --> F["본문·파일·편집기 처리"]
+    F --> G["POST messenger/v1/channels/direct-send"]
+    G --> H["전송 결과 출력"]
+```
+
+- 수신자와 비어 있지 않은 본문은 필수다. 이메일 검색은 정확히 한 멤버와 일치해야 한다.
+- 편집기에서 빈 본문이 나오면 취소가 아니라 종료 코드 3으로 끝난다.
+
+### `messenger channel-send`
+
+```mermaid
+flowchart TD
+    A["대화방과 본문 입력"] --> B{"대화방 값"}
+    B -->|15자리 이상 ID| C["ID 바로 사용"]
+    B -->|이름| D["GET messenger/v1/channels"]
+    D --> E["제목 정확·부분 일치 해석"]
+    C & E --> F["본문·파일·편집기 처리"]
+    F --> G["POST channels/{channelId}/logs"]
+    G --> H["전송 결과 출력"]
+```
+
+- 대화방 이름이 없거나 여러 개와 맞으면 후보와 함께 종료 코드 3으로 끝난다.
+- 대화방과 비어 있지 않은 본문은 필수다.
+
+### `messenger thread-send`
+
+```mermaid
+flowchart TD
+    A["스레드 입력"] --> B["옵션 조합 검증"]
+    B --> C["대화방 해석"]
+    C --> D["본문 읽기"]
+    D --> E{"기존 log 지정"}
+    E -->|예| F["POST logs/{logId}/threads"]
+    E -->|아니오| G["새 스레드 본문 읽기"]
+    G --> H["POST channels/{channelId}/threads"]
+    F & H --> I["전송 결과 출력"]
+```
+
+- 기존 로그 ID와 새 스레드 본문을 함께 주면 새 스레드 본문을 무시한다는 경고를 낸다.
+- 본문과 스레드 본문 양쪽에서 표준 입력을 동시에 읽으려 하면 종료 코드 3으로 끝난다.
+- API 응답에 대화방 ID가 없으면 성공 응답이어도 오류로 끝난다.
+
+### `messenger logs`
+
+```mermaid
+flowchart TD
+    A["대화방과 개수 입력"] --> B["개수 검증"]
+    B --> C["대화방 해석"]
+    C --> D["GET channels/{channelId}/logs?size"]
+    D --> E{"출력 형식"}
+    E -->|JSON| F["최신순 원본 출력"]
+    E -->|표·quiet| G["오래된 순서로 뒤집기"]
+    G --> H["멤버 발신자 이름 병렬 조회"]
+    H --> I["표·ID 출력"]
+```
+
+- 개수는 1에서 1000 사이의 정수여야 하며 아니면 종료 코드 3으로 끝난다.
+- 멤버 이름 조회가 실패하면 ID를 남긴다. 발신자가 멤버가 아니면 `sender.type`을 표시한다.
+- API가 `hasMore=true`를 돌려주면 더 오래된 메시지는 이 API로 페이지 이동할 수 없다는 경고를 낸다.
 
 ## 위키 페이지 첨부파일 흐름 (Issue #70, ADR-029)
 
-페이지 첨부파일을 CLI 로 관리.
-post file 명령군과 같은 구조다. `<project> <page-id>`, `--id`, `--url`, positional URL 을 모두 지원한다.
+### `wiki page file list`
 
-```
-# 목록 (general 첨부 + inline image 둘 다 표시)
-dooray wiki page file list my-project <page-id>
-
-# 업로드 (기본 general — 페이지 하단 첨부 영역)
-dooray wiki page file upload my-project <page-id> --file ./SKILL.md
-# stdout: attachFileId + 본문 삽입용 markdown snippet 안내
-
-# 인라인 이미지 업로드 (본문 markdown 은 사용자가 직접 박음 — 자동 합성 안 함)
-dooray wiki page file upload my-project <page-id> --file ./diagram.png --type inline_image
-
-# 다운로드
-dooray wiki page file download my-project <page-id> --file-id <id> -o ./
-
-# 페이지 모든 첨부 일괄 다운로드
-dooray wiki page file download-all my-project <page-id> -o ./attachments/
-
-# 삭제 (post file delete 와 동일 — confirm 기본, -y/--yes 로 생략)
-dooray wiki page file delete my-project <page-id> --file-id <id>
+```mermaid
+flowchart TD
+    A["페이지 대상 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    B --> C["GET wikis/{wikiId}/pages/{pageId}"]
+    C --> D["일반 파일과 인라인 이미지 합치기"]
+    D --> E["목록 출력"]
 ```
 
-활용 사례: 팀 위키에 스킬 파일 첨부 → 팀원이 `wiki page file download-all` 로 일괄 받아 `~/.claude/skills/` 에 그대로 설치.
+- 일반 첨부와 인라인 이미지를 같은 목록으로 출력한다.
+
+### `wiki page file upload`
+
+```mermaid
+flowchart TD
+    A["페이지·파일·유형 입력"] --> B["유형 검증"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    C --> D["type 뒤 file 순서로 폼 구성"]
+    D --> E["POST pages/{pageId}/files"]
+    E -->|307| F["리다이렉트 URL에 다시 POST"]
+    E -->|성공| G["업로드 결과 출력"]
+    F --> G
+```
+
+- 유형은 `general` 또는 `inline_image`만 받으며, 그 밖의 값은 종료 코드 3으로 끝난다.
+- 307 리다이렉트 뒤에도 새 폼을 만들고 `type`, `file` 순서를 유지한다.
+- 인라인 이미지 성공 출력에는 본문에 넣을 마크다운 조각을 함께 넣는다.
+
+### `wiki page file download`와 `download-all`
+
+```mermaid
+flowchart TD
+    A["다운로드 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    B --> C{"단일 또는 전체"}
+    C -->|단일| D["GET files/{fileId}"]
+    C -->|전체| E["페이지 GET 후 파일 목록 합치기"]
+    E --> F["각 파일을 차례로 GET"]
+    D & F --> G["307 URL에서 파일 받기"]
+    G --> H["안전한 파일명으로 저장"]
+    H --> I["저장 결과 출력"]
+```
+
+- 다운로드 API가 307이 아닌 상태를 돌려주거나 위치 헤더가 없으면 종료 코드 1로 끝난다.
+- 전체 다운로드는 일반 첨부와 인라인 이미지를 모두 받는다. 일부 파일이 실패하면 나머지를 계속 받은 뒤 종료 코드 1로 끝난다.
+
+### `wiki page file delete`
+
+```mermaid
+flowchart TD
+    A["삭제 입력"] --> B["공통 삭제 확인"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    C --> D["DELETE pages/{pageId}/files/{fileId}"]
+    D --> E["삭제 결과 출력"]
+```
+
+- 확인을 거절하면 페이지 해석이나 API 호출 없이 성공으로 끝난다.
 
 ## 위키 페이지 댓글 흐름
 
-post comment 명령군과 동일 UX. 단 wiki comment 는 mention / cc / 첨부 파일 미지원 (Dooray API 부재).
+### `wiki page comment list`와 `latest`
 
-```
-# 목록 (최신순)
-dooray wiki page comment list <project> <page-id>
-dooray wiki page comment list <project> <page-id> --size 50
-
-# 최신 1건 shortcut
-dooray wiki page comment latest <project> <page-id>
-
-# 단일 조회
-dooray wiki page comment get <project> <page-id> <comment-id>
-
-# 추가 — interactive ($EDITOR) 또는 옵션
-dooray wiki page comment add <project> <page-id>                       # $EDITOR
-dooray wiki page comment add <project> <page-id> --body "..." 
-dooray wiki page comment add <project> <page-id> --body-file ./note.md
-echo "댓글 본문" | dooray wiki page comment add <project> <page-id> --body -
-
-# 수정 — interactive ($EDITOR) 또는 옵션
-dooray wiki page comment edit <project> <page-id> <comment-id> --body "..."
-
-# 삭제 (confirm 기본, -y/--yes 로 생략)
-dooray wiki page comment delete <project> <page-id> <comment-id>
+```mermaid
+flowchart TD
+    A["페이지와 조회 범위 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    B --> C{"명령 종류"}
+    C -->|list| D["GET comments?page&size"]
+    C -->|latest| E["GET comments?page=0&size=1"]
+    D --> F["목록 출력"]
+    E -->|결과 있음| G["댓글 출력"]
+    E -->|결과 없음| H["댓글 없음 출력"]
 ```
 
-활용 사례: 회의록 위키 페이지에 자동화 봇이 결정사항 댓글로 누적, 토론 흐름 추적.
+- `list`는 `latest` 값이 있으면 그 값을 크기로 쓰고, 아니면 명시한 크기나 기본값 20을 쓴다. 코드에서 크기 상한을 별도로 검사하지 않는다.
+
+### `wiki page comment get`
+
+```mermaid
+flowchart TD
+    A["페이지·댓글 대상 입력"] --> B["입력 형태 해석"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    C --> D["GET comments/{commentId}"]
+    D --> E["댓글 출력"]
+```
+
+- 프로젝트·페이지·댓글 위치 인자와 ID·URL 옵션의 조합이 맞지 않으면 종료 코드 3으로 끝난다.
+
+### `wiki page comment add`
+
+```mermaid
+flowchart TD
+    A["본문 입력"] --> B["입력 충돌 검증"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    C --> D{"본문 제공"}
+    D -->|아니오| E["편집기 실행"]
+    D -->|예| F["POST pages/{pageId}/comments"]
+    E -->|빈 본문| G["변경 없이 종료"]
+    E -->|본문 있음| F
+    F --> H["생성 결과 출력"]
+```
+
+- 본문과 본문 파일을 함께 주는 등 입력이 충돌하면 API 호출 전에 종료 코드 3으로 끝난다.
+
+### `wiki page comment edit`
+
+```mermaid
+flowchart TD
+    A["댓글 대상 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    B --> C["GET comments/{commentId}"]
+    C --> D{"새 본문 제공"}
+    D -->|아니오| E["편집기 실행"]
+    D -->|예| F["PUT comments/{commentId}"]
+    E -->|빈 값·변경 없음| G["변경 없이 종료"]
+    E -->|변경 있음| F
+    F --> H["수정 결과 출력"]
+```
+
+- 편집기 결과가 비었거나 기존 본문과 같으면 수정 API를 호출하지 않는다.
+
+### `wiki page comment delete`
+
+```mermaid
+flowchart TD
+    A["삭제 입력"] --> B["공통 삭제 확인"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
+    C --> D["DELETE comments/{commentId}"]
+    D --> E["삭제 결과 출력"]
+```
+
+- 확인은 페이지와 댓글 입력 해석보다 먼저 한다.
 
 ## 피드백 흐름 (ADR-022/023)
 
-`dooray feedback` 은 GitHub issue 를 `gh` CLI 위임으로 자동 등록.
+### `feedback`
 
-```
-dooray feedback                                  # 인터랙티브 ($EDITOR)
-dooray feedback --title "버그" --body-file bug.md --label bug
-dooray feedback --last                           # 직전 명령 sanitized argv + 에러 자동 첨부 (opt-in)
+```mermaid
+flowchart TD
+    A["제목·본문 입력"] --> B{"last 지정"}
+    B -->|예| C["기록된 명령과 오류 읽기"]
+    B -->|아니오| D["본문 조합"]
+    C --> D
+    D --> E["제목·라벨·본문 보완"]
+    E --> F["환경정보와 함께 본문 구성"]
+    F --> G{"dry-run"}
+    G -->|예| H["예정 본문 출력"]
+    G -->|아니오| I{"대화형 확인 필요"}
+    I -->|예| J["미리보기와 확인"]
+    I -->|아니오| K["gh 설치 확인"]
+    J -->|승인| K
+    J -->|거절| L["취소 출력"]
+    K --> M["gh issue create"]
+    M --> N["등록 결과 출력"]
 ```
 
-`--last` 사전 활성화: `dooray config set track-last-run true`.
-시크릿 패턴 (`--api-key=*`, `Authorization: Bearer *` 등) 자동 마스킹.
+- `--last`인데 기록이 없거나 제목·본문이 비면 종료 코드 3으로 끝난다.
+- 제목을 옵션으로 주지 않은 대화형 경로만 등록 전 미리보기와 기본값 예인 확인을 거친다.
+- `dry-run`은 `gh` 설치 여부를 검사하지 않는다. `gh issue create`가 실패하면 종료 코드 3으로 끝나며 임시 본문 파일은 항상 지운다.
 
 ## 파이프라인 활용
 
-```bash
-# JSON 출력 → jq 가공
-dooray post list my-project --json | jq '.[] | select(.priority == "high")'
+### 구조화 출력 파이프라인
 
-# 조용한 출력 (ID만)
-dooray post list my-project --quiet | xargs -I{} dooray post done my-project {}
+```mermaid
+flowchart TD
+    A["조회 명령 입력"] --> B["설정·대상·옵션 검증"]
+    B --> C["Dooray API 호출"]
+    C --> D{"출력 형식"}
+    D -->|json| E["JSON을 표준 출력"]
+    D -->|quiet| F["ID를 표준 출력"]
+    D -->|기본| G["사람용 표를 표준 출력"]
+    E & F --> H["다음 프로세스의 표준 입력"]
 ```
+
+- 경고와 오류는 표준 오류로 보내 구조화된 표준 출력을 섞지 않는다.
+- 일부 조회 명령은 JSON에서 이름 보강이나 순서 뒤집기를 하지 않고 API 원본을 유지한다.
 
 ## 첨부파일 흐름
 
-```
-dooray post file list my-project 42                    # 첨부파일 목록
-dooray post file download my-project 42 <file-id>     # 단일 다운로드
-dooray post file download-all my-project 42 -o ./files # 전체 다운로드
-dooray post file upload my-project 42 ./report.pdf     # 업로드
-dooray post file delete my-project 42 <file-id>        # 삭제 (confirm 기본, -y/--yes 로 생략)
+### `post file list`
+
+```mermaid
+flowchart TD
+    A["업무 대상 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B --> C["GET posts/{postId}/files"]
+    C --> D["목록 출력"]
 ```
 
-`download-all` 은 첨부 목록(`getPostFiles`)과 본문의 `/files/<id>` 참조를 합쳐 대상으로 삼는다 (ADR-057).
-본문 참조는 업무 상세(`getPost`)를 한 번 더 조회해 뽑고, 두 곳에 같은 id 가 있으면 한 번만 받는다.
-`--no-inline` 을 주면 그 상세 조회를 하지 않고 첨부 목록만 받는다.
+- 목록은 업무 단위 첨부 API 응답을 출력한다.
+
+### `post file upload`
+
+```mermaid
+flowchart TD
+    A["업무와 파일 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B --> C["POST posts/{postId}/files"]
+    C -->|307| D["리다이렉트 URL에 다시 POST"]
+    C -->|성공| E["업로드 결과 출력"]
+    D --> E
+```
+
+- 리다이렉트 위치 헤더가 없거나 파일 서버가 실패하면 종료 코드 1로 끝난다.
+
+### `post file download`와 `download-all`
+
+```mermaid
+flowchart TD
+    A["다운로드 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B --> C{"단일 또는 전체"}
+    C -->|단일| D["파일 ID로 다운로드"]
+    C -->|전체| E["GET posts/{postId}/files"]
+    E --> F{"인라인 포함"}
+    F -->|예| G["업무 GET 후 본문 참조 합치기"]
+    F -->|아니오| H["첨부 목록만 사용"]
+    G & H --> I["각 파일 다운로드"]
+    D & I --> J["안전한 이름으로 저장"]
+    J --> K["저장 결과 출력"]
+```
+
+- 전체 다운로드는 기본으로 본문 `/files/{id}` 참조도 합친다. `--no-inline`이면 업무 상세를 조회하지 않는다.
+- 같은 ID는 한 번만 받는다. 일부 파일이 실패하면 나머지를 계속 받은 뒤 종료 코드 1로 끝난다.
+
+### `post file delete`
+
+```mermaid
+flowchart TD
+    A["삭제 입력"] --> B["공통 삭제 확인"]
+    B --> C["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    C --> D["DELETE posts/{postId}/files/{fileId}"]
+    D --> E["삭제 결과 출력"]
+```
+
+- 확인을 거절하면 업무 해석이나 API 호출 없이 성공으로 끝난다.
 
 ## 삭제 확인 공통 흐름 (ADR-036)
 
-다음 여섯 명령은 같은 안전 정책을 적용한다.
+### 삭제 명령의 사전 확인
 
-- `dooray wiki page delete`
-- `dooray wiki page file delete`
-- `dooray wiki page comment delete`
-- `dooray post file delete`
-- `dooray post comment delete`
-- `dooray post comment file delete`
+```mermaid
+flowchart TD
+    A["삭제 명령 입력"] --> B{"yes 지정"}
+    B -->|예| C["명령별 대상 해석"]
+    B -->|아니오| D{"TTY 환경"}
+    D -->|아니오| E["종료 코드 3"]
+    D -->|예| F["기본값 아니오로 확인"]
+    F -->|거절| G["취소 출력 후 성공 종료"]
+    F -->|승인| C
+    C --> H["명령별 DELETE 또는 선행 수정"]
+    H --> I["명령별 결과 출력"]
+```
 
-사용자에게는 확인 한 번이 더해질 뿐이고, `-y` 또는 `--yes` 를 주면 그 확인도 생략한다.
-확인 절차와 종료 코드 규약은 ADR-036 이 소유한다.
-
-확인 정책만 통일하며 각 명령의 기존 plain·`--json`·`--quiet` 성공 출력과 부분 실패 처리는 유지한다.
-
-업로드·다운로드 시 Dooray API는 307 리다이렉트로 파일 서버 URL을 반환한다.
-CLI가 자동 처리하므로 사용자는 신경 쓸 필요 없다.
+- 위키 페이지·위키 파일·위키 댓글·업무 파일·업무 댓글·댓글 파일 삭제가 같은 확인 함수를 쓴다.
+- 확인은 설정 읽기, 대상 해석, API 호출보다 먼저 실행한다.
 
 ## 메일 흐름
 
-```
-dooray config set imap-username user@example.com       # 최초 1회 설정
-dooray config set imap-password <app-password>
+### `mail list`
 
-dooray mail list                                        # 최근 메일 목록
-dooray mail list --unread                               # 안읽은 메일만
-dooray mail list --search "키워드"                      # 제목 검색
-dooray mail get <uid>                                   # 메일 상세
-
-dooray mail send --to "recipient@example.com" --subject "제목" --body "본문"
-dooray mail reply <uid> --body "답장 내용"              # 스레드 유지
-
-dooray mail logout                                      # 저장된 IMAP·SMTP 인증정보 제거
-```
-
-`mail get` 과 `mail reply` 는 세 가지 입력을 받는다.
-
-```
-dooray mail get 6980                                                    # IMAP UID
-dooray mail get https://<tenant>.dooray.com/mail/systems/inbox/<mail-id>  # 메일 웹 주소
-dooray mail get <mail-id>                                               # 주소에서 뽑은 19자리 id
+```mermaid
+flowchart TD
+    A["목록 조건 입력"] --> B["메일 설정 검증"]
+    B --> C["IMAP 연결과 INBOX 잠금"]
+    C --> D{"조회 조건"}
+    D -->|unread| E["안 읽은 UID 검색"]
+    D -->|search| F["제목으로 UID 검색"]
+    D -->|기본| G["전체 UID 검색"]
+    E & F & G --> H["최근 UID의 envelope·flags 조회"]
+    H --> I["날짜 내림차순 정렬"]
+    I --> J["잠금 해제와 연결 종료"]
+    J --> K["목록 출력"]
 ```
 
-뒤의 두 형태는 id 에서 도착 시각을 꺼낸 뒤, 그 시각의 앞뒤 하루를 `SEARCH` 로 조회하고
-받은 후보의 도착 시각을 한 번에 받아 UID 를 결정한다 (ADR-040).
-후보가 상한을 넘으면 UID 를 고르지 않고 대체 조회를 안내한다.
-시간 일치는 원본 메일의 동일성을 보장하지 않는다.
-대상이 이동되거나 삭제된 뒤 같은 시각의 다른 메일만 남으면 그 메일이 조회될 수 있다.
-UID 직접 입력을 포함한 세 입력 형식 모두 답장할 때 제목, 발신자, IMAP 도착 시각과 UID 를 확인한다.
-TTY 확인의 기본값은 아니오이며 거절하면 발송 없이 정상 취소한다.
-`-y` 또는 `--yes` 는 확인을 생략한다. non-TTY 에서 이 옵션이 없으면 설정과 IMAP 조회 전에 종료 코드 3으로 중단한다.
+- 설정이 없으면 종료 코드 4, 인증이 실패하면 종료 코드 2, IMAP 통신이 실패하면 종료 코드 1로 끝난다.
+- 사서함 잠금은 성공과 실패 경로에서 모두 해제하고 연결을 닫는다.
 
-후보는 id 에서 복원한 시각의 초 또는 그 다음 초에 도착한 메일이다.
-이 두 초 안에 후보가 여럿이면 하나를 고르지 않고 후보를 보여준다.
+### `mail get`
 
-```
-$ dooray mail get <mail-id>
-오류: 사서함 INBOX에서 메일 id <mail-id>에 대응하는 메일이 여러 건입니다.
-  UID: 6979
-  도착 시각: 2026-08-18T10:52:00.000Z
-  보낸사람: sender <sender@example.com>
-  제목: 첫 번째 메일
-  UID: 6980
-  도착 시각: 2026-08-18T10:52:01.000Z
-  보낸사람: sender <sender@example.com>
-  제목: 두 번째 메일
-받은 메일함(INBOX)의 후보 UID 하나를 골라 다시 조회하세요.
+```mermaid
+flowchart TD
+    A["메일 대상 입력"] --> B{"입력 형태"}
+    B -->|32비트 이하 숫자| C["UID 바로 사용"]
+    B -->|메일 ID·URL| D["ID에서 시각과 폴더 해석"]
+    D --> E["앞뒤 하루 UID 검색"]
+    E --> F["후보 envelope를 500개씩 조회"]
+    F --> G["같은 초와 다음 초 후보 선별"]
+    G -->|정확히 하나| C
+    C --> H["IMAP에서 본문 조회"]
+    H --> I["메일 상세 출력"]
 ```
 
-시스템 폴더 `inbox`, `sent`, `draft`, `archive`, `spam`, `trash` 주소는 해당 사서함을 조회한다.
-`inbox` 는 `INBOX` 로 바꾸고, 폴더 이름의 대소문자는 구분하지 않는다.
-지원 목록 밖의 시스템 폴더는 지원 폴더 목록과 함께 거절한다.
-시스템 폴더 형식이 아닌 주소와 mail id 와 UID 직접 입력은 `INBOX` 를 조회한다.
-따라서 다른 사서함의 모호한 후보는 웹 메일의 해당 폴더에서 확인한다.
+- 웹 주소는 `inbox`, `sent`, `draft`, `archive`, `spam`, `trash` 폴더만 받는다. 주소가 아니거나 폴더가 없으면 `INBOX`를 쓴다.
+- 메일 ID 검색 후보 상한은 2000개다. 후보 envelope는 500개씩 가져온다.
+- 도착 시각이 빠졌거나, 같은 시각 후보가 여러 개거나, 조회 범위 경계 뒤에 후보가 더 있을 수 있으면 UID를 고르지 않고 종료 코드 1로 끝난다.
 
-조회 중 메일의 날짜나 일부 응답이 빠지면 UID 를 결정하지 않고 중단한다.
-조회 범위 끝의 단일 후보 뒤에 같은 시각의 메일이 더 있을 수 있는 경우에도 중단한다.
-받은 메일함의 실패 안내는 `mail list --search` 로 우회하도록 안내한다.
-다른 사서함의 실패 안내는 웹 메일의 해당 폴더에서 확인하도록 안내한다.
+### `mail send`
+
+```mermaid
+flowchart TD
+    A["수신자·제목·본문 입력"] --> B["메일 설정 검증"]
+    B --> C["본문 파일 또는 본문 읽기"]
+    C --> D["빈 본문 검증"]
+    D --> E["SMTP 보안 연결"]
+    E --> F["메일 전송"]
+    F --> G["전송 결과 출력"]
+```
+
+- 본문 파일을 주면 인자 본문보다 우선한다. 본문이 비면 종료 코드 3으로 끝난다.
+- 설정 누락, 인증 실패, SMTP 통신 실패의 종료 코드는 각각 4, 2, 1이다.
+
+### `mail reply`
+
+```mermaid
+flowchart TD
+    A["답장 대상과 본문 입력"] --> B{"yes 또는 TTY"}
+    B -->|둘 다 아님| C["종료 코드 3"]
+    B -->|가능| D["메일 설정과 본문 검증"]
+    D --> E["get 흐름으로 원본 조회"]
+    E --> F["수신자·제목·시각·UID 미리보기"]
+    F --> G{"확인 필요"}
+    G -->|거절| H["취소 출력"]
+    G -->|승인·yes| I["SMTP로 답장 전송"]
+    I --> J["전송 결과 출력"]
+```
+
+- 비대화형 환경에서 `--yes`가 없으면 설정이나 IMAP을 읽기 전에 종료 코드 3으로 끝난다.
+- 확인의 기본값은 아니오다. 답장 제목에는 `Re:`를 붙이고 원본 메시지 ID를 `In-Reply-To`와 `References`에 넣는다.
+- 본문 파일은 인자 본문보다 우선하며, 빈 본문은 종료 코드 3으로 끝난다.
+
+### `mail logout`
+
+```mermaid
+flowchart TD
+    A["logout 입력"] --> B{"yes 지정"}
+    B -->|아니오| C{"TTY 환경"}
+    C -->|아니오| D["종료 코드 3"]
+    C -->|예| E["기본값 아니오로 확인"]
+    B -->|예| F["메일 설정 읽기"]
+    E -->|승인| F
+    E -->|거절| G["취소 출력"]
+    F --> H{"인증정보 존재"}
+    H -->|예| I["IMAP 사용자명·비밀번호 제거"]
+    H -->|아니오| J["제거할 정보 없음 출력"]
+    I --> K["완료 출력"]
+```
+
+- 로그아웃은 IMAP 사용자명과 비밀번호만 제거하며 API 설정은 유지한다.
