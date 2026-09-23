@@ -1,16 +1,14 @@
 ---
 name: health-check
-description: dooray-cli 의 의존성, 취약점, 저장소 규약, 코드 구조와 유지보수성을 점검하고 개선 목록과 적용 계획을 만든다. "/health-check", "정기 점검", "의존성 점검", "패키지 버전 낡았나", "npm audit", "취약점 확인", "메이저 업그레이드 해도 되나", "구조 검토", "유지보수성 평가", "코드 건강도" 같은 요청이면 이 스킬을 쓴다. 사용자가 스킬 이름을 말하지 않고 "요즘 패키지 상태 어때" 정도로만 물어도 이 스킬을 먼저 연다. 새 버전을 npm 에 내보내는 일은 `release` 가, 남의 PR 리뷰는 `pr-review` 가 맡는다.
+description: dooray-cli 의 의존성, 취약점, 저장소 규약, 코드 구조와 유지보수성을 점검하고 개선 목록과 적용 계획을 만든다. "/health-check", "정기 점검", "의존성 점검", "패키지 버전 낡았나", "요즘 패키지 상태 어때", "npm audit", "취약점 확인", "메이저 업그레이드 해도 되나", "구조 검토", "유지보수성 평가", "코드 건강도" 같은 요청이면 이 스킬을 쓴다. 새 버전을 npm 에 내보내는 일은 `release` 가, 남의 PR 리뷰는 `pr-review` 가 맡는다.
 ---
 
 # health-check
 
-**목표: 의존성과 코드의 현재 상태를 측정해, 무엇을 왜 고칠지와 어느 경로로 적용할지를 사용자가 정할 수 있게 한다.**
+**목표: 작업 단위 표를 받은 사용자가 단위마다 적용 경로를 정했다.**
 
 - 측정은 스크립트가 한다. 판단이 필요한 곳만 사람과 에이전트가 본다.
-- 버전을 올리면 패키지마다 올린 이유를 남긴다. 이유가 없는 갱신은 "범위 안 최신화" 라고 그대로 적는다.
 - 작업 중인 checkout 에서 갱신을 시험하지 않는다. 시험은 임시 워크트리에서 한다.
-- 규모가 커지면 이 세션에서 구현하지 않고 `planning` 과 `orchestration` 으로 넘긴다.
 
 ## 워크플로 개요
 
@@ -19,12 +17,13 @@ description: dooray-cli 의 의존성, 취약점, 저장소 규약, 코드 구�
 | 1 | 측정 | `deps-report.mjs` 와 `conventions.mjs` 가 종료 코드 0 이나 1 로 끝났다 | |
 | 2 | 범위 안 갱신 시험 | `trial-update.mjs --range` 가 종료 코드 0 이고, 남은 취약점마다 해소 방법이나 남기는 이유가 있다 | |
 | 3 | 메이저 판단 | 메이저 대상마다 올림, 코드 수정 후 올림, 보류 중 하나와 이유가 있다 | `references/major-upgrade.md` |
-| 4 | 구조와 유지보수성 검토 | 검토 결과의 높음 항목을 코드에서 직접 확인했다 | `references/review-axes.md` |
+| 4 | 구조와 유지보수성 검토 | 보고 표의 높음 항목마다 확인한 파일과 줄이나 "확인하지 않음"이 적혀 있다 | `references/review-axes.md` |
 | 5 | 보고와 적용 경로 결정 | 작업 단위 표를 보여 줬고, 어느 단위를 어느 경로로 할지 사용자가 정했다 | |
 
 4단계는 사용자가 구조나 유지보수성 평가를 요청했을 때, 또는 1단계 규약 검사에서 error 가 나왔을 때만 돈다.
 
-스크립트는 모두 저장소 root 를 스스로 찾는다. 실행 규약은 `CLAUDE.md` 의 "저장소 스킬 작성 규약" 이 소유한다.
+명령 블록은 저장소 root 에서 붙여넣는다. 스크립트는 그 뒤 root 를 스스로 확인한다.
+실행 규약은 `CLAUDE.md` 의 "저장소 스킬 작성 규약" 이 소유한다.
 
 ## 워크플로 상세
 
@@ -34,9 +33,9 @@ description: dooray-cli 의 의존성, 취약점, 저장소 규약, 코드 구�
 OUT="$(mktemp -d)"
 node .claude/skills/health-check/scripts/deps-report.mjs >| "$OUT/deps.md"; echo "deps=$?"
 node .claude/skills/health-check/scripts/conventions.mjs >| "$OUT/conventions.md"; echo "conventions=$?"
+echo "OUT=$OUT"
 ```
 
-두 스크립트 모두 종료 코드 1 은 "찾은 것이 있다" 는 뜻이다. 2 만 실행 실패다.
 출력은 파일로 받아서 읽는다. 표가 길어 터미널에서 잘리면 어느 패키지가 런타임 경로인지가 사라진다.
 
 읽을 때 먼저 보는 것은 두 가지다.
@@ -44,7 +43,7 @@ node .claude/skills/health-check/scripts/conventions.mjs >| "$OUT/conventions.md
 - **취약점 표의 "런타임" 행.** 사용자 설치본에 들어가는 경로다. 개발 도구 경로는 CI 와 개발 머신에만 영향이 있다
 - **규약 검사의 error 행.** 규칙과 근거는 `conventions.mjs` 머리말과 각 규칙의 주석이 소유한다
 
-규칙을 새로 알게 되면 SKILL.md 에 문장으로 더하지 말고 `conventions.mjs` 에 검사로 더한다.
+새 규칙은 `conventions.mjs` 에 검사로 더한다.
 
 ### 2. 범위 안 갱신 시험
 
@@ -52,44 +51,30 @@ node .claude/skills/health-check/scripts/conventions.mjs >| "$OUT/conventions.md
 node .claude/skills/health-check/scripts/trial-update.mjs --range; echo "trial=$?"
 ```
 
-HEAD 커밋에서 임시 워크트리를 만들어 `pnpm update` 뒤에 타입 체크, 테스트, 빌드, 감사를 돌린다.
-커밋하지 않은 변경은 시험에 들어가지 않는다.
-
 **갱신 뒤에도 취약점이 남으면 3단계 전에 거쳐 오는 경로를 본다.** 1단계 표의 "거쳐 오는 직접 의존성" 열이다.
 이 결과가 3단계에서 메이저의 보안 이득을 판정하는 기준이 된다. 건너뛰면 범위 안에서 풀리는 취약점을 메이저 갱신의 이득으로 잘못 셈한다.
 
-- 직접 의존성의 새 버전이 범위를 넓혀 주지 않으면 그 패키지의 메이저 갱신이 필요하다. 3단계로 넘긴다
-- peer 로 자동 설치된 개발 도구는 `pnpm update --depth Infinity` 로도, lockfile 을 새로 만들어도 옛 버전에 머물 수 있다.
-  `vite` 가 vitest 의 peer 로 8.0.10 에 머문 적이 있고, devDependencies 에 직접 선언하자 풀렸다.
-  `--dev-pkg vite@^8.3.0` 처럼 직접 선언을 시험한다. `overrides` 는 그래도 안 풀릴 때만 쓴다
-- 상위 패키지가 범위를 묶어 올릴 수 없으면 영향 범위를 적고 남긴다.
-  tsup 이 esbuild 를 `^0.27` 로 묶은 것이 그 예다. 해당 취약점은 Windows 개발 서버에만 해당한다
+peer 로 자동 설치된 개발 도구는 lockfile 을 새로 만들어도 옛 버전에 머물 수 있다.
+1단계 표에 그런 패키지가 남으면 `--dev-pkg NAME@SPEC` 으로 직접 선언을 시험한다.
 
 실패하면 로그 파일 경로가 표에 있다. 다시 돌리기 전에 로그를 읽고 실패한 테스트 이름을 적어 둔다.
 
 ### 3. 메이저 판단
 
-1단계 표에서 갱신 종류가 "메이저" 인 패키지마다 판단한다.
-릴리스 노트를 읽는 방법, 판정 기준, 이유를 적는 형식은 `references/major-upgrade.md` 가 소유한다.
-
-코드 수정이 필요한지는 시험으로 확인한다.
+1단계 표에서 갱신 종류가 "메이저" 인 패키지마다 `references/major-upgrade.md` 를 읽고 판단한다.
 
 ```bash
-PKGS="--pkg imapflow@^2 --pkg nodemailer@^10"
-node .claude/skills/health-check/scripts/trial-update.mjs --range $PKGS; echo "trial=$?"
+PKGS=(--pkg "NAME@SPEC" --pkg "NAME@SPEC")
+node .claude/skills/health-check/scripts/trial-update.mjs --range "${PKGS[@]}"; echo "trial=$?"
 ```
 
-`PKGS` 에는 1단계 표의 메이저 대상을 넣는다. 타입 오류가 나면 `4-tsc.log` 에서 파일과 줄을 읽어 수정량을 적는다.
-
-`engines.node` 를 올려야 하는 패키지는 혼자 판단하지 않는다.
-사용자 설치 환경의 하한이 바뀌는 결정이라 사용자에게 묻는다. 물을 때 Node 버전의 지원 종료일과 CI 가 검증하는 버전을 함께 보여 준다.
+`PKGS` 배열에는 1단계 표의 메이저 대상을 넣는다. 타입 오류가 나면 `tsc.log` 에서 파일과 줄을 읽어 수정량을 적는다.
 
 ### 4. 구조와 유지보수성 검토
 
-읽기 전용 검토 에이전트 둘을 병렬로 띄운다. 이름은 주지 않는다.
-검토자에게 줄 범위와 축은 `references/review-axes.md` 가 소유한다. 1단계의 `conventions.md` 를 함께 넘겨 이미 측정한 것을 다시 세지 않게 한다.
+`references/review-axes.md` 에 따라 읽기 전용 검토를 진행한다.
 
-검토 결과를 그대로 보고하지 않는다. 심각도가 높음인 항목은 근거로 든 파일과 줄을 직접 열어 확인한다.
+심각도가 높음인 항목은 근거로 든 파일과 줄을 직접 열어 확인한 뒤 보고한다.
 확인하지 못한 항목은 보고에 "확인하지 않음" 이라고 적는다.
 
 ### 5. 보고와 적용 경로 결정

@@ -7,7 +7,7 @@
 GitHub 저장소는 `npm view` 로 찾는다.
 
 ```bash
-PKG=imapflow
+PKG="" # 1단계 표의 패키지 이름을 넣는다.
 npm view "$PKG" repository.url engines --json
 ```
 
@@ -15,8 +15,9 @@ npm view "$PKG" repository.url engines --json
 zsh 는 따옴표 없는 `?` 를 glob 으로 해석해 `no matches found` 로 멈춘다.
 
 ```bash
-REPO=postalsys/imapflow
-TAG_RE='v?2\.0\.0$'
+REPO="" # npm view 결과의 owner/repository 를 넣는다.
+MAJOR="" # 확인할 메이저 버전 숫자를 넣는다.
+TAG_RE="^v?${MAJOR}[.]0[.]0$"
 gh api "repos/$REPO/releases?per_page=30" --jq ".[] | select(.tag_name|test(\"$TAG_RE\")) | .body"
 ```
 
@@ -27,7 +28,7 @@ Release 를 쓰지 않는 저장소는 `CHANGELOG.md` 를 읽는다. 둘 다 없
 | 확인할 것 | 보는 곳 | 판정에 주는 영향 |
 | --- | --- | --- |
 | Node 하한 (dependencies) | 새 버전의 `engines.node` 와 우리 `package.json` 의 `engines.node` | 새 하한이 더 높으면 사용자에게 묻는다. 사용자 설치 환경의 하한이 바뀌기 때문이다 |
-| Node 하한 (devDependencies) | 새 버전의 `engines.node` 와 `.github/workflows/*.yml` 의 `NODE_VERSION` | 사용자 설치본에 들어가지 않으므로 `engines.node` 와 비교하지 않는다. `setup-node` 는 메이저만 적으면 그 메이저의 최신 patch 를 받으므로, `^22.12.0` 같은 요구는 `NODE_VERSION: "22"` 로 충족된다 |
+| Node 하한 (devDependencies) | 새 버전의 `engines.node` 와 `.github/workflows/*.yml` 의 `NODE_VERSION` | 사용자 설치본에 들어가지 않으므로 `engines.node` 와 비교하지 않는다. `setup-node` 는 메이저만 적으면 그 메이저의 최신 patch 를 받으므로, 같은 메이저의 하한은 `NODE_VERSION` 의 메이저 값으로 충족된다 |
 | 범위 안 대안 | 2단계에서 남은 취약점과 그 해소 방법 | 메이저가 해소한다고 보이는 취약점이 범위 안 갱신이나 devDependencies 직접 선언으로 이미 풀리는지 먼저 본다. 풀리면 그 메이저의 보안 이득은 없다 |
 | 자체 타입 제공 | 릴리스 노트의 "TypeScript", `package.json` 의 `types` | 자체 타입을 주면 `@types/*` 를 빼는지 시험한다. 두 정의가 충돌할 수 있다 |
 | 진입점 변경 | `exports` 맵, "no longer published" 같은 문구 | 깊은 경로로 import 하는 곳을 grep 한다 |
@@ -50,9 +51,7 @@ Release 를 쓰지 않는 저장소는 `CHANGELOG.md` 를 읽는다. 둘 다 없
 
 | 패키지 | 변경 | 이유 |
 | --- | --- | --- |
-| `js-yaml` | 5.2.1 → 5.4.2 | 특정 형식의 YAML 을 파싱하면 처리 시간이 지수적으로 늘어나는 DoS (high). 에디터 frontmatter 파싱에 쓰인다 |
-| `ky` | 2.0.2 → 2.1.0 | 보안 사유 없음. 빈 응답 본문 처리와 `Retry-After` 처리 개선이 큰 정수 파서와 재시도 경로에 해당한다 |
-| `@inquirer/prompts` | 8.5.2 → 8.7.2 | 보안 사유 없음. 같은 범위 안의 최신화다 |
+| `PACKAGE` | 현재 → 목표 | 해소하는 문제나 이 CLI 에 닿는 변경을 적는다. 둘 다 없으면 "보안 사유 없음. 같은 범위 안의 최신화"라고 적는다 |
 
 이유 칸에 적는 것은 셋 중 하나다.
 
