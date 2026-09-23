@@ -134,33 +134,75 @@ dooray skill update --force  # 관리되지 않은 기존 파일을 백업한 �
 
 ## 일반 조회 흐름
 
+```mermaid
+flowchart TD
+    input["조회 명령 입력"] --> config["설정 로드와 필수값 검증"]
+    config --> client["DoorayApiClient 생성"]
+    client --> command{"명령"}
+
+    command -->|project list| project_type{"프로젝트 종류"}
+    project_type -->|public| project_cache["공개 프로젝트 캐시 조회"]
+    project_type -->|private| private_cache["개인 프로젝트 캐시 조회"]
+    project_cache --> project_fresh{"캐시가 있고 TTL 이내인가"}
+    private_cache --> project_fresh
+    project_fresh -->|아니오| project_api["GET project/v1/projects<br/>private이면 type을 지정하고 페이지당 100건 조회"]
+    project_api --> project_more{"누적 건수가 totalCount보다 적은가"}
+    project_more -->|예| project_api
+    project_more -->|아니오| project_save["종류별 캐시에 저장"]
+    project_save --> project_filter
+    project_fresh -->|예| project_filter{"검색어가 있는가"}
+    project_filter -->|예| project_search["code 부분 일치로 거르기"]
+    project_filter -->|아니오| project_output["표, JSON 또는 ID 목록 출력"]
+    project_search --> project_output
+
+    command -->|post list| resolve_project
+    command -->|post search| resolve_project
+    resolve_project{"프로젝트 입력이 15자리 이상 숫자인가"}
+    resolve_project -->|예| project_id["입력값을 projectId로 사용"]
+    resolve_project -->|아니오| public_lookup["공개 프로젝트 캐시를 갱신하고 code 또는 ID 검색"]
+    public_lookup --> public_match{"일치하는 프로젝트가 있는가"}
+    public_match -->|예| project_id
+    public_match -->|아니오| private_lookup["개인 프로젝트 캐시를 갱신하고 code 또는 ID 검색"]
+    private_lookup --> private_match{"일치하는 프로젝트가 있는가"}
+    private_match -->|예| project_id
+    private_match -->|아니오| input_error["매개변수 오류 출력"]
+
+    project_id --> post_command{"post 명령"}
+    post_command -->|list| tag_filter{"태그 이름을 받았는가"}
+    tag_filter -->|예| tag_lookup["태그 캐시를 갱신하고 이름을 tagId로 변환"]
+    tag_filter -->|아니오| list_all{"전체 조회인가"}
+    tag_lookup --> list_all
+    list_all -->|예| list_api_all["GET project/v1/projects/projectId/posts<br/>page를 늘려 100건씩 조회"]
+    list_api_all --> list_more{"누적 건수가 totalCount보다 적은가"}
+    list_more -->|예| list_api_all
+    list_more -->|아니오| list_output["업무 목록 형식으로 출력"]
+    list_all -->|아니오| list_api_one["GET project/v1/projects/projectId/posts<br/>요청한 page와 size로 조회"]
+    list_api_one --> list_output
+    post_command -->|search| search_api["GET project/v1/projects/projectId/posts<br/>subjects와 -createdAt 전달"]
+    search_api --> list_output
+
+    command -->|post get| post_input{"입력 조합이 유효한가"}
+    post_input -->|아니오| input_error
+    post_input -->|ID 또는 URL| standalone_api["GET project/v1/posts/postId"]
+    standalone_api --> detail_key["응답에서 projectId와 postId 추출"]
+    post_input -->|프로젝트와 업무 번호| resolve_project
+    post_command -->|get| find_post["GET project/v1/projects/projectId/posts<br/>postNumber로 검색"]
+    find_post --> found_post{"업무를 찾았는가"}
+    found_post -->|아니오| input_error
+    found_post -->|예| detail_key
+    detail_key --> detail_api["GET project/v1/projects/projectId/posts/postId"]
+    detail_api --> need_tag_names{"태그가 있고 이름을 출력해야 하는가"}
+    need_tag_names -->|아니오| option_warning{"with-tag-names를 JSON 없이 지정했는가"}
+    need_tag_names -->|예| attach_tags["태그 캐시를 갱신하고 이름 연결"]
+    attach_tags --> tag_result{"이름 연결 결과"}
+    tag_result -->|성공| option_warning
+    tag_result -->|일반 출력에서 실패| tag_warning["경고를 출력하고 태그 ID 유지"]
+    tag_warning --> option_warning
+    tag_result -->|JSON 이름 보강에서 실패| api_error["API 오류 출력"]
+    option_warning -->|예| ignored_warning["옵션이 효력이 없다는 경고 출력"]
+    option_warning -->|아니오| detail_output["업무 상세를 표 또는 JSON으로 출력"]
+    ignored_warning --> detail_output
 ```
-dooray project list                         # 1) 프로젝트 목록 (캐시 자동 갱신)
-dooray post list my-project                 # 2) 업무 목록 (postNumber 포함)
-dooray post list my-project --tag "<태그 이름>"  # 2-1) 태그로 거르기 (여러 번 주면 모두 가진 업무)
-dooray post get my-project 42              # 3) 업무 상세 (#42번)
-dooray post get --id <postId>              # 3-1) internal postId 로 (create 출력값)
-dooray post get https://x.dooray.com/task/to/<postId>        # 3-2) URL 직접 입력 (task/to)
-dooray post get https://x.dooray.com/project/tasks/<postId>  # 3-3) URL 직접 입력 (project/tasks, #83)
-dooray post get my-project 42 --json --with-tag-names        # 3-4) 태그 이름까지 채워서 (ADR-056)
-dooray post search my-project "스프린트"   # 4) 제목 검색
-```
-
-`post create` 출력의 긴 숫자는 internal postId 다 (업무 번호 #N 아님).
-후속 조회·수정은 `--id <postId>` 로 한다. positional `<project> <number>` 자리에 넣으면 안내 에러로 거부된다 (#82).
-
-### projectId 직접 입력 (member=me 응답 외 프로젝트, ADR-030, Issue #78)
-
-`member=me` 응답에 없는 프로젝트 (다른 팀 프로젝트 등) 는 코드로 resolve 안 됨.
-projectId (15+자리 numeric) 를 직접 입력하면 cache 를 우회하고 후속 API 호출에 그대로 사용.
-
-```
-dooray post search 1234567890123456789 "keyword"
-dooray post list 1234567890123456789
-dooray member list 1234567890123456789
-```
-
-권한 검증은 후속 API 호출 시점에 이뤄지고, 권한이 없으면 4xx 가 발생한다.
 
 ## 업무 생성 흐름
 
@@ -496,57 +538,100 @@ dooray wiki page get --id <page-id> --project my-project
 하위 페이지는 기본으로 함께 이동한다.
 이동할 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
 
-## 메신저 흐름 (Issue #88, ADR-033, 스레드는 ADR-052, 읽기는 ADR-061)
+## 메신저 흐름
 
-빠른 알림·배포 요청을 CLI/에이전트가 메일보다 즉시성 있게 전송.
+```mermaid
+flowchart TD
+    input["messenger 하위 명령 입력"] --> command{"명령"}
 
+    command -->|send| to_required{"받는 사람을 지정했는가"}
+    to_required -->|아니오| param_error["매개변수 오류 출력"]
+    to_required -->|예| direct_config["설정 검증 후 DoorayApiClient 생성"]
+    direct_config --> member_type{"받는 사람 형식"}
+    member_type -->|15자리 이상 숫자| member_detail["GET common/v1/members/memberId"]
+    member_type -->|이메일| member_search["GET common/v1/members<br/>externalEmailAddresses로 검색"]
+    member_type -->|그 외| param_error
+    member_detail --> member_valid{"멤버 조회에 성공했는가"}
+    member_valid -->|아니오| param_error
+    member_valid -->|예| direct_ready["organizationMemberId 확정"]
+    member_search --> email_hits{"검색 결과가 한 명인가"}
+    email_hits -->|아니오| param_error
+    email_hits -->|예| direct_ready
+
+    command -->|channel-send| channel_required{"대화방을 지정했는가"}
+    command -->|thread-send| thread_required{"대화방을 지정했는가"}
+    command -->|logs| count_valid{"count가 1 이상 1000 이하의 정수인가"}
+    channel_required -->|아니오| param_error
+    channel_required -->|예| channel_config["설정 검증 후 DoorayApiClient 생성"]
+    thread_required -->|아니오| param_error
+    thread_required -->|예| thread_options{"스레드 옵션 조합이 유효한가"}
+    thread_options -->|아니오| param_error
+    thread_options -->|예| has_thread_warning{"무시되는 옵션이 있는가"}
+    has_thread_warning -->|예| thread_warning["경고를 stderr에 출력"]
+    has_thread_warning -->|아니오| channel_config
+    thread_warning --> channel_config
+    count_valid -->|아니오| param_error
+    count_valid -->|예| channel_config
+
+    channel_config --> channel_type{"대화방 입력이 15자리 이상 숫자인가"}
+    channel_type -->|예| channel_ready["입력값을 channelId로 사용"]
+    channel_type -->|아니오| channels_api["GET messenger/v1/channels"]
+    channels_api --> channel_match["제목이 있는 방에서 정확 일치 후 부분 일치"]
+    channel_match --> channel_found{"한 대화방으로 정해졌는가"}
+    channel_found -->|아니오| param_error
+    channel_found -->|예| channel_ready
+
+    direct_ready --> body_input["본문 옵션 검사와 입력 읽기"]
+    channel_ready --> channel_command{"명령"}
+    channel_command -->|channel-send| body_input
+    channel_command -->|thread-send| body_input
+    body_input --> body_present{"본문 옵션이 있는가"}
+    body_present -->|아니오| editor["EDITOR로 본문 입력"]
+    body_present -->|예| body_valid{"본문이 비어 있지 않은가"}
+    editor --> body_valid
+    body_valid -->|아니오| param_error
+    body_valid -->|예| send_command{"전송 명령"}
+    send_command -->|send| direct_api["POST messenger/v1/channels/direct-send"]
+    send_command -->|channel-send| channel_api["POST messenger/v1/channels/channelId/logs"]
+    send_command -->|thread-send| log_branch{"logId가 있는가"}
+    log_branch -->|예| log_thread_api["POST messenger/v1/channels/channelId/logs/logId/threads/create-and-send"]
+    log_branch -->|아니오| thread_body["선택한 스레드 첫 메시지 읽기"]
+    thread_body --> channel_thread_api["POST messenger/v1/channels/channelId/threads/create-and-send"]
+
+    direct_api --> send_output{"출력 형식"}
+    channel_api --> send_output
+    send_output -->|JSON| send_json["응답 result 출력"]
+    send_output -->|quiet| send_quiet["logId 출력"]
+    send_output -->|기본| send_text["전송 결과와 logId 출력"]
+    log_thread_api --> thread_response{"응답에 thread channelId가 있는가"}
+    channel_thread_api --> thread_response
+    thread_response -->|아니오| api_error["API 오류 출력"]
+    thread_response -->|예| thread_output{"출력 형식"}
+    thread_output -->|JSON| thread_json["응답 result 출력"]
+    thread_output -->|quiet| thread_quiet["thread channelId 출력"]
+    thread_output -->|기본| thread_text["logId와 thread channelId 출력"]
+
+    channel_command -->|logs| logs_api["GET messenger/v1/channels/channelId/logs<br/>size에 count 전달"]
+    logs_api --> logs_output{"출력 형식"}
+    logs_output -->|JSON| logs_json["서버가 준 최신순 배열 출력"]
+    logs_output -->|quiet| logs_reverse["오래된 순서로 뒤집기"]
+    logs_output -->|기본| logs_reverse
+    logs_reverse --> logs_empty{"메시지가 비어 있는가"}
+    logs_empty -->|예, 기본| empty_text["메시지 없음 출력"]
+    logs_empty -->|예, quiet| no_output["stdout을 비워 둠"]
+    logs_empty -->|아니오, quiet| log_ids["오래된 순서로 logId 출력"]
+    logs_empty -->|아니오, 기본| sender_api["고유 발신자마다 GET common/v1/members/memberId 병렬 호출"]
+    sender_api --> sender_result["성공한 ID는 이름으로 바꾸고 실패한 ID와 비회원 발신자는 원래 값 유지"]
+    sender_result --> table_output["시각, 발신자, 60자 본문을 정제해 표로 출력"]
+    logs_json --> has_more{"hasMore가 true인가"}
+    empty_text --> has_more
+    no_output --> has_more
+    log_ids --> has_more
+    table_output --> has_more
+    has_more -->|예| more_warning["이전 메시지가 남았다는 경고를 stderr에 출력"]
+    has_more -->|아니오| done["종료"]
+    more_warning --> done
 ```
-# 1:1 DM — 받는 사람은 organizationMemberId 또는 이메일 (이름 미지원)
-dooray messenger send --to user@example.com --body "배포 완료됐습니다"
-dooray messenger send --to <memberId> --body-file ./notice.md
-
-# 대화방 — channelId 또는 대화방 이름 (내가 속한 방)
-dooray messenger channel-send --channel "배포알림" --body "v1.2.3 배포"
-dooray messenger channel-send --channel <channelId> --body-file -   # stdin
-
-# body 미지정 시 $EDITOR 진입 (comment 와 동일)
-dooray messenger send --to <memberId>
-```
-
-대화방에 스레드를 열어 후속 보고를 그 안에 쌓는다.
-`--quiet` 이 내는 값은 log-id 가 아니라 새로 만들어진 스레드 채널의 channelId 다.
-
-```
-# 대화방에 메시지를 보내면서 스레드를 연다 (--thread-body 는 스레드 첫 메시지, 생략 가능)
-dooray messenger thread-send --channel "배포알림" --body "v1.2.3 배포" --thread-body "빌드 시작"
-
-# 이미 있는 메시지에 스레드를 연다 (--log 는 channel-send 가 낸 log-id)
-dooray messenger thread-send --channel "배포알림" --log <logId> --body "빌드 로그"
-
-# 연 스레드에 메시지를 잇는다 (스레드 채널 id 를 channel-send 의 --channel 로 준다)
-THREAD=$(dooray messenger thread-send --channel "배포알림" --body "v1.2.3 배포" --quiet)
-dooray messenger channel-send --channel "$THREAD" --body "테스트 통과"
-dooray messenger channel-send --channel "$THREAD" --body "배포 완료"
-```
-
-대화방에 쌓인 메시지를 읽는다. 대상은 `channel-send` 와 같게 channelId 나 대화방 이름을 받는다.
-
-```
-# 최근 N건 (기본 20, 상한 1000). 표는 오래된 것이 위, 최신이 아래
-dooray messenger logs "배포알림"
-dooray messenger logs <channelId> -n 200
-
-# 전문이 필요하면 --json. 표의 내용 열은 60자에서 자른다
-dooray messenger logs "배포알림" --json
-```
-
-가져오는 범위는 최근 1000건이 전부다. 페이징도 날짜 필터도 API 에 없어
-`-n` 상한 초과는 클램프하지 않고 `EXIT_PARAM_ERROR` 로 거부한다.
-더 오래된 메시지가 남아 있다는 `hasMore` 는 stderr 로만 알려 stdout 파싱을 건드리지 않는다.
-
-발신자는 id 로만 오므로 표 모드에서만 `common/v1/members/{id}` 를 불러 이름으로 바꾼다.
-고유 id 마다 한 번씩 병렬로 부르고, 실패한 id 는 그 자리에 id 를 그대로 둔다.
-`--json` 은 서버 응답 원형이라 이름을 끼워넣지 않고 정렬도 서버가 준 대로 최신이 앞이다.
 
 ## 위키 페이지 첨부파일 흐름 (Issue #70, ADR-029)
 
