@@ -185,8 +185,9 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["수정 대상 입력"] --> B["대상 해석과 업무 조회"]
-    B --> C["멤버 캐시 준비"]
+    A["수정 대상 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B --> B2["GET projects/{id}/posts/{postId}"]
+    B2 --> C["멤버 캐시 준비"]
     C --> D["YAML 머리말과 본문 생성"]
     D --> E["편집기 실행"]
     E --> F{"내용 변경"}
@@ -205,8 +206,9 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["수정 옵션 입력"] --> B["대상 해석과 업무 조회"]
-    B --> C["본문·참여자·태그 병합"]
+    A["수정 옵션 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B --> B2["GET projects/{id}/posts/{postId}"]
+    B2 --> C["본문·참여자·태그 병합"]
     C --> D["필수 태그와 첨부 참조 검증"]
     D --> E{"dry-run"}
     E -->|예| F["요청 예정값 출력"]
@@ -303,7 +305,8 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["댓글 조회 입력"] --> B["옵션과 대상 검증"]
-    B --> C{"명령 종류"}
+    B --> B2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B2 --> C{"명령 종류"}
     C -->|get| D["GET logs/{logId}"]
     C -->|latest| E["GET logs?size=count"]
     C -->|list| F{"since 지정"}
@@ -324,7 +327,7 @@ flowchart TD
 flowchart TD
     A["본문 입력"] --> B{"본문 제공"}
     B -->|아니오| C["편집기 실행"]
-    B -->|예| D["대상 업무 해석"]
+    B -->|예| D["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     C -->|빈 본문| E["변경 없이 종료"]
     C -->|본문 있음| D
     D --> F["멘션·업무 링크 조합"]
@@ -340,7 +343,8 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["댓글 대상 입력"] --> B["업무의 댓글 목록 조회"]
+    A["댓글 대상 입력"] --> A2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    A2 --> B["GET posts/{postId}/logs"]
     B --> C["댓글 ID 찾기"]
     C --> D{"본문 또는 MIME 제공"}
     D -->|아니오| E["편집기 실행"]
@@ -363,7 +367,7 @@ flowchart TD
 flowchart TD
     A["삭제 입력"] --> B{"yes 지정"}
     B -->|아니오| C["TTY 확인"]
-    B -->|예| D["대상 업무 해석"]
+    B -->|예| D["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     C -->|거절| E["취소 출력"]
     C -->|승인| D
     D --> F["DELETE logs/{logId}"]
@@ -379,7 +383,8 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["댓글 대상 입력"] --> B["GET logs/{logId}"]
+    A["댓글 대상 입력"] --> A2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    A2 --> B["GET logs/{logId}"]
     B --> C["응답 파일과 본문 참조 합치기"]
     C --> D{"파일 존재"}
     D -->|예| E["GET posts/{postId}/files"]
@@ -395,7 +400,8 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["댓글과 파일 입력"] --> B["GET logs/{logId}"]
+    A["댓글과 파일 입력"] --> A2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    A2 --> B["GET logs/{logId}"]
     B --> C{"댓글이 HTML"}
     C -->|예| D["종료 코드 3"]
     C -->|아니오| E["POST posts/{postId}/files"]
@@ -411,7 +417,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["댓글·파일 ID 입력"] --> B["업무 대상 해석"]
+    A["댓글·파일 ID 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     B --> C["GET files/{fileId}?media=raw"]
     C --> D["리다이렉트 URL 다운로드"]
     D --> E["안전한 파일명으로 저장"]
@@ -425,7 +431,8 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["삭제 입력"] --> B["공통 삭제 확인"]
-    B --> C["GET logs/{logId}"]
+    B --> B2["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
+    B2 --> C["GET logs/{logId}"]
     C --> D{"본문 참조 존재"}
     D -->|아니오| E["종료 코드 3"]
     D -->|예| F["참조를 뺀 본문 PUT"]
@@ -505,9 +512,10 @@ flowchart TD
 flowchart TD
     A["상위 업무 입력"] --> B{"다른 비대화형 옵션"}
     B -->|없음| C["대화형 경로에서 경고 후 무시"]
-    B -->|있음| D["대상과 상위 업무 해석"]
+    B -->|있음| D["대상 업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     D --> E["PUT posts/{postId}"]
-    E --> F["POST set-parent-post"]
+    E --> E2["상위 업무 해석"]
+    E2 --> F["POST set-parent-post"]
     F --> G["수정 결과 출력"]
 ```
 
@@ -602,7 +610,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["업무 대상 입력"] --> B["업무 해석"]
+    A["업무 대상 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     B --> C["POST posts/{postId}/set-done"]
     C --> D["완료 결과 출력"]
 ```
@@ -614,7 +622,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["업무와 워크플로우 입력"] --> B["입력 형태 정규화"]
-    B --> C["업무 해석"]
+    B --> C["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     C --> D["워크플로우 캐시 조회"]
     D --> E["class 또는 이름 해석"]
     E --> F["POST posts/{postId}/set-workflow"]
@@ -678,11 +686,11 @@ flowchart TD
     A["페이지 대상 입력"] --> B{"입력 형태"}
     B -->|URL| C["URL에서 wikiId·pageId 추출"]
     B -->|id와 project| D["프로젝트에서 wikiId 해석"]
-    B -->|id만| E["GET wiki/v1/pages/{pageId}"]
+    B -->|id만| E["GET wiki/v1/pages/{pageId}<br/>wikiId 해석"]
     B -->|project pageId| D
     C & D --> F["GET wikis/{wikiId}/pages/{pageId}"]
-    E --> G["페이지 출력"]
-    F --> G
+    E --> F
+    F --> G["페이지 출력"]
 ```
 
 - 입력 형태가 충돌하거나 빠지면 종료 코드 3으로 끝난다. 15자리 이상 숫자 프로젝트 값은 프로젝트 ID로 바로 쓴다.
@@ -706,20 +714,26 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["수정 입력"] --> B["페이지 대상 해석"]
+    A["수정 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     B --> C{"제목·본문·MIME 제공"}
     C -->|없음| D["페이지 GET 후 편집기 실행"]
     D -->|변경 있음| E["PUT pages/{pageId}"]
     D -->|변경 없음| F["변경 없이 종료"]
     C -->|있음| G{"변경 조합"}
     G -->|제목만| H["PUT pages/{pageId}/title"]
-    G -->|본문만| I["MIME 조회 후 PUT content"]
-    G -->|MIME만| J["본문 조회 후 PUT content"]
-    G -->|제목과 본문| E
-    E & H & I & J --> K["수정 결과 출력"]
+    G -->|본문만| I["현재 MIME GET"]
+    G -->|MIME만| J["현재 본문 GET"]
+    G -->|본문과 MIME| M["PUT pages/{pageId}/content"]
+    G -->|제목과 본문| N["현재 MIME GET"]
+    G -->|제목과 MIME| O["현재 본문 GET"]
+    G -->|제목·본문·MIME| E
+    I & J --> M
+    N & O --> E
+    E & H & M --> K["수정 결과 출력"]
 ```
 
 - 본문과 MIME을 함께 주면 기존 페이지를 조회하지 않고 콘텐츠를 수정한다. 둘 중 하나만 주면 빠진 값을 조회한다.
+- MIME만 지정했거나 제목과 MIME만 지정했는데 기존 본문이 없으면 PUT하지 않고 종료 코드 3으로 끝난다.
 - 편집기 내용이 바뀌지 않으면 API를 호출하지 않는다.
 
 ### `wiki page delete`
@@ -727,7 +741,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["삭제 입력"] --> B["공통 삭제 확인"]
-    B --> C["페이지 대상 해석"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     C --> D["DELETE wikis/{wikiId}/pages/{pageId}"]
     D --> E["삭제 결과 출력"]
 ```
@@ -739,7 +753,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["페이지·새 부모 입력"] --> B["옵션 조합 검증"]
-    B --> C["현재 페이지 대상 해석"]
+    B --> C["현재 페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     C --> D{"대상 위키 지정"}
     D -->|이름·코드| E["대상 wikiId 해석"]
     D -->|숫자 ID·없음| F["대상 또는 현재 wikiId 사용"]
@@ -826,7 +840,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["페이지 대상 입력"] --> B["페이지 해석"]
+    A["페이지 대상 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     B --> C["GET wikis/{wikiId}/pages/{pageId}"]
     C --> D["일반 파일과 인라인 이미지 합치기"]
     D --> E["목록 출력"]
@@ -839,7 +853,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["페이지·파일·유형 입력"] --> B["유형 검증"]
-    B --> C["페이지 해석"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     C --> D["type 뒤 file 순서로 폼 구성"]
     D --> E["POST pages/{pageId}/files"]
     E -->|307| F["리다이렉트 URL에 다시 POST"]
@@ -855,7 +869,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["다운로드 입력"] --> B["페이지 해석"]
+    A["다운로드 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     B --> C{"단일 또는 전체"}
     C -->|단일| D["GET files/{fileId}"]
     C -->|전체| E["페이지 GET 후 파일 목록 합치기"]
@@ -873,7 +887,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["삭제 입력"] --> B["공통 삭제 확인"]
-    B --> C["페이지 해석"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     C --> D["DELETE pages/{pageId}/files/{fileId}"]
     D --> E["삭제 결과 출력"]
 ```
@@ -886,7 +900,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["페이지와 조회 범위 입력"] --> B["페이지 해석"]
+    A["페이지와 조회 범위 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     B --> C{"명령 종류"}
     C -->|list| D["GET comments?page&size"]
     C -->|latest| E["GET comments?page=0&size=1"]
@@ -902,7 +916,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["페이지·댓글 대상 입력"] --> B["입력 형태 해석"]
-    B --> C["페이지 해석"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     C --> D["GET comments/{commentId}"]
     D --> E["댓글 출력"]
 ```
@@ -914,7 +928,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["본문 입력"] --> B["입력 충돌 검증"]
-    B --> C["페이지 해석"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     C --> D{"본문 제공"}
     D -->|아니오| E["편집기 실행"]
     D -->|예| F["POST pages/{pageId}/comments"]
@@ -929,7 +943,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["댓글 대상 입력"] --> B["페이지 해석"]
+    A["댓글 대상 입력"] --> B["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     B --> C["GET comments/{commentId}"]
     C --> D{"새 본문 제공"}
     D -->|아니오| E["편집기 실행"]
@@ -946,7 +960,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["삭제 입력"] --> B["공통 삭제 확인"]
-    B --> C["페이지·댓글 해석"]
+    B --> C["페이지 해석<br/>ID만: GET wiki/v1/pages/{pageId}"]
     C --> D["DELETE comments/{commentId}"]
     D --> E["삭제 결과 출력"]
 ```
@@ -1004,7 +1018,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["업무 대상 입력"] --> B["업무 해석"]
+    A["업무 대상 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     B --> C["GET posts/{postId}/files"]
     C --> D["목록 출력"]
 ```
@@ -1015,7 +1029,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["업무와 파일 입력"] --> B["업무 해석"]
+    A["업무와 파일 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     B --> C["POST posts/{postId}/files"]
     C -->|307| D["리다이렉트 URL에 다시 POST"]
     C -->|성공| E["업로드 결과 출력"]
@@ -1028,7 +1042,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["다운로드 입력"] --> B["업무 해석"]
+    A["다운로드 입력"] --> B["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     B --> C{"단일 또는 전체"}
     C -->|단일| D["파일 ID로 다운로드"]
     C -->|전체| E["GET posts/{postId}/files"]
@@ -1048,7 +1062,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["삭제 입력"] --> B["공통 삭제 확인"]
-    B --> C["업무 해석"]
+    B --> C["업무 해석<br/>ID·URL: GET project/v1/posts/{postId}"]
     C --> D["DELETE posts/{postId}/files/{fileId}"]
     D --> E["삭제 결과 출력"]
 ```
