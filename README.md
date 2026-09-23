@@ -434,7 +434,7 @@ dooray feedback --last --title "에러 제목"        # 직전 실패 명령을 
 ```
 
 `--last` 는 미리 켜야 한다: `dooray config set track-last-run true`.
-argv 는 API 키 같은 값을 가린 뒤 저장한다. `config set api-key <값>` 처럼 비밀값 키의 값도 가린다.
+argv 는 API 키 같은 값을 가린 뒤 저장한다. `config set <키> <값>` 의 값도 키와 관계없이 가린다.
 `--last` 는 `--title` 을 줘도 등록 전에 본문 미리보기를 stderr 로 보여 주고 확인을 받는다.
 터미널이 아닌 환경에서는 미리보기를 확인한 뒤 `--yes` 를 붙여 다시 실행해야 등록된다.
 

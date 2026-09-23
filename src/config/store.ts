@@ -232,7 +232,7 @@ export async function setConfigValue(
       break;
     default:
       throw new DoorayCliError(
-        `알 수 없는 설정 키: ${key}\n사용 가능한 키: ${Object.keys(CONFIG_SET_KEYS).join(", ")}`,
+        `알 수 없는 설정 키: ${key}\n사용 가능한 키: ${CONFIG_SET_KEYS.join(", ")}`,
         EXIT_CONFIG_ERROR,
       );
   }
