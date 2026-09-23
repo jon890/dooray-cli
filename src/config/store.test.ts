@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Config } from "./types.js";
-import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
+import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import {
   clearMailCredentials,
   getConfig,
@@ -10,16 +10,28 @@ import {
   setConfigValue,
 } from "./store.js";
 
-const { readFileMock, writeFileMock } = vi.hoisted(() => ({
-  readFileMock: vi.fn(),
-  writeFileMock: vi.fn(),
-}));
+const { readFileMock, writeFileMock, mkdirMock, renameMock, chmodMock } =
+  vi.hoisted(() => ({
+    readFileMock: vi.fn(),
+    writeFileMock: vi.fn(),
+    mkdirMock: vi.fn(),
+    renameMock: vi.fn(),
+    chmodMock: vi.fn(),
+  }));
 
 vi.mock("node:fs/promises", () => ({
-  mkdir: vi.fn(),
+  mkdir: mkdirMock,
   readFile: readFileMock,
   writeFile: writeFileMock,
+  rename: renameMock,
+  chmod: chmodMock,
 }));
+
+const ENOENT = () => Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+
+function writtenConfig(): Record<string, unknown> {
+  return JSON.parse(writeFileMock.mock.calls[0][1] as string);
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -95,6 +107,7 @@ describe("clearMailCredentials", () => {
     expect(writeFileMock).toHaveBeenCalledWith(
       expect.any(String),
       expect.not.stringContaining("secret"),
+      { mode: 0o600 },
     );
   });
 });
@@ -237,4 +250,99 @@ describe("setConfigValue", () => {
     });
     expect(writeFileMock).not.toHaveBeenCalled();
   });
+});
+
+describe("config.json 저장 권한", () => {
+  it("디렉터리를 0o700 으로 만들고 tmp 에 0o600 으로 쓴 뒤 rename 한다", async () => {
+    readFileMock.mockRejectedValueOnce(ENOENT());
+
+    await setConfigValue("api-key", "new-key");
+
+    expect(mkdirMock).toHaveBeenCalledWith(expect.stringMatching(/\.dooray$/), {
+      recursive: true,
+      mode: 0o700,
+    });
+    const [tmpPath, , options] = writeFileMock.mock.calls[0];
+    expect(tmpPath).toMatch(/config\.json\.tmp$/);
+    expect(options).toEqual({ mode: 0o600 });
+    expect(chmodMock).toHaveBeenCalledWith(tmpPath, 0o600);
+    expect(renameMock).toHaveBeenCalledWith(
+      tmpPath,
+      expect.stringMatching(/config\.json$/),
+    );
+  });
+
+  it("chmod 가 실패해도 저장은 끝난다", async () => {
+    readFileMock.mockRejectedValueOnce(ENOENT());
+    chmodMock.mockRejectedValueOnce(
+      Object.assign(new Error("EPERM"), { code: "EPERM" }),
+    );
+
+    await expect(setConfigValue("api-key", "new-key")).resolves.toBeUndefined();
+    expect(renameMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("setConfigValue 값 검증", () => {
+  it.each(["abc", "", "0", "65536", "-1", "99.5", "993abc"])(
+    "포트 값 %j 는 저장하지 않고 EXIT_PARAM_ERROR 로 거절한다",
+    async (value) => {
+      readFileMock.mockRejectedValueOnce(ENOENT());
+
+      await expect(setConfigValue("imap-port", value)).rejects.toMatchObject({
+        exitCode: EXIT_PARAM_ERROR,
+        message: expect.stringContaining("imap-port"),
+      });
+      expect(writeFileMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("smtp-port 도 범위 밖이면 거절한다", async () => {
+    readFileMock.mockRejectedValueOnce(ENOENT());
+
+    await expect(setConfigValue("smtp-port", "70000")).rejects.toMatchObject({
+      exitCode: EXIT_PARAM_ERROR,
+    });
+    expect(writeFileMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["imap-port", "993", "imapPort", 993],
+    ["smtp-port", "1", "smtpPort", 1],
+    ["smtp-port", "65535", "smtpPort", 65535],
+  ])("%s %s 는 숫자로 저장한다", async (key, value, field, expected) => {
+    readFileMock.mockRejectedValueOnce(ENOENT());
+
+    await setConfigValue(key, value);
+
+    expect(writtenConfig()[field]).toBe(expected);
+  });
+
+  it.each([
+    ["true", true],
+    ["TRUE", true],
+    ["yes", true],
+    ["1", true],
+    ["false", false],
+    ["no", false],
+    ["0", false],
+  ])("track-last-run %j 는 %s 로 저장한다", async (value, expected) => {
+    readFileMock.mockRejectedValueOnce(ENOENT());
+
+    await setConfigValue("track-last-run", value);
+
+    expect(writtenConfig().trackLastRun).toBe(expected);
+  });
+
+  it.each(["ture", "on", "", "2"])(
+    "track-last-run %j 는 거절한다",
+    async (value) => {
+      readFileMock.mockRejectedValueOnce(ENOENT());
+
+      await expect(
+        setConfigValue("track-last-run", value),
+      ).rejects.toMatchObject({ exitCode: EXIT_PARAM_ERROR });
+      expect(writeFileMock).not.toHaveBeenCalled();
+    },
+  );
 });

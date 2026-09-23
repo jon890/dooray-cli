@@ -1,8 +1,8 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rename, chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
+import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import type { Config } from "./types.js";
 import { DEFAULTS } from "./types.js";
 
@@ -21,7 +21,54 @@ export type ClearMailResult =
   | { state: "failed"; reason: string };
 
 async function ensureDir(): Promise<void> {
-  await mkdir(DOORAY_DIR, { recursive: true });
+  await mkdir(DOORAY_DIR, { recursive: true, mode: 0o700 });
+}
+
+/**
+ * config.json 은 평문 apiKey 와 imapPassword 를 담으므로 소유자만 읽게 쓴다.
+ *
+ * `writeFile` 의 `mode` 는 파일을 새로 만들 때만 적용된다. 그래서 tmp 파일에 쓰고
+ * rename 으로 교체한다. rename 은 대상 자리에 tmp 의 inode 를 두므로
+ * 이미 0o644 로 있던 config.json 도 저장할 때 0o600 이 된다.
+ * 이전 실행이 남긴 tmp 가 있으면 mode 가 적용되지 않으니 chmod 로 한 번 더 맞춘다.
+ * chmod 는 Windows 처럼 POSIX 권한이 없는 곳에서 실패할 수 있어 저장을 막지 않는다.
+ */
+async function writeConfigFile(config: Config): Promise<void> {
+  const tmp = CONFIG_PATH + ".tmp";
+  await writeFile(tmp, JSON.stringify(config, null, 2) + "\n", { mode: 0o600 });
+  try {
+    await chmod(tmp, 0o600);
+  } catch {
+    // POSIX 권한이 없는 파일 시스템이다. 저장은 계속한다.
+  }
+  await rename(tmp, CONFIG_PATH);
+}
+
+/** 포트 값은 1~65535 정수만 받는다. NaN 이 저장되면 JSON 에서 null 이 되어 설정 전체가 손상 판정을 받는다. */
+function parsePort(key: string, value: string): number {
+  const trimmed = value.trim();
+  const port = /^\d+$/.test(trimmed) ? Number(trimmed) : NaN;
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new DoorayCliError(
+      `${key} 값이 올바르지 않습니다: ${value}\n1 에서 65535 사이의 정수를 입력하세요.`,
+      EXIT_PARAM_ERROR,
+    );
+  }
+  return port;
+}
+
+const TRUE_VALUES = new Set(["true", "yes", "1"]);
+const FALSE_VALUES = new Set(["false", "no", "0"]);
+
+/** 불리언 값은 명확한 값만 받는다. 오타가 조용히 false 로 저장되지 않게 한다. */
+function parseBoolean(key: string, value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (TRUE_VALUES.has(normalized)) return true;
+  if (FALSE_VALUES.has(normalized)) return false;
+  throw new DoorayCliError(
+    `${key} 값이 올바르지 않습니다: ${value}\n사용 가능한 값: true, false, yes, no, 1, 0`,
+    EXIT_PARAM_ERROR,
+  );
 }
 
 function reasonOf(err: unknown): string {
@@ -163,7 +210,7 @@ export async function setConfigValue(
       config.imapHost = value;
       break;
     case "imap-port":
-      config.imapPort = parseInt(value, 10);
+      config.imapPort = parsePort(key, value);
       break;
     case "imap-username":
       config.imapUsername = value;
@@ -178,10 +225,10 @@ export async function setConfigValue(
       config.tenantName = value;
       break;
     case "smtp-port":
-      config.smtpPort = parseInt(value, 10);
+      config.smtpPort = parsePort(key, value);
       break;
     case "track-last-run":
-      config.trackLastRun = value === "true";
+      config.trackLastRun = parseBoolean(key, value);
       break;
     default:
       throw new DoorayCliError(
@@ -190,12 +237,12 @@ export async function setConfigValue(
       );
   }
 
-  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
+  await writeConfigFile(config);
 }
 
 export async function saveConfig(config: Config): Promise<void> {
   await ensureDir();
-  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
+  await writeConfigFile(config);
 }
 
 export function removeMailCredentials(config: Config): Config {
