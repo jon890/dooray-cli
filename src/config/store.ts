@@ -1,8 +1,9 @@
-import { readFile, writeFile, mkdir, rename, chmod } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rename, chmod, unlink } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+import { EXIT_CONFIG_ERROR, EXIT_IO_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import type { Config } from "./types.js";
 import { CONFIG_SET_KEYS, DEFAULTS } from "./types.js";
 
@@ -20,8 +21,19 @@ export type ClearMailResult =
   | { state: "absent" }
   | { state: "failed"; reason: string };
 
+/**
+ * `~/.dooray` 를 소유자 전용으로 둔다.
+ *
+ * mkdir 의 mode 는 새로 만들 때만 적용되므로 이미 있던 디렉터리는 chmod 로 한 번 맞춘다.
+ * chmod 는 Windows 처럼 POSIX 권한이 없는 곳에서 실패할 수 있어 저장을 막지 않는다.
+ */
 async function ensureDir(): Promise<void> {
   await mkdir(DOORAY_DIR, { recursive: true, mode: 0o700 });
+  try {
+    await chmod(DOORAY_DIR, 0o700);
+  } catch {
+    // POSIX 권한이 없는 파일 시스템이다. 저장은 계속한다.
+  }
 }
 
 /**
@@ -30,18 +42,27 @@ async function ensureDir(): Promise<void> {
  * `writeFile` 의 `mode` 는 파일을 새로 만들 때만 적용된다. 그래서 tmp 파일에 쓰고
  * rename 으로 교체한다. rename 은 대상 자리에 tmp 의 inode 를 두므로
  * 이미 0o644 로 있던 config.json 도 저장할 때 0o600 이 된다.
- * 이전 실행이 남긴 tmp 가 있으면 mode 가 적용되지 않으니 chmod 로 한 번 더 맞춘다.
- * chmod 는 Windows 처럼 POSIX 권한이 없는 곳에서 실패할 수 있어 저장을 막지 않는다.
+ *
+ * tmp 이름에 pid 와 UUID 를 넣고 `wx` 로 열어, 동시에 저장하는 두 프로세스가
+ * 같은 tmp 를 덮어쓰거나 남의 tmp 를 rename 하지 않게 한다.
+ * 실패하면 tmp 를 지우고 파일 시스템 오류로 알린다.
  */
 async function writeConfigFile(config: Config): Promise<void> {
-  const tmp = CONFIG_PATH + ".tmp";
-  await writeFile(tmp, JSON.stringify(config, null, 2) + "\n", { mode: 0o600 });
+  const tmp = `${CONFIG_PATH}.${process.pid}.${randomUUID()}.tmp`;
   try {
-    await chmod(tmp, 0o600);
-  } catch {
-    // POSIX 권한이 없는 파일 시스템이다. 저장은 계속한다.
+    await writeFile(tmp, JSON.stringify(config, null, 2) + "\n", {
+      mode: 0o600,
+      flag: "wx",
+    });
+    await rename(tmp, CONFIG_PATH);
+  } catch (err) {
+    await unlink(tmp).catch(() => undefined);
+    throw new DoorayCliError(
+      `설정 파일을 저장하지 못했습니다: ${CONFIG_PATH}\n이유: ${reasonOf(err)}`,
+      EXIT_IO_ERROR,
+      { cause: err },
+    );
   }
-  await rename(tmp, CONFIG_PATH);
 }
 
 /** 포트 값은 1~65535 정수만 받는다. NaN 이 저장되면 JSON 에서 null 이 되어 설정 전체가 손상 판정을 받는다. */

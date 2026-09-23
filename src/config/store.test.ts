@@ -1,23 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Config } from "./types.js";
-import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+import {
+  EXIT_CONFIG_ERROR,
+  EXIT_IO_ERROR,
+  EXIT_PARAM_ERROR,
+} from "../utils/exit-codes.js";
 import {
   clearMailCredentials,
   getConfig,
   getConfigOrThrow,
   isConfig,
   removeMailCredentials,
+  saveConfig,
   setConfigValue,
 } from "./store.js";
 
-const { readFileMock, writeFileMock, mkdirMock, renameMock, chmodMock } =
-  vi.hoisted(() => ({
-    readFileMock: vi.fn(),
-    writeFileMock: vi.fn(),
-    mkdirMock: vi.fn(),
-    renameMock: vi.fn(),
-    chmodMock: vi.fn(),
-  }));
+const {
+  readFileMock,
+  writeFileMock,
+  mkdirMock,
+  renameMock,
+  chmodMock,
+  unlinkMock,
+} = vi.hoisted(() => ({
+  readFileMock: vi.fn(),
+  writeFileMock: vi.fn(),
+  mkdirMock: vi.fn(),
+  renameMock: vi.fn(),
+  chmodMock: vi.fn(),
+  unlinkMock: vi.fn(),
+}));
 
 vi.mock("node:fs/promises", () => ({
   mkdir: mkdirMock,
@@ -25,6 +37,7 @@ vi.mock("node:fs/promises", () => ({
   writeFile: writeFileMock,
   rename: renameMock,
   chmod: chmodMock,
+  unlink: unlinkMock,
 }));
 
 const ENOENT = () => Object.assign(new Error("ENOENT"), { code: "ENOENT" });
@@ -107,7 +120,7 @@ describe("clearMailCredentials", () => {
     expect(writeFileMock).toHaveBeenCalledWith(
       expect.any(String),
       expect.not.stringContaining("secret"),
-      { mode: 0o600 },
+      { mode: 0o600, flag: "wx" },
     );
   });
 });
@@ -253,26 +266,44 @@ describe("setConfigValue", () => {
 });
 
 describe("config.json 저장 권한", () => {
-  it("디렉터리를 0o700 으로 만들고 tmp 에 0o600 으로 쓴 뒤 rename 한다", async () => {
+  const TMP_PATTERN = /config\.json\.\d+\.[0-9a-f-]{36}\.tmp$/;
+
+  it("디렉터리를 0o700 으로 맞추고 고유한 tmp 에 0o600 으로 쓴 뒤 rename 한다", async () => {
     readFileMock.mockRejectedValueOnce(ENOENT());
 
     await setConfigValue("api-key", "new-key");
 
-    expect(mkdirMock).toHaveBeenCalledWith(expect.stringMatching(/\.dooray$/), {
+    const dirMatcher = expect.stringMatching(/\.dooray$/);
+    expect(mkdirMock).toHaveBeenCalledWith(dirMatcher, {
       recursive: true,
       mode: 0o700,
     });
+    // 이미 있던 디렉터리에는 mkdir 의 mode 가 적용되지 않는다.
+    expect(chmodMock).toHaveBeenCalledWith(dirMatcher, 0o700);
     const [tmpPath, , options] = writeFileMock.mock.calls[0];
-    expect(tmpPath).toMatch(/config\.json\.tmp$/);
-    expect(options).toEqual({ mode: 0o600 });
-    expect(chmodMock).toHaveBeenCalledWith(tmpPath, 0o600);
+    expect(tmpPath).toMatch(TMP_PATTERN);
+    expect(tmpPath).toContain(`.${process.pid}.`);
+    expect(options).toEqual({ mode: 0o600, flag: "wx" });
     expect(renameMock).toHaveBeenCalledWith(
       tmpPath,
       expect.stringMatching(/config\.json$/),
     );
+    expect(unlinkMock).not.toHaveBeenCalled();
   });
 
-  it("chmod 가 실패해도 저장은 끝난다", async () => {
+  it("저장할 때마다 다른 tmp 이름을 쓴다", async () => {
+    readFileMock.mockRejectedValueOnce(ENOENT()).mockRejectedValueOnce(ENOENT());
+
+    await setConfigValue("api-key", "a");
+    await setConfigValue("api-key", "b");
+
+    const [first, second] = writeFileMock.mock.calls.map((c) => c[0]);
+    expect(first).toMatch(TMP_PATTERN);
+    expect(second).toMatch(TMP_PATTERN);
+    expect(first).not.toBe(second);
+  });
+
+  it("디렉터리 chmod 가 실패해도 저장은 끝난다", async () => {
     readFileMock.mockRejectedValueOnce(ENOENT());
     chmodMock.mockRejectedValueOnce(
       Object.assign(new Error("EPERM"), { code: "EPERM" }),
@@ -280,6 +311,33 @@ describe("config.json 저장 권한", () => {
 
     await expect(setConfigValue("api-key", "new-key")).resolves.toBeUndefined();
     expect(renameMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("rename 이 실패하면 tmp 를 지우고 EXIT_IO_ERROR 로 감싼다", async () => {
+    readFileMock.mockRejectedValueOnce(ENOENT());
+    const original = Object.assign(new Error("EXDEV: cross-device link"), {
+      code: "EXDEV",
+    });
+    renameMock.mockRejectedValueOnce(original);
+    unlinkMock.mockResolvedValueOnce(undefined);
+
+    await expect(setConfigValue("api-key", "new-key")).rejects.toMatchObject({
+      name: "DoorayCliError",
+      exitCode: EXIT_IO_ERROR,
+      message: expect.stringContaining("EXDEV"),
+      cause: original,
+    });
+    expect(unlinkMock).toHaveBeenCalledWith(writeFileMock.mock.calls[0][0]);
+  });
+
+  it("tmp 삭제까지 실패해도 원래 오류를 알린다", async () => {
+    const original = Object.assign(new Error("EACCES"), { code: "EACCES" });
+    renameMock.mockRejectedValueOnce(original);
+    unlinkMock.mockRejectedValueOnce(new Error("ENOENT"));
+
+    await expect(
+      saveConfig({ version: 1, apiKey: "k", baseUrl: "https://api.dooray.com" }),
+    ).rejects.toMatchObject({ exitCode: EXIT_IO_ERROR, cause: original });
   });
 });
 
