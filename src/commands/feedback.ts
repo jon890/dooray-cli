@@ -54,6 +54,7 @@ export const feedbackCommand = new Command("feedback")
   )
   .option("--last", "직전 실행한 dooray 명령의 argv + 에러를 본문 상단에 자동 첨부")
   .option("--dry-run", "gh 호출 없이 본문만 미리보기")
+  .option("-y, --yes", "등록 전 확인 생략 (--last 를 non-TTY 에서 쓸 때 필요)")
   .action(async (opts) => {
     let title: string | undefined = opts.title;
     let userBody = await readBody(opts);
@@ -121,7 +122,9 @@ export const feedbackCommand = new Command("feedback")
     }
 
     const isInteractive = !opts.title;
-    if (isInteractive) {
+    // --last 는 직전 실행의 argv 와 오류 메시지를 공개 이슈에 싣는다.
+    // 마스킹이 놓친 값이 있을 수 있어 --title 을 줘도 미리보기를 보여 주고 확인을 받는다.
+    if (isInteractive || opts.last) {
       process.stderr.write("\n--- 미리보기 ---\n");
       process.stderr.write(`Repo: ${TARGET_REPO}\n`);
       process.stderr.write(`Title: ${title}\n`);
@@ -131,9 +134,19 @@ export const feedbackCommand = new Command("feedback")
       process.stderr.write("Body:\n");
       process.stderr.write(issueBody);
       process.stderr.write("--- 끝 ---\n\n");
+    }
+    if (opts.last && !opts.yes && !process.stdin.isTTY) {
+      throw new DoorayCliError(
+        "--last 로 직전 실행 기록을 첨부하면 공개 GitHub 이슈에 올라갑니다. " +
+          "non-TTY 환경에서는 확인할 수 없으므로 위 미리보기를 확인한 뒤 --yes(-y) 로 다시 실행하세요.",
+        EXIT_PARAM_ERROR,
+      );
+    }
+    if ((isInteractive || opts.last) && !opts.yes) {
       const ok = await confirm({
         message: "이 내용으로 등록할까요?",
-        default: true,
+        // 직전 실행 기록은 공개 이슈에 올라가면 되돌리기 어려워 기본값을 아니오로 둔다.
+        default: !opts.last,
       });
       if (!ok) {
         process.stderr.write("취소되었습니다.\n");

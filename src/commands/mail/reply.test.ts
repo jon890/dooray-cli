@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Config } from "../../config/types.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
@@ -303,18 +304,34 @@ describe("mailReplyCommand", () => {
   });
 
   it("본문이 없으면 UID 탐색이나 IMAP 연결 없이 종료한다", async () => {
-    const exit = new Error("process.exit");
-    vi.spyOn(process, "exit").mockImplementation(() => { throw exit; });
+    const exit = vi.spyOn(process, "exit");
 
-    await expect(runMailReply(["1234567890123456789"])).rejects.toBe(exit);
+    await expect(runMailReply(["1234567890123456789"])).rejects.toMatchObject({
+      name: "DoorayCliError",
+      exitCode: EXIT_PARAM_ERROR,
+      message: "--body 또는 --body-file을 지정하세요",
+    });
 
-    expect(process.exit).toHaveBeenCalledWith(EXIT_PARAM_ERROR);
-    expect(process.stderr.write).toHaveBeenCalledWith(
-      "오류: --body 또는 --body-file을 지정하세요\n",
-    );
+    expect(exit).not.toHaveBeenCalled();
     expect(mocks.resolveUidByMailId).not.toHaveBeenCalled();
     expect(mocks.connectImapClient).not.toHaveBeenCalled();
     expect(mocks.sendMail).not.toHaveBeenCalled();
+  });
+
+  it("--body-file - 는 stdin 에서 답장 본문을 읽는다", async () => {
+    const stream = Object.assign(Readable.from([Buffer.from("stdin 답장")]), {
+      isTTY: undefined,
+    });
+    vi.spyOn(process, "stdin", "get").mockReturnValue(
+      stream as unknown as typeof process.stdin,
+    );
+
+    await runMailReply(["991", "--body-file", "-", "--yes"]);
+
+    expect(mocks.sendMail).toHaveBeenCalledWith(
+      config,
+      expect.objectContaining({ body: "stdin 답장" }),
+    );
   });
 
   it("UID 탐색에 실패하면 원본 조회와 답장을 실행하지 않는다", async () => {

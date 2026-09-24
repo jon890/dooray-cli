@@ -110,8 +110,13 @@ dooray feedback --title "버그 제목" --body "재현 방법" --label "bug"
 # --last 모드 (직전 에러 자동 첨부 — track-last-run 활성화 필요)
 dooray config set track-last-run true
 dooray feedback --last --title "에러 제목" --body "추가 설명" --dry-run  # 미리보기
-dooray feedback --last --title "에러 제목" --body "추가 설명"            # 실제 등록
+dooray feedback --last --title "에러 제목" --body "추가 설명" --yes      # 실제 등록
 ```
+
+`--last` 는 직전 실행 기록을 공개 GitHub 이슈에 싣는다.
+그래서 `--title` 을 줘도 본문 미리보기를 stderr 로 내고 확인을 받는다.
+터미널이 아닌 환경에서 `--yes` 가 없으면 등록하지 않고 종료 코드 3 으로 끝난다.
+에이전트는 미리보기에 비밀값이 없는지 사용자에게 확인받은 뒤 `--yes` 로 다시 실행한다.
 
 
 

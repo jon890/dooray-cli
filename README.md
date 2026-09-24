@@ -40,6 +40,9 @@ printf '%s' "$TOKEN" | dooray config set api-key -
 
 토큰을 명령 인자로 넘기면 셸 기록과 프로세스 목록에 남는다. 에이전트가 대신 실행하면 실행 로그에도 남는다.
 stdin 으로 받은 값은 양끝 공백을 지운 뒤 저장하고, 비어 있으면 저장하지 않고 종료 코드 3 으로 끝낸다.
+`imap-port` 와 `smtp-port` 는 1 에서 65535 사이의 정수만, `track-last-run` 은 `true`, `false`, `yes`, `no`, `1`, `0` 만 받는다.
+그 밖의 값은 저장하지 않고 종료 코드 3 으로 끝낸다.
+설정 파일 `~/.dooray/config.json` 은 소유자만 읽을 수 있는 권한(0600)으로 저장한다.
 
 `api-key` 나 `base-url` 을 바꾸면 캐시를 함께 비우고 그 사실을 알린다.
 캐시는 계정과 접속 환경별로 나뉘지 않아서, 비우지 않으면 이전 계정의 프로젝트와 멤버가 남아 잘못 매칭된다.
@@ -431,7 +434,9 @@ dooray feedback --last --title "에러 제목"        # 직전 실패 명령을 
 ```
 
 `--last` 는 미리 켜야 한다: `dooray config set track-last-run true`.
-argv 는 API 키 같은 값을 가린 뒤 저장한다.
+argv 는 API 키 같은 값을 가린 뒤 저장한다. `config set <키> <값>` 의 값도 키와 관계없이 가린다.
+`--last` 는 `--title` 을 줘도 등록 전에 본문 미리보기를 stderr 로 보여 주고 확인을 받는다.
+터미널이 아닌 환경에서는 미리보기를 확인한 뒤 `--yes` 를 붙여 다시 실행해야 등록된다.
 
 [GitHub Issues](https://github.com/jon890/dooray-cli/issues) 에 직접 올려도 된다.
 

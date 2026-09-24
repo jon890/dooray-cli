@@ -1,10 +1,11 @@
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rename, chmod, unlink } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
+import { EXIT_CONFIG_ERROR, EXIT_IO_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import type { Config } from "./types.js";
-import { DEFAULTS } from "./types.js";
+import { CONFIG_SET_KEYS, DEFAULTS } from "./types.js";
 
 const DOORAY_DIR = join(homedir(), ".dooray");
 const CONFIG_PATH = join(DOORAY_DIR, "config.json");
@@ -20,8 +21,75 @@ export type ClearMailResult =
   | { state: "absent" }
   | { state: "failed"; reason: string };
 
+/**
+ * `~/.dooray` 를 소유자 전용으로 둔다.
+ *
+ * mkdir 의 mode 는 새로 만들 때만 적용되므로 이미 있던 디렉터리는 chmod 로 한 번 맞춘다.
+ * chmod 는 Windows 처럼 POSIX 권한이 없는 곳에서 실패할 수 있어 저장을 막지 않는다.
+ */
 async function ensureDir(): Promise<void> {
-  await mkdir(DOORAY_DIR, { recursive: true });
+  await mkdir(DOORAY_DIR, { recursive: true, mode: 0o700 });
+  try {
+    await chmod(DOORAY_DIR, 0o700);
+  } catch {
+    // POSIX 권한이 없는 파일 시스템이다. 저장은 계속한다.
+  }
+}
+
+/**
+ * config.json 은 평문 apiKey 와 imapPassword 를 담으므로 소유자만 읽게 쓴다.
+ *
+ * `writeFile` 의 `mode` 는 파일을 새로 만들 때만 적용된다. 그래서 tmp 파일에 쓰고
+ * rename 으로 교체한다. rename 은 대상 자리에 tmp 의 inode 를 두므로
+ * 이미 0o644 로 있던 config.json 도 저장할 때 0o600 이 된다.
+ *
+ * tmp 이름에 pid 와 UUID 를 넣고 `wx` 로 열어, 동시에 저장하는 두 프로세스가
+ * 같은 tmp 를 덮어쓰거나 남의 tmp 를 rename 하지 않게 한다.
+ * 실패하면 tmp 를 지우고 파일 시스템 오류로 알린다.
+ */
+async function writeConfigFile(config: Config): Promise<void> {
+  const tmp = `${CONFIG_PATH}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    await writeFile(tmp, JSON.stringify(config, null, 2) + "\n", {
+      mode: 0o600,
+      flag: "wx",
+    });
+    await rename(tmp, CONFIG_PATH);
+  } catch (err) {
+    await unlink(tmp).catch(() => undefined);
+    throw new DoorayCliError(
+      `설정 파일을 저장하지 못했습니다: ${CONFIG_PATH}\n이유: ${reasonOf(err)}`,
+      EXIT_IO_ERROR,
+      { cause: err },
+    );
+  }
+}
+
+/** 포트 값은 1~65535 정수만 받는다. NaN 이 저장되면 JSON 에서 null 이 되어 설정 전체가 손상 판정을 받는다. */
+function parsePort(key: string, value: string): number {
+  const trimmed = value.trim();
+  const port = /^\d+$/.test(trimmed) ? Number(trimmed) : NaN;
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new DoorayCliError(
+      `${key} 값이 올바르지 않습니다: ${value}\n1 에서 65535 사이의 정수를 입력하세요.`,
+      EXIT_PARAM_ERROR,
+    );
+  }
+  return port;
+}
+
+const TRUE_VALUES = new Set(["true", "yes", "1"]);
+const FALSE_VALUES = new Set(["false", "no", "0"]);
+
+/** 불리언 값은 명확한 값만 받는다. 오타가 조용히 false 로 저장되지 않게 한다. */
+function parseBoolean(key: string, value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (TRUE_VALUES.has(normalized)) return true;
+  if (FALSE_VALUES.has(normalized)) return false;
+  throw new DoorayCliError(
+    `${key} 값이 올바르지 않습니다: ${value}\n사용 가능한 값: true, false, yes, no, 1, 0`,
+    EXIT_PARAM_ERROR,
+  );
 }
 
 function reasonOf(err: unknown): string {
@@ -163,7 +231,7 @@ export async function setConfigValue(
       config.imapHost = value;
       break;
     case "imap-port":
-      config.imapPort = parseInt(value, 10);
+      config.imapPort = parsePort(key, value);
       break;
     case "imap-username":
       config.imapUsername = value;
@@ -178,24 +246,24 @@ export async function setConfigValue(
       config.tenantName = value;
       break;
     case "smtp-port":
-      config.smtpPort = parseInt(value, 10);
+      config.smtpPort = parsePort(key, value);
       break;
     case "track-last-run":
-      config.trackLastRun = value === "true";
+      config.trackLastRun = parseBoolean(key, value);
       break;
     default:
       throw new DoorayCliError(
-        `알 수 없는 설정 키: ${key}\n사용 가능한 키: api-key, base-url, tenant-name, imap-host, imap-port, imap-username, imap-password, smtp-host, smtp-port, track-last-run`,
+        `알 수 없는 설정 키: ${key}\n사용 가능한 키: ${CONFIG_SET_KEYS.join(", ")}`,
         EXIT_CONFIG_ERROR,
       );
   }
 
-  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
+  await writeConfigFile(config);
 }
 
 export async function saveConfig(config: Config): Promise<void> {
   await ensureDir();
-  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n");
+  await writeConfigFile(config);
 }
 
 export function removeMailCredentials(config: Config): Config {
