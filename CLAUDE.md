@@ -141,6 +141,7 @@ CI 가 같은 스크립트를 돌린다.
 ## 저장소 스킬 작성 규약
 
 `.claude/skills/` 의 스킬은 기존 스킬(`release`, `health-check`)의 문서 구조를 따른다.
+통과 조건은 관측할 수 있는 사실로 쓰고, 순서가 없는 스킬은 개요 표를 두지 않는다.
 
 - **반복되는 절차와 판정은 그 스킬의 `scripts/*.mjs` 로 옮긴다.**
   선례는 `.claude/skills/release/scripts/preflight.mjs` 다.
