@@ -133,8 +133,11 @@ jobs:
             echo 'PROMPT_EOF'
           } >> "$GITHUB_OUTPUT"
 
+      # @v1 은 v1 의 최신 릴리스를 따라간다. 버전마다 다시 고정하지 않으려고 major 태그를 쓴다.
+      # --model opus 는 별칭이라 실제 모델은 action 에 든 Claude Code 가 정한다. 아래 단계가 그 값을 남긴다.
       - name: Claude 코드 리뷰 실행
-        uses: anthropics/claude-code-action@v1.0.133
+        id: review
+        uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_bots: "*"
@@ -143,6 +146,22 @@ jobs:
           # allowedTools 는 허용 목록이라 여기 없으면 위임 절이 조용히 자가검토로 떨어진다.
           # 서브 에이전트는 부모 권한을 상속하므로 disallowedTools 의 read-only 도 함께 적용된다.
           claude_args: '--model opus --allowedTools "Bash,Read,Grep,Glob,Agent,Task" --disallowedTools "Write,Edit"'
+
+      # 실행 기록의 init 메시지에서 실제 모델 ID 를 읽어 notice 와 Job Summary 에 남긴다.
+      # 리뷰가 실패해도 어떤 모델이었는지 남도록 always 로 돈다. 읽지 못해도 워크플로를 실패시키지 않는다.
+      - name: 리뷰에 쓰인 모델 기록
+        if: always()
+        env:
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+        run: |
+          MODEL=""
+          if [ -n "$EXECUTION_FILE" ] && [ -f "$EXECUTION_FILE" ]; then
+            MODEL=$(jq -r '(if type == "array" then .[] else . end)
+              | select(.type == "system" and .subtype == "init") | .model // empty' "$EXECUTION_FILE" 2>/dev/null | head -n 1)
+          fi
+          MODEL=${MODEL:-읽지 못함}
+          echo "::notice title=리뷰 모델::$MODEL"
+          echo "리뷰 모델: \`$MODEL\`" >> "$GITHUB_STEP_SUMMARY"
 
       # 게시된 인라인 댓글 중 dummy / 길이 미달 / 마커 부재 entry 를 자동 정리
       # — Claude action 이 자연어 sanity check 를 무시하고 "test body" / "test2"
