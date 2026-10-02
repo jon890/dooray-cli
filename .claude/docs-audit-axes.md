@@ -139,7 +139,7 @@ Bash 로 만든 `.md` 는 훅을 거치지 않는다.
 그래서 만든 방법과 무관하게 파일 경로로 검사기를 직접 실행한다.
 
 ```bash
-~/.claude/skills/korean-check/scripts/check.sh <파일>
+~/.claude/scripts/korean-check.sh <파일>
 ```
 
 검사기가 잡지 못하는 항목만 수동으로 본다.
