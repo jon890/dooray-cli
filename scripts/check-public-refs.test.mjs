@@ -15,6 +15,13 @@ async function makeTempRoot() {
   return root;
 }
 
+// CLI 가 필수로 읽는 검사 경로다. 하나라도 없으면 종료 코드 2 로 끝난다.
+async function makeRequiredRoots(root) {
+  await mkdir(join(root, "skills"));
+  await mkdir(join(root, "docs", "guide"), { recursive: true });
+  await writeFile(join(root, "CONTRIBUTING.md"), "contributing\n");
+}
+
 afterEach(async () => {
   await Promise.all(tempRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
@@ -69,7 +76,7 @@ describe("walkFiles", () => {
 describe("check-public-refs CLI", () => {
   it("깨끗한 필수 root 는 종료 코드 0과 성공 메시지를 낸다", async () => {
     const root = await makeTempRoot();
-    await mkdir(join(root, "skills"));
+    await makeRequiredRoots(root);
     await writeFile(join(root, "README.md"), "readme\n");
     await writeFile(join(root, "skills", "SKILL.md"), "skill\n");
 
@@ -81,7 +88,7 @@ describe("check-public-refs CLI", () => {
 
   it("위반이 있으면 종료 코드 1과 파일:줄:내용을 출력한다", async () => {
     const root = await makeTempRoot();
-    await mkdir(join(root, "skills"));
+    await makeRequiredRoots(root);
     await writeFile(join(root, "README.md"), "첫 줄\n둘째 줄 ADR-030\n");
 
     const result = spawnSync(process.execPath, [scriptPath], { cwd: root, encoding: "utf8" });
@@ -103,7 +110,7 @@ describe("check-public-refs CLI", () => {
 
   it.skipIf(skipAsRoot)("파일을 읽을 수 없으면 종료 코드 2로 실패한다", async () => {
     const root = await makeTempRoot();
-    await mkdir(join(root, "skills"));
+    await makeRequiredRoots(root);
     await writeFile(join(root, "README.md"), "readme\n");
     await writeFile(join(root, "skills", "unreadable.md"), "unreadable\n", { mode: 0o000 });
 

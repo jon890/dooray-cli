@@ -5,243 +5,104 @@
 [![CI](https://github.com/jon890/dooray-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/jon890/dooray-cli/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/@bifos/dooray-cli.svg)](https://github.com/jon890/dooray-cli/blob/main/LICENSE)
 
-[NHN Dooray](https://dooray.com) 를 AI 에이전트가 다룰 수 있게 만든 CLI 다.
+[NHN Dooray](https://dooray.com) 를 터미널과 AI 에이전트에서 쓸 수 있게 해 주는 CLI 예요.
 
-업무·댓글·위키·메일·메신저를 명령 한 줄로 처리하고, 결과를 `--json` 으로 내보낸다.
-Claude Code 같은 에이전트에 스킬로 설치하면 "업무 만들어줘" 같은 자연어 지시를 그대로 처리한다.
-
-```bash
-npm install -g @bifos/dooray-cli
-dooray setup
-dooray skill install
-```
-
-## 설치와 설정
-
-Node.js 20 이상이 필요하다.
-
-```bash
-npm install -g @bifos/dooray-cli
-```
-
-`dooray setup` 이 API endpoint 와 API key, 메일 설정까지 대화형으로 받는다.
-API key 는 Dooray 웹의 **설정 → API → 인증 토큰** 에서 만든다.
-
-```bash
-dooray setup
-dooray doctor   # 설정이 제대로 됐는지 확인
-```
-
-개별 값만 바꾸려면 `dooray config set` 을 쓴다. 값 자리에 `-` 를 주면 stdin 에서 읽는다.
-
-```bash
-printf '%s' "$TOKEN" | dooray config set api-key -
-```
-
-토큰을 명령 인자로 넘기면 셸 기록과 프로세스 목록에 남는다. 에이전트가 대신 실행하면 실행 로그에도 남는다.
-stdin 으로 받은 값은 양끝 공백을 지운 뒤 저장하고, 비어 있으면 저장하지 않고 종료 코드 3 으로 끝낸다.
-`imap-port` 와 `smtp-port` 는 1 에서 65535 사이의 정수만, `track-last-run` 은 `true`, `false`, `yes`, `no`, `1`, `0` 만 받는다.
-그 밖의 값은 저장하지 않고 종료 코드 3 으로 끝낸다.
-설정 파일 `~/.dooray/config.json` 은 소유자만 읽을 수 있는 권한(0600)으로 저장한다.
-
-`api-key` 나 `base-url` 을 바꾸면 캐시를 함께 비우고 그 사실을 알린다.
-캐시는 계정과 접속 환경별로 나뉘지 않아서, 비우지 않으면 이전 계정의 프로젝트와 멤버가 남아 잘못 매칭된다.
-같은 값을 다시 설정하는 경우와 최초 설정에서는 비우지 않는다.
-
-에이전트에서 쓰려면 스킬을 설치한다. Claude Code 가 이 CLI 의 사용법을 알게 된다.
-
-```bash
-dooray skill install
-dooray skill status
-```
-
-CLI 를 새 버전으로 올린 뒤에는 `dooray skill update` 를 실행해야 스킬도 갱신된다.
-
-## Dooray 문체 페르소나
-
-`dooray-persona` 스킬은 Dooray에 쌓인 본인 업무 글과 댓글을 모아 개인 업무 문체 문서를 만든다.
-완성한 문서를 AI 에이전트의 규칙으로 연결하면 업무와 댓글 초안을 본인 문체에 맞춰 작성할 수 있다.
-
-이 스킬은 사용자 글을 로컬에서 분석하는 별도 워크플로우이므로 `dooray skill install`의 설치 대상이 아니다.
-저장소를 내려받은 뒤 스킬 디렉터리를 `~/.claude/skills/` 아래에 링크하거나 복사한다.
-
-```bash
-git clone https://github.com/jon890/dooray-cli.git
-cd dooray-cli
-mkdir -p ~/.claude/skills
-ln -s "$PWD/skills/dooray-persona" ~/.claude/skills/dooray-persona
-```
-
-링크 대신 복사해서 사용하려면 마지막 명령을 다음 명령으로 바꾼다.
-
-```bash
-cp -R skills/dooray-persona ~/.claude/skills/
-```
-
-설정 파일은 `~/.claude/dooray-persona.config.json`이며, 최초 실행에서는 후보 프로젝트를 탐색해 대상을 고른 뒤 본인 글을 수집한다.
-인증은 `dooray setup`이 만든 `~/.dooray/config.json`을 읽어 사용하므로 토큰을 따로 입력하지 않는다.
-
-### 터미널에 익숙하지 않은 동료에게 넘기기
-
-`skills/dooray-persona/references/bootstrap.md`에 붙여넣기용 프롬프트가 있다.
-그 블록을 복사해 전달하면 받는 사람은 Claude Code에 한 번 붙여넣는 것으로 CLI 설치, 인증 설정, 스킬 연결, 수집, 문서 생성, 주입까지 진행한다.
-
-받는 사람이 직접 해야 하는 것은 둘이다. Claude Code 설치와 Dooray 개인 인증 토큰 발급이다.
-토큰 발급은 웹 로그인이 필요해 자동화할 수 없고, 프롬프트가 발급 화면 주소까지만 안내한다.
-
-Claude 데스크톱 앱은 사용자 컴퓨터의 파일과 명령을 기본 상태로 다루지 못한다.
-문서는 Claude Code에서 만들고, 완성한 문서를 데스크톱 앱의 프로젝트 지식이나 스타일 설정에 붙여넣어 쓴다.
-
-## 사용법
-
-설정을 마치면 에이전트에게 한국어로 시키면 된다.
+업무, 댓글, 위키, 메일, 메신저, 캘린더를 명령 한 줄로 다뤄요.
+Claude Code 에 스킬로 설치하면 "업무 만들어줘" 같은 말을 그대로 알아듣고 처리해요.
 
 ```
-"내 프로젝트 목록 보여줘"
 "백엔드 프로젝트에 '로그인 실패 로그 확인' 업무 만들고 김철수 담당자로 지정해줘"
 "42번 업무에 '80% 완료' 댓글 달아줘"
-"이번 주 회의록 위키 페이지 만들어줘"
 "안 읽은 메일 보여줘"
 "개발팀 대화방에 배포 완료 알려줘"
-"이 업무 완료 처리하고 담당자에게 알려줘"
 ```
 
-에이전트가 알맞은 `dooray` 명령으로 옮기고, 필요하면 프로젝트 코드나 업무 번호를 먼저 조회한다.
-업무 URL 을 그대로 붙여도 된다. 에이전트가 URL 에서 대상을 찾아낸다.
+## 이런 분께 맞아요
 
-에이전트가 쓰는 명령 카탈로그와 판단 기준은 [스킬 문서](skills/dooray-cli/SKILL.md)에 있다.
+- Dooray 웹을 열지 않고 터미널에서 업무를 확인하고 정리하고 싶은 분
+- AI 에이전트에게 업무 등록, 댓글, 위키 정리를 맡기고 싶은 분
+- 배포 알림이나 정기 보고처럼 반복되는 Dooray 작업을 스크립트로 자동화하고 싶은 분
 
-## 에이전트 없이 직접 쓰기
+## 빠른 시작
 
-터미널에서 바로 쓸 수도 있다.
+Node.js 20 이상이 필요해요.
+
+### 1. 설치해요
 
 ```bash
-dooray project list                          # 내 프로젝트
-dooray post list <project>                   # 업무 목록
-dooray post list <project> --tag "<태그 이름>"  # 태그로 거르기
-dooray post list <project> --from me --created 2026-09-01~  # 내가 9월 이후 등록한 업무
-dooray post get <project> 42                 # 업무 상세
-dooray post create <project> --title "제목"  # 업무 생성
-dooray post comment add <project> 42 --body "댓글"
-dooray wiki pages <project>                  # 위키 페이지 목록
-dooray wiki page get --id <page-id>          # 페이지 ID 하나로 조회 (project 불필요)
-dooray wiki list --search 설계               # 위키 이름으로 찾기 (대소문자 무시)
-dooray wiki page get --url "https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>"
-dooray wiki page edit --id <page-id> --body-file notes.md   # 페이지 ID 하나로 본문 수정
-dooray post replace <project> 42 --old "초안" --new "확정"   # 본문 일부만 치환
-dooray wiki page move --id <page-id> --parent <parent-page-id>
-dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
-dooray mail list --unread                    # 안 읽은 메일
+npm install -g @bifos/dooray-cli
 ```
+
+### 2. Dooray 계정을 연결해요
+
+먼저 Dooray 웹의 **설정 → API → 인증 토큰** 에서 토큰을 만들어요.
+그다음 아래 명령을 실행하면 필요한 값을 차례로 물어봐요.
 
 ```bash
-dooray post edit <project> 42 --cc-group <group-code>  # 제목·본문 없이 참조자 그룹 추가
+dooray setup
 ```
 
-참조자·담당자 옵션만 지정하면 `$EDITOR`를 열지 않고 기존 제목·본문·태그를 보존한 채 참여자만 바꾼다.
-
-### 태그 확인과 태그로 찾기
-
-업무 상세를 그냥 조회하면 붙어 있는 태그가 이름으로 함께 나온다.
-
-`--json` 은 서버 응답을 그대로 내므로 태그에 `id` 만 들어 있다.
-이름이 필요하면 `--with-tag-names` 를 함께 준다.
+연결이 잘 됐는지는 `doctor` 로 확인해요.
 
 ```bash
-dooray post get <project> 42 --json --with-tag-names
-dooray post list <project> --tag "<태그 이름>"
-dooray post list <project> --tag "<이름 A>" --tag "<이름 B>"
+dooray doctor
 ```
 
-`--with-tag-names` 는 이름을 채우지 못한 태그가 하나라도 있으면 멈춘다.
-옵션을 주지 않으면 출력이 서버 응답 그대로다.
-
-`--tag` 를 여러 번 주면 그 태그를 모두 가진 업무만 온다.
-
-### 사람·상위 업무·기간으로 거르기
+### 3. 첫 명령을 실행해요
 
 ```bash
-dooray post list <project> --to me --parent 42               # 42번의 하위 업무 중 내 담당
-dooray post list <project> --from "김철수"
-dooray post list <project> --cc me --updated prev-7d --order -postUpdatedAt
-dooray post list <project> --created 2026-09-01~2026-09-30
+dooray project list          # 내 프로젝트 목록
+dooray post list <project>   # 그 프로젝트의 업무 목록
 ```
 
-`--from`·`--to`·`--cc` 는 등록자·담당자·참조자다. 옵션마다 한 명을 받고 `me`, 멤버 id, 이메일, 프로젝트 멤버 이름으로 준다.
-같은 옵션을 두 번 주면 조회하기 전에 오류로 끝난다. 여러 사람을 보려면 한 사람씩 따로 조회해 합친다.
-값의 앞뒤 공백은 지우고 해석한다. 빈 값이나 공백만 있는 값은 조회하기 전에 오류로 끝난다.
+`<project>` 자리에는 프로젝트 목록에 나온 프로젝트 코드를 넣어요.
 
-`--parent` 는 이 프로젝트의 업무 번호(`42`), 다른 프로젝트의 `<project>/<number>`, postId 를 받는다.
+### 4. AI 에이전트에 연결해요 (선택)
 
-`--created`·`--updated` 는 `A~B`, `A~`(그 뒤로), `~B`(그 앞으로), `prev-<N>d`(최근 N일, N 은 1 이상)를 받는다.
-A·B 는 `2026-09-01` 같은 날짜나 `2026-09-01T09:00:00+09:00` 같은 일시다.
-날짜만 주면 A 는 그 날 0시, B 는 그 날 23시 59분 59초로 본다.
-없는 날짜나 끝이 시작보다 앞선 범위는 조회하기 전에 오류로 끝난다.
-`~` 로 시작하는 값은 셸이 홈 디렉터리로 바꾸려 하므로 `--created "~2026-09-30"` 처럼 따옴표로 감싼다.
-
-`--order` 는 `createdAt`·`postUpdatedAt`·`postDueAt` 중 하나이고 앞에 `-` 를 붙이면 내림차순이다. 기본은 `-createdAt` 이다.
-
-### 본문 일부만 고치기
-
-`post edit --body` 와 `wiki page edit --body` 는 본문 전체를 바꾼다.
-긴 본문에서 한두 군데만 고칠 때는 `replace` 로 바꿀 구간만 준다.
+Claude Code 를 쓴다면 스킬을 설치해요. 에이전트가 이 CLI 의 사용법을 알게 돼요.
 
 ```bash
-dooray post replace <project> 42 --old "2. 배포" --new "2. 카나리 배포"
-dooray wiki page replace --id <page-id> --old-file old.md --new-file new.md
-dooray post replace <project> 42 --old "v1.2" --new "v1.3" --all --dry-run
+dooray skill install
 ```
 
-- `--old` 는 공백과 줄바꿈까지 정확히 일치해야 한다. 여러 줄이거나 따옴표가 섞이면 `--old-file`/`--new-file` 로 준다. `-` 는 stdin 이며, old 와 new 가 함께 stdin 을 쓸 수는 없다
-- 파일과 stdin 으로 준 값은 UTF-8 BOM 과 끝 줄바꿈 하나를 떼고 쓴다. 에디터나 `echo` 가 붙인 줄바꿈 때문에 어긋나지 않게 하려는 것이다. 끝 줄바꿈까지 일치시켜야 하면 인자로 준다 (`--old $'마지막 줄\n'`)
-- 구간을 지우려면 인자로 `--new ""` 를 준다. 파일이나 stdin 으로 읽은 new 가 비어 있으면 앞 명령이 실패한 것과 구분할 수 없어 종료 코드 3 으로 멈춘다
-- 일치하는 곳이 없으면 종료 코드 3 으로 멈춘다. 두 군데 이상이면 몇 군데인지 알리고 멈추므로, 앞뒤 문맥을 더 넣어 한 군데로 좁히거나 `--all` 로 모두 바꾼다
-- `--dry-run` 은 수정하지 않고 바뀌는 줄만 diff 형식으로 보여준다. 탭은 그대로, CR 은 `<CR>` 로 보인다. 긴 줄은 바뀐 곳 앞뒤 80자만 남기고 `...` 로 줄이므로, 잘린 줄은 그대로 복사해 `--old` 로 쓸 수 없다
-- 제목·담당자·태그·본문 형식은 그대로 둔다. 치환으로 첨부나 인라인 이미지 참조가 사라지면 확인을 받고, 자동화에서는 `--no-confirm` 으로 넘긴다
-- 내부적으로는 현재 본문을 읽어 바꾼 뒤 전체를 다시 보낸다. 그 사이에 다른 사람이 같은 본문을 고치면 그 수정을 덮어쓴다
+이제 에이전트에게 한국어로 시키면 돼요.
+에이전트가 알맞은 `dooray` 명령을 고르고, 필요하면 프로젝트 코드나 업무 번호를 먼저 찾아봐요.
+업무 URL 을 그대로 붙여 넣어도 돼요.
 
-### 본문 형식
+CLI 를 새 버전으로 올린 뒤에는 `dooray skill update` 를 한 번 실행해 주세요. 그래야 스킬도 함께 갱신돼요.
 
-업무와 댓글과 위키 페이지의 본문은 마크다운이거나 HTML 이다.
-`post edit`, `post comment edit`, `wiki page edit` 는 수정할 때 기존 형식을 그대로 유지한다.
+## 할 수 있는 일
 
-주는 본문의 형식이 기존과 다르면 `--mime-type` 으로 명시한다.
-빠뜨리면 마크다운 본문이 HTML 로 저장되어 웹에서 원문이 그대로 보인다.
+| 영역 | 할 수 있는 일 | 명령 | 가이드 |
+| --- | --- | --- | --- |
+| 업무 | 조회, 검색, 생성, 수정, 본문 일부 치환, 완료 처리, 상태 변경, 댓글, 첨부 파일 | `dooray post` | [업무와 위키](docs/guide/post-wiki.md) |
+| 위키 | 페이지 조회, 생성, 수정, 본문 일부 치환, 이동, 삭제, 댓글, 첨부 파일 | `dooray wiki` | [업무와 위키](docs/guide/post-wiki.md) |
+| 프로젝트 | 프로젝트, 멤버, 태그, 워크플로우, 템플릿 조회와 태그 생성 | `dooray project` | [업무와 위키](docs/guide/post-wiki.md#프로젝트-태그-만들기) |
+| 메신저 | 1:1 메시지, 대화방 메시지, 스레드, 대화방 목록, 메시지 조회 | `dooray messenger` | [메신저](docs/guide/messenger.md) |
+| 메일 | 목록, 상세 조회, 발송, 답장 | `dooray mail` | `dooray mail --help` |
+| 캘린더 | 캘린더와 일정 조회 (읽기 전용) | `dooray calendar` | [캘린더](docs/guide/calendar.md) |
+| 멤버 | 조직 멤버 검색과 상세 조회 | `dooray member` | `dooray member --help` |
+
+## 자주 쓰는 명령
+
+에이전트 없이 터미널에서 바로 써도 돼요.
 
 ```bash
-dooray post get <project> 42 --json | jq .body.mimeType    # "text/html"
-dooray post edit <project> 42 --body-file notes.md --mime-type text/x-markdown
-dooray post edit <project> 42 --mime-type text/html        # 본문은 그대로, 형식만 되돌리기
+dooray post list <project> --to me                  # 내가 담당인 업무
+dooray post get <project> 42                        # 42번 업무 상세
+dooray post create <project> --title "제목"         # 업무 생성
+dooray post comment add <project> 42 --body "댓글"  # 댓글 달기
+dooray post replace <project> 42 --old "초안" --new "확정"   # 본문 일부만 고치기
+dooray post done <project> 42                       # 완료 처리
+dooray wiki pages <project>                         # 위키 페이지 목록
+dooray mail list --unread                           # 안 읽은 메일
+dooray messenger channel-send --channel "배포알림" --body "배포 완료"
+dooray calendar event list                          # 오늘 일정
 ```
 
-값은 `text/x-markdown` 과 `text/html` 둘뿐이다.
-본문을 바꾸지 않고 형식만 바꾸면 CLI 가 본문을 변환하지 않는다는 경고가 나온다.
+업무나 위키 페이지를 가리킬 때는 `<project> <번호>` 대신 Dooray URL 을 그대로 줘도 돼요.
 
-### 멘션과 업무 링크
-
-`post edit` 과 `post comment edit` 은 본문에 멘션과 다른 업무 링크를 붙인다.
-
-```bash
-dooray post edit <project> 42 --title "배포 준비" --mention 홍길동
-dooray post comment edit <project> 42 --comment-id <comment-id> --body "확인 부탁" --link-task <project>/7
-```
-
-| 옵션 | 동작 |
-| --- | --- |
-| `--mention <name>` | 이름으로 멤버를 찾아 본문 앞에 멘션을 붙인다 (반복 가능) |
-| `--mention-group <code>` | 그룹 코드로 찾아 멘션을 붙인다 (반복 가능) |
-| `--link-task <ref>` | 다른 업무 링크를 본문 끝에 붙인다. `<project>/<number>` 또는 postId (반복 가능) |
-| `--dry-run` | API 를 호출하지 않고 합성된 본문만 stdout 에 출력한다 |
-
-**본문 형식이 `text/html` 이면 이 세 옵션을 쓸 수 없다.**
-그 형식의 멘션과 링크 표기가 확인되지 않아, 종료 코드 3 으로 멈추고
-`--mime-type text/x-markdown` 으로 형식을 바꾸는 방법을 안내한다.
-추측한 표기를 넣으면 링크로 렌더링되지 않는 문자열이 본문에 남는다.
-
-`post edit` 에서 `--mention` 이나 `--link-task` 만 주면 편집기를 열지 않고 기존 본문에 붙여 수정한다.
-`--dry-run` 을 붙이면 수정하지 않고 합성한 본문만 출력한다.
-
-전체 명령과 옵션은 `--help` 로 본다.
+명령과 옵션 전체는 `--help` 로 볼 수 있어요.
 
 ```bash
 dooray --help
@@ -249,306 +110,41 @@ dooray post --help
 dooray post create --help
 ```
 
-출력은 세 가지 모드다.
+### 출력 형식을 골라요
 
-| 플래그 | 출력 | 쓰는 곳 |
+| 옵션 | 출력 | 쓰는 곳 |
 | --- | --- | --- |
-| (없음) | 사람이 읽는 표 | 터미널 |
-| `--json` | JSON | 파싱, 명령 연결 |
-| `--quiet` | ID 만 | 스크립트 |
-
-전역 옵션이라 모든 명령에 붙일 수 있다. 서브커맨드의 `--help` 에는 나오지 않는다.
-
-`--no-color` 도 전역 옵션이다. 붙이면 색상을 끄고, 환경 변수 `NO_COLOR` 가 설정돼 있어도 같게 동작한다.
+| (없음) | 사람이 읽기 좋은 표 | 터미널 |
+| `--json` | JSON | 다른 프로그램에서 읽을 때 |
+| `--quiet` | ID 만 | 셸 스크립트 |
 
 ```bash
 POST_ID=$(dooray post create <project> --title "배포" --quiet)
 dooray post comment add --id "$POST_ID" --body "시작합니다"
 ```
 
-### 댓글에 파일 첨부
+## 더 알아보기
 
-```bash
-dooray post comment file upload <project> <number> <comment-id> <path>
-```
-
-이미지 확장자는 이미지 마크다운으로, 그 외 파일은 일반 링크로 댓글 본문에 추가한다.
-`comment file list`는 웹 UI 첨부와 CLI 업로드 파일을 함께 보여주며 `출처` 열로 구분한다.
-CLI로 올린 파일은 댓글의 첨부 카드가 아니라 본문 링크로 표시된다.
-
-본문 형식에 따라 두 명령이 멈추는 조건이 있다.
-
-- `comment file upload` 는 댓글 본문이 `text/html` 이면 파일을 올리기 전에 종료 코드 3 으로 멈춘다.
-  그 형식의 첨부 표기가 확인되지 않아, 올려도 본문에서 그 파일에 닿을 수 없다
-- `comment file delete` 는 댓글 본문에서 그 파일의 참조를 찾지 못하면
-  본문도 파일도 건드리지 않고 종료 코드 3 으로 멈춘다.
-  종전에는 참조를 찾지 못해도 파일을 지워 본문에 대상이 사라진 링크가 남았다.
-  파일만 지우려면 `dooray post file delete` 를 쓴다
-
-### 첨부 파일 내려받기
-
-```bash
-dooray post file download-all <project> 42 -o ./files
-dooray post file download-all <project> 42 -o ./files --no-inline
-```
-
-첨부 목록에 있는 파일과 본문에 삽입된 파일을 함께 받는다.
-본문에 이미지를 붙여 넣기만 한 업무는 첨부 목록이 비어 있어도 그 이미지를 받는다.
-본문 쪽을 제외하려면 `--no-inline` 을 준다.
-
-### 삭제 명령의 확인
-
-| 영역 | 삭제 명령 |
+| 문서 | 내용 |
 | --- | --- |
-| 업무 | `dooray post comment delete`<br>`dooray post file delete`<br>`dooray post comment file delete` |
-| 위키 | `dooray wiki page delete`<br>`dooray wiki page file delete`<br>`dooray wiki page comment delete` |
+| [설치와 설정](docs/guide/setup.md) | 설정 값 바꾸기, 토큰을 안전하게 넣는 방법, 스킬 관리, 출력 모드 |
+| [업무와 위키](docs/guide/post-wiki.md) | 태그와 기간으로 거르기, 본문 일부 치환, 본문 형식, 멘션, 첨부 파일, 삭제 확인 |
+| [메신저](docs/guide/messenger.md) | 메시지 보내기, 스레드, 대화방 목록, 메시지 조회 |
+| [캘린더](docs/guide/calendar.md) | 캘린더와 일정 조회 |
+| [문체 페르소나](docs/guide/persona.md) | 내 Dooray 글을 모아 에이전트가 내 문체로 쓰게 하는 스킬 |
+| [스킬 문서](skills/dooray-cli/SKILL.md) | 에이전트가 읽는 명령 목록과 판단 기준 |
 
-여섯 명령은 TTY에서 기본값이 아니오인 `y/N` 확인을 요청한다.
-자동화·파이프 등 non-TTY 실행에서는 `-y` 또는 `--yes`로 확인을 생략해야 한다.
-플래그가 없으면 삭제 API를 호출하기 전에 종료 코드 3으로 끝난다.
-기존 삭제 자동화에는 명시적인 yes 플래그를 추가해야 한다.
+## 문제가 생기면
 
-`post comment delete` 와 `post file delete` 는 `--json` 과 `--quiet` 을 함께 받는다.
-`--json` 은 삭제한 식별자와 `status` 를 내고, `--quiet` 은 식별자 한 줄만 낸다.
-식별자의 키 이름은 명령마다 다르다. 댓글 삭제는 `commentId`, 파일 삭제는 `fileId` 다.
-
-### 프로젝트 태그 만들기
-
-업무에 붙일 태그를 CLI 에서 만든다.
-
-```bash
-dooray project tags <project>                                    # 태그 목록
-dooray project tags list <project>                               # 같은 동작
-dooray project tags create <project> --name "배포환경:staging"    # 그룹에 속한 태그
-dooray project tags create <project> --name "긴급" --color c6eab3  # 그룹 없는 태그
-dooray project tags group <project> "배포환경" --select-one        # 그룹에서 하나만 고르게
-```
-
-`--name` 은 `"그룹명:태그명"` 형식이고 그룹명은 생략할 수 있다.
-같은 그룹명으로 여러 번 만들면 그 그룹에 태그가 쌓인다.
-`--color` 를 생략하면 회색이 붙는다.
-
-`group` 은 그룹의 필수 여부(`--mandatory`)와 단일 선택 여부(`--select-one`)를 바꾼다.
-해제는 `--no-mandatory` 와 `--no-select-one` 이고, 지정하지 않은 쪽은 그대로 둔다.
-태그가 하나도 없는 그룹은 대상이 되지 않는다.
-
-프로젝트 코드가 `list`, `create`, `group` 중 하나와 같으면 그 인자가 하위 명령으로 먼저 읽힌다.
-그때는 `dooray project tags list <project>` 로 목록을 조회한다.
-
-태그 이름·색상 수정과 태그 삭제는 Dooray API 에 경로가 없어 웹 설정 화면에서 한다.
-
-### 메신저로 알리기
-
-작업 결과를 메신저로 바로 보낸다.
-
-```bash
-dooray messenger send --to user@example.com --body "배포 완료됐습니다"   # 1:1 메시지
-dooray messenger channel-send --channel "배포알림" --body "v1.2.3 배포"  # 대화방 메시지
-```
-
-`send` 의 `--to` 는 멤버 ID 나 이메일을 받고 이름은 받지 않는다.
-`channel-send` 의 `--channel` 은 channelId 나 대화방 이름을 받고, 이름으로는 자신이 속한 방만 찾는다.
-`--body` 대신 `--body-file` 로 파일을 주거나 둘 다 생략해 `$EDITOR` 에서 쓸 수 있다.
-
-진행 상황을 여러 번 보고할 때는 스레드를 열어 그 안에 쌓는다.
-`thread-send` 에 `--quiet` 을 붙이면 새로 만들어진 스레드 채널의 id 가 나오고,
-그 값을 `channel-send` 의 `--channel` 에 주면 메시지가 스레드에 붙는다.
-
-```bash
-THREAD=$(dooray messenger thread-send --channel "배포알림" --body "v1.2.3 배포" --quiet)
-dooray messenger channel-send --channel "$THREAD" --body "테스트 통과"
-```
-
-`--thread-body` 로 스레드 첫 메시지를 함께 보낼 수 있고, 파일로 주려면 `--thread-body-file <path>` 를 쓴다.
-둘 다 생략하면 스레드만 열린다.
-
-이미 올라간 메시지에 스레드를 열려면 그 메시지의 log-id 를 `--log` 로 준다.
-
-```bash
-dooray messenger thread-send --channel "배포알림" --log <logId> --body "빌드 로그"
-```
-
-내가 속한 대화방은 `channels` 로 본다. 수정 시각(`updatedAt`)이 최신인 방이 위에 오고,
-`logs` 나 `channel-send` 에 넘길 channelId 를 여기서 찾는다.
-
-```bash
-dooray messenger channels                         # 전체 (수정 시각 최신순)
-dooray messenger channels --search "홍길동"       # 이름 부분 일치 (대소문자 무시)
-dooray messenger channels --since 2026-09-20      # 그 날 이후 수정 시각(updatedAt)이 찍힌 방
-dooray messenger channels --type direct --quiet   # 1:1 방 id 만
-```
-
-1:1 방과 일부 그룹방은 제목이 비어 있다. 표에는 나를 뺀 참여자 이름으로 `DM: 홍길동`,
-`그룹: 가, 나, 다 외 N명`, `봇: 가, 나 외 N명` 처럼 보여주고, 제목 없는 나와의 대화방은 `나와의 대화` 로 보여준다. `--search` 는 제목에서 찾고, 제목이 없으면
-나를 뺀 참여자 모두의 이름에서 찾는다. 이름을 확인하지 못한 참여자가 있으면 그 수를 stderr 로 알린다.
-`--type` 은 `direct`(1:1), `private`(그룹), `me`(나와의 대화), `bot`(봇이 만든 방) 을 받는다. 빈 검색어는 거부한다. `--since` 는 `YYYY-MM-DD` 나 offset 이 붙은 시각을 받는다.
-보관된 방, 숨긴 방, 시스템 방은 기본으로 빠지고 `--all` 을 주면 함께 나온다.
-`--json` 은 거르고 정렬만 한 서버 응답 그대로라 만든 이름이 들어가지 않는다.
-참여자 이름을 얻으려면 멤버를 하나씩 조회해야 해서 1:1 방이 많으면 표 출력이 수십 초 걸린다.
-`--json` 이나 `--quiet` 에 `--search` 를 주지 않으면 이 조회를 건너뛴다.
-
-대화방에 올라온 메시지는 `logs` 로 읽는다. 대화방 인자는 `channel-send` 와 같게 channelId 나 이름을 받는다.
-
-```bash
-dooray messenger logs "배포알림"              # 최근 20건
-dooray messenger logs "배포알림" --count 200  # 최근 200건 (-n 200 과 같다)
-dooray messenger logs "배포알림" --json       # 서버 응답 원형
-```
-
-표는 오래된 메시지가 위, 최신이 아래로 나오고 발신자는 이름으로 보여준다.
-이름 조회에 실패한 발신자는 id 로 남는다. `--json` 은 서버 응답 그대로라 이름이 들어가지 않고,
-정렬도 서버가 주는 대로 최신이 앞이다. 표와 `--quiet` 은 대화 순서대로 뒤집는다.
-
-표의 내용 열은 60자에서 자르고 잘린 자리에 `…` 를 붙인다. 메시지 전문은 `--json` 으로 봐야 한다.
-긴 메시지를 옮겨 적거나 요약할 때 표만 보면 뒷부분을 놓친다.
-
-가져올 수 있는 범위는 최근 1000건까지다. 그 이전으로 거슬러 갈 수단이 API 에 없어
-`-n` 에 1000 을 넘기면 조용히 잘리는 대신 에러로 끝난다. 날짜로 거르는 옵션도 없다.
-가져온 것보다 오래된 메시지가 남아 있으면 그 사실만 stderr 로 알린다. stdout 은 데이터만 담는다.
-
-**이 명령이 부르는 endpoint 는 Dooray 공식 API 문서에 실려 있지 않다.**
-같은 경로로 메시지를 보내는 쪽은 문서에 있는데 읽는 쪽만 없다.
-동작은 실제 호출로 확인했지만 호환을 약속받은 것이 아니라서, 예고 없이 막히거나 응답이 바뀔 수 있다.
-멈추면 곤란한 자동화에 넣을 때는 이 점을 감안한다.
-
-### 캘린더 일정 보기
-
-캘린더와 일정은 읽기만 지원한다. 만들거나 고치거나 지우는 명령은 없다.
-
-```bash
-dooray calendar list                                  # 접근 가능한 캘린더 목록
-dooray calendar event list                            # 오늘 하루의 일정
-dooray calendar event list --from 2026-09-20 --to 2026-09-26
-dooray calendar event get <calendarId> <eventId>      # 일정 상세
-```
-
-`--from` 과 `--to` 는 `2026-09-20` 처럼 날짜만 주거나 `2026-09-20T09:00:00+09:00` 처럼 시각까지 줄 수 있다.
-날짜만 주면 실행 장비의 시간대로 `--from` 은 그 날 `00:00:00`, `--to` 는 그 날 `23:59:59` 로 늘어난다.
-둘 다 생략하면 오늘 하루를 본다. 한쪽만 주면 **그 값이 가리키는 날 하루**를 본다.
-`--from 2026-10-01` 은 10월 1일 하루, `--to 2026-08-01` 은 8월 1일 하루다.
-서버가 한쪽만 받으면 기간을 걸지 않은 것과 같은 결과를 주기 때문에 언제나 양끝을 채워 보낸다.
-형식이 어긋난 값과 `--from` 이 `--to` 보다 뒤인 범위는 API 를 부르기 전에 종료 코드 3 으로 거부한다.
-날짜와 시각이 실재하는 값인지도 보므로 `2026-02-31T25:00:00+09:00` 같은 값은 통과하지 못한다.
-한 번에 조회할 수 있는 기간은 최대 50일이다. `--from 2026-01-01 --to 2026-02-20` 은 되고 `--to 2026-02-21` 은 안 된다.
-그보다 길면 서버가 400 으로 거절하므로 API 를 부르기 전에 같은 종료 코드로 거부한다.
-
-`event list` 의 표는 시각과 제목과 캘린더 이름, 그리고 내 참여 여부를 낸다.
-내 참여 열은 내가 그 일정에 어떻게 들어가 있는지를 `참석·수락`, `참조·미응답`, `주최` 처럼 적고,
-내가 참여자가 아닌 일정(공유받은 캘린더의 남의 일정)은 비워 둔다.
-종일 일정은 하루짜리면 `2026-09-18 (종일)`, 여러 날이면 마지막 날까지 `2026-09-18 ~ 2026-09-20 (종일)` 로 적는다.
-`--quiet` 은 일정 id 를 내므로 그 값을 `event get` 의 두 번째 인자로 넘길 수 있다.
-`event get` 의 첫 번째 인자인 캘린더 id 는 `calendar list --quiet` 이나 `event list --json` 의 `calendar.id` 에서 얻는다.
-
-참석자 이름과 본문은 `event get` 에만 들어 있다. 목록 응답의 참석자 항목은 비어 있다.
-`event get` 은 본문을 자르지 않고 줄바꿈을 살려 전문을 보여준다.
-
-일정 목록은 페이징이 없다. 기간을 좁히는 것이 결과 수를 줄이는 유일한 방법이다.
-
-## 프로젝트 구조
-
-```
-src/
-  index.ts       CLI 진입점
-  api/           Dooray REST API 클라이언트 (ky), IMAP·SMTP 클라이언트
-  cache/         ~/.dooray/cache/ 파일 캐시
-  config/        ~/.dooray/config.json 스키마와 읽기·쓰기
-  resolvers/     이름·이메일·URL 을 ID 로 바꾸는 읽기 계층
-  services/      상태를 바꾸는 API 를 호출하고 그 엔티티의 캐시를 지우는 계층
-  commands/      Commander.js 명령 정의
-  formatters/    표·JSON·quiet 출력
-  editor/        $EDITOR 연동
-  skill/         Claude Code 스킬 설치·갱신
-  utils/         에러, 스피너, 종료 코드
-```
-
-의존 방향은 읽기와 쓰기로 나뉜다.
-읽기는 `api/` → `resolvers/` → `commands/` → `formatters/` 다.
-쓰기는 `commands/` → `services/` → `api/` 와 `cache/` 다.
-`services/` 는 `resolvers/` 를 의존하지 않는다. 이름을 ID 로 바꾸는 일과 바꾸는 일을 조합하는 것은 `commands/` 다.
-
-| 문서 | 담는 것 |
-| --- | --- |
-| [docs/prd.md](docs/prd.md) | 제품 목적과 범위 |
-| [docs/flow.md](docs/flow.md) | 사용자 흐름 |
-| [docs/code-architecture.md](docs/code-architecture.md) | 디렉터리 책임, 레이어, 의존 방향 |
-| [docs/data-schema.md](docs/data-schema.md) | 캐시 구조와 TTL |
-| [docs/adr/INDEX.md](docs/adr/INDEX.md) | 기술 의사결정 기록 |
-
-이 저장소를 AI 에이전트로 만든 과정은
-[AI 에이전트와 함께 MVP 만들기](https://blog.fosworld.co.kr/posts/AI/practice/mvp-with-ai-agent.md) 에 있다.
+- 설정이 의심되면 `dooray doctor` 를 먼저 실행해 보세요. 설정과 API 연결, 스킬 상태를 한 번에 확인해요.
+- 에이전트가 새 명령을 모르면 `dooray skill update` 를 실행해 주세요.
+- 버그나 제안은 [GitHub Issues](https://github.com/jon890/dooray-cli/issues) 에 남겨 주세요. `dooray feedback` 으로 터미널에서 바로 올릴 수도 있어요.
 
 ## 기여하기
 
-이슈와 PR 모두 환영한다.
-
-### 개발 환경
-
-```bash
-git clone https://github.com/jon890/dooray-cli.git
-cd dooray-cli
-pnpm install
-
-pnpm run build       # tsup 으로 dist/index.js 단일 번들 생성
-pnpm test            # vitest
-pnpm tsc --noEmit    # 타입 검사 (빌드는 타입을 검사하지 않는다)
-
-node dist/index.js --help   # 빌드 결과 직접 실행
-npm link                    # dooray 명령으로 실행
-```
-
-`pnpm` 을 쓴다. 빌드는 `tsup`(esbuild) 이 담당하고 `tsc` 는 타입 검사 전용이므로,
-타입 오류를 잡으려면 `pnpm tsc --noEmit` 를 따로 돌려야 한다.
-
-### 새 명령을 추가할 때
-
-1. `src/api/client.ts` 에 API 호출을 추가한다. 기존 메서드로 되는지 먼저 확인한다
-2. 이름을 ID 로 바꿔야 하면 `src/resolvers/` 에 resolver 를 만든다. 매칭 정책은 정확일치 → 부분일치 → 모호하면 후보와 함께 에러다
-3. `src/commands/` 에 명령을 정의한다. 인접한 명령의 구조를 따르는 것이 가장 빠르다
-4. 출력은 `src/formatters/` 에서 표·JSON·quiet 세 모드를 모두 지원한다
-5. `src/**/*.test.ts` 에 테스트를 추가한다
-
-새 설정 값이 필요하면 `src/config/` 의 스키마와 `config set` 처리에 키를 추가한다.
-
-Dooray API 의 동작이 문서와 다르거나 직관에 반하면 [docs/adr/](docs/adr/) 에 기록한다.
-파일 업로드의 307 리다이렉트나 multipart 필드 순서처럼, 모르고 접근하면 다시 막히는 것들이 여러 건 쌓여 있다.
-
-### PR 을 낼 때
-
-- 커밋과 PR 제목은 `type(scope): 설명` 형식을 쓴다
-- 커밋 메시지와 PR 본문은 한국어로 쓴다
-- PR 을 열면 CI 가 빌드와 테스트를 돌리고, Claude 가 코드 리뷰를 남긴다
-- 리뷰는 P1 부터 P5 까지 등급을 붙인다. P1 이 남으면 머지하지 않고, P2 는 고치거나 PR 에 까닭을 적는다
-
-### 버그와 제안
-
-CLI 안에서 바로 이슈를 만들 수 있다.
-
-```bash
-dooray feedback                                   # 대화형
-dooray feedback --title "제목" --body "내용" --label bug
-dooray feedback --last --title "에러 제목"        # 직전 실패 명령을 자동 첨부
-```
-
-`--last` 는 미리 켜야 한다: `dooray config set track-last-run true`.
-argv 는 API 키 같은 값을 가린 뒤 저장한다. `config set <키> <값>` 의 값도 키와 관계없이 가린다.
-`--last` 는 `--title` 을 줘도 등록 전에 본문 미리보기를 stderr 로 보여 주고 확인을 받는다.
-터미널이 아닌 환경에서는 미리보기를 확인한 뒤 `--yes` 를 붙여 다시 실행해야 등록된다.
-
-[GitHub Issues](https://github.com/jon890/dooray-cli/issues) 에 직접 올려도 된다.
-
-## 기술 스택
-
-| 분류 | 사용 |
-| --- | --- |
-| 언어·런타임 | TypeScript, Node.js 20+ |
-| CLI 프레임워크 | Commander.js |
-| HTTP | ky |
-| 메일 | imapflow (조회), nodemailer (발송), mailparser |
-| 출력 | chalk, cli-table3, ora |
-| 대화형 입력 | @inquirer/prompts |
-| 빌드 | tsup (CJS 단일 번들) |
-| 테스트 | vitest |
+이슈와 PR 모두 환영해요.
+개발 환경을 준비하는 방법과 새 명령을 추가하는 순서는 [CONTRIBUTING.md](CONTRIBUTING.md) 에 있어요.
 
 ## 라이선스
 
-MIT
+[MIT](LICENSE)

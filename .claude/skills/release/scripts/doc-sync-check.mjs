@@ -80,9 +80,9 @@ console.log("검사 대상 " + targets.length + "건 (출처: " + source + ")");
 for (const t of targets) console.log("  " + t);
 console.log("---------------");
 
-const SCAN = ["README.md", "skills"].filter((p) => existsSync(join(root, p)));
+const SCAN = ["README.md", "docs/guide", "skills"].filter((p) => existsSync(join(root, p)));
 if (SCAN.length === 0) {
-  console.error("README.md 도 skills/ 도 없다.");
+  console.error("README.md 도 docs/guide/ 도 skills/ 도 없다.");
   process.exit(2);
 }
 

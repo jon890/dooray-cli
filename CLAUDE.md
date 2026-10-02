@@ -61,7 +61,7 @@ dooray                # 글로벌 링크 시
 
 ## 명령 공통 규약
 
-명령별 옵션·동작은 `docs/adr/INDEX.md` 와 `README.md` 에서 찾는다. 여기에는 전 명령 공통 규약만 둔다.
+명령별 옵션·동작은 `docs/adr/INDEX.md` 와 `docs/guide/` 에서 찾는다. `README.md` 는 처음 온 사람을 위한 소개와 빠른 시작만 담는다. 여기에는 전 명령 공통 규약만 둔다.
 
 - **입력 형식** — post get/edit/replace/done/workflow 와 post comment·post file 계열, wiki page get/edit/replace/delete/move 와 wiki page file·comment 계열이 공통으로 받는다. `post list`·`post search`·`post create` 는 받지 않는다
   - `<project> <number>` / `--id <id>` / `--url <url>` / 첫 positional 에 Dooray URL 직접 입력
@@ -108,7 +108,7 @@ Claude Code 는 그 경로의 파일을 읽을 때 규칙을 불러온다.
 
 | 파일 | 범위 |
 | --- | --- |
-| `.claude/rules/public-docs.md` | `README.md`, `skills/**` 의 내부 참조 번호 제외 |
+| `.claude/rules/public-docs.md` | `README.md`, `CONTRIBUTING.md`, `docs/guide/**`, `skills/**` 의 내부 참조 번호 제외 |
 | `.claude/rules/skill-authoring.md` | `.claude/skills/**` 의 스킬 작성 규약 |
 
 ## Git
