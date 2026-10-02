@@ -716,3 +716,255 @@ describe("installSkill", () => {
     });
   });
 });
+
+describe("Claude Code and Codex installation", () => {
+  function codexDestination(context: SkillManagerContext): string {
+    return path.join(context.homeDir, ".agents", "skills", "dooray-cli");
+  }
+
+  async function failCodexActivation(context: SkillManagerContext): Promise<void> {
+    const actualFs = await vi.importActual<typeof import("node:fs/promises")>(
+      "node:fs/promises",
+    );
+    vi.mocked(fs.rename).mockImplementation(async (from, to) => {
+      if (to === codexDestination(context) && String(from).includes(".tmp-")) {
+        throw new Error("Codex activation failed");
+      }
+      return actualFs.rename(from, to);
+    });
+  }
+
+  it("installs both agents with references in the same managed store", async () => {
+    const context = await makeContext(await makeRoot());
+    const source = path.join(context.packageRoot, "skills", "dooray-cli");
+    await fs.mkdir(path.join(source, "references"));
+    await fs.writeFile(path.join(source, "references", "common.md"), "usage\n");
+
+    const result = await installSkill(context);
+    const claude = await fs.readlink(await destinationOf(context));
+    const codex = await fs.readlink(codexDestination(context));
+
+    expect(codex).toBe(claude);
+    await expect(fs.readFile(path.join(codex, "references", "common.md"), "utf8"))
+      .resolves.toBe("usage\n");
+    expect(result.current).toMatchObject({
+      status: "current",
+      agents: {
+        claude: { status: "current", destination: await destinationOf(context) },
+        codex: { status: "current", destination: codexDestination(context) },
+      },
+    });
+    expect(result.backupPaths).toEqual({});
+  });
+
+  it("adds Codex to an existing Claude-only installation without rewriting Claude", async () => {
+    const context = await makeContext(await makeRoot());
+    await installSkill(context);
+    await fs.rm(codexDestination(context));
+    const before = await fs.lstat(await destinationOf(context));
+
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "missing",
+      agents: { claude: { status: "current" }, codex: { status: "missing" } },
+    });
+    const result = await installSkill(context);
+
+    expect(result.changed).toBe(true);
+    expect(result.current.status).toBe("current");
+    expect((await fs.lstat(await destinationOf(context))).ino).toBe(before.ino);
+    await expect(fs.readlink(codexDestination(context))).resolves.toBe(
+      await fs.readlink(await destinationOf(context)),
+    );
+  });
+
+  it("adds Claude to an existing Codex-only installation", async () => {
+    const context = await makeContext(await makeRoot());
+    await installSkill(context);
+    await fs.rm(await destinationOf(context));
+
+    await expect(installSkill(context)).resolves.toMatchObject({
+      current: { status: "current" },
+      changed: true,
+    });
+    await expect(fs.readlink(await destinationOf(context))).resolves.toBe(
+      await fs.readlink(codexDestination(context)),
+    );
+  });
+
+  it("updates both links after the CLI version and skill content change", async () => {
+    const root = await makeRoot();
+    const context = await makeContext(root);
+    await installSkill(context);
+    const oldStore = await fs.readlink(codexDestination(context));
+    const next = {
+      ...context,
+      currentVersion: "2.0.0",
+      packageRoot: await makePackage(root, "2.0.0"),
+    };
+    await fs.writeFile(
+      path.join(next.packageRoot, "skills", "dooray-cli", "SKILL.md"),
+      "updated skill\n",
+    );
+
+    const result = await installSkill(next);
+    const newStore = await fs.readlink(codexDestination(next));
+
+    expect(result.previous.agents.codex.status).toBe("outdated");
+    expect(result.current.agents.codex.installedVersion).toBe("2.0.0");
+    expect(newStore).not.toBe(oldStore);
+    await expect(fs.readlink(await destinationOf(next))).resolves.toBe(newStore);
+    await expect(fs.readFile(path.join(newStore, "SKILL.md"), "utf8"))
+      .resolves.toBe("updated skill\n");
+    await expect(fs.readFile(path.join(oldStore, "SKILL.md"), "utf8"))
+      .resolves.toBe("# dooray-cli\n");
+  });
+
+  it("recognizes an indirect Codex link to Claude and updates it without force", async () => {
+    const context = await makeContext(await makeRoot());
+    await installSkill(context);
+    const codex = codexDestination(context);
+    await fs.rm(codex);
+    await fs.symlink(await destinationOf(context), codex);
+
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "current",
+      agents: { codex: { status: "current", managed: true } },
+    });
+    await fs.writeFile(
+      path.join(context.packageRoot, "skills", "dooray-cli", "SKILL.md"),
+      "updated skill\n",
+    );
+    await installSkill(context);
+    await expect(fs.readlink(codex)).resolves.toBe(
+      await fs.readlink(await destinationOf(context)),
+    );
+  });
+
+  it("repairs a broken Codex link while preserving the current Claude link", async () => {
+    const context = await makeContext(await makeRoot());
+    await installSkill(context);
+    const codex = codexDestination(context);
+    await fs.rm(codex);
+    await fs.symlink(path.join(context.dataRoot!, "skills", "missing"), codex);
+
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      status: "broken",
+      agents: { claude: { status: "current" }, codex: { status: "broken" } },
+    });
+    await expect(installSkill(context)).resolves.toMatchObject({
+      current: { status: "current" },
+    });
+  });
+
+  it.each(["file", "directory", "link", "broken link"])(
+    "protects an unmanaged Codex %s before installing Claude",
+    async (kind) => {
+      const root = await makeRoot();
+      const context = await makeContext(root);
+      const codex = codexDestination(context);
+      await fs.mkdir(path.dirname(codex), { recursive: true });
+      if (kind === "file") {
+        await fs.writeFile(codex, "local edit\n");
+      } else if (kind === "directory") {
+        await fs.mkdir(codex);
+        await fs.writeFile(path.join(codex, "SKILL.md"), "local edit\n");
+      } else {
+        const target = path.join(root, "external");
+        if (kind === "link") await fs.mkdir(target);
+        await fs.symlink(target, codex);
+      }
+
+      await expect(installSkill(context)).rejects.toMatchObject({
+        exitCode: EXIT_PARAM_ERROR,
+        message: expect.stringContaining("Codex"),
+      });
+      await expect(fs.lstat(await destinationOf(context))).rejects.toMatchObject({
+        code: "ENOENT",
+      });
+      expect((await fs.lstat(codex)).isSymbolicLink()).toBe(kind.includes("link"));
+      if (kind === "file" || kind === "directory") {
+        await expect(fs.readFile(kind === "file" ? codex : path.join(codex, "SKILL.md"), "utf8"))
+          .resolves.toBe("local edit\n");
+      }
+    },
+  );
+
+  it("backs up user entries for both agents with force", async () => {
+    const context = await makeContext(await makeRoot());
+    const claude = await ensureDestinationParent(context);
+    const codex = codexDestination(context);
+    await fs.writeFile(claude, "Claude local edit\n");
+    await fs.mkdir(codex, { recursive: true });
+    await fs.writeFile(path.join(codex, "SKILL.md"), "Codex local edit\n");
+
+    const result = await installSkill(context, { force: true });
+
+    expect(result.current.status).toBe("current");
+    expect(result.backupPath).toBe(result.backupPaths.claude);
+    await expect(fs.readFile(result.backupPaths.claude!, "utf8"))
+      .resolves.toBe("Claude local edit\n");
+    await expect(fs.readFile(path.join(result.backupPaths.codex!, "SKILL.md"), "utf8"))
+      .resolves.toBe("Codex local edit\n");
+  });
+
+  it("removes the new Claude link when first-time Codex activation fails", async () => {
+    const context = await makeContext(await makeRoot());
+    await failCodexActivation(context);
+
+    await expect(installSkill(context)).rejects.toThrow("Codex activation failed");
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      agents: { claude: { status: "missing" }, codex: { status: "missing" } },
+    });
+    for (const destination of [await destinationOf(context), codexDestination(context)]) {
+      expect(await fs.readdir(path.dirname(destination))).toEqual([]);
+    }
+  });
+
+  it("restores both previous links when Codex activation fails during update", async () => {
+    const context = await makeContext(await makeRoot());
+    await installSkill(context);
+    const oldStore = await fs.readlink(codexDestination(context));
+    await fs.writeFile(
+      path.join(context.packageRoot, "skills", "dooray-cli", "SKILL.md"),
+      "updated skill\n",
+    );
+    await failCodexActivation(context);
+
+    await expect(installSkill(context)).rejects.toThrow("Codex activation failed");
+    await expect(fs.readlink(await destinationOf(context))).resolves.toBe(oldStore);
+    await expect(fs.readlink(codexDestination(context))).resolves.toBe(oldStore);
+    for (const destination of [await destinationOf(context), codexDestination(context)]) {
+      expect(await fs.readdir(path.dirname(destination))).toEqual(["dooray-cli"]);
+    }
+  });
+
+  it("restores both user entries when a forced Codex activation fails", async () => {
+    const context = await makeContext(await makeRoot());
+    const claude = await ensureDestinationParent(context);
+    const codex = codexDestination(context);
+    await fs.writeFile(claude, "Claude local edit\n");
+    await fs.mkdir(codex, { recursive: true });
+    await fs.writeFile(path.join(codex, "SKILL.md"), "Codex local edit\n");
+    await failCodexActivation(context);
+
+    await expect(installSkill(context, { force: true })).rejects.toThrow("Codex activation failed");
+    await expect(fs.readFile(claude, "utf8")).resolves.toBe("Claude local edit\n");
+    await expect(fs.readFile(path.join(codex, "SKILL.md"), "utf8"))
+      .resolves.toBe("Codex local edit\n");
+  });
+
+  it("restores quarantined shared content if forced activation fails", async () => {
+    const context = await makeContext(await makeRoot());
+    await installSkill(context);
+    const store = await fs.readlink(codexDestination(context));
+    await fs.writeFile(path.join(store, "SKILL.md"), "local edit\n");
+    await failCodexActivation(context);
+
+    await expect(installSkill(context, { force: true })).rejects.toThrow("Codex activation failed");
+    await expect(fs.readFile(path.join(store, "SKILL.md"), "utf8"))
+      .resolves.toBe("local edit\n");
+    await expect(inspectSkill(context)).resolves.toMatchObject({
+      agents: { claude: { status: "modified" }, codex: { status: "modified" } },
+    });
+  });
+});

@@ -26,7 +26,7 @@ flowchart TD
 
 - API 연결이 실패하면 설정을 저장하지 않고 API 키 입력부터 다시 받는다.
 - 입력 중 `Ctrl+C`가 들어오면 설정 파일을 쓰지 않고 끝난다.
-- `~/.claude`가 없거나 `npx`로 실행한 경우에는 스킬 설치 질문을 건너뛴다. 스킬 설치가 실패해도 경고만 내고 설정은 저장한다.
+- `~/.claude`, `~/.codex`, `~/.agents`가 모두 없거나 `npx`로 실행한 경우에는 스킬 설치 질문을 건너뛴다. 하나라도 있으면 Claude Code·Codex 공용 설치를 제안한다. 스킬 설치가 실패해도 경고만 내고 설정은 저장한다.
 - 기존 설정이 없으면 캐시를 지우지 않는다. 기존 설정을 읽을 수 없거나 API 키·API 주소가 바뀌면 저장 후 전체 캐시를 지우며, 삭제 실패는 경고로 남긴다.
 
 ### `config set`
@@ -49,7 +49,7 @@ flowchart TD
 - 기존 설정 파일이 손상됐거나 읽히지 않으면 덮어쓰지 않고 끝난다.
 - API 키나 API 주소가 실제로 바뀔 때만 캐시를 지운다. 캐시 삭제가 실패해도 경고만 내고 설정 변경은 성공으로 끝낸다.
 
-## Claude Code 스킬 관리 흐름
+## Claude Code·Codex 스킬 관리 흐름
 
 ### `skill status`
 
@@ -68,6 +68,8 @@ flowchart TD
 - 상태 조회 자체가 끝나면 설치 상태와 관계없이 종료 코드 0을 반환한다.
 - 관리형 콘텐츠의 실제 해시가 매니페스트와 다르면 `modified`, 매니페스트가 없거나 형식·경로가 맞지 않으면 `corrupt`다.
 - 절대 경로인 `XDG_DATA_HOME`이 있으면 그 아래 `dooray-cli`, 아니면 `~/.local/share/dooray-cli`를 관리 저장소로 쓴다.
+- Claude Code의 `~/.claude/skills/dooray-cli`와 Codex의 `~/.agents/skills/dooray-cli`를 각각 검사하고 에이전트별 상세 상태를 출력한다.
+- 전체 상태는 `corrupt`, `modified`, `unmanaged`, `broken`, `outdated`, `missing`, `current` 순으로 먼저 해당하는 상태다. 둘 다 최신일 때만 `current`이며, `--quiet`는 이 토큰 하나를 출력한다.
 
 ### `skill install`과 `skill update`
 
@@ -88,8 +90,11 @@ flowchart TD
 ```
 
 - `unmanaged`, `modified`, `corrupt`는 `--force`가 없으면 보존하고 종료 코드 3으로 끝난다.
+- 양쪽 상태를 먼저 검사하고 같은 관리 저장소로 연결한다. 한쪽에 보호할 항목이 있으면 다른 쪽을 변경하기 전에 실패한다.
+- Claude Code만 최신인 기존 설치도 Codex 경로가 없으면 추가 설치한다.
 - 같은 버전·해시 저장소가 수정됐거나 손상됐으면 `--force`에서 먼저 별도 백업으로 격리한다.
-- 링크 전환이나 사후 검증이 실패하면 가능한 범위에서 기존 링크와 격리한 저장소를 복구한다.
+- 링크 전환이나 사후 검증이 실패하면 가능한 범위에서 양쪽 기존 링크·사용자 항목과 격리한 저장소를 복구한다.
+- `doctor`도 양쪽 설치 상태를 진단하며, JSON 모드에서는 `skill`에 전체 상태와 에이전트별 상세 상태를 담는다.
 
 ## 일반 조회 흐름
 
