@@ -45,6 +45,7 @@ dooray skill status --quiet  # 양쪽 상태를 합친 토큰 하나만 출력
 
 Claude Code는 `~/.claude/skills/dooray-cli`, Codex는 `~/.agents/skills/dooray-cli`에 설치한다.
 두 경로는 같은 관리형 저장소를 가리킨다. 기존 Claude Code 설치가 최신이어도 Codex 경로가 없으면 다시 설치할 때 추가한다.
+Codex 설치 여부와 관계없이 양쪽 스킬을 관리하며, `install`과 `update`는 필요한 `~/.agents/skills` 디렉터리도 생성한다.
 Codex에서는 `$dooray-cli`로 호출한다. 새 스킬이 보이지 않으면 Codex를 다시 시작한다.
 JSON의 `agents`에 에이전트별 상세 정보가 있고, `status`는 전체 상태다. 기존 최상위 상세 필드는 Claude Code 기준으로 유지한다.
 

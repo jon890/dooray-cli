@@ -568,9 +568,11 @@ export async function installSkill(
   const { storePath, quarantinePath } = await prepareStore(context, options);
   const backupPaths: Partial<Record<SkillAgent, string>> = {};
   const transitions: {
-    agent: SkillAgent;
+    agents: SkillAgent[];
+    resolvedDestination: string;
     previous: SkillStatus;
     tempPath: string;
+    backupPath: string | null;
     activated: boolean;
   }[] = [];
 
@@ -578,9 +580,29 @@ export async function installSkill(
     for (const agent of SKILL_AGENTS) {
       const target = previous.agents[agent];
       if (target.status === "current") continue;
+      const directory = path.dirname(target.destination);
+      await fs.mkdir(directory, { recursive: true });
+      // 서로 다른 설치 항목도 최종 링크 대상을 공유하므로 부모 경로와 이름으로 비교한다.
+      const resolvedDestination = path.join(
+        await fs.realpath(directory),
+        path.basename(target.destination),
+      );
+      const sharedTransition = transitions.find(
+        (transition) => transition.resolvedDestination === resolvedDestination,
+      );
+      if (sharedTransition != null) {
+        sharedTransition.agents.push(agent);
+        continue;
+      }
       const tempPath = `${target.destination}.tmp-${process.pid}-${Date.now()}`;
-      transitions.push({ agent, previous: target, tempPath, activated: false });
-      await fs.mkdir(path.dirname(target.destination), { recursive: true });
+      transitions.push({
+        agents: [agent],
+        resolvedDestination,
+        previous: target,
+        tempPath,
+        backupPath: null,
+        activated: false,
+      });
       await fs.symlink(storePath, tempPath);
     }
 
@@ -589,7 +611,10 @@ export async function installSkill(
       if (!target.managed) {
         const backupPath = `${target.destination}.backup-${utcTimestamp()}`;
         await fs.rename(target.destination, backupPath);
-        backupPaths[transition.agent] = backupPath;
+        transition.backupPath = backupPath;
+        for (const agent of transition.agents) {
+          backupPaths[agent] = backupPath;
+        }
       }
       await fs.rename(transition.tempPath, target.destination);
       transition.activated = true;
@@ -613,7 +638,7 @@ export async function installSkill(
   } catch (error) {
     for (const transition of [...transitions].reverse()) {
       const target = transition.previous;
-      const backupPath = backupPaths[transition.agent];
+      const backupPath = transition.backupPath;
       if (backupPath != null) {
         if (transition.activated) {
           await fs.rm(target.destination, { force: true }).catch(() => {});
