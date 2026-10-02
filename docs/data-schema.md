@@ -29,6 +29,9 @@ ${XDG_DATA_HOME}/dooray-cli/              # XDG_DATA_HOME이 절대 경로일 �
 ~/.claude/skills/
   dooray-cli -> <dataRoot>/skills/{packageVersion}-{contentDigestHex}/
 
+~/.agents/skills/
+  dooray-cli -> <dataRoot>/skills/{packageVersion}-{contentDigestHex}/
+
 ~/.claude/dooray-persona.config.json       # dooray-persona 스킬 설정 (ADR-038)
 ~/.local/share/dooray-persona/             # dooray-persona 중간 산출물
   candidates.json
@@ -42,7 +45,7 @@ ${XDG_DATA_HOME}/dooray-cli/              # XDG_DATA_HOME이 절대 경로일 �
 
 ---
 
-## Claude Code 스킬 매니페스트
+## Claude Code·Codex 스킬 매니페스트
 
 `.dooray-skill.json`은 설치된 스킬과 현재 CLI 패키지의 정합성을 판별하는 관리 메타데이터다.
 외부 파일이므로 읽을 때 반드시 모든 필드를 타입 가드로 검증한다.
@@ -72,12 +75,19 @@ interface DooraySkillManifest {
 저장 디렉터리 이름에는 전체 SHA-256을 사용한다.
 `contentDigestHex`는 매니페스트의 `contentDigest`에서 `sha256:` 접두사를 제거한 64자리 lowercase hex다.
 같은 버전과 해시의 디렉터리가 이미 있으면 매니페스트와 실제 콘텐츠를 검증한 뒤 재사용한다.
-새 설치는 같은 파일시스템의 임시 디렉터리에 완성한 후 `rename`하고, Claude Code 활성 링크도 임시 링크를 `rename`해 전환한다.
+새 설치는 같은 파일시스템의 임시 디렉터리에 완성한 후 `rename`한다.
+Claude Code와 Codex의 활성 링크는 같은 저장소를 가리키며, 양쪽 임시 링크를 준비한 뒤 각각 `rename`해 전환한다.
 
 같은 최종 저장 경로의 매니페스트·실제 콘텐츠가 기대값과 다르면 기본 동작은 종료 코드 3으로 실패하며 저장소와 활성 링크를 보존한다.
 `--force`에서는 기존 저장 디렉터리를 같은 `skills/` 아래 `.backup-<UTC timestamp>-<basename>/`으로 격리한 뒤 staging 디렉터리를 최종 경로로 `rename`한다.
 전환 실패 시 격리한 저장 디렉터리를 원래 경로로 복구한다.
-이 저장 디렉터리 격리는 `~/.claude/skills/dooray-cli` 활성 항목의 백업과 별개다.
+이 저장 디렉터리 격리는 `~/.claude/skills/dooray-cli`와 `~/.agents/skills/dooray-cli` 활성 항목의 백업과 별개다.
+
+`skill status --json`의 `agents.claude`와 `agents.codex`는 각각 기존 `SkillStatus` 형식의 상세 상태다.
+최상위 `status`는 `corrupt`, `modified`, `unmanaged`, `broken`, `outdated`, `missing`, `current` 순의 우선순위로 양쪽을 합친다.
+둘 다 최신이면 `current`다. 기존 최상위 상세 필드는 Claude Code 기준으로 유지한다.
+설치 결과의 `previous`와 `current`도 같은 형식이며, `backupPaths`는 에이전트별 백업 경로다.
+기존 `backupPath`는 Claude Code 백업 경로로 유지한다.
 
 ---
 

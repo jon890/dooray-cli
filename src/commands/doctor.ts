@@ -1,9 +1,12 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import path from "path";
-import fs from "fs/promises";
 import { createSkillManagerContext } from "../skill/context.js";
-import { inspectSkill, type SkillStatus } from "../skill/manager.js";
+import {
+  inspectSkill,
+  SKILL_AGENTS,
+  SKILL_AGENT_NAMES,
+  type SkillStatus,
+} from "../skill/manager.js";
 import { getConfig, getConfigOrThrow } from "../config/store.js";
 import { getCacheStats } from "../cache/store.js";
 import { DoorayApiClient } from "../api/client.js";
@@ -72,6 +75,7 @@ export const doctorCommand = new Command("doctor")
       // 진단 명령이므로 「설정이 되었는가」 와 「실제로 접속되는가」 를 함께 낸다.
       // 설정이 갖춰지지 않아 시도하지 않은 경우를 skipped 로 구분한다.
       payload.apiConnection = apiKeyOk && baseUrlOk ? await probeApiConnection() : "skipped";
+      payload.skill = await inspectSkill(createSkillManagerContext());
       console.log(JSON.stringify(payload, null, 2));
       return;
     }
@@ -121,22 +125,14 @@ export const doctorCommand = new Command("doctor")
     console.log(`  Milestone 캐시 (프로젝트 수): ${stats.milestoneProjectCount}`);
     console.log(`  Member Group 캐시 (프로젝트 수): ${stats.memberGroupProjectCount}`);
 
-    // Claude Code 스킬 검증
-    const claudeDir = path.join(
-      process.env.HOME ?? process.env.USERPROFILE ?? "",
-      ".claude",
-    );
-    const claudeDirExists = await fs
-      .access(claudeDir)
-      .then(() => true)
-      .catch(() => false);
-
-    if (claudeDirExists) {
-      console.log(chalk.bold("\n🔧 Claude Code 스킬\n"));
-      const skillStatus = await inspectSkill(createSkillManagerContext());
-      console.log(`  dooray-cli: ${formatSkillStatus(skillStatus)}`);
-      console.log(`  설치 경로:   ${skillStatus.destination}`);
-      console.log(`  링크 대상:   ${skillStatus.linkTarget ?? "-"}`);
+    // Claude Code·Codex 스킬 검증
+    console.log(chalk.bold("\n🔧 Claude Code·Codex 스킬\n"));
+    const skillStatus = await inspectSkill(createSkillManagerContext());
+    for (const agent of SKILL_AGENTS) {
+      const target = skillStatus.agents[agent];
+      console.log(`  ${SKILL_AGENT_NAMES[agent]}: ${formatSkillStatus(target)}`);
+      console.log(`  설치 경로:   ${target.destination}`);
+      console.log(`  링크 대상:   ${target.linkTarget ?? "-"}`);
     }
 
     // Summary

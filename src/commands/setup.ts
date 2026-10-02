@@ -3,7 +3,7 @@ import chalk from "chalk";
 import path from "path";
 import fs from "fs/promises";
 import { createSkillManagerContext } from "../skill/context.js";
-import { installSkill as installClaudeSkill } from "../skill/manager.js";
+import { installSkill } from "../skill/manager.js";
 import { getConfig } from "../config/store.js";
 import { replaceConfig } from "../services/config.js";
 import { DoorayApiClient } from "../api/client.js";
@@ -122,17 +122,17 @@ export const setupCommand = new Command("setup")
         });
       }
 
-      // 7. Claude Code 스킬 설치
-      const claudeDir = path.join(
-        process.env.HOME ?? process.env.USERPROFILE ?? "",
-        ".claude",
+      // 7. Claude Code·Codex 스킬 설치
+      const skillContext = createSkillManagerContext();
+      const agentDirectories = await Promise.all(
+        [".claude", ".codex", ".agents"].map((directory) =>
+          fs.access(path.join(skillContext.homeDir, directory))
+            .then(() => true)
+            .catch(() => false),
+        ),
       );
-      const claudeDirExists = await fs
-        .access(claudeDir)
-        .then(() => true)
-        .catch(() => false);
 
-      if (claudeDirExists) {
+      if (agentDirectories.some(Boolean)) {
         const isNpx =
           /_npx[/\\]/.test(__dirname) ||
           /\.npm[/\\]_npx/.test(__dirname) ||
@@ -145,16 +145,16 @@ export const setupCommand = new Command("setup")
             ),
           );
         } else {
-          const installSkill = await confirm({
-            message: "Claude Code 스킬을 설치하시겠습니까?",
+          const shouldInstallSkill = await confirm({
+            message: "Claude Code·Codex 스킬을 설치하시겠습니까?",
             default: true,
             theme: { prefix: "🔧" },
           });
 
-          if (installSkill) {
+          if (shouldInstallSkill) {
             try {
-              await installClaudeSkill(createSkillManagerContext());
-              console.log(chalk.green("  ✓ Claude Code 스킬 설치 완료"));
+              await installSkill(skillContext);
+              console.log(chalk.green("  ✓ Claude Code·Codex 스킬 설치 완료"));
             } catch (err) {
               const reason = err instanceof Error ? err.message : String(err);
               console.log(

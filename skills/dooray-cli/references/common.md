@@ -33,22 +33,27 @@ printf '%s' "$TOKEN" | dooray config set api-key -
 인자로 넘긴 값은 셸 기록과 프로세스 목록에 남는다.
 stdin 값은 양끝 공백을 지운 뒤 저장하고, 비어 있으면 저장하지 않고 종료 코드 3 으로 끝낸다.
 
-## Claude Code 스킬 관리
+## Claude Code·Codex 스킬 관리
 
 ```bash
 dooray skill status          # 설치 상태 확인
-dooray skill install         # 최초 설치
-dooray skill update          # 현재 CLI 버전의 스킬로 갱신
-dooray skill status --json   # SkillStatus 객체 출력
-dooray skill status --quiet  # 상태 토큰만 출력
+dooray skill install         # Claude Code와 Codex에 함께 설치
+dooray skill update          # 양쪽을 현재 CLI 버전의 스킬로 갱신
+dooray skill status --json   # 전체 상태와 agents.claude / agents.codex 상세 출력
+dooray skill status --quiet  # 양쪽 상태를 합친 토큰 하나만 출력
 ```
+
+Claude Code는 `~/.claude/skills/dooray-cli`, Codex는 `~/.agents/skills/dooray-cli`에 설치한다.
+두 경로는 같은 관리형 저장소를 가리킨다. 기존 Claude Code 설치가 최신이어도 Codex 경로가 없으면 다시 설치할 때 추가한다.
+Codex에서는 `$dooray-cli`로 호출한다. 새 스킬이 보이지 않으면 Codex를 다시 시작한다.
+JSON의 `agents`에 에이전트별 상세 정보가 있고, `status`는 전체 상태다. 기존 최상위 상세 필드는 Claude Code 기준으로 유지한다.
 
 상태 토큰:
 
 | 상태 | 의미 | 복구 |
 |---|---|---|
 | `missing` | 설치 경로가 없음 | `dooray skill install` |
-| `current` | 현재 CLI 버전의 스킬 링크 | 조치 없음 |
+| `current` | 양쪽 모두 현재 CLI 버전의 스킬 링크 | 조치 없음 |
 | `outdated` | 다른 버전의 dooray-cli 스킬 링크 | `dooray skill update` |
 | `broken` | 링크 대상이 사라짐 | `dooray skill update` |
 | `corrupt` | 관리 저장소 manifest가 없거나 형식·경로·해시가 맞지 않음 | 내용 확인 후 `dooray skill update --force` |
@@ -56,8 +61,10 @@ dooray skill status --quiet  # 상태 토큰만 출력
 | `modified` | 관리형 저장소 전환 뒤 사용자 수정이 감지된 상태 | 내용 확인 후 `dooray skill update --force` |
 
 `--force` 는 기존 항목을 `.backup-<timestamp>` 로 옮긴 뒤 교체한다. 내용을 확인한 다음에만 쓴다.
+양쪽 경로를 먼저 검사하므로 한쪽에 보호할 항목이 있으면 다른 쪽도 변경하지 않는다.
+전체 상태는 `corrupt`, `modified`, `unmanaged`, `broken`, `outdated`, `missing`, `current` 순으로 먼저 해당하는 토큰이다.
 
-CLI 를 새 버전으로 설치했으면 `dooray skill update` 를 직접 실행해야 스킬 파일이 갱신된다.
+CLI 를 새 버전으로 설치했으면 `dooray skill update` 를 직접 실행해야 양쪽 스킬 파일이 갱신된다.
 
 ## 출력 모드
 
