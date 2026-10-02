@@ -1,6 +1,6 @@
 # dooray-cli 명령 동작 흐름
 
-이 문서는 명령 입력이 검증, 분기, API 호출을 거쳐 출력으로 바뀌는 경로를 정리한다. 명령 문법과 옵션은 README.md, 에이전트의 명령 선택 기준은 skills/dooray-cli/SKILL.md, 결정 근거와 기각한 대안은 docs/adr/에서 다룬다.
+이 문서는 명령 입력이 검증, 분기, API 호출을 거쳐 출력으로 바뀌는 경로를 정리한다. 명령 문법과 옵션은 docs/guide/, 에이전트의 명령 선택 기준은 skills/dooray-cli/SKILL.md, 결정 근거와 기각한 대안은 docs/adr/에서 다룬다.
 
 ## 최초 설정: `dooray setup`
 
