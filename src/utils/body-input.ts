@@ -51,6 +51,73 @@ export function warnUnconvertedBody(
   );
 }
 
+export interface TextInputSource {
+  /** 인자로 받은 값 (`--body` 등). `-` 면 stdin */
+  text?: string;
+  /** 파일 경로 (`--body-file` 등). `-` 면 stdin */
+  file?: string;
+  /** 오류 메시지에 쓸 옵션 이름 (`--body`) */
+  textFlag: string;
+  /** 오류 메시지에 쓸 옵션 이름 (`--body-file`) */
+  fileFlag: string;
+}
+
+export interface TextInputBehavior {
+  /**
+   * 파일과 stdin 으로 받은 값에서 UTF-8 BOM 과 끝 줄바꿈 하나를 뗀다. 인자로 받은 값은 손대지 않는다.
+   * 정확 일치로 찾는 입력(`replace` 의 old/new)에 쓴다. 에디터와 `echo` 가 붙인 끝 줄바꿈 때문에
+   * 뜻과 다르게 일치하거나 0건이 되는 것을 막는다 (ADR-065).
+   */
+  stripFileArtifacts?: boolean;
+  /** 없는 파일을 raw ENOENT 대신 `EXIT_PARAM_ERROR` 로 알린다. */
+  missingFileAsParamError?: boolean;
+}
+
+/** UTF-8 BOM 과 끝 줄바꿈(`\n` 또는 `\r\n`) 하나를 뗀다. */
+export function stripFileArtifacts(text: string): string {
+  return text.replace(/^\uFEFF/, "").replace(/\r?\n$/, "");
+}
+
+async function readFileInput(path: string, behavior: TextInputBehavior): Promise<string> {
+  try {
+    return await readFile(path, "utf-8");
+  } catch (e) {
+    if (behavior.missingFileAsParamError && (e as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new DoorayCliError(`파일을 찾을 수 없습니다: ${path}`, EXIT_PARAM_ERROR);
+    }
+    throw e;
+  }
+}
+
+/**
+ * 인자 하나와 파일 하나로 받는 텍스트 입력을 읽는다. `--body`/`--body-file` 과 `replace` 의
+ * `--old`/`--old-file`·`--new`/`--new-file` 이 같이 쓴다.
+ *
+ * - 둘 다 주면 에러
+ * - 값이 `"-"` 이면 stdin 에서 읽는다
+ * - 둘 다 비어 있으면 빈 문자열 (호출자가 의미를 정한다)
+ */
+export async function readTextInput(
+  source: TextInputSource,
+  behavior: TextInputBehavior = {},
+): Promise<string> {
+  const { text, file, textFlag, fileFlag } = source;
+  if (text != null && file != null) {
+    throw new DoorayCliError(
+      `${textFlag}와 ${fileFlag}은 함께 사용할 수 없습니다.`,
+      EXIT_PARAM_ERROR,
+    );
+  }
+  const clean = (raw: string): string =>
+    behavior.stripFileArtifacts ? stripFileArtifacts(raw) : raw;
+  if (file) {
+    if (file === "-") return clean(await readStdin());
+    return clean(await readFileInput(file, behavior));
+  }
+  if (text === "-") return clean(await readStdin());
+  return text ?? "";
+}
+
 /**
  * `--body` / `--body-file` 옵션을 받아 본문 문자열을 돌려준다.
  *
@@ -59,18 +126,12 @@ export function warnUnconvertedBody(
  * - 둘 다 비어있으면 빈 문자열 반환 (호출자 책임으로 의미 해석).
  */
 export async function readBodyInput(opts: BodyInputOptions): Promise<string> {
-  if (opts.body != null && opts.bodyFile != null) {
-    throw new DoorayCliError(
-      "--body와 --body-file은 함께 사용할 수 없습니다.",
-      EXIT_PARAM_ERROR,
-    );
-  }
-  if (opts.bodyFile) {
-    if (opts.bodyFile === "-") return readStdin();
-    return readFile(opts.bodyFile, "utf-8");
-  }
-  if (opts.body === "-") return readStdin();
-  return opts.body ?? "";
+  return readTextInput({
+    text: opts.body,
+    file: opts.bodyFile,
+    textFlag: "--body",
+    fileFlag: "--body-file",
+  });
 }
 
 /**

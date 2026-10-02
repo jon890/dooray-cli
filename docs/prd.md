@@ -42,6 +42,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
   - 정형 task: `post create --template <name|id>` (ADR-027, `project templates` 명령으로 목록 조회)
   - 태그 확인과 태그 필터: `post get` 의 태그 줄과 `post get --with-tag-names`, `post list --tag <이름>` (ADR-056)
   - 목록 필터: `post list` 의 `--from`·`--to`·`--cc`(`me` 포함), `--parent`, `--created`·`--updated` 기간, `--order` (ADR-064)
+  - 본문 부분 치환: `post replace --old/--new` 와 `wiki page replace` — 정확 일치, 2건 이상은 `--all` 필요, `--dry-run` 은 바뀌는 줄만 (ADR-065)
 - `dooray post comment` — 목록·추가·수정($EDITOR)·삭제
 - `dooray post file` — 목록·다운로드·전체다운로드·업로드·삭제 (v0.3.0)
 - `dooray post comment file` — 댓글 첨부 파일 목록·업로드·다운로드·삭제 (댓글 조회·수정 API와 post-level files API 조합, ADR-024)

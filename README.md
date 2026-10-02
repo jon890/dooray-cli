@@ -128,6 +128,7 @@ dooray wiki page get --id <page-id>          # 페이지 ID 하나로 조회 (pr
 dooray wiki list --search 설계               # 위키 이름으로 찾기 (대소문자 무시)
 dooray wiki page get --url "https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>"
 dooray wiki page edit --id <page-id> --body-file notes.md   # 페이지 ID 하나로 본문 수정
+dooray post replace <project> 42 --old "초안" --new "확정"   # 본문 일부만 치환
 dooray wiki page move --id <page-id> --parent <parent-page-id>
 dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
 dooray mail list --unread                    # 안 읽은 메일
@@ -179,6 +180,25 @@ A·B 는 `2026-09-01` 같은 날짜나 `2026-09-01T09:00:00+09:00` 같은 일시
 `~` 로 시작하는 값은 셸이 홈 디렉터리로 바꾸려 하므로 `--created "~2026-09-30"` 처럼 따옴표로 감싼다.
 
 `--order` 는 `createdAt`·`postUpdatedAt`·`postDueAt` 중 하나이고 앞에 `-` 를 붙이면 내림차순이다. 기본은 `-createdAt` 이다.
+
+### 본문 일부만 고치기
+
+`post edit --body` 와 `wiki page edit --body` 는 본문 전체를 바꾼다.
+긴 본문에서 한두 군데만 고칠 때는 `replace` 로 바꿀 구간만 준다.
+
+```bash
+dooray post replace <project> 42 --old "2. 배포" --new "2. 카나리 배포"
+dooray wiki page replace --id <page-id> --old-file old.md --new-file new.md
+dooray post replace <project> 42 --old "v1.2" --new "v1.3" --all --dry-run
+```
+
+- `--old` 는 공백과 줄바꿈까지 정확히 일치해야 한다. 여러 줄이거나 따옴표가 섞이면 `--old-file`/`--new-file` 로 준다. `-` 는 stdin 이며, old 와 new 가 함께 stdin 을 쓸 수는 없다
+- 파일과 stdin 으로 준 값은 UTF-8 BOM 과 끝 줄바꿈 하나를 떼고 쓴다. 에디터나 `echo` 가 붙인 줄바꿈 때문에 어긋나지 않게 하려는 것이다. 끝 줄바꿈까지 일치시켜야 하면 인자로 준다 (`--old $'마지막 줄\n'`)
+- 구간을 지우려면 인자로 `--new ""` 를 준다. 파일이나 stdin 으로 읽은 new 가 비어 있으면 앞 명령이 실패한 것과 구분할 수 없어 종료 코드 3 으로 멈춘다
+- 일치하는 곳이 없으면 종료 코드 3 으로 멈춘다. 두 군데 이상이면 몇 군데인지 알리고 멈추므로, 앞뒤 문맥을 더 넣어 한 군데로 좁히거나 `--all` 로 모두 바꾼다
+- `--dry-run` 은 수정하지 않고 바뀌는 줄만 diff 형식으로 보여준다. 탭은 그대로, CR 은 `<CR>` 로 보인다. 긴 줄은 바뀐 곳 앞뒤 80자만 남기고 `...` 로 줄이므로, 잘린 줄은 그대로 복사해 `--old` 로 쓸 수 없다
+- 제목·담당자·태그·본문 형식은 그대로 둔다. 치환으로 첨부나 인라인 이미지 참조가 사라지면 확인을 받고, 자동화에서는 `--no-confirm` 으로 넘긴다
+- 내부적으로는 현재 본문을 읽어 바꾼 뒤 전체를 다시 보낸다. 그 사이에 다른 사람이 같은 본문을 고치면 그 수정을 덮어쓴다
 
 ### 본문 형식
 

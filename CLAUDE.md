@@ -63,7 +63,7 @@ dooray                # 글로벌 링크 시
 
 명령별 옵션·동작은 `docs/adr/INDEX.md` 와 `README.md` 에서 찾는다. 여기에는 전 명령 공통 규약만 둔다.
 
-- **입력 형식** — post get/edit/done/workflow 와 post comment·post file 계열, wiki page get/edit/delete/move 와 wiki page file·comment 계열이 공통으로 받는다. `post list`·`post search`·`post create` 는 받지 않는다
+- **입력 형식** — post get/edit/replace/done/workflow 와 post comment·post file 계열, wiki page get/edit/replace/delete/move 와 wiki page file·comment 계열이 공통으로 받는다. `post list`·`post search`·`post create` 는 받지 않는다
   - `<project> <number>` / `--id <id>` / `--url <url>` / 첫 positional 에 Dooray URL 직접 입력
   - wiki 의 `--id` 모드는 project 없이 단독으로 동작한다. `--project` 는 선택이며 주면 wikiId 해석 호출을 아낀다
 - **옵션 이름**

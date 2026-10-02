@@ -527,6 +527,12 @@ export interface WikiPageFile {
   id: string;
   name: string;
   size: number;
+  /**
+   * 공식 문서의 페이지 조회 응답에 없는 필드다(문서의 `files[]`·`images[]` 는 `id`·`name`·`size` 만). 실측으로만 확인했다.
+   * 인라인 이미지(`images`)에 붙어 왔고, 본문 참조 `/wikis/<n>/files/<id>` 의 id 는 `id` 가 아니라 이 값이었다 (ADR-065).
+   * 첨부 참조 누락 확인에만 쓰며, 없으면 `id` 만으로 확인한다.
+   */
+  attachFileId?: string;
 }
 
 export interface WikiPageDetail {
