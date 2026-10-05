@@ -1,12 +1,14 @@
 ---
 paths:
   - "README.md"
+  - "CONTRIBUTING.md"
+  - "docs/guide/**"
   - "skills/**"
 ---
 
 # 공개 문서의 내부 참조 번호 제외
 
-`README.md` 와 `skills/` 아래 문서에는 `ADR-NNN`, `Issue #NN`, `task NN` 같은 내부 추적 번호를 넣지 않는다.
+`README.md`, `CONTRIBUTING.md`, `docs/guide/` 와 `skills/` 아래 문서에는 `ADR-NNN`, `Issue #NN`, `task NN` 같은 내부 추적 번호를 넣지 않는다.
 검사 범위는 `scripts/check-public-refs.mjs` 의 `TARGETS` 목록이 소유한다.
 `skills/dooray-cli/references/` 와 `skills/dooray-persona/` 도 그 범위에 들어간다.
 사용자는 ADR 맥락을 모르고, 이 문서를 그대로 LLM 에 붙여 실행을 요청하기도 한다.

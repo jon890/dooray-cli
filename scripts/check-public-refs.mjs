@@ -12,7 +12,7 @@ import { constants } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const TARGETS = ["README.md", "skills/"];
+const TARGETS = ["README.md", "CONTRIBUTING.md", "docs/guide/", "skills/"];
 const SKIP_DIRS = new Set([".git", "node_modules", "dist", "worktrees"]);
 const INTERNAL_REF_PATTERN = /ADR-[0-9]+|Issue #[0-9]+|task [0-9]+/g;
 

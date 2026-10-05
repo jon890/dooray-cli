@@ -8,8 +8,8 @@
 dooray wiki page get --id <page-id>
 ```
 
-`wiki page get`, `wiki page delete`, `wiki page move`, `wiki page file`, `wiki page comment` 가 `--id` 만으로 동작한다.
-`wiki page create` 와 `wiki page edit` 은 `--id` 를 받지 않고 `<project>` 가 필수다.
+`wiki page get`, `wiki page edit`, `wiki page replace`, `wiki page delete`, `wiki page move`, `wiki page file`, `wiki page comment` 가 `--id` 만으로 동작한다.
+`wiki page create` 는 `--id` 를 받지 않고 `<project>` 가 필수다.
 
 `--project` 는 선택이다. 함께 주면 wikiId 를 해석하는 호출을 한 번 아낀다.
 반복 실행하는 자동화라면 함께 주는 편이 빠르다.
@@ -70,6 +70,25 @@ ${SNIPPET}"
 
 기존 본문을 먼저 받아 뒤에 이어 붙인다. `--body` 는 전체 교체이므로 snippet 만 넣으면 본문이 사라진다.
 `wiki page edit` 은 기존 본문 형식을 그대로 유지하므로, 주는 본문의 형식이 기존과 다르면 `--mime-type` 을 함께 준다.
+
+## 본문 일부만 치환
+
+긴 페이지에서 몇 군데만 고칠 때는 `wiki page edit --body` 대신 `wiki page replace` 를 쓴다.
+`--body` 는 전체 교체라 전문을 받아 고쳐 다시 보내야 한다.
+
+```bash
+dooray wiki page replace --id <page-id> --old "v1.2" --new "v1.3" --dry-run
+dooray wiki page replace --id <page-id> --old-file old.md --new-file new.md
+dooray wiki page replace --id <page-id> --old "TODO" --new "완료" --all
+```
+
+정확 일치, 유일성, `--all`, `--dry-run`, stdin 규칙은 `post replace` 와 같다 — [post.md](post.md#본문-일부만-치환).
+다른 점은 다음과 같다.
+
+- 대상은 `wiki page edit` 과 같게 `--id <page-id>`, `<project> <page-id>`, `--url` 로 준다
+- 본문만 바꾸고 제목은 건드리지 않는다. 본문 형식은 기존 값을 유지한다
+- 치환으로 첨부나 인라인 이미지 참조(`/wikis/.../files/<id>`)가 사라지면 확인을 받는다. 의도한 것이면 `--no-confirm`
+- 성공하면 `--json` 은 `{ wikiId, pageId, replaced }`, `--quiet` 은 pageId 다
 
 ## 첨부 일괄 내려받기
 

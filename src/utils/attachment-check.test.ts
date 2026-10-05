@@ -50,6 +50,14 @@ describe("extractAttachmentFileIds", () => {
     expect(extractAttachmentFileIds("![](/files/abc?dl=1) [x](/files/def#frag)"))
       .toEqual(new Set(["abc", "def"]));
   });
+  it("위키 형태 /wikis/<n>/files/<id> 에서도 id 추출", () => {
+    expect(extractAttachmentFileIds("![a.png](/wikis/100/files/200) [b](/wikis/100/files/300?dl=1)"))
+      .toEqual(new Set(["200", "300"]));
+  });
+  it("/wikis/ 뒤에 /files/ 가 바로 오지 않는 경로는 무시", () => {
+    expect(extractAttachmentFileIds("[x](/wikis/100/pages/200) [y](/wikis/files/300)"))
+      .toEqual(new Set());
+  });
 });
 
 describe("findDroppedAttachments", () => {

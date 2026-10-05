@@ -73,4 +73,5 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-062](062-undocumented-endpoint-policy.md) — 공식 문서에 없는 endpoint 는 조건 넷을 채운 읽기 전용에만 쓴다
 - [ADR-063](063-calendar-read-commands.md) — 캘린더는 읽기 세 명령만 두고 기간은 항상 양끝을 보낸다 (기간 상한 50일·종일 `endedAt` exclusive·목록 `me` 로 참여 판정 실측)
 - [ADR-064](064-post-list-filters.md) — `post list` 에 사람·상위 업무·기간·정렬 필터를 열고 기간과 정렬은 CLI 가 검증한다 (날짜만 준 범위·`~B`·같은 시각 400, 모르는 `order` 무시, 끝 `9999-12-31` 500 실측. 멤버 옵션은 한 명)
+- [ADR-065](065-body-partial-replace.md) — 본문 부분 치환을 `post replace` 와 `wiki page replace` 로 둔다 (정확 일치·유일성 규칙, 업무 `version` 조건부 갱신은 현재 값을 얻을 수 없어 미사용 실측)
 - [ADR-066](066-messenger-channels.md) — 대화방 목록을 `messenger channels` 로 두고 필터·정렬은 클라이언트에서 한다 (`size` 무시·제목 빈 방 154/230 실측, 제목 없는 방은 참여자 이름으로 표시, 숨긴 방 기본 제외)

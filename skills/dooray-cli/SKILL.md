@@ -12,9 +12,9 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 하려는 일 | reference |
 | --- | --- |
 | 설치·초기 설정, 출력 모드, API 제약, 에러 처리, 캐시, 피드백 등록 | [common.md](references/common.md) |
-| 업무 식별·생성·수정·삭제, 목록 거르기, 참조자·담당자 변경, 첨부 보호, 부모 지정, 태그 | [post.md](references/post.md) |
+| 업무 식별·생성·수정·삭제, 목록 거르기, 본문 일부 치환, 참조자·담당자 변경, 첨부 보호, 부모 지정, 태그 | [post.md](references/post.md) |
 | 업무 댓글 추가·필터·조회 | [comment.md](references/comment.md) |
-| 위키 페이지 조회·트리·삭제, 첨부와 인라인 이미지, 위키 댓글 | [wiki.md](references/wiki.md) |
+| 위키 페이지 조회·트리·삭제, 본문 일부 치환, 첨부와 인라인 이미지, 위키 댓글 | [wiki.md](references/wiki.md) |
 | 그룹 멘션·cc 판단, 멘션·링크 자동 삽입, Dooray 마크다운 링크 | [mention-link.md](references/mention-link.md) |
 | 워크플로우 판단 기준, 정형 task 자동화, 명령 체이닝 | [workflow.md](references/workflow.md) |
 | 메일 원본 선택, 답장 전 확인 | [mail.md](references/mail.md) |
@@ -23,8 +23,8 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 
 ## 대상 지정 방법
 
-`post get`/`edit`/`done`/`workflow`, `post comment` 전체, `post file` 전체, `post comment file` 전체,
-`wiki page get` 과 `wiki page edit`, `wiki page file` 과 `wiki page comment` 전체,
+`post get`/`edit`/`replace`/`done`/`workflow`, `post comment` 전체, `post file` 전체, `post comment file` 전체,
+`wiki page get` 과 `wiki page edit` 과 `wiki page replace`, `wiki page file` 과 `wiki page comment` 전체,
 그리고 `wiki page delete` 와 `wiki page move` 가 네 가지 형태를 모두 받는다.
 
 - `<project> <number>` — 업무는 번호, 위키는 `<project> <page-id>`
@@ -44,6 +44,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 - 구조화 결과가 필요하면 `--json`, 다음 명령에 ID 만 넘길 때는 `--quiet` 를 쓴다
 - 조회는 `--json` 으로 먼저 실행해 응답 구조를 확인한 뒤 쓰기 명령으로 넘어간다
 - 쓰기 명령은 대상 ID 를 명시하고, 지원하면 `--dry-run` 으로 먼저 확인한다
+- 긴 본문의 일부만 고칠 때는 `edit --body` 로 전문을 다시 보내지 말고 `post replace`/`wiki page replace` 로 바꿀 구간만 보낸다
 - 이름 기반 조회(멤버·그룹·워크플로우·태그)는 부분일치를 지원한다. 모호하면 에러와 후보 목록이 나오므로 임의로 고르지 말고 사용자에게 확인한다
 - 멤버를 이름으로 찾는 것은 그 프로젝트의 멤버로 한정된다. 비멤버는 이메일이나 memberId 로 지정한다 — [post.md](references/post.md)
 - 실패하면 [common.md](references/common.md) 의 에러 처리 표와 대조한다
@@ -123,7 +124,8 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 태그 이름까지 받기 | `dooray post get <project> <number> --json --with-tag-names` — `--json` 의 `tags[]` 에 `name` 을 채운다. 하나라도 못 채우면 멈춘다 |
 | 업무 생성 | `dooray post create <project> --title "..." [--body "..." \| --body-file <path>]` — 담당자는 `--to <name\|email>`, 참조자는 `--cc`, 둘 다 여러 명 가능 |
 | 템플릿으로 생성 | `dooray post create <project> --template <name\|id>` — 본문·담당자·태그가 채워지고 사용자 옵션이 우선한다 |
-| 제목·본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` — 본문 형식이 기존과 다르면 `--mime-type` 을 함께 준다 |
+| 제목·본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` — 본문 전체를 바꾼다. 본문 형식이 기존과 다르면 `--mime-type` 을 함께 준다 |
+| 본문 일부만 수정 | `dooray post replace <project> <number> --old "..." --new "..."` — 긴 본문에서 몇 군데만 고칠 때 `edit` 대신 쓴다. 여러 줄은 `--old-file`/`--new-file`, 먼저 `--dry-run` 으로 확인. 규칙은 [post.md](references/post.md) |
 | 완료 처리 (업무 상태를 완료로) | `dooray post done <project> <number>` |
 | 워크플로우 변경 (업무 상태·진행 상태 변경) | `dooray post workflow <project> <number> <workflow>` |
 
@@ -232,6 +234,7 @@ dooray post get <project> <number> --json --with-tag-names
 | 페이지 생성 | `dooray wiki page create <project> --title "..." [--parent <page-id>] [--body "..."]` — `--parent` 를 생략하면 위키 home 아래에 만든다 |
 | 페이지 제목 수정 | `dooray wiki page edit <project> <page-id> --title "..."` — `--id <page-id>` 와 `--url` 도 받는다 |
 | 페이지 본문 수정 | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` — `--id <page-id>` 와 `--url` 도 받는다. 본문 형식이 기존과 다르면 `--mime-type` 을 함께 준다 |
+| 페이지 본문 일부만 수정 | `dooray wiki page replace --id <page-id> --old "..." --new "..."` — 긴 본문에서 몇 군데만 고칠 때 `edit` 대신 쓴다. 규칙은 [wiki.md](references/wiki.md) |
 | 페이지 에디터로 수정 | `dooray wiki page edit <project> <page-id>` — 플래그가 없으면 `$EDITOR` 가 열린다 |
 | 페이지 이동 | `dooray wiki page move <project> <page-id> --parent <parent-page-id>` — `--parent` 는 필수다. 하위 페이지는 기본으로 함께 이동하고, `--no-children` 으로 페이지 하나만 옮긴다. `--to-wiki <project-or-wiki-id>` 로 다른 위키로 옮기며, `--first` 와 `--before <page-id>` 로 형제 사이 정렬을 바꾼다 |
 | 페이지 삭제 | `dooray wiki page delete <project> <page-id>` — 확인 있음, `-y`/`--yes`로 생략. 하위 페이지는 삭제한 페이지의 부모 아래로 재부착되어 orphan 이 생기지 않는다 |

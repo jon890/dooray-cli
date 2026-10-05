@@ -22,4 +22,16 @@ describe("sanitizeMultilineForTerminal", () => {
   it("홀로 선 CR 과 탭, ESC, DEL 은 ? 로 바꾼다", () => {
     expect(sanitizeMultilineForTerminal(`덮어\r쓰기\t${ESC}[2J\x7F`)).toBe("덮어?쓰기??[2J?");
   });
+
+  it("옵션 없이 부르면 종전 동작과 같다", () => {
+    expect(sanitizeMultilineForTerminal("a\tb\r\nc\rd", {})).toBe("a?b\nc?d");
+  });
+
+  it("keepTab 이면 탭을 그대로 둔다", () => {
+    expect(sanitizeMultilineForTerminal(`a\tb${ESC}`, { keepTab: true })).toBe("a\tb?");
+  });
+
+  it("crMarker 를 주면 CR 을 접거나 ? 로 바꾸지 않고 표기로 바꾼다", () => {
+    expect(sanitizeMultilineForTerminal("a\r\nb\rc", { crMarker: "<CR>" })).toBe("a<CR>\nb<CR>c");
+  });
 });

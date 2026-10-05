@@ -13,8 +13,9 @@ export function extractAttachmentReferences(body: string): AttachmentReference[]
   const seen = new Set<string>();
   // !?\[...\]\(/files/<id>...\) — id 종결자: 공백 / `)` / `?` (query) / `#` (fragment).
   // `[^\s)]+` 만 쓰면 `/files/abc?dl=1` 에서 `abc?dl=1` 을 id 로 잘못 추출하여 attachments 의 `abc` 와 매칭 실패.
+  // 위키 본문은 `/wikis/<n>/files/<id>` 형태라 앞 segment 를 선택으로 받는다. 업무 본문에는 이 형태가 없다 (ADR-065).
   // code block 내부 표기도 매칭됨 — 보수적 검출 우선.
-  const re = /!?\[([^\]]*)\]\(\/files\/([^\s)?#]+)/g;
+  const re = /!?\[([^\]]*)\]\((?:\/wikis\/[^\s/)]+)?\/files\/([^\s)?#]+)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(body)) !== null) {
     const id = m[2];

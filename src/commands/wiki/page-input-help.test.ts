@@ -7,6 +7,7 @@ import {
 import { wikiPageGetCommand } from "./page-get.js";
 import { wikiPageDeleteCommand } from "./page-delete.js";
 import { wikiPageMoveCommand } from "./page-move.js";
+import { wikiPageReplaceCommand } from "./page-replace.js";
 import { wikiPageFileDownloadAllCommand } from "./page-file/download-all.js";
 import { wikiPageFileDownloadCommand } from "./page-file/download.js";
 import { wikiPageFileListCommand } from "./page-file/list.js";
@@ -23,6 +24,7 @@ const commands: { name: string; command: Command }[] = [
   { name: "wiki page get", command: wikiPageGetCommand },
   { name: "wiki page delete", command: wikiPageDeleteCommand },
   { name: "wiki page move", command: wikiPageMoveCommand },
+  { name: "wiki page replace", command: wikiPageReplaceCommand },
   { name: "wiki page file download-all", command: wikiPageFileDownloadAllCommand },
   { name: "wiki page file download", command: wikiPageFileDownloadCommand },
   { name: "wiki page file list", command: wikiPageFileListCommand },
