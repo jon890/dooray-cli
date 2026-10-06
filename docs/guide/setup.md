@@ -38,14 +38,21 @@ stdin 으로 받은 값은 양끝 공백을 지운 뒤 저장하고, 비어 있�
 
 ## 에이전트 스킬
 
-에이전트에서 쓰려면 스킬을 설치한다. Claude Code 가 이 CLI 의 사용법을 알게 된다.
+에이전트에서 쓰려면 스킬을 설치한다. 한 번 실행하면 Claude Code와 Codex가 같은 CLI 사용법을 읽는다.
 
 ```bash
 dooray skill install
 dooray skill status
 ```
 
-CLI 를 새 버전으로 올린 뒤에는 `dooray skill update` 를 실행해야 스킬도 갱신된다.
+설치 경로는 Claude Code의 `~/.claude/skills/dooray-cli`와 Codex의 `~/.agents/skills/dooray-cli`다.
+두 경로는 같은 관리형 저장소에 연결된다. 기존에 Claude Code에만 설치했다면 `dooray skill install`을 다시 실행해 Codex에도 연결한다.
+Codex 설치 여부와 관계없이 양쪽 스킬을 관리하며, `install`과 `update`는 필요한 `~/.agents/skills` 디렉터리도 생성한다.
+Codex에서는 `$dooray-cli`로 스킬을 호출할 수 있다. 새 스킬이 보이지 않으면 Codex를 다시 시작한다.
+
+`dooray skill status`는 에이전트별 상태를 보여준다. `--quiet`는 양쪽 상태를 합친 토큰 하나를 출력하며, 둘 다 최신일 때만 `current`다.
+기존 경로에 사용자 파일이나 디렉터리가 있으면 덮어쓰지 않는다. 내용을 확인한 뒤 `--force`를 주면 백업하고 교체한다.
+CLI 를 새 버전으로 올린 뒤에는 `dooray skill update` 를 실행해야 양쪽 스킬이 함께 갱신된다.
 
 ## 도움말과 출력 모드
 

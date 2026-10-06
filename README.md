@@ -8,7 +8,7 @@
 [NHN Dooray](https://dooray.com) 를 터미널과 AI 에이전트에서 쓸 수 있게 해 주는 CLI 예요.
 
 업무, 댓글, 위키, 메일, 메신저, 캘린더를 명령 한 줄로 다뤄요.
-Claude Code 에 스킬로 설치하면 "업무 만들어줘" 같은 말을 그대로 알아듣고 처리해요.
+Claude Code 와 Codex 에 스킬로 설치하면 "업무 만들어줘" 같은 말을 그대로 알아듣고 처리해요.
 
 ```
 "백엔드 프로젝트에 '로그인 실패 로그 확인' 업무 만들고 김철수 담당자로 지정해줘"
@@ -59,11 +59,15 @@ dooray post list <project>   # 그 프로젝트의 업무 목록
 
 ### 4. AI 에이전트에 연결해요 (선택)
 
-Claude Code 를 쓴다면 스킬을 설치해요. 에이전트가 이 CLI 의 사용법을 알게 돼요.
+Claude Code 나 Codex 를 쓴다면 스킬을 설치해요. 에이전트가 이 CLI 의 사용법을 알게 돼요.
 
 ```bash
 dooray skill install
 ```
+
+스킬은 `~/.claude/skills/dooray-cli`와 `~/.agents/skills/dooray-cli`에 함께 연결돼요.
+Codex 설치 여부와 관계없이 양쪽 스킬을 관리하며, 필요한 `~/.agents/skills` 디렉터리도 만들어요.
+설치 상태와 Codex에서 호출하는 방법은 [설치와 설정 가이드](docs/guide/setup.md#에이전트-스킬)에 있어요.
 
 이제 에이전트에게 한국어로 시키면 돼요.
 에이전트가 알맞은 `dooray` 명령을 고르고, 필요하면 프로젝트 코드나 업무 번호를 먼저 찾아봐요.

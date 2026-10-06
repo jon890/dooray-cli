@@ -70,7 +70,7 @@ src/
   commands/      Commander.js 명령 정의
   formatters/    표·JSON·quiet 출력
   editor/        $EDITOR 연동
-  skill/         Claude Code 스킬 설치·갱신
+  skill/         Claude Code·Codex 스킬 설치·갱신
   utils/         에러, 스피너, 종료 코드
 ```
 

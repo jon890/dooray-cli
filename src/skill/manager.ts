@@ -21,6 +21,14 @@ export type SkillStatusCode =
   | "modified"
   | "corrupt";
 
+export const SKILL_AGENTS = ["claude", "codex"] as const;
+export type SkillAgent = (typeof SKILL_AGENTS)[number];
+
+export const SKILL_AGENT_NAMES: Record<SkillAgent, string> = {
+  claude: "Claude Code",
+  codex: "Codex",
+};
+
 export interface SkillManagerContext {
   homeDir: string;
   packageRoot: string;
@@ -39,11 +47,16 @@ export interface SkillStatus {
   managed: boolean;
 }
 
+export interface SkillsStatus extends SkillStatus {
+  agents: Record<SkillAgent, SkillStatus>;
+}
+
 export interface SkillInstallResult {
-  previous: SkillStatus;
-  current: SkillStatus;
+  previous: SkillsStatus;
+  current: SkillsStatus;
   changed: boolean;
   backupPath: string | null;
+  backupPaths: Partial<Record<SkillAgent, string>>;
 }
 
 interface PackageMetadata {
@@ -58,8 +71,9 @@ function getSource(context: SkillManagerContext): string {
   return path.join(context.packageRoot, SKILL_RELATIVE_PATH);
 }
 
-function getDestination(context: SkillManagerContext): string {
-  return path.join(context.homeDir, ".claude", "skills", "dooray-cli");
+function getDestination(context: SkillManagerContext, agent: SkillAgent): string {
+  const directory = agent === "claude" ? ".claude" : ".agents";
+  return path.join(context.homeDir, directory, "skills", "dooray-cli");
 }
 
 function getDataRoot(context: SkillManagerContext): string {
@@ -85,6 +99,7 @@ function getStorePath(
 
 function statusOf(
   context: SkillManagerContext,
+  agent: SkillAgent,
   status: SkillStatusCode,
   overrides: Partial<
     Pick<SkillStatus, "installedVersion" | "linkTarget" | "managed">
@@ -93,7 +108,7 @@ function statusOf(
   return {
     schemaVersion: 1,
     status,
-    destination: getDestination(context),
+    destination: getDestination(context, agent),
     source: getSource(context),
     currentVersion: context.currentVersion,
     installedVersion: overrides.installedVersion ?? null,
@@ -172,8 +187,12 @@ function utcTimestamp(): string {
   return new Date().toISOString().replace(/[:.]/g, "-");
 }
 
-function isInsideStoreRoot(context: SkillManagerContext, target: string): boolean {
-  const relative = path.relative(getStoreRoot(context), target);
+function isInsideStoreRoot(
+  context: SkillManagerContext,
+  target: string,
+  storeRoot = getStoreRoot(context),
+): boolean {
+  const relative = path.relative(storeRoot, target);
   return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
 }
 
@@ -281,7 +300,7 @@ async function createStagedStore(
 async function prepareStore(
   context: SkillManagerContext,
   options: { force?: boolean },
-): Promise<string> {
+): Promise<{ storePath: string; quarantinePath: string | null }> {
   const sourceDigest = await computeSkillContentDigest(getSource(context));
   const expectedManifest = createDooraySkillManifest(
     context.currentVersion,
@@ -312,7 +331,7 @@ async function prepareStore(
 
     const status = await verifyStore(storePath, expectedManifest);
     if (status === "valid") {
-      return storePath;
+      return { storePath, quarantinePath: null };
     }
 
     if (options.force !== true) {
@@ -336,7 +355,7 @@ async function prepareStore(
     }
 
     await fs.rename(stagingPath, storePath);
-    return storePath;
+    return { storePath, quarantinePath };
   } catch (error) {
     await fs.rm(stagingPath, { recursive: true, force: true }).catch(() => {});
     if (quarantinePath != null) {
@@ -367,25 +386,11 @@ async function assertSourceAvailable(source: string): Promise<void> {
   }
 }
 
-async function renameWithRollback(
-  from: string,
-  to: string,
-  backupPath: string | null,
-): Promise<void> {
-  try {
-    await fs.rename(from, to);
-  } catch (error) {
-    if (backupPath != null) {
-      await fs.rename(backupPath, to).catch(() => {});
-    }
-    throw error;
-  }
-}
-
-export async function inspectSkill(
+async function inspectAgentSkill(
   context: SkillManagerContext,
+  agent: SkillAgent,
 ): Promise<SkillStatus> {
-  const destination = getDestination(context);
+  const destination = getDestination(context, agent);
   const source = getSource(context);
 
   let stat;
@@ -393,13 +398,13 @@ export async function inspectSkill(
     stat = await fs.lstat(destination);
   } catch (error) {
     if (isNodeError(error, "ENOENT")) {
-      return statusOf(context, "missing", { managed: true });
+      return statusOf(context, agent, "missing", { managed: true });
     }
     throw error;
   }
 
   if (!stat.isSymbolicLink()) {
-    return statusOf(context, "unmanaged");
+    return statusOf(context, agent, "unmanaged");
   }
 
   const linkTarget = await fs.readlink(destination);
@@ -411,7 +416,7 @@ export async function inspectSkill(
     if (!isNodeError(error, "ENOENT")) {
       throw error;
     }
-    return statusOf(context, "broken", {
+    return statusOf(context, agent, "broken", {
       linkTarget,
       managed:
         isManagedSkillPath(absoluteTarget) ||
@@ -419,34 +424,39 @@ export async function inspectSkill(
     });
   }
 
+  // 수동으로 Codex 경로를 Claude Code 링크에 연결한 설치도 판별한다.
+  const resolvedTarget = await fs.realpath(absoluteTarget);
+  const resolvedStoreRoot = await fs.realpath(getStoreRoot(context)).catch(
+    () => getStoreRoot(context),
+  );
   const sourceDigest = await computeSkillContentDigest(source).catch(() => null);
 
-  if (isInsideStoreRoot(context, absoluteTarget)) {
+  if (isInsideStoreRoot(context, resolvedTarget, resolvedStoreRoot)) {
     const manifest = await readDooraySkillManifest(
-      path.join(absoluteTarget, MANIFEST_FILE_NAME),
+      path.join(resolvedTarget, MANIFEST_FILE_NAME),
     );
     if (manifest == null) {
-      return statusOf(context, "corrupt", { linkTarget, managed: true });
+      return statusOf(context, agent, "corrupt", { linkTarget, managed: true });
     }
 
-    const basename = parseStoreBasename(path.basename(absoluteTarget));
+    const basename = parseStoreBasename(path.basename(resolvedTarget));
     if (
       basename == null ||
       basename.packageVersion !== manifest.packageVersion ||
       basename.contentDigest !== manifest.contentDigest
     ) {
-      return statusOf(context, "corrupt", {
+      return statusOf(context, agent, "corrupt", {
         installedVersion: manifest.packageVersion,
         linkTarget,
         managed: true,
       });
     }
 
-    const actualDigest = await computeSkillContentDigest(absoluteTarget).catch(
+    const actualDigest = await computeSkillContentDigest(resolvedTarget).catch(
       () => null,
     );
     if (actualDigest !== manifest.contentDigest) {
-      return statusOf(context, "modified", {
+      return statusOf(context, agent, "modified", {
         installedVersion: manifest.packageVersion,
         linkTarget,
         managed: true,
@@ -457,45 +467,64 @@ export async function inspectSkill(
       manifest.packageVersion === context.currentVersion &&
       sourceDigest === manifest.contentDigest
     ) {
-      return statusOf(context, "current", {
+      return statusOf(context, agent, "current", {
         installedVersion: manifest.packageVersion,
         linkTarget,
         managed: true,
       });
     }
 
-    return statusOf(context, "outdated", {
+    return statusOf(context, agent, "outdated", {
       installedVersion: manifest.packageVersion,
       linkTarget,
       managed: true,
     });
   }
 
-  if (await isSameEntry(absoluteTarget, source)) {
-    return statusOf(context, "outdated", {
+  if (await isSameEntry(resolvedTarget, source)) {
+    return statusOf(context, agent, "outdated", {
       installedVersion: context.currentVersion,
       linkTarget,
       managed: true,
     });
   }
 
-  const packageMetadata = await readPackageMetadata(absoluteTarget);
+  const packageMetadata = await readPackageMetadata(resolvedTarget);
   if (packageMetadata == null) {
-    return statusOf(context, "unmanaged", { linkTarget });
+    return statusOf(context, agent, "unmanaged", { linkTarget });
   }
 
   if (packageMetadata.name !== PACKAGE_NAME) {
-    return statusOf(context, "unmanaged", {
+    return statusOf(context, agent, "unmanaged", {
       installedVersion: packageMetadata.version,
       linkTarget,
     });
   }
 
-  return statusOf(context, "outdated", {
+  return statusOf(context, agent, "outdated", {
     installedVersion: packageMetadata.version,
     linkTarget,
     managed: true,
   });
+}
+
+export async function inspectSkill(
+  context: SkillManagerContext,
+): Promise<SkillsStatus> {
+  const [claude, codex] = await Promise.all(
+    SKILL_AGENTS.map((agent) => inspectAgentSkill(context, agent)),
+  );
+  const agents = { claude, codex };
+  // 보호가 필요한 상태를 먼저 알리고, 둘 다 최신일 때만 current를 반환한다.
+  const priority: SkillStatusCode[] = [
+    "corrupt", "modified", "unmanaged", "broken", "outdated", "missing", "current",
+  ];
+  const status = priority.find((candidate) =>
+    SKILL_AGENTS.some((agent) => agents[agent].status === candidate),
+  )!;
+
+  // 기존 JSON 필드는 Claude Code의 상세 정보로 유지한다.
+  return { ...claude, status, agents };
 }
 
 export async function installSkill(
@@ -512,55 +541,89 @@ export async function installSkill(
       current: previous,
       changed: false,
       backupPath: null,
+      backupPaths: {},
     };
   }
 
-  if (
-    (previous.status === "modified" || previous.status === "corrupt") &&
-    options.force !== true
-  ) {
-    throw new DoorayCliError(
-      `Claude Code 스킬 관리 저장소가 ${previous.status} 상태입니다. 내용을 확인한 뒤 dooray skill update --force로 복구하세요: ${previous.destination}`,
-      EXIT_PARAM_ERROR,
-    );
+  // 한쪽의 사용자 파일 때문에 실패할 때 다른 쪽도 변경하지 않는다.
+  for (const agent of SKILL_AGENTS) {
+    const target = previous.agents[agent];
+    if (
+      (target.status === "modified" || target.status === "corrupt") &&
+      options.force !== true
+    ) {
+      throw new DoorayCliError(
+        `${SKILL_AGENT_NAMES[agent]} 스킬 관리 저장소가 ${target.status} 상태입니다. 내용을 확인한 뒤 dooray skill update --force로 복구하세요: ${target.destination}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
+    if (!target.managed && options.force !== true) {
+      throw new DoorayCliError(
+        `${SKILL_AGENT_NAMES[agent]} 스킬 경로가 dooray-cli에서 관리한 항목이 아닙니다: ${target.destination}`,
+        EXIT_PARAM_ERROR,
+      );
+    }
   }
 
-  if (!previous.managed && options.force !== true) {
-    throw new DoorayCliError(
-      `Claude Code 스킬 경로가 dooray-cli에서 관리한 항목이 아닙니다: ${previous.destination}`,
-      EXIT_PARAM_ERROR,
-    );
-  }
-
-  const storePath = await prepareStore(context, options);
-
-  await fs.mkdir(path.dirname(previous.destination), { recursive: true });
-
-  const tempPath = `${previous.destination}.tmp-${process.pid}-${Date.now()}`;
-  let backupPath: string | null = null;
+  const { storePath, quarantinePath } = await prepareStore(context, options);
+  const backupPaths: Partial<Record<SkillAgent, string>> = {};
+  const transitions: {
+    agents: SkillAgent[];
+    resolvedDestination: string;
+    previous: SkillStatus;
+    tempPath: string;
+    backupPath: string | null;
+    activated: boolean;
+  }[] = [];
 
   try {
-    await fs.symlink(storePath, tempPath);
-
-    if (!previous.managed && options.force === true) {
-      backupPath = `${previous.destination}.backup-${utcTimestamp()}`;
-      await fs.rename(previous.destination, backupPath);
+    for (const agent of SKILL_AGENTS) {
+      const target = previous.agents[agent];
+      if (target.status === "current") continue;
+      const directory = path.dirname(target.destination);
+      await fs.mkdir(directory, { recursive: true });
+      // 서로 다른 설치 항목도 최종 링크 대상을 공유하므로 부모 경로와 이름으로 비교한다.
+      const resolvedDestination = path.join(
+        await fs.realpath(directory),
+        path.basename(target.destination),
+      );
+      const sharedTransition = transitions.find(
+        (transition) => transition.resolvedDestination === resolvedDestination,
+      );
+      if (sharedTransition != null) {
+        sharedTransition.agents.push(agent);
+        continue;
+      }
+      const tempPath = `${target.destination}.tmp-${process.pid}-${Date.now()}`;
+      transitions.push({
+        agents: [agent],
+        resolvedDestination,
+        previous: target,
+        tempPath,
+        backupPath: null,
+        activated: false,
+      });
+      await fs.symlink(storePath, tempPath);
     }
 
-    await renameWithRollback(tempPath, previous.destination, backupPath);
-    const current = await inspectSkill(context);
-    if (current.status !== "current") {
-      let recovery = "백업 없음, 새 링크 상태를 유지했습니다";
-      if (backupPath != null) {
-        try {
-          await fs.rename(backupPath, previous.destination);
-          recovery = `백업 복구 완료: ${backupPath}`;
-        } catch {
-          recovery = `백업 복구 실패, 새 링크 유지 상태일 수 있음: ${previous.destination}`;
+    for (const transition of transitions) {
+      const target = transition.previous;
+      if (!target.managed) {
+        const backupPath = `${target.destination}.backup-${utcTimestamp()}`;
+        await fs.rename(target.destination, backupPath);
+        transition.backupPath = backupPath;
+        for (const agent of transition.agents) {
+          backupPaths[agent] = backupPath;
         }
       }
+      await fs.rename(transition.tempPath, target.destination);
+      transition.activated = true;
+    }
+
+    const current = await inspectSkill(context);
+    if (current.status !== "current") {
       throw new DoorayCliError(
-        `Claude Code 스킬 설치 후 상태가 current가 아닙니다: ${current.status} (${recovery})`,
+        `스킬 설치 후 상태가 current가 아닙니다: ${current.status}`,
         1,
       );
     }
@@ -569,10 +632,32 @@ export async function installSkill(
       previous,
       current,
       changed: true,
-      backupPath,
+      backupPath: backupPaths.claude ?? null,
+      backupPaths,
     };
   } catch (error) {
-    await fs.rm(tempPath, { force: true }).catch(() => {});
+    for (const transition of [...transitions].reverse()) {
+      const target = transition.previous;
+      const backupPath = transition.backupPath;
+      if (backupPath != null) {
+        if (transition.activated) {
+          await fs.rm(target.destination, { force: true }).catch(() => {});
+        }
+        await fs.rename(backupPath, target.destination).catch(() => {});
+      } else if (transition.activated) {
+        if (target.linkTarget == null) {
+          await fs.rm(target.destination, { force: true }).catch(() => {});
+        } else {
+          await fs.symlink(target.linkTarget, transition.tempPath).catch(() => {});
+          await fs.rename(transition.tempPath, target.destination).catch(() => {});
+        }
+      }
+      await fs.rm(transition.tempPath, { force: true }).catch(() => {});
+    }
+    if (quarantinePath != null) {
+      await fs.rm(storePath, { recursive: true, force: true }).catch(() => {});
+      await fs.rename(quarantinePath, storePath).catch(() => {});
+    }
     throw error;
   }
 }

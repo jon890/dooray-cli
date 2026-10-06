@@ -4,8 +4,11 @@ import { createSkillManagerContext } from "../skill/context.js";
 import {
   inspectSkill,
   installSkill,
+  SKILL_AGENTS,
+  SKILL_AGENT_NAMES,
   type SkillInstallResult,
   type SkillStatus,
+  type SkillsStatus,
 } from "../skill/manager.js";
 
 interface OutputOptions {
@@ -29,7 +32,19 @@ function statusHint(status: SkillStatus): string {
   }
 }
 
-function printStatus(status: SkillStatus, options: OutputOptions): void {
+function printAgentStatuses(status: SkillsStatus): void {
+  for (const agent of SKILL_AGENTS) {
+    const target = status.agents[agent];
+    console.log(`\n${SKILL_AGENT_NAMES[agent]}`);
+    console.log(`설치 상태: ${target.status}`);
+    console.log(`설치 버전: ${target.installedVersion ?? "-"}`);
+    console.log(`설치 경로: ${target.destination}`);
+    console.log(`링크 대상: ${target.linkTarget ?? "-"}`);
+    console.log(`복구 방법: ${statusHint(target)}`);
+  }
+}
+
+function printStatus(status: SkillsStatus, options: OutputOptions): void {
   if (options.json) {
     console.log(JSON.stringify(status, null, 2));
     return;
@@ -42,10 +57,7 @@ function printStatus(status: SkillStatus, options: OutputOptions): void {
 
   console.log(`상태: ${status.status}`);
   console.log(`현재 버전: ${status.currentVersion}`);
-  console.log(`설치 버전: ${status.installedVersion ?? "-"}`);
-  console.log(`링크 대상: ${status.linkTarget ?? "-"}`);
-  console.log(`설치 경로: ${status.destination}`);
-  console.log(`복구 방법: ${statusHint(status)}`);
+  printAgentStatuses(status);
 }
 
 function printInstallResult(
@@ -63,28 +75,28 @@ function printInstallResult(
   }
 
   if (result.changed) {
-    console.log(chalk.green("✓ Claude Code 스킬 설치 완료"));
+    console.log(chalk.green("✓ Claude Code·Codex 스킬 설치 완료"));
   } else {
-    console.log(chalk.green("✓ Claude Code 스킬이 이미 최신입니다"));
+    console.log(chalk.green("✓ Claude Code·Codex 스킬이 이미 최신입니다"));
   }
 
   console.log(`상태: ${result.current.status}`);
   console.log(`현재 버전: ${result.current.currentVersion}`);
-  console.log(`설치 버전: ${result.current.installedVersion ?? "-"}`);
-  console.log(`링크 대상: ${result.current.linkTarget ?? "-"}`);
-  console.log(`복구 방법: ${statusHint(result.current)}`);
-  if (result.backupPath != null) {
-    console.log(`백업 경로: ${result.backupPath}`);
+  printAgentStatuses(result.current);
+  for (const agent of SKILL_AGENTS) {
+    if (result.backupPaths[agent] != null) {
+      console.log(`${SKILL_AGENT_NAMES[agent]} 백업 경로: ${result.backupPaths[agent]}`);
+    }
   }
 }
 
 export const skillCommand = new Command("skill").description(
-  "Claude Code 스킬 관리",
+  "Claude Code·Codex 스킬 관리",
 );
 
 const skillStatusCommand = skillCommand
   .command("status")
-  .description("Claude Code 스킬 설치 상태 조회")
+  .description("Claude Code·Codex 스킬 설치 상태 조회")
   .option("--json", "JSON 형식으로 출력")
   .option("--quiet", "상태 토큰만 출력")
   .action(async () => {
@@ -111,5 +123,5 @@ function addInstallCommand(name: "install" | "update", description: string): voi
     });
 }
 
-addInstallCommand("install", "Claude Code 스킬 설치");
-addInstallCommand("update", "Claude Code 스킬을 현재 CLI 버전으로 갱신");
+addInstallCommand("install", "Claude Code·Codex 스킬 설치");
+addInstallCommand("update", "Claude Code·Codex 스킬을 현재 CLI 버전으로 갱신");
