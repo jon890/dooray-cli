@@ -17,7 +17,7 @@ description: dooray-cli 의 새 버전을 npm 에 내보낸다. "/release", "릴
 | 단계 | 이름 | 통과 조건 | reference |
 | --- | --- | --- | --- |
 | 시작 전 | main 최신화 | `main` 으로 옮겨 origin 최신 커밋 위에 로컬 커밋을 올렸다 | |
-| 1 | 변경 분석 | 직전 태그 이후 커밋을 분류했고 close 대상 이슈를 사용자가 확정했다 | |
+| 1 | 변경 분석 | 직전 태그 이후 커밋을 분류했고, 열린 PR 을 이번 릴리스에 넣을지와 close 대상 이슈를 사용자가 확정했다 | |
 | 2 | 문서 동기화 | `doc-sync-check.mjs` 가 종료 코드 0 으로 끝났다 | |
 | 3 | 버전 올리기 | `main` 에서 `package.json` 의 `version` 을 올렸다 | |
 | 4 | 검증 | `preflight.mjs` 가 종료 코드 0 으로 끝났다 | |
@@ -48,6 +48,16 @@ git rebase origin/main
 
 ### 1. 변경 분석
 
+**열린 PR 가운데 이번 릴리스에 넣을 것이 있는지 먼저 확정받는다.**
+
+```bash
+gh pr list --state open --json number,title,author --jq '.[] | "#\(.number)  \(.title)  (\(.author.login))"'
+```
+
+넣을 PR 이 있으면 그것을 머지한 뒤에 분석을 시작한다. 열린 PR 이 없으면 확정 없이 진행한다.
+태그를 민 뒤에 PR 을 머지하면 그 변경은 다음 버전으로 밀린다.
+v0.23.0 은 태그를 밀고 npm 게시 전에 README PR 을 머지해, 게시하지 못하고 v0.23.1 을 다시 냈다.
+
 ```bash
 LAST_TAG="$(git describe --tags --abbrev=0)"
 git log "$LAST_TAG"..HEAD --no-merges --pretty='%s' | sort
@@ -69,6 +79,7 @@ gh issue list --state open --json number,title --jq '.[] | "#\(.number)  \(.titl
 열린 이슈마다 이번 릴리스가 그 요청을 채웠는지 본다. 후속 작업이 남은 이슈와
 범위가 부분만 겹치는 이슈는 닫지 않고 진행 상황만 댓글로 남긴다.
 확정한 목록이 5단계의 릴리스 노트와 7단계의 close 에 그대로 쓰인다.
+이번 릴리스가 채운 이슈가 하나도 없으면 확정을 받지 않고 진행한다. 그 판단을 보고에 한 줄로 적는다.
 
 PR 본문의 `Closes #N` 으로 머지 때 이미 닫힌 이슈는 위 목록에 나오지 않는다.
 직전 태그 이후에 머지된 PR 이 닫은 이슈를 따로 보고 릴리스 노트에만 적는다. 7단계의 close 대상은 아니다.
@@ -146,7 +157,7 @@ git push origin "v$VERSION"
 VERSION="" # package.json 에 넣은 버전에서 v를 뺀 값을 넣는다.
 NOTES="" # 작성하고 검사한 릴리스 노트 파일 경로를 넣는다.
 : "${VERSION:?VERSION을 넣는다}" "${NOTES:?NOTES를 넣는다}"
-~/.claude/skills/korean-check/scripts/check.sh "$NOTES"
+~/.claude/scripts/korean-check.sh "$NOTES"
 gh release create "v$VERSION" --title "v$VERSION" --notes-file "$NOTES" --verify-tag
 ```
 
