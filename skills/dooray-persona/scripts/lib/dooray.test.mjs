@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { tmpdir, userInfo } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -7,8 +8,15 @@ import {
   createRateLimiter,
   getAllPages,
   getMe,
+  keychainApiKeyAccount,
   loadApiConfig,
+  readKeychainApiKey,
 } from "./dooray.mjs";
+
+const { execFileMock } = vi.hoisted(() => ({ execFileMock: vi.fn() }));
+
+// 실제 security 를 띄우지 않는다.
+vi.mock("node:child_process", () => ({ execFile: execFileMock }));
 
 const MEMBER_ID = "1234567890123456789";
 const OTHER_MEMBER_ID = "9876543210987654321";
@@ -164,5 +172,144 @@ describe("loadApiConfig", () => {
     } finally {
       await rm(directory, { recursive: true, force: true });
     }
+  });
+});
+
+describe("loadApiConfig 키체인", () => {
+  async function withConfig(content, fn) {
+    const directory = await mkdtemp(join(tmpdir(), "dooray-persona-"));
+    const configPath = join(directory, "config.json");
+    try {
+      await writeFile(configPath, JSON.stringify(content));
+      await fn(configPath);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  }
+
+  const BASE_URL = "https://api.dooray.com";
+
+  it("macOS 에서 파일에 apiKey 가 없으면 키체인 값을 쓴다", async () => {
+    await withConfig({ version: 1, baseUrl: BASE_URL }, async (configPath) => {
+      const readKeychain = vi.fn().mockResolvedValue("dummy-keychain-key");
+
+      await expect(
+        loadApiConfig(configPath, { platform: "darwin", readKeychain }),
+      ).resolves.toEqual({ apiKey: "dummy-keychain-key", baseUrl: BASE_URL });
+      expect(readKeychain).toHaveBeenCalledTimes(1);
+      // 임시 경로는 기본 경로가 아니라 경로별 account 로 읽는다.
+      expect(readKeychain).toHaveBeenCalledWith(keychainApiKeyAccount(configPath));
+      expect(readKeychain.mock.calls[0][0]).toMatch(/^apiKey:[0-9a-f]{16}$/);
+    });
+  });
+
+  it("공백뿐인 apiKey 는 CLI 와 같이 없음으로 보지 않아 키체인을 부르지 않고 실패한다", async () => {
+    await withConfig({ version: 1, apiKey: "   ", baseUrl: BASE_URL }, async (configPath) => {
+      const readKeychain = vi.fn().mockResolvedValue("dummy-keychain-key");
+
+      await expect(
+        loadApiConfig(configPath, { platform: "darwin", readKeychain }),
+      ).rejects.toThrow(/dooray setup/);
+      expect(readKeychain).not.toHaveBeenCalled();
+    });
+  });
+
+  it("macOS 에서도 파일에 apiKey 가 있으면 키체인을 부르지 않는다", async () => {
+    await withConfig(
+      { version: 1, apiKey: "dummy-file-key", baseUrl: BASE_URL },
+      async (configPath) => {
+        const readKeychain = vi.fn();
+
+        await expect(
+          loadApiConfig(configPath, { platform: "darwin", readKeychain }),
+        ).resolves.toEqual({ apiKey: "dummy-file-key", baseUrl: BASE_URL });
+        expect(readKeychain).not.toHaveBeenCalled();
+      },
+    );
+  });
+
+  it("macOS 가 아니면 키체인을 부르지 않고 dooray setup 을 안내한다", async () => {
+    await withConfig({ version: 1, baseUrl: BASE_URL }, async (configPath) => {
+      const readKeychain = vi.fn();
+
+      await expect(
+        loadApiConfig(configPath, { platform: "linux", readKeychain }),
+      ).rejects.toThrow(/dooray setup/);
+      expect(readKeychain).not.toHaveBeenCalled();
+    });
+  });
+
+  it("키체인에도 없으면 dooray setup 을 안내한다", async () => {
+    await withConfig({ version: 1, apiKey: "", baseUrl: BASE_URL }, async (configPath) => {
+      const readKeychain = vi.fn().mockResolvedValue(undefined);
+
+      await expect(
+        loadApiConfig(configPath, { platform: "darwin", readKeychain }),
+      ).rejects.toThrow(/dooray setup/);
+    });
+  });
+});
+
+describe("keychainApiKeyAccount", () => {
+  it("계정 홈의 기본 config 경로면 apiKey 다", () => {
+    expect(
+      keychainApiKeyAccount(join(userInfo().homedir, ".dooray", "config.json")),
+    ).toBe("apiKey");
+  });
+
+  it("다른 경로면 apiKey:<경로 sha256 앞 16자> 다", () => {
+    const configPath = "/tmp/other-home/.dooray/config.json";
+    const hash = createHash("sha256").update(configPath).digest("hex").slice(0, 16);
+
+    expect(keychainApiKeyAccount(configPath)).toBe(`apiKey:${hash}`);
+  });
+});
+
+describe("readKeychainApiKey", () => {
+  it("주어진 account 로 읽는다", async () => {
+    execFileMock.mockImplementationOnce((_file, _args, _options, callback) => {
+      callback(null, "dummy-key\n", "");
+    });
+
+    await readKeychainApiKey("apiKey:0123456789abcdef");
+
+    expect(execFileMock.mock.calls.at(-1)[1]).toEqual([
+      "find-generic-password",
+      "-s",
+      "dooray-cli",
+      "-a",
+      "apiKey:0123456789abcdef",
+      "-w",
+    ]);
+  });
+
+  it("dooray-cli 서비스의 apiKey 항목을 읽고 끝 개행 하나만 뗀다", async () => {
+    execFileMock.mockImplementationOnce((_file, _args, _options, callback) => {
+      callback(null, " dummy-key \n", "");
+    });
+
+    await expect(readKeychainApiKey()).resolves.toBe(" dummy-key ");
+    expect(execFileMock).toHaveBeenCalledWith(
+      "/usr/bin/security",
+      ["find-generic-password", "-s", "dooray-cli", "-a", "apiKey", "-w"],
+      { env: expect.objectContaining({ HOME: userInfo().homedir }) },
+      expect.any(Function),
+    );
+  });
+
+  it("종료 코드 44 는 항목 없음이라 undefined 다", async () => {
+    execFileMock.mockImplementationOnce((_file, _args, _options, callback) => {
+      callback(Object.assign(new Error("exit 44"), { code: 44 }), "", "not found");
+    });
+
+    await expect(readKeychainApiKey()).resolves.toBeUndefined();
+  });
+
+  it("그 밖의 실패는 키체인 안내와 함께 던진다", async () => {
+    execFileMock.mockImplementationOnce((_file, _args, _options, callback) => {
+      callback(Object.assign(new Error("exit 51"), { code: 51 }), "", "locked");
+    });
+
+    await expect(readKeychainApiKey()).rejects.toThrow(/키체인/);
   });
 });

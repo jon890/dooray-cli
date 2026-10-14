@@ -1,6 +1,8 @@
+import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { homedir, userInfo } from "node:os";
+import { join, resolve } from "node:path";
 
 const EMPTY_PAGE_RETRY_DELAY_MS = 1_000;
 const EMPTY_PAGE_MAX_RETRIES = 2;
@@ -15,8 +17,54 @@ function configError(configPath) {
   );
 }
 
+/**
+ * dooray CLI 와 같은 규칙으로 키체인 account 를 정한다.
+ * config 경로가 계정 홈의 `~/.dooray/config.json` 이면 `apiKey`, 아니면 `apiKey:<경로 sha256 앞 16자>` 다.
+ */
+export function keychainApiKeyAccount(configPath) {
+  const resolved = resolve(configPath);
+  const defaultPath = resolve(join(userInfo().homedir, ".dooray", "config.json"));
+  if (resolved === defaultPath) return "apiKey";
+  const hash = createHash("sha256").update(resolved).digest("hex").slice(0, 16);
+  return `apiKey:${hash}`;
+}
+
+/**
+ * macOS 에서 dooray CLI 는 API 토큰을 config.json 이 아니라 로그인 키체인에 둔다.
+ * 읽기는 argv 에 비밀값이 없어 execFile 로 불러도 된다. 항목이 없으면 undefined 다.
+ */
+export function readKeychainApiKey(account = "apiKey") {
+  return new Promise((resolvePromise, reject) => {
+    execFile(
+      "/usr/bin/security",
+      ["find-generic-password", "-s", "dooray-cli", "-a", account, "-w"],
+      // security 는 로그인 키체인을 $HOME 에서 찾는다. HOME 이 바뀌어 있어도 계정의 실제 홈을 쓴다.
+      { env: { ...process.env, HOME: userInfo().homedir } },
+      (error, stdout, stderr) => {
+        if (error) {
+          if (error.code === 44) {
+            resolvePromise(undefined);
+            return;
+          }
+          reject(
+            new Error(
+              `macOS 키체인에서 Dooray API 토큰을 읽지 못했습니다: ${String(stderr).trim() || error.message}\n` +
+                "로그인 키체인이 잠겨 있거나 접근이 거부됐을 수 있습니다.",
+            ),
+          );
+          return;
+        }
+        // 끝 개행 하나만 뗀다. 값 앞뒤의 공백은 값의 일부다.
+        const value = String(stdout);
+        resolvePromise(value.endsWith("\n") ? value.slice(0, -1) : value);
+      },
+    );
+  });
+}
+
 export async function loadApiConfig(
   configPath = join(homedir(), ".dooray", "config.json"),
+  { platform = process.platform, readKeychain = readKeychainApiKey } = {},
 ) {
   let raw;
   try {
@@ -34,6 +82,14 @@ export async function loadApiConfig(
   }
 
   const config = JSON.parse(raw);
+  // macOS 에서 키체인으로 옮겨진 뒤에는 파일에 apiKey 가 없다. 그때만 키체인을 본다.
+  // CLI 와 같이 빈 문자열만 「없음」 이다. 공백뿐인 값은 아래 검사에서 실패한다.
+  const fileApiKeyMissing =
+    typeof config.apiKey !== "string" || config.apiKey === "";
+  if (fileApiKeyMissing && platform === "darwin") {
+    const keychainApiKey = await readKeychain(keychainApiKeyAccount(configPath));
+    if (keychainApiKey !== undefined) config.apiKey = keychainApiKey;
+  }
   if (
     typeof config.apiKey !== "string" ||
     config.apiKey.trim() === "" ||

@@ -7,7 +7,13 @@ const mocks = vi.hoisted(() => ({
   updateConfigValue: vi.fn(),
 }));
 
-vi.mock("../config/store.js", () => ({ getConfig: mocks.getConfig }));
+// 안내 문구는 실제 configReadErrorMessage 를 쓴다. 저장 함수는 이 테스트에서 불리지 않는다.
+vi.mock("../config/store.js", async (importOriginal) => ({
+  configReadErrorMessage: (
+    await importOriginal<typeof import("../config/store.js")>()
+  ).configReadErrorMessage,
+  getConfig: mocks.getConfig,
+}));
 vi.mock("../services/config.js", () => ({
   updateConfigValue: mocks.updateConfigValue,
 }));
@@ -52,6 +58,47 @@ describe("config 명령 오류 처리", () => {
       message: "설정 파일이 없습니다. dooray config set 으로 설정하세요.",
     });
     expect(exit).not.toHaveBeenCalled();
+  });
+
+  it("config get 은 키체인 읽기 실패를 설정 파일 부재로 안내하지 않는다", async () => {
+    mocks.getConfig.mockResolvedValue({
+      state: "unreadable",
+      reason: "macOS 키체인에서 apiKey 를 읽지 못했습니다.",
+      source: "keychain",
+    });
+
+    await expect(runConfig(["get"])).rejects.toMatchObject({
+      name: "DoorayCliError",
+      exitCode: EXIT_CONFIG_ERROR,
+      message: expect.stringContaining("macOS 키체인에서 apiKey 를 읽지 못했습니다."),
+    });
+    await expect(runConfig(["get"])).rejects.toMatchObject({
+      message: expect.not.stringContaining("설정 파일이 없습니다"),
+    });
+  });
+
+  it("config get 은 손상된 설정 파일의 이유를 보인다", async () => {
+    mocks.getConfig.mockResolvedValue({
+      state: "invalid",
+      reason: "version 필드는 1이어야 합니다.",
+    });
+
+    await expect(runConfig(["get"])).rejects.toMatchObject({
+      exitCode: EXIT_CONFIG_ERROR,
+      message: expect.stringMatching(/손상[\s\S]*version 필드는 1이어야 합니다/),
+    });
+  });
+
+  it("config get 은 파일 읽기 실패의 이유를 보인다", async () => {
+    mocks.getConfig.mockResolvedValue({
+      state: "unreadable",
+      reason: "EACCES: permission denied",
+    });
+
+    await expect(runConfig(["get"])).rejects.toMatchObject({
+      exitCode: EXIT_CONFIG_ERROR,
+      message: expect.stringContaining("EACCES"),
+    });
   });
 
   it("config get 에 알 수 없는 키를 주면 EXIT_CONFIG_ERROR 를 던진다", async () => {

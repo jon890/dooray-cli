@@ -77,3 +77,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-066](066-messenger-channels.md) — 대화방 목록을 `messenger channels` 로 두고 필터·정렬은 클라이언트에서 한다 (`size` 무시·제목 빈 방 154/230 실측, 제목 없는 방은 참여자 이름으로 표시, 숨긴 방 기본 제외와 제외 알림, 숨김 방향 실측)
 - [ADR-067](067-attachment-file-name-decoding.md) — 첨부 다운로드 파일명을 `Content-Disposition` 에서 풀어 NFC 로 저장하고 실패하면 목록 이름, `<fileId>.<ext>` 순으로 대체한다 (fetch 의 Latin-1 헤더 mojibake·RFC 2047 확인). 단일 다운로드에 `--output-file` 을 둔다
 - [ADR-068](068-comment-add-rejects-empty-body.md) — `post comment add` 는 어느 입력 경로든 빈 본문·공백뿐인 본문을 API 호출 전에 거부한다 (`--allow-empty` 없음, `$EDITOR` 경로 종료 코드 0 → 3)
+- [ADR-069](069-macos-keychain-secret-store.md) — macOS 에서는 `apiKey`·`imapPassword` 를 로그인 키체인에 두고 저장 시점에 옮긴다. 읽기는 필드마다 파일 값이 앞서고, 저장은 바뀐 필드만 쓰며 실패하면 키체인을 되돌린다. 기본 경로가 아닌 config 는 account 에 경로 해시를 붙인다 (`security -i` stdin 채택: `-w` 단독 tty 멈춤·argv 노출 실측, 비ASCII hex 출력으로 새 값은 출력 가능 ASCII 만 허용, 종료 코드 44·1, `HOME` 은 계정 홈으로, `apiKey` 누락은 OS 무관 미완료, 키체인 실패는 `unreadable`)

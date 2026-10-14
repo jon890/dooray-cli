@@ -20,7 +20,7 @@ cp -R skills/dooray-persona ~/.claude/skills/
 ```
 
 설정 파일은 `~/.claude/dooray-persona.config.json`이며, 최초 실행에서는 후보 프로젝트를 탐색해 대상을 고른 뒤 본인 글을 수집한다.
-인증은 `dooray setup`이 만든 `~/.dooray/config.json`을 읽어 사용하므로 토큰을 따로 입력하지 않는다.
+인증은 `dooray setup`이 저장한 설정을 읽어 사용하므로 토큰을 따로 입력하지 않는다. macOS 에서 설정 파일에 토큰이 없으면 로그인 키체인에서 읽는다.
 
 ## 터미널에 익숙하지 않은 동료에게 넘기기
 

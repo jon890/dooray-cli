@@ -64,7 +64,7 @@ src/
   index.ts       CLI 진입점
   api/           Dooray REST API 클라이언트 (ky), IMAP·SMTP 클라이언트
   cache/         ~/.dooray/cache/ 파일 캐시
-  config/        ~/.dooray/config.json 스키마와 읽기·쓰기
+  config/        ~/.dooray/config.json 스키마와 읽기·쓰기, macOS 키체인의 비밀값 읽기·쓰기
   resolvers/     이름·이메일·URL 을 ID 로 바꾸는 읽기 계층
   services/      상태를 바꾸는 API 를 호출하고 그 엔티티의 캐시를 지우는 계층
   commands/      Commander.js 명령 정의

@@ -86,6 +86,10 @@ export const doctorCommand = new Command("doctor")
     if (config.state === "invalid") {
       console.log(`  설정 파일: ${chalk.red("❌ 손상")}`);
       console.log(`  이유:      ${config.reason}`);
+    } else if (config.state === "unreadable" && config.source === "keychain") {
+      // 키체인 실패는 이유에 대처 방법이 이미 들어 있다.
+      console.log(`  키체인:    ${chalk.red("❌ 읽기 실패")}`);
+      console.log(`  이유:      ${config.reason}`);
     } else if (config.state === "unreadable") {
       console.log(`  설정 파일: ${chalk.red("❌ 읽기 실패")}`);
       console.log(`  이유:      ${config.reason}`);
@@ -141,6 +145,8 @@ export const doctorCommand = new Command("doctor")
       console.log(chalk.green("✓ 기본 설정이 완료되었습니다."));
     } else if (config.state === "invalid") {
       console.log(chalk.yellow("⚠ 설정 파일이 손상되었습니다."));
+    } else if (config.state === "unreadable" && config.source === "keychain") {
+      console.log(chalk.yellow("⚠ 키체인에서 설정의 비밀값을 읽지 못했습니다."));
     } else if (config.state === "unreadable") {
       console.log(chalk.yellow("⚠ 설정 파일을 읽지 못했습니다."));
     } else {

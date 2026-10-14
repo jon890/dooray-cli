@@ -28,7 +28,7 @@ src/
   resolvers/      # 사람이 준 이름·URL·부분 입력을 식별자로 바꾼다. 읽기 전용
   services/       # 캐시의 유효성을 깨는 변경. 성공 직후 해당 캐시를 지운다
   cache/          # ~/.dooray/cache/ 파일 CRUD 와 TTL
-  config/         # ~/.dooray/config.json CRUD
+  config/         # ~/.dooray/config.json CRUD 와 비밀값 저장소(macOS 키체인, ADR-069)
   skill/          # 번들 스킬의 설치 상태 판정과 install/update
   editor/         # $EDITOR 실행과 frontmatter 직렬화
   formatters/     # 엔티티별 표·JSON·quiet 출력
