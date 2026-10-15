@@ -91,6 +91,29 @@ organization 전체를 검색한다. 프로젝트 멤버 목록(`project members
 
 `--to` 와 `--cc` 에 넣을 organizationMemberId 를 찾을 때 쓴다.
 
+## 멤버 소속 (`member get --with-org`)
+
+멤버 상세 응답에는 회사·부서·직책이 없다. `--with-org` 를 주면 셋을 함께 조회한다.
+
+```bash
+dooray member get <memberId> --with-org          # 회사:, 부서:, 직책: 줄이 더해진다
+dooray member get <memberId> --json --with-org   # organization 키가 더해진다
+```
+
+`--json` 에 더해지는 형태는 아래와 같다. 값이 없는 항목은 `null` 이다.
+
+```json
+"organization": {
+  "defaultOrganization": { "id": "<orgId>", "name": "두레이" },
+  "primaryDepartment": { "id": null, "name": "플랫폼개발팀" },
+  "positionName": "선임"
+}
+```
+
+- 부서는 이름이 있어도 `id` 가 `null` 로 올 수 있다. 부서 유무는 `name` 으로 판단한다
+- 조회가 실패하거나 응답에 그 멤버가 없으면 아무것도 출력하지 않고 종료 코드 1 로 멈춘다
+- `--quiet` 과 함께 주면 효력이 없고 stderr 로 경고한다
+
 ---
 
 ## 제약사항 (Dooray API 한계)

@@ -812,3 +812,62 @@ export interface CalendarEventDetail extends CalendarEvent {
 // 목록 응답에 totalCount 는 없다.
 export type CalendarEventListResponse = DoorayApiResponse<CalendarEvent[]>;
 export type CalendarEventDetailResponse = DoorayApiResponse<CalendarEventDetail>;
+
+// ─── Calendar > Busy Hours ──────────────────────────────
+
+export interface BusyHoursRequest {
+  organizationMemberIds: string[];
+  beginDateTime: string;
+  endDateTime: string;
+}
+
+/**
+ * 소속 부서. 공식 문서는 부서가 없으면 `id` 와 `name` 이 각각 null 이라고 적는다.
+ * 실측으로는 부서 이름이 있는데도 `id` 가 null 로 왔다. `id` 로 부서 유무를 판단하지 않는다.
+ */
+export interface BusyHoursDepartment {
+  id: string | null;
+  name: string | null;
+}
+
+/** `member get` 응답의 `defaultOrganization` 은 id 뿐이고, 이름은 이 응답에만 온다. */
+export interface BusyHoursOrganization {
+  id: string | null;
+  name: string | null;
+}
+
+export interface BusyHoursMember {
+  id: string;
+  name?: string;
+  primaryDepartment?: BusyHoursDepartment | null;
+  defaultOrganization?: BusyHoursOrganization | null;
+  /** 직책명. 없으면 null */
+  positionName?: string | null;
+}
+
+export interface BusyHoursRange {
+  startedAt?: string;
+  endedAt?: string;
+}
+
+export interface OfficeHoursRange {
+  begin?: string;
+  end?: string;
+}
+
+export interface BusyHoursEntry {
+  member: BusyHoursMember;
+  busyHours?: BusyHoursRange[];
+  officeHours?: OfficeHoursRange[];
+  outOfOfficeHours?: OfficeHoursRange[];
+}
+
+/** 요청한 organizationMemberIds 순서대로 온다(공식 문서). */
+export type BusyHoursResponse = DoorayApiResponse<BusyHoursEntry[]>;
+
+/** `member get --with-org` 이 응답에 덧붙이는 소속 정보. 바쁨 시간 조회의 `member` 에서 꺼낸다. */
+export interface MemberOrganization {
+  defaultOrganization: BusyHoursOrganization | null;
+  primaryDepartment: BusyHoursDepartment | null;
+  positionName: string | null;
+}
