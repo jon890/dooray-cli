@@ -70,6 +70,8 @@ import type {
   CalendarListResponse,
   CalendarEventListResponse,
   CalendarEventDetailResponse,
+  BusyHoursRequest,
+  BusyHoursResponse,
 } from "./types.js";
 
 export interface GetPostsParams {
@@ -1187,6 +1189,22 @@ export class DoorayApiClient {
       return await this.api
         .get(`calendar/v1/calendars/${calendarId}/events/${eventId}`)
         .json<CalendarEventDetailResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  /**
+   * 멤버별 바쁨 시간. 응답의 `member` 에 소속 회사·부서·직책이 함께 온다.
+   *
+   * `member get` 응답에는 부서와 직책이 없고 회사도 id 뿐이라, 이름은 이 endpoint 로만 얻는다.
+   * 공식 문서상 기간은 7일 미만, 멤버는 한 번에 20명까지다.
+   */
+  async fetchBusyHours(request: BusyHoursRequest): Promise<BusyHoursResponse> {
+    try {
+      return await this.api
+        .post("calendar/v1/fetch-busy-hours", { json: request })
+        .json<BusyHoursResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);
     }

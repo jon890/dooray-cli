@@ -107,6 +107,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 태그 그룹 속성 변경 | `dooray project tags group <project> "<그룹>" [--mandatory] [--select-one]` — 해제는 `--no-` 접두 |
 | 프로젝트 템플릿 목록 | `dooray project templates <project>` |
 | 멤버 상세 | `dooray member get <organizationMemberId>` (캐시 우회) |
+| 멤버 소속(회사·부서·직책) | `dooray member get <organizationMemberId> --with-org` — `--json` 에는 `organization` 키가 붙는다. 못 채우면 멈춘다 |
 | organization 전체 멤버 검색 | `dooray member search <keyword>` — 옵션은 [common.md](references/common.md) |
 
 ## 업무 조회와 생성

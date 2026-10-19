@@ -316,8 +316,14 @@ flowchart TD
     B -->|get| C["GET common/v1/members/{id}"]
     B -->|search| D["조건 조합 검증"]
     D --> E["GET common/v1/members"]
-    C & E --> F["표·JSON·ID 출력"]
+    C --> G{"--with-org 이고 --quiet 만 주지 않았나"}
+    G -->|예| H["POST calendar/v1/fetch-busy-hours"]
+    G -->|아니오| F
+    H --> F
+    E --> F["표·JSON·ID 출력"]
 ```
+
+- `member get --with-org` 은 바쁨 시간 조회 응답의 `member` 에서 회사·부서·직책을 꺼낸다. 조회가 실패하거나 응답에 그 멤버가 없으면 출력 없이 끝낸다 (ADR-069).
 
 - 검색 조건이 하나도 없거나 위치 이름과 이메일·사용자 코드 조건을 함께 주면 종료 코드 3으로 끝난다.
 - 검색 페이지는 0 이상으로, 크기는 1에서 100 사이로 맞춘 뒤 API에 보낸다.
