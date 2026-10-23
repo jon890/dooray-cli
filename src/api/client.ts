@@ -1112,6 +1112,60 @@ export class DoorayApiClient {
     }
   }
 
+  /**
+   * 대화방 메시지에 첨부된 파일. 공식 문서에 없는 경로다 (ADR-072).
+   * api 서버는 채널·파일 조합을 검증하지 않고 항상 307 을 주며, 틀린 조합은 file-api 가 본문 없는 404 로 답한다.
+   * 이름을 대신 찾을 목록 조회가 없어 헤더로 못 풀면 `<fileId>.<ext>` 로 저장한다 (ADR-067).
+   */
+  async downloadMessengerFile(
+    channelId: string,
+    fileId: string,
+  ): Promise<{ buffer: ArrayBuffer; fileName: string }> {
+    try {
+      const res = await this.api
+        .get(`messenger/v1/channels/${channelId}/files/${fileId}`, {
+          redirect: "manual",
+          throwHttpErrors: false,
+        });
+
+      if (res.status !== 307) {
+        throw new DoorayCliError(
+          `메신저 파일 다운로드 실패 (예상 status 307, 실제 ${res.status})`,
+          EXIT_API_ERROR,
+        );
+      }
+
+      const location = res.headers.get("location");
+      if (!location) {
+        throw new DoorayCliError("메신저 파일 다운로드 리다이렉트 URL을 받지 못했습니다.", EXIT_API_ERROR);
+      }
+
+      const fileRes = await fetch(location, {
+        headers: { Authorization: this.authHeader },
+      });
+      if (fileRes.status === 404) {
+        throw new DoorayCliError(
+          "메신저 파일을 찾지 못했습니다 (404). 대화방 id 와 파일 id 조합을 확인하세요. " +
+            "파일 id 는 그 파일이 올라온 대화방의 logs 참조 칸에서 얻습니다.",
+          EXIT_API_ERROR,
+        );
+      }
+      if (!fileRes.ok) {
+        throw new DoorayCliError(`메신저 파일 다운로드 실패 (${fileRes.status})`, EXIT_API_ERROR);
+      }
+
+      const disposition = fileRes.headers.get("content-disposition");
+      const fileName =
+        parseContentDispositionFileName(disposition) ?? fallbackFileName(fileId, undefined, disposition);
+
+      const buffer = await fileRes.arrayBuffer();
+      return { buffer, fileName };
+    } catch (e) {
+      if (e instanceof DoorayCliError) throw e;
+      throw await toDoorayCliError(e);
+    }
+  }
+
   async createChannelThread(
     channelId: string,
     text: string,

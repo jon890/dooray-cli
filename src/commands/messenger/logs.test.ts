@@ -290,4 +290,170 @@ describe("messenger logs", () => {
       expect(JSON.parse(out)).toEqual([]);
     });
   });
+  describe("파일과 스레드", () => {
+    const FILE_ID = "3333444455556666777";
+    const THREAD_ID = "4444555566667777888";
+    const base = {
+      sender: { type: "member", member: { organizationMemberId: ALICE_ID } },
+      sentAt: "2026-09-18T11:38:11+09:00",
+    };
+
+    function stubLogs(result: MessengerLog[]): void {
+      mocks.client.getChannelLogs.mockResolvedValue({
+        header: { isSuccessful: true, resultCode: 0, resultMessage: "" },
+        result,
+      });
+    }
+
+    it("파일 메시지는 내용에 파일명과 크기를, 참조에 파일 id 를 보여준다", async () => {
+      stubLogs([
+        {
+          id: "log-f",
+          ...base,
+          type: "FILE",
+          text: "보고서.pdf",
+          file: { id: FILE_ID, fileName: "보고서.pdf", fileSize: 2048, mimeType: "application/pdf" },
+        },
+      ]);
+      const out = await run(["messenger", "logs", CHANNEL_ID]);
+      expect(out).toContain("참조");
+      expect(out).toContain("[파일] 보고서.pdf (2.0KB)");
+      // text 가 파일명과 같으면 뒤에 다시 붙이지 않는다
+      expect(out).not.toContain("(2.0KB) 보고서.pdf");
+      expect(out).toContain(`파일 ${FILE_ID}`);
+    });
+
+    it("REPLY 에 붙은 파일은 파일 표시 뒤에 본문을 잇는다", async () => {
+      stubLogs([
+        {
+          id: "log-r",
+          ...base,
+          type: "REPLY",
+          text: "이거 보세요",
+          file: { id: FILE_ID, fileName: "a.png", fileSize: 10 },
+        },
+      ]);
+      const out = await run(["messenger", "logs", CHANNEL_ID]);
+      expect(out).toContain("[파일] a.png (10B) 이거 보세요");
+      expect(out).toContain(`파일 ${FILE_ID}`);
+    });
+
+    it("파일명이 길어도 크기와 REPLY 본문은 잘리지 않는다", async () => {
+      const longName = "가".repeat(40) + ".xlsx";
+      stubLogs([
+        {
+          id: "log-l",
+          ...base,
+          type: "REPLY",
+          text: "확인",
+          file: { id: FILE_ID, fileName: longName, fileSize: 2048 },
+        },
+      ]);
+      const out = await run(["messenger", "logs", CHANNEL_ID]);
+      expect(out).toContain(`[파일] ${"가".repeat(30)}… (2.0KB) 확인`);
+    });
+
+    it("text 가 파일명과 공백·정규화만 다르면 같은 이름으로 보고 다시 붙이지 않는다", async () => {
+      const nfc = "보고서.pdf";
+      stubLogs([
+        {
+          id: "log-n",
+          ...base,
+          type: "FILE",
+          text: `${nfc.normalize("NFD")} `,
+          file: { id: FILE_ID, fileName: nfc, fileSize: 2048 },
+        },
+      ]);
+      const out = await run(["messenger", "logs", CHANNEL_ID]);
+      expect(out).toContain("[파일] 보고서.pdf (2.0KB)");
+      expect(out).not.toContain(`(2.0KB) ${nfc.normalize("NFD")}`);
+      expect(out).not.toContain(`(2.0KB) ${nfc}`);
+    });
+
+    it("파일 객체에 이름이 없으면 text 를 이름으로 쓴다", async () => {
+      stubLogs([
+        {
+          id: "log-x",
+          ...base,
+          type: "FILE",
+          text: "a.png",
+          file: { id: FILE_ID },
+        },
+      ]);
+      const out = await run(["messenger", "logs", CHANNEL_ID]);
+      expect(out).toContain("[파일] a.png (-)");
+    });
+
+    it("스레드가 달린 메시지는 참조에 댓글 수와 스레드 channelId 를 보여준다", async () => {
+      stubLogs([
+        {
+          id: "log-t",
+          ...base,
+          text: "배포 시작",
+          thread: { channelId: THREAD_ID, totalCount: "3", lastUpdatedAt: 1760000000000 },
+        },
+      ]);
+      const out = await run(["messenger", "logs", CHANNEL_ID]);
+      expect(out).toContain("배포 시작");
+      expect(out).toContain(`스레드(3) ${THREAD_ID}`);
+    });
+
+    it("파일과 스레드가 둘 다 있으면 참조 칸에 줄을 나눠 둘 다 보여준다", async () => {
+      stubLogs([
+        {
+          id: "log-ft",
+          ...base,
+          type: "FILE",
+          text: "a.txt",
+          file: { id: FILE_ID, fileName: "a.txt", fileSize: 1 },
+          thread: { channelId: THREAD_ID, totalCount: "1" },
+        },
+      ]);
+      const out = await run(["messenger", "logs", CHANNEL_ID]);
+      const fileLine = out.split("\n").findIndex((l) => l.includes(`파일 ${FILE_ID}`));
+      const threadLine = out.split("\n").findIndex((l) => l.includes(`스레드(1) ${THREAD_ID}`));
+      expect(fileLine).toBeGreaterThanOrEqual(0);
+      expect(threadLine).toBe(fileLine + 1);
+    });
+
+    it("파일도 스레드도 없으면 참조 칸은 비고 내용은 그대로다", async () => {
+      const out = await run(["messenger", "logs", CHANNEL_ID]);
+      expect(out).toContain("참조");
+      expect(out).toContain("첫 번째");
+      expect(out).not.toContain("[파일]");
+      expect(out).not.toContain("스레드(");
+    });
+
+    it("참조 칸의 서버 값도 control char 를 없앤다", async () => {
+      stubLogs([
+        { id: "log-x", ...base, text: "t", thread: { channelId: `${THREAD_ID}${ESC}[31m`, totalCount: "1" } },
+      ]);
+      const out = await run(["messenger", "logs", CHANNEL_ID]);
+      expect(out).toContain(`${THREAD_ID}?[31m`);
+    });
+
+    it("--json 은 file·thread 를 포함한 원형 그대로다", async () => {
+      const raw: MessengerLog[] = [
+        {
+          id: "log-ft",
+          ...base,
+          type: "FILE",
+          text: "a.txt",
+          file: { id: FILE_ID, fileName: "a.txt", fileSize: 1 },
+          thread: { channelId: THREAD_ID, totalCount: "1" },
+        },
+      ];
+      stubLogs(raw);
+      const out = await run(["--json", "messenger", "logs", CHANNEL_ID]);
+      expect(JSON.parse(out)).toEqual(raw);
+    });
+
+    it("--quiet 은 로그 id 만 낸다", async () => {
+      stubLogs([
+        { id: "log-f", ...base, text: "a.txt", file: { id: FILE_ID, fileName: "a.txt", fileSize: 1 } },
+      ]);
+      const out = await run(["--quiet", "messenger", "logs", CHANNEL_ID]);
+      expect(out.trim()).toBe("log-f");
+    });
+  });
 });

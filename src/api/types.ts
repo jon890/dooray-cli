@@ -700,13 +700,33 @@ export interface MessengerLogSender {
   member?: { organizationMemberId?: string };
 }
 
+// 로그에 붙은 첨부 파일. type 이 FILE 인 메시지에 오고, REPLY 에도 붙는 경우가 있다 (ADR-072).
+export interface MessengerLogFile {
+  id: string;
+  title?: string;
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
+}
+
+// 스레드가 달린 메시지에만 온다. channelId 를 logs 에 다시 넣으면 스레드 댓글이 조회된다 (ADR-072).
+export interface MessengerLogThread {
+  channelId: string;
+  /** 실측상 숫자가 아니라 문자열 숫자(`"3"`)로 온다. */
+  totalCount?: string;
+  lastUpdatedAt?: number;
+}
+
 export interface MessengerLog {
   id: string;
   seq?: number;
   sender?: MessengerLogSender;
   sentAt?: string;
+  /** FILE 메시지는 파일명과 같은 값이 온다. */
   text?: string;
   type?: string;
+  file?: MessengerLogFile;
+  thread?: MessengerLogThread;
 }
 
 // 목록 응답에 totalCount 는 없고 hasMore 만 온다.

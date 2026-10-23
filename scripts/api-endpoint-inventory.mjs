@@ -20,6 +20,10 @@ const KNOWN_UNDOCUMENTED = new Map([
     "GET messenger/v1/channels/{id}/logs",
     "대화방 메시지 읽기. 2026-09-21 에 공식 문서 Messenger > Channels 절에 없는 것을 확인했다 (ADR-061)",
   ],
+  [
+    "GET messenger/v1/channels/{id}/files/{id}",
+    "대화방 첨부 파일 받기. 2026-10-21 에 공식 문서 Messenger 절 11개 endpoint 에 없는 것을 확인했다 (ADR-072)",
+  ],
 ]);
 
 /**
