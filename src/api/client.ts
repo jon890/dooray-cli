@@ -732,8 +732,14 @@ export class DoorayApiClient {
    * 첨부 API 의 307 이 가리키는 파일 서버에 인증 헤더를 실어 요청한다 (ADR-015, ADR-074).
    * API 주소와 같은 도메인의 https 주소가 아니면 인증 헤더를 보내지 않고 멈춘다. 파일 서버가 또 redirect 하면 따라가지 않는다.
    * 응답 시간 제한은 본문이 없는 다운로드에만 건다. 업로드는 본문 전송이 끝나야 헤더가 와서 제한이 곧 전송 시간 제한이 된다.
+   * notFoundMessage 는 파일 서버의 404 가 본문 없이 와서 호출자가 고칠 곳을 알려야 할 때 준다 (ADR-072).
    */
-  private async requestFileServer(location: string | null, label: string, init: RequestInit = {}): Promise<Response> {
+  private async requestFileServer(
+    location: string | null,
+    label: string,
+    init: RequestInit = {},
+    notFoundMessage?: string,
+  ): Promise<Response> {
     if (!location) {
       throw new DoorayCliError(`${label} 리다이렉트 URL을 받지 못했습니다.`, EXIT_API_ERROR);
     }
@@ -748,6 +754,9 @@ export class DoorayApiClient {
     if (res.status >= 300 && res.status < 400) {
       throw new DoorayCliError(`${label} 실패: 파일 서버가 다른 주소로 다시 보냈습니다 (${res.status}).`, EXIT_API_ERROR);
     }
+    if (res.status === 404 && notFoundMessage) {
+      throw new DoorayCliError(notFoundMessage, EXIT_API_ERROR);
+    }
     if (!res.ok) {
       throw new DoorayCliError(`${label} 실패 (${res.status})`, EXIT_API_ERROR);
     }
@@ -755,11 +764,11 @@ export class DoorayApiClient {
   }
 
   /** 다운로드 경로는 항상 307 이다 (ADR-015). 다른 status 면 파일 서버를 부르지 않고 실패한다. */
-  private async followDownloadRedirect(res: Response, label: string): Promise<Response> {
+  private async followDownloadRedirect(res: Response, label: string, notFoundMessage?: string): Promise<Response> {
     if (res.status !== 307) {
       throw new DoorayCliError(`${label} 실패 (예상 status 307, 실제 ${res.status})`, EXIT_API_ERROR);
     }
-    return this.requestFileServer(res.headers.get("location"), label);
+    return this.requestFileServer(res.headers.get("location"), label, {}, notFoundMessage);
   }
 
   // fileName 은 ADR-067 규칙으로 푼 안전한 저장 이름이다. knownName 은 호출자가 이미 가진 목록의 name 이다.
@@ -1093,6 +1102,40 @@ export class DoorayApiClient {
         })
         .json<MessengerLogListResponse>();
     } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  /**
+   * 대화방 메시지에 첨부된 파일. 공식 문서에 없는 경로다 (ADR-072).
+   * api 서버는 채널·파일 조합을 검증하지 않고 항상 307 을 주며, 틀린 조합은 file-api 가 본문 없는 404 로 답한다.
+   * 이름을 대신 찾을 목록 조회가 없어 헤더로 못 풀면 `<fileId>.<ext>` 로 저장한다 (ADR-067).
+   */
+  async downloadMessengerFile(
+    channelId: string,
+    fileId: string,
+  ): Promise<{ buffer: ArrayBuffer; fileName: string }> {
+    try {
+      const res = await this.api
+        .get(apiPath`messenger/v1/channels/${channelId}/files/${fileId}`, {
+          redirect: "manual",
+          throwHttpErrors: false,
+        });
+      const fileRes = await this.followDownloadRedirect(
+        res,
+        "메신저 파일 다운로드",
+        "메신저 파일을 찾지 못했습니다 (404). 대화방 id 와 파일 id 조합을 확인하세요. " +
+          "파일 id 는 그 파일이 올라온 대화방의 logs 참조 칸에서 얻습니다.",
+      );
+
+      const disposition = fileRes.headers.get("content-disposition");
+      const fileName =
+        parseContentDispositionFileName(disposition) ?? fallbackFileName(fileId, undefined, disposition);
+
+      const buffer = await fileRes.arrayBuffer();
+      return { buffer, fileName };
+    } catch (e) {
+      if (e instanceof DoorayCliError) throw e;
       throw await toDoorayCliError(e);
     }
   }

@@ -32,6 +32,7 @@ describe("첨부 다운로드의 redirect", () => {
   it.each([
     ["downloadPostFile", (c: DoorayApiClient) => c.downloadPostFile("p", "post", "f1", "a.txt")],
     ["downloadWikiPageFile", (c: DoorayApiClient) => c.downloadWikiPageFile("w", "page", "f1", "a.txt")],
+    ["downloadMessengerFile", (c: DoorayApiClient) => c.downloadMessengerFile("ch", "f1")],
   ])("%s 는 같은 도메인의 파일 서버에 인증 헤더를 실어 받는다", async (_name, call) => {
     const fetchMock = stubFetch(() => new Response("hello"));
     const { c } = clientWithRedirect(307, TRUSTED);
@@ -46,6 +47,7 @@ describe("첨부 다운로드의 redirect", () => {
   it.each([
     ["downloadPostFile", (c: DoorayApiClient) => c.downloadPostFile("p", "post", "f1", "a.txt"), "파일 다운로드"],
     ["downloadWikiPageFile", (c: DoorayApiClient) => c.downloadWikiPageFile("w", "page", "f1", "a.txt"), "위키 파일 다운로드"],
+    ["downloadMessengerFile", (c: DoorayApiClient) => c.downloadMessengerFile("ch", "f1"), "메신저 파일 다운로드"],
   ])("%s 는 다른 도메인을 가리키면 그 주소를 부르지 않고 멈춘다", async (_name, call, label) => {
     const fetchMock = stubFetch(() => new Response("hello"));
     const { c } = clientWithRedirect(307, FOREIGN);
@@ -74,6 +76,13 @@ describe("첨부 다운로드의 redirect", () => {
       "project/v1/projects/p/posts/post/files/..%2F..%2Fx%3Fy",
       expect.anything(),
     );
+  });
+
+  it("메신저 다운로드도 경로에 넣는 id 를 인코딩한다", async () => {
+    stubFetch(() => new Response("hello"));
+    const { c, api } = clientWithRedirect(307, TRUSTED);
+    await c.downloadMessengerFile("ch", "../../x?y");
+    expect(api.get).toHaveBeenCalledWith("messenger/v1/channels/ch/files/..%2F..%2Fx%3Fy", expect.anything());
   });
 });
 

@@ -53,7 +53,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray wiki page comment` — 페이지 댓글 목록·최신·조회·추가·수정·삭제 (post comment 패턴 mirror, mention/cc/file 부재 — WikiComment 시그니처 차이)
 - `dooray mail` — 목록·조회·검색·발송·답장·인증정보 제거 (v0.2.0), 첨부 목록(`get`)과 첨부 저장(`attachment`, ADR-071, Issue #222)
 - `dooray feedback` — `gh` CLI 위임으로 GitHub 이슈 자동 생성 (`--last` 옵션으로 직전 명령 sanitized argv와 에러 자동 첨부, ADR-022/023)
-- `dooray messenger` — 1:1 다이렉트 메시지 (`send`) / 대화방 메시지 (`channel-send`) / 대화방 스레드 생성 (`thread-send`) 전송 + 대화방 메시지 조회 (`logs`) + 대화방 목록 (`channels`) (`--to` id·email, `--channel` id·이름, ADR-033, 스레드는 ADR-052, 조회는 ADR-061 — 최근 N건·상한 1000·페이징 없음, 목록은 ADR-066 — 필터·정렬은 클라이언트, 제목 없는 방은 참여자 이름으로 표시)
+- `dooray messenger` — 1:1 다이렉트 메시지 (`send`) / 대화방 메시지 (`channel-send`) / 대화방 스레드 생성 (`thread-send`) 전송 + 대화방 메시지 조회 (`logs`) + 대화방 목록 (`channels`) + 대화방 첨부 파일 저장 (`file download`) (`--to` id·email, `--channel` id·이름, ADR-033, 스레드는 ADR-052, 조회는 ADR-061 — 최근 N건·상한 1000·페이징 없음, 목록은 ADR-066 — 필터·정렬은 클라이언트, 제목 없는 방은 참여자 이름으로 표시, 첨부 파일 저장은 ADR-072 — 공식 문서에 없는 endpoint, `logs` 표의 참조 칸에 파일 ID·스레드 channelId)
 - `dooray calendar` — 캘린더 목록 (`list`) + 기간 일정 조회 (`event list`) + 일정 상세 (`event get`). 읽기 전용이며 `--from`·`--to` 는 날짜만 주면 로컬 시간대로 하루 시작·끝까지 늘어나고 기본값은 오늘 하루다. 한 번에 최대 50일까지 조회한다. 목록은 페이징이 없고 참석자 이름과 본문은 상세에만 있으며, 목록 표는 내 참여 여부를 함께 낸다
 - `skills/dooray-persona` — Dooray 에 쌓인 본인 글을 수집해 업무 글 문체 문서를 만드는 워크플로우 스킬. CLI 명령이 아니라 저장소를 내려받아 쓰는 자산이다 (ADR-038)
 
