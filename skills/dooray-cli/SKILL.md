@@ -273,7 +273,7 @@ dooray post get <project> <number> --json --with-tag-names
 | 대화방 메시지 | `dooray messenger channel-send --channel "<channelId\|이름>" --body "..."` — 이름으로는 자신이 속한 방만 찾는다 |
 | 대화방 스레드 열기 | `dooray messenger thread-send --channel "<channelId\|이름>" --body "..."` — `--thread-body` 나 `--thread-body-file` 로 첫 메시지를 함께 보내고, `--log <log-id>` 로 이미 올라간 메시지에 연다 |
 | 대화방 목록 | `dooray messenger channels [--type direct\|private\|me\|bot] [--search <이름>] [--since <날짜>] [--all]` — 수정 시각(updatedAt) 최신순, 보관·숨긴·`status` 가 `normal` 이 아닌 방은 `--all` 로 포함(빠진 방이 있으면 stderr 로 알림). `logs`·`channel-send` 에 넘길 channelId 를 여기서 찾는다 |
-| 대화방 메시지 읽기 | `dooray messenger logs "<channelId\|이름>" [-n\|--count <개수>]` — 최근 N건(기본 20, 최대 1000). 표는 오래된 것이 위, 최신이 아래. 마지막 `참조` 칸에 `파일 <fileId>`·`스레드(<댓글 수>) <channelId>` 가 잘리지 않고 나온다. 스레드 channelId 를 다시 `logs` 에 넣으면 스레드 댓글을 읽는다. 공식 API 문서에 없는 endpoint 라 예고 없이 막힐 수 있다 |
+| 대화방 메시지 읽기 | `dooray messenger logs "<channelId\|이름>" [-n\|--count <개수>]` — 최근 N건(기본 20, 최대 1000). 표는 오래된 것이 위, 최신이 아래. 마지막 참조 열에 `파일 <fileId>`·`스레드(<댓글 수>) <channelId>` 가 잘리지 않고 나온다. 스레드 channelId 를 다시 `logs` 에 넣으면 스레드 댓글을 읽는다. 공식 API 문서에 없는 endpoint 라 예고 없이 막힐 수 있다 |
 | 대화방 파일 받기 | `dooray messenger file download "<channelId\|이름>" <fileId> [-o <dir>] [--output-file <path>]` — 파일이 올라온 대화방을 준다(스레드의 파일은 스레드 channelId 나 부모 대화방 어느 쪽이든 된다). 공식 API 문서에 없는 endpoint 라 예고 없이 막힐 수 있다 |
 
 대화방을 찾거나 `logs` 로 메시지·스레드를 읽거나 파일을 받거나 진행 상황을 스레드에 보고할 때는 [messenger.md](references/messenger.md) 를 먼저 읽는다.
