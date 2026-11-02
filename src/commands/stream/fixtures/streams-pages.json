@@ -1,0 +1,124 @@
+{
+  "_comment": "GET common/v1/streams 고정 응답. 공식 문서의 type 별 모델에 실측에서 본 시각 필드(event.createdAt)를 더한 가짜 값이다. 페이지마다 size 보다 적게 와도 끝이 아니고, 빈 배열이 끝이다.",
+  "pages": [
+    {
+      "header": { "isSuccessful": true, "resultCode": 0, "resultMessage": "" },
+      "result": [
+        {
+          "type": "post",
+          "post": {
+            "read": false,
+            "id": "post-1",
+            "projectId": "project-1",
+            "users": {
+              "from": { "type": "member", "member": { "organizationMemberId": "member-1", "name": "홍길동" } },
+              "to": [],
+              "cc": []
+            },
+            "subject": "배포 일정 확인",
+            "body": { "mimeType": "text/x-markdown", "content": "본문" },
+            "createdAt": "2026-11-02T11:00:00+09:00",
+            "updatedAt": "2026-11-02T11:00:00+09:00"
+          }
+        },
+        {
+          "type": "event",
+          "event": {
+            "read": true,
+            "id": "event-1",
+            "type": "comment",
+            "postId": "post-1",
+            "creator": { "type": "member", "member": { "organizationMemberId": "member-2", "name": "김철수" } },
+            "body": { "mimeType": "text/x-markdown", "content": "첫 줄\n둘째 줄" },
+            "createdAt": "2026-11-02T10:30:00+09:00"
+          }
+        },
+        {
+          "type": "schedule",
+          "schedule": {
+            "read": false,
+            "id": "schedule-1",
+            "calendarId": "calendar-1",
+            "users": {
+              "from": { "type": "member", "member": { "organizationMemberId": "member-1", "name": "홍길동" } },
+              "to": [],
+              "cc": []
+            },
+            "startedAt": "2026-11-20T11:30:00+09:00",
+            "endedAt": "2026-11-20T12:30:00+09:00",
+            "wholeDayFlag": false,
+            "subject": "주간 회의",
+            "recurrenceType": "none"
+          }
+        }
+      ],
+      "cursor": "1793581200000000000"
+    },
+    {
+      "header": { "isSuccessful": true, "resultCode": 0, "resultMessage": "" },
+      "result": [
+        {
+          "type": "mail",
+          "mail": {
+            "id": "mail-1",
+            "folder": { "id": "folder-1", "name": "받은편지함" },
+            "sentAt": "2026-11-01T13:00:00+09:00",
+            "subject": "회의록 공유",
+            "users": {
+              "from": { "type": "emailUser", "emailUser": { "name": "홍길동", "emailAddress": "user@example.com" } }
+            },
+            "body": { "mimeType": "text/plain", "content": "" }
+          }
+        },
+        {
+          "type": "pageComment",
+          "pageComment": {
+            "read": false,
+            "id": "page-comment-1",
+            "pageId": "page-1",
+            "body": { "mimeType": "text/x-markdown", "content": "확인했습니다" },
+            "creator": { "organizationMemberId": "member-2", "name": "김철수" },
+            "createdAt": "2026-11-01T12:05:00+09:00"
+          }
+        }
+      ],
+      "cursor": "1793502000000000000"
+    },
+    {
+      "header": { "isSuccessful": true, "resultCode": 0, "resultMessage": "" },
+      "result": [
+        {
+          "type": "page",
+          "page": {
+            "read": true,
+            "id": "page-1",
+            "wikiId": "wiki-1",
+            "parentPageId": "page-0",
+            "subject": "운영 가이드",
+            "referrers": [],
+            "body": { "mimeType": "text/x-markdown", "content": "" },
+            "creator": { "organizationMemberId": "member-1", "name": "홍길동" },
+            "createdAt": "2026-10-31T10:00:00+09:00"
+          }
+        },
+        {
+          "type": "project",
+          "project": {
+            "id": "project-1",
+            "name": "example-project",
+            "actor": { "organizationMemberId": "member-1" },
+            "action": "invited",
+            "actionDetail": { "type": "invited" },
+            "at": "2026-10-31T09:30:00+09:00"
+          }
+        }
+      ],
+      "cursor": "1793404800000000000"
+    },
+    {
+      "header": { "isSuccessful": true, "resultCode": 0, "resultMessage": "" },
+      "result": [],
+      "cursor": null
+    }
+  ]
+}

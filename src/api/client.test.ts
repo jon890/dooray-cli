@@ -50,3 +50,26 @@ describe("DoorayApiClient — 429", () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 });
+
+describe("DoorayApiClient — streams", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("size·before·read 를 쿼리로 보낸다", async () => {
+    const fetchMock = vi.fn(
+      async (_req: Request) =>
+        new Response('{"header":{"isSuccessful":true,"resultCode":0,"resultMessage":""},"result":[]}', {
+          status: 200,
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const client = new DoorayApiClient("api-key", "https://api.dooray.com");
+    await client.getStreams({ size: 50, before: "1793581200000000000", read: false });
+    const url = new URL((fetchMock.mock.calls[0][0] as Request).url);
+    expect(url.pathname).toBe("/common/v1/streams");
+    expect(url.searchParams.get("size")).toBe("50");
+    expect(url.searchParams.get("before")).toBe("1793581200000000000");
+    expect(url.searchParams.get("read")).toBe("false");
+  });
+});

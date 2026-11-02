@@ -34,7 +34,7 @@ src/
   formatters/     # 엔티티별 표·JSON·quiet 출력
   utils/          # 오류, 종료 코드, 본문 입력, 마크업, 확인 절차 같은 공용 조각
   commands/       # 명령 하나에 파일 하나. 위 계층을 조합한다
-    messenger/  project/  member/  post/  wiki/  mail/  calendar/
+    messenger/  project/  member/  post/  wiki/  mail/  calendar/  stream/
 ```
 
 파일 하나하나가 무엇을 하는지는 여기 적지 않는다.

@@ -77,6 +77,8 @@ import type {
   UpdateCalendarEventResponse,
   CalendarEventDeleteType,
   DeleteCalendarEventResponse,
+  StreamListResponse,
+  GetStreamsParams,
 } from "./types.js";
 
 export interface GetPostsParams {
@@ -1178,6 +1180,24 @@ export class DoorayApiClient {
       return await this.api
         .get("messenger/v1/channels")
         .json<MessengerChannelListResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  // ─── Streams ────────────────────────────────────────
+
+  async getStreams(params?: GetStreamsParams): Promise<StreamListResponse> {
+    try {
+      return await this.api
+        .get("common/v1/streams", {
+          searchParams: {
+            ...(params?.size != null && { size: params.size }),
+            ...(params?.before && { before: params.before }),
+            ...(params?.read != null && { read: params.read }),
+          },
+        })
+        .json<StreamListResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);
     }
