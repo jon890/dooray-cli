@@ -100,15 +100,25 @@ export function streamModel(item: StreamItem): Record<string, unknown> | undefin
 // schedule 의 startedAt 은 일정 시각이라 활동 시각이 아니어서 넣지 않는다.
 const TIME_FIELDS = ["at", "createdAt", "updatedAt", "sentAt"] as const;
 
-/** 원소의 활동 시각 문자열. 모델에 시각이 없으면 undefined. */
+/**
+ * 원소의 활동 시각 문자열. 시각 필드 가운데 가장 늦은 값을 쓴다.
+ * 오래전에 만든 업무가 수정되어 피드에 다시 오면 `createdAt` 이 아니라 `updatedAt` 이 활동 시각이다.
+ * 모델에 읽을 수 있는 시각이 없으면 undefined.
+ */
 export function streamItemAt(item: StreamItem): string | undefined {
   const model = streamModel(item);
   if (!model) return undefined;
+  let latest: string | undefined;
+  let latestMs = -Infinity;
   for (const key of TIME_FIELDS) {
     const v = str(model[key]);
-    if (v) return v;
+    const ms = v ? Date.parse(v) : NaN;
+    if (v && !Number.isNaN(ms) && ms > latestMs) {
+      latest = v;
+      latestMs = ms;
+    }
   }
-  return undefined;
+  return latest;
 }
 
 /** 작성자·행위자 이름. `creator`, `users.from`, `actor` 순으로 찾고 member·emailUser 를 한 겹 벗긴다. */

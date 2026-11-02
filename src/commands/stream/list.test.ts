@@ -130,6 +130,14 @@ describe("원소 헬퍼", () => {
     expect(streamItemAt(byType("schedule"))).toBeUndefined();
   });
 
+  it("시각 필드가 여럿이면 가장 늦은 값을 활동 시각으로 쓴다", () => {
+    const edited = {
+      type: "post",
+      post: { id: "post-old", createdAt: "2026-09-01T09:00:00+09:00", updatedAt: "2026-11-02T09:00:00+09:00" },
+    };
+    expect(streamItemAt(edited)).toBe("2026-11-02T09:00:00+09:00");
+  });
+
   it("작성자는 creator·users.from·actor 에서 이름을 찾는다", () => {
     expect(streamItemAuthor(byType("event"))).toBe("김철수");
     expect(streamItemAuthor(byType("post"))).toBe("홍길동");

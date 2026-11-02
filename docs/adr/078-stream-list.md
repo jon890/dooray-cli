@@ -31,6 +31,7 @@
 - 한 페이지 189건의 type 분포는 mail 153, event 31, post 2, page 1, pageComment 1, schedule 1 이었다.
 - `cursor` 는 나노초 timestamp 이고, 그 페이지 마지막 원소의 시각과 수십 초 안에서 맞았다.
 - 문서 예시에 없는 `event.createdAt`·`event.updatedAt` 이 실제로 온다. `pageComment` 에는 `wikiId` 가 더 온다.
+- 한 페이지 189건 중 6건은 `createdAt` 과 `updatedAt` 이 달랐다. 활동 시각은 시각 필드 가운데 가장 늦은 값으로 읽는다.
 - `schedule` 에는 활동 시각 필드가 없다. `startedAt` 은 일정 시각이라 활동 시각으로 쓰지 않는다.
 - 원소 시각(`createdAt`·`sentAt` 등)은 최신순에서 최대 29초 어긋났다(1184건 중 29곳).
   원소 시각이 since 보다 앞선 첫 원소에서 멈추면 뒤에 오는 since 이후 원소를 놓칠 수 있어, 멈춤은 커서로 판단한다.
