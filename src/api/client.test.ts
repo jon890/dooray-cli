@@ -27,3 +27,26 @@ describe("DoorayApiClient — 응답 JSON 파싱", () => {
     expect((response.result as unknown as { seq: unknown }).seq).toBe(259);
   });
 });
+
+describe("DoorayApiClient — 429", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("재시도를 다 써도 429 면 다른 API 오류와 다른 종료 코드로 끝난다", async () => {
+    const { EXIT_RATE_LIMITED } = await import("../utils/exit-codes.js");
+    // Retry-After 0 으로 재시도 대기를 없앤다.
+    const fetchMock = vi.fn(
+      async () => new Response("{}", { status: 429, headers: { "Retry-After": "0" } }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = new DoorayApiClient("api-key", "https://api.dooray.com");
+    await expect(client.getMe()).rejects.toMatchObject({
+      exitCode: EXIT_RATE_LIMITED,
+      message: expect.stringContaining("429"),
+    });
+    // ky 의 재시도 3회를 거친 뒤다.
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+});

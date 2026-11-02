@@ -5,7 +5,7 @@ import { basename } from "node:path";
 import { DoorayCliError } from "../utils/errors.js";
 import { normalizeDoorayMessage } from "../utils/dooray-message.js";
 import { fallbackFileName, parseContentDispositionFileName } from "../utils/content-disposition.js";
-import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "../utils/exit-codes.js";
+import { EXIT_API_ERROR, EXIT_AUTH_ERROR, EXIT_RATE_LIMITED } from "../utils/exit-codes.js";
 import { describeOrigin, fetchWithResponseTimeout, isTrustedFileHost } from "./file-redirect.js";
 import { createTokenBucket, parseRateLimitHeaders } from "./rate-limiter.js";
 import { apiPath } from "./api-path.js";
@@ -139,6 +139,13 @@ function joinIds(ids: string[] | undefined): string | undefined {
 async function toDoorayCliError(error: unknown): Promise<never> {
   if (error instanceof HTTPError) {
     const status = error.response.status;
+    if (status === 429) {
+      // ky 가 재시도를 다 쓴 뒤다. 본문 메시지보다 「잠시 뒤 다시」 가 부르는 쪽에 필요한 정보다.
+      throw new DoorayCliError(
+        "API 호출 한도를 넘었습니다 (429). 잠시 뒤 다시 실행하세요.",
+        EXIT_RATE_LIMITED,
+      );
+    }
     const exitCode = status === 401 || status === 403 ? EXIT_AUTH_ERROR : EXIT_API_ERROR;
     try {
       const body = (await error.response.json()) as DoorayErrorResponse;
