@@ -138,6 +138,11 @@ function joinIds(ids: string[] | undefined): string | undefined {
   return ids && ids.length > 0 ? ids.join(",") : undefined;
 }
 
+/** status 를 직접 보는 파일 경로의 종료 코드. 429 는 ky 오류 변환과 같이 호출 한도 초과로 나눈다. */
+function fileStatusExitCode(status: number): number {
+  return status === 429 ? EXIT_RATE_LIMITED : EXIT_API_ERROR;
+}
+
 async function toDoorayCliError(error: unknown): Promise<never> {
   if (error instanceof HTTPError) {
     const status = error.response.status;
@@ -767,7 +772,7 @@ export class DoorayApiClient {
       throw new DoorayCliError(notFoundMessage, EXIT_API_ERROR);
     }
     if (!res.ok) {
-      throw new DoorayCliError(`${label} 실패 (${res.status})`, EXIT_API_ERROR);
+      throw new DoorayCliError(`${label} 실패 (${res.status})`, fileStatusExitCode(res.status));
     }
     return res;
   }
@@ -775,7 +780,10 @@ export class DoorayApiClient {
   /** 다운로드 경로는 항상 307 이다 (ADR-015). 다른 status 면 파일 서버를 부르지 않고 실패한다. */
   private async followDownloadRedirect(res: Response, label: string, notFoundMessage?: string): Promise<Response> {
     if (res.status !== 307) {
-      throw new DoorayCliError(`${label} 실패 (예상 status 307, 실제 ${res.status})`, EXIT_API_ERROR);
+      throw new DoorayCliError(
+        `${label} 실패 (예상 status 307, 실제 ${res.status})`,
+        fileStatusExitCode(res.status),
+      );
     }
     return this.requestFileServer(res.headers.get("location"), label, {}, notFoundMessage);
   }
@@ -841,7 +849,7 @@ export class DoorayApiClient {
       }
 
       if (!res.ok) {
-        throw new DoorayCliError(`파일 업로드 실패 (${res.status})`, EXIT_API_ERROR);
+        throw new DoorayCliError(`파일 업로드 실패 (${res.status})`, fileStatusExitCode(res.status));
       }
 
       return await res.json() as UploadFileResponse;
@@ -899,7 +907,7 @@ export class DoorayApiClient {
       }
 
       if (!res.ok) {
-        throw new DoorayCliError(`위키 파일 업로드 실패 (${res.status})`, EXIT_API_ERROR);
+        throw new DoorayCliError(`위키 파일 업로드 실패 (${res.status})`, fileStatusExitCode(res.status));
       }
       return await res.json() as UploadWikiPageFileResponse;
     } catch (e) {

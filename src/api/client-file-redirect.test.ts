@@ -140,3 +140,23 @@ describe("첨부 업로드의 redirect", () => {
     expect(fetchMock.mock.calls[1]![1]).toMatchObject({ method: "POST", headers: { Authorization: "dooray-api key" } });
   });
 });
+
+describe("첨부 경로의 429", () => {
+  it("다운로드 첫 응답이 429 면 종료 코드 6 으로 끝난다", async () => {
+    stubFetch(() => new Response("hello"));
+    const { c } = clientWithRedirect(429, null);
+    await expect(c.downloadPostFile("p", "post", "f1", "a.txt")).rejects.toMatchObject({ exitCode: 6 });
+  });
+
+  it("파일 서버가 429 면 종료 코드 6 으로 끝난다", async () => {
+    stubFetch(() => new Response(null, { status: 429 }));
+    const { c } = clientWithRedirect(307, TRUSTED);
+    await expect(c.downloadPostFile("p", "post", "f1", "a.txt")).rejects.toMatchObject({ exitCode: 6 });
+  });
+
+  it("업로드 첫 응답이 429 면 종료 코드 6 으로 끝난다", async () => {
+    stubFetch(() => new Response(null, { status: 429 }));
+    const c = new DoorayApiClient("key", BASE);
+    await expect(c.uploadPostFile("p", "post", THIS_FILE)).rejects.toMatchObject({ exitCode: 6 });
+  });
+});
