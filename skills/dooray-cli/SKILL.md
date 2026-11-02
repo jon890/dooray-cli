@@ -20,6 +20,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 메일 원본 선택, 답장 전 확인, 첨부 저장 | [mail.md](references/mail.md) |
 | 메신저 대화방 찾기, 메시지·스레드 읽기, 파일 받기, 스레드 보고 | [messenger.md](references/messenger.md) |
 | 캘린더 기간 조회, 일정 상세, 참석자, 일정 생성·수정·삭제 | [calendar.md](references/calendar.md) |
+| 최근 활동(알림) 피드 읽기 | 이 파일의 「활동 피드」 절 |
 
 ## 대상 지정 방법
 
@@ -277,6 +278,19 @@ dooray post get <project> <number> --json --with-tag-names
 | 대화방 파일 받기 | `dooray messenger file download "<channelId\|이름>" <fileId> [-o <dir>] [--output-file <path>]` — 파일이 올라온 대화방을 준다(스레드의 파일은 스레드 channelId 나 부모 대화방 어느 쪽이든 된다). 공식 API 문서에 없는 endpoint 라 예고 없이 막힐 수 있다 |
 
 대화방을 찾거나 `logs` 로 메시지·스레드를 읽거나 파일을 받거나 진행 상황을 스레드에 보고할 때는 [messenger.md](references/messenger.md) 를 먼저 읽는다.
+
+## 활동 피드
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 최근 활동(알림) 목록 | `dooray stream list [--size <n>] [--unread]` — 최근 2주, 최신순. 업무·댓글(`event`)·위키·메일·일정 등 type 이 섞여 온다. 표는 시각, 타입, 작성자, 제목·내용 열이다 |
+| 어느 시각 이후 활동만 | `dooray stream list --since <YYYY-MM-DD\|ISO8601\|prev-<N>d>` — 그 시각보다 오래된 페이지가 나오면 멈춘다 |
+| 2주 치 전부 | `dooray stream list --all` — 빈 페이지가 올 때까지 넘긴다 |
+| 다음 페이지 이어 받기 | `dooray stream list --before <cursor>` — 한 페이지만 받으면 다음 커서를 stderr 에 `다음 페이지: --before <cursor>` 로 알린다 |
+
+- 한 페이지가 `--size` 보다 적게 와도 끝이 아니다. 끝까지 보려면 `--all` 이나 `--since` 를 쓴다.
+- `--json` 은 API 의 원소를 그대로 배열로 낸다. 원소는 `{ "type": "post", "post": {...} }` 처럼 type 이름의 키에 모델이 들어 있고, 모델은 type 마다 다르다.
+- 호출 한도(429)를 넘으면 종료 코드 6 으로 끝난다. 잠시 기다렸다 다시 부른다.
 
 ## 캘린더
 
