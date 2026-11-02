@@ -5,7 +5,7 @@ import { basename } from "node:path";
 import { DoorayCliError } from "../utils/errors.js";
 import { normalizeDoorayMessage } from "../utils/dooray-message.js";
 import { fallbackFileName, parseContentDispositionFileName } from "../utils/content-disposition.js";
-import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "../utils/exit-codes.js";
+import { EXIT_API_ERROR, EXIT_AUTH_ERROR, EXIT_RATE_LIMITED } from "../utils/exit-codes.js";
 import { describeOrigin, fetchWithResponseTimeout, isTrustedFileHost } from "./file-redirect.js";
 import { createTokenBucket, parseRateLimitHeaders } from "./rate-limiter.js";
 import { apiPath } from "./api-path.js";
@@ -77,6 +77,8 @@ import type {
   UpdateCalendarEventResponse,
   CalendarEventDeleteType,
   DeleteCalendarEventResponse,
+  StreamListResponse,
+  GetStreamsParams,
 } from "./types.js";
 
 export interface GetPostsParams {
@@ -136,9 +138,21 @@ function joinIds(ids: string[] | undefined): string | undefined {
   return ids && ids.length > 0 ? ids.join(",") : undefined;
 }
 
+/** status 를 직접 보는 파일 경로의 종료 코드. 429 는 ky 오류 변환과 같이 호출 한도 초과로 나눈다. */
+function fileStatusExitCode(status: number): number {
+  return status === 429 ? EXIT_RATE_LIMITED : EXIT_API_ERROR;
+}
+
 async function toDoorayCliError(error: unknown): Promise<never> {
   if (error instanceof HTTPError) {
     const status = error.response.status;
+    if (status === 429) {
+      // ky 가 재시도를 다 쓴 뒤다. 본문 메시지보다 「잠시 뒤 다시」 가 부르는 쪽에 필요한 정보다.
+      throw new DoorayCliError(
+        "API 호출 한도를 넘었습니다 (429). 잠시 뒤 다시 실행하세요.",
+        EXIT_RATE_LIMITED,
+      );
+    }
     const exitCode = status === 401 || status === 403 ? EXIT_AUTH_ERROR : EXIT_API_ERROR;
     try {
       const body = (await error.response.json()) as DoorayErrorResponse;
@@ -758,7 +772,7 @@ export class DoorayApiClient {
       throw new DoorayCliError(notFoundMessage, EXIT_API_ERROR);
     }
     if (!res.ok) {
-      throw new DoorayCliError(`${label} 실패 (${res.status})`, EXIT_API_ERROR);
+      throw new DoorayCliError(`${label} 실패 (${res.status})`, fileStatusExitCode(res.status));
     }
     return res;
   }
@@ -766,7 +780,10 @@ export class DoorayApiClient {
   /** 다운로드 경로는 항상 307 이다 (ADR-015). 다른 status 면 파일 서버를 부르지 않고 실패한다. */
   private async followDownloadRedirect(res: Response, label: string, notFoundMessage?: string): Promise<Response> {
     if (res.status !== 307) {
-      throw new DoorayCliError(`${label} 실패 (예상 status 307, 실제 ${res.status})`, EXIT_API_ERROR);
+      throw new DoorayCliError(
+        `${label} 실패 (예상 status 307, 실제 ${res.status})`,
+        fileStatusExitCode(res.status),
+      );
     }
     return this.requestFileServer(res.headers.get("location"), label, {}, notFoundMessage);
   }
@@ -832,7 +849,7 @@ export class DoorayApiClient {
       }
 
       if (!res.ok) {
-        throw new DoorayCliError(`파일 업로드 실패 (${res.status})`, EXIT_API_ERROR);
+        throw new DoorayCliError(`파일 업로드 실패 (${res.status})`, fileStatusExitCode(res.status));
       }
 
       return await res.json() as UploadFileResponse;
@@ -890,7 +907,7 @@ export class DoorayApiClient {
       }
 
       if (!res.ok) {
-        throw new DoorayCliError(`위키 파일 업로드 실패 (${res.status})`, EXIT_API_ERROR);
+        throw new DoorayCliError(`위키 파일 업로드 실패 (${res.status})`, fileStatusExitCode(res.status));
       }
       return await res.json() as UploadWikiPageFileResponse;
     } catch (e) {
@@ -1171,6 +1188,24 @@ export class DoorayApiClient {
       return await this.api
         .get("messenger/v1/channels")
         .json<MessengerChannelListResponse>();
+    } catch (e) {
+      throw await toDoorayCliError(e);
+    }
+  }
+
+  // ─── Streams ────────────────────────────────────────
+
+  async getStreams(params?: GetStreamsParams): Promise<StreamListResponse> {
+    try {
+      return await this.api
+        .get("common/v1/streams", {
+          searchParams: {
+            ...(params?.size != null && { size: params.size }),
+            ...(params?.before && { before: params.before }),
+            ...(params?.read != null && { read: params.read }),
+          },
+        })
+        .json<StreamListResponse>();
     } catch (e) {
       throw await toDoorayCliError(e);
     }

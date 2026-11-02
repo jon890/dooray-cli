@@ -89,6 +89,7 @@ CLI 를 새 버전으로 올린 뒤에는 `dooray skill update` 를 한 번 실�
 | 메일 | 목록, 상세 조회, 발송, 답장, 첨부 파일 내려받기 | `dooray mail` | `dooray mail --help` |
 | 캘린더 | 캘린더와 일정 조회, 일정 생성, 수정, 삭제 | `dooray calendar` | [캘린더](docs/guide/calendar.md) |
 | 멤버 | 조직 멤버 검색과 상세 조회 | `dooray member` | `dooray member --help` |
+| 활동 피드 | 최근 2주 활동(업무, 댓글, 위키, 메일, 일정 알림) 목록 | `dooray stream list` | `dooray stream list --help` |
 
 ## 자주 쓰는 명령
 
@@ -106,6 +107,7 @@ dooray mail list --unread                           # 안 읽은 메일
 dooray mail attachment <uid> -o ./files             # 메일 첨부 파일 저장
 dooray messenger channel-send --channel "배포알림" --body "배포 완료"
 dooray calendar event list                          # 오늘 일정
+dooray stream list --since prev-1d                  # 하루 동안의 활동 알림
 ```
 
 업무나 위키 페이지를 가리킬 때는 `<project> <번호>` 대신 Dooray URL 을 그대로 줘도 돼요.
