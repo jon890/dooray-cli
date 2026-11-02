@@ -84,6 +84,27 @@ describe("fetchStreams — 페이지 넘기기", () => {
     expect(types(res.items)).toEqual(["post", "event", "schedule", "mail", "pageComment"]);
   });
 
+  it("--since 는 커서가 since 를 막 지나도 여유 안이면 다음 페이지를 받는다", async () => {
+    // 원소 시각은 최신순에서 수십 초 어긋나, 다음 페이지 앞쪽에 since 이후 원소가 올 수 있다.
+    const sinceMs = Date.parse("2026-11-02T10:00:30+09:00");
+    const lateItem = {
+      type: "event",
+      event: { id: "event-late", createdAt: "2026-11-02T10:00:40+09:00" },
+    };
+    const pages: StreamListResponse[] = [
+      { ...PAGES[0], result: PAGES[0].result!.slice(0, 1) },
+      { ...PAGES[1], result: [lateItem, ...PAGES[1].result!] },
+      PAGES[2],
+    ];
+    const getStreams = vi.fn(async (params?: { before?: string }) =>
+      params?.before == null ? pages[0] : pages[pages.findIndex((p) => String(p.cursor) === params.before) + 1],
+    );
+    const res = await fetchStreams({ getStreams }, { size: 20, sinceMs });
+    // 첫 커서(10:00:00)는 since 보다 30초 앞이지만 여유 안이라 둘째 페이지까지 받는다.
+    expect(getStreams).toHaveBeenCalledTimes(2);
+    expect(res.items.map((i) => (i[i.type!] as { id: string }).id)).toEqual(["post-1", "event-late"]);
+  });
+
   it("--unread 는 read=false 로 보낸다", async () => {
     const client = fakeClient();
     await fetchStreams(client, { size: 5, read: false });

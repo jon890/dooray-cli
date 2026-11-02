@@ -36,6 +36,12 @@ export const PAGING_SIZE = MAX_SIZE;
  */
 export const MAX_PAGES = 1000;
 
+/**
+ * `--since` 의 멈춤 판단에 두는 여유. 원소 시각이 최신순에서 최대 29초 어긋났다(실측).
+ * 커서가 since 를 막 지난 페이지 다음에도 since 이후 원소가 올 수 있어, 그만큼 한 페이지 더 받는다.
+ */
+export const SINCE_STOP_MARGIN_MS = 60_000;
+
 const PREV_DAYS = /^prev-([1-9]\d*)d$/;
 
 interface StreamListOptions {
@@ -173,7 +179,7 @@ export interface FetchStreamsResult {
  * 페이지를 넘기며 원소를 모은다.
  * - 기본: 한 페이지만 받는다.
  * - `all`: 빈 배열이 올 때까지 넘긴다.
- * - `sinceMs`: 응답 커서가 그보다 오래되면 멈춘다. 원소는 자기 시각이 그보다 오래되면 뺀다.
+ * - `sinceMs`: 응답 커서가 그보다 여유(`SINCE_STOP_MARGIN_MS`) 이상 오래되면 멈춘다. 원소는 자기 시각이 그보다 오래되면 뺀다.
  *   멈춤을 원소 시각이 아니라 커서로 판단하는 것은, 원소 시각이 최신순에서 수십 초씩 어긋나기 때문이다(실측).
  *   시각이 없는 원소(schedule 등)는 그 페이지 커서가 since 이후일 때만 남긴다.
  */
@@ -206,7 +212,7 @@ export async function fetchStreams(
         }
       }
       // 커서를 읽지 못하면 원소 시각으로 대신 판단한다.
-      reachedSince = cursorMs != null ? cursorMs < sinceMs : olderItem;
+      reachedSince = cursorMs != null ? cursorMs < sinceMs - SINCE_STOP_MARGIN_MS : olderItem;
     } else {
       items.push(...received);
     }
