@@ -2,7 +2,7 @@
  * 멤버의 소속 회사·부서·직책을 바쁨 시간 조회 응답에서 꺼낸다.
  *
  * `member get` 응답에는 이 셋이 없어 `POST /calendar/v1/fetch-busy-hours` 를 빌려 쓴다.
- * 바쁨 시간 자체는 쓰지 않으므로 기간은 1분으로 둔다 (ADR-069).
+ * 바쁨 시간 자체는 쓰지 않으므로 기간은 1분으로 둔다 (ADR-079).
  */
 import type { DoorayApiClient } from "../api/client.js";
 import type { MemberOrganization } from "../api/types.js";
