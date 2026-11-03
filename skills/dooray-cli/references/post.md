@@ -41,7 +41,7 @@ dooray post file upload   --url <url> --file ./report.pdf
 
 TTY 확인, non-TTY 실행, `-y`와 `--yes` 사용법은 [SKILL.md](../SKILL.md#삭제-명령의-확인-동작)를 따른다.
 
-## 업무 목록 거르기
+## 업무 목록 필터링
 
 `post list` 의 필터는 함께 줄 수 있고 `--all` 이면 모든 페이지에 같은 조건이 걸린다.
 
@@ -66,7 +66,7 @@ dooray post list <project> --to user@example.com --all
 `--parent` 의 짧은 숫자는 이 프로젝트의 업무 번호로 본다. `post create --parent` 와 달리 postId 를 쓰려면 15자리 이상 숫자여야 한다.
 숫자도 `<project>/<number>` 도 아닌 값은 조회 전에 종료 코드 3 으로 끝난다.
 
-기간은 네 가지 형태다.
+기간 형태는 다음과 같다.
 
 | 형태 | 뜻 |
 | --- | --- |

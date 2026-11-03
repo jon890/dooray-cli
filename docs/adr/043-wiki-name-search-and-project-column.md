@@ -36,7 +36,7 @@
   `post list --subject` 는 서버의 `subjects` 파라미터로 내려가지만 위키에는 대응하는 것이 없다.
 
   전체를 순회하는 것은 이슈가 지적한 문제가 전체를 순회해야 한다는 것이기 때문이다.
-  한 페이지 안에서만 거르면 그 문제가 그대로 남는다.
+  한 페이지 안에서만 필터링하면 그 문제가 그대로 남는다.
   `src/resolvers/project.ts` 의 `fetchAllProjects` 가 이미 같은 형태로 `size 100` 씩 `totalCount` 까지 순회하므로 새 패턴이 아니다.
   `resolveWikiHomePageId` 는 `size 100` 을 한 번만 불러 위키가 100개를 넘으면 뒤쪽을 보지 못하는데, 같은 순회 함수를 쓰면 그 누락도 함께 사라진다.
 

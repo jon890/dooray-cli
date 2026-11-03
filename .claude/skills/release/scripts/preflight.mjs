@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // 릴리스 전에 코드, 문서, 패키지 산출물과 빌드된 CLI 버전을 검사한다.
+// 로컬에서 게시할 릴리스면 npm 로그인도 검사한다.
 // CI release 워크플로의 태그-버전 일치와 pre-release 거부는 게시 단계에서 따로 검사한다.
 //
 // 종료 코드
@@ -65,6 +66,22 @@ if (pkgVersion !== builtVersion) {
   failed.push("버전 일치");
 } else {
   console.log("통과: 버전 일치");
+}
+
+// npm 로그인. 로그인이 만료된 채 게시하면 태그를 민 뒤에 PUT 404 로 실패하므로 여기서 막는다.
+// NPM_TRUSTED_PUBLISHING 이 true 면 CI 가 게시하므로 보지 않는다. 변수를 읽지 못하면 로컬 게시로 본다.
+console.log("\n=== npm 로그인 ===");
+const trusted = run("gh", ["variable", "get", "NPM_TRUSTED_PUBLISHING"]);
+if (trusted.status === 0 && trusted.stdout.trim() === "true") {
+  console.log("건너뜀: npm 로그인 (NPM_TRUSTED_PUBLISHING=true 라 CI 가 게시한다)");
+} else {
+  const whoami = run("npm", ["whoami"]);
+  if (whoami.status === 0) {
+    console.log(`통과: npm 로그인 (${whoami.stdout.trim()})`);
+  } else {
+    console.log("실패: npm 로그인 (npm whoami 실패). 사용자에게 `npm login` 을 요청한 뒤 다시 돌린다.");
+    failed.push("npm 로그인");
+  }
 }
 
 console.log("\n===============");

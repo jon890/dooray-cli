@@ -1,12 +1,15 @@
 # 캘린더
 
-캘린더와 일정은 읽기만 지원한다. 만들거나 고치거나 지우는 명령은 없다.
+캘린더 목록과 일정을 조회하고, 일정을 만들고 고치고 지운다.
 
 ```bash
 dooray calendar list                                  # 접근 가능한 캘린더 목록
 dooray calendar event list                            # 오늘 하루의 일정
 dooray calendar event list --from 2026-09-20 --to 2026-09-26
 dooray calendar event get <calendarId> <eventId>      # 일정 상세
+dooray calendar event create <calendar> --title "휴가" --start 2026-09-18
+dooray calendar event edit <calendar> <eventId> --location "회의실 B"
+dooray calendar event delete <calendar> <eventId>
 ```
 
 `--from` 과 `--to` 는 `2026-09-20` 처럼 날짜만 주거나 `2026-09-20T09:00:00+09:00` 처럼 시각까지 줄 수 있다.
@@ -30,3 +33,104 @@ dooray calendar event get <calendarId> <eventId>      # 일정 상세
 `event get` 은 본문을 자르지 않고 줄바꿈을 살려 전문을 보여준다.
 
 일정 목록은 페이징이 없다. 결과 수를 줄이려면 기간을 짧게 잡는 방법뿐이다.
+
+## 일정 만들기
+
+```bash
+# 종일 일정. --end 는 마지막 날이고 생략하면 하루다
+dooray calendar event create "내 캘린더" --title "휴가" --start 2026-09-18 --end 2026-09-19
+
+# 일반 일정. offset 을 붙인 일시로 주고 --end 가 필수다
+dooray calendar event create "팀 캘린더" --title "주간 회의" \
+  --start 2026-09-21T10:00:00+09:00 --end 2026-09-21T11:00:00+09:00 \
+  --location "회의실 A" --to 홍길동 user@example.com me --alarm 10m --alarm mail:1d \
+  --repeat weekly --repeat-byday MO --repeat-until 2026-12-31
+```
+
+첫 인자 `<calendar>` 는 캘린더 id 나 이름이다. 이름은 정확히 같은 것을 먼저 찾고, 없으면 이름에 포함된 것을 찾는다.
+여럿이 걸리면 후보를 보여주고 멈춘다. 구독 캘린더는 일정을 쓸 수 없어 이름 후보에서 빠진다.
+
+`--start` 의 형식이 종일 여부를 정한다.
+
+- `2026-09-18` 처럼 날짜만 주면 종일 일정이다. `--end` 도 날짜만 주고, **마지막 날을 포함해서** 적는다.
+  `--start 2026-09-18 --end 2026-09-19` 는 18일과 19일 이틀이다. `--end` 를 생략하면 하루다.
+- `2026-09-21T10:00:00+09:00` 처럼 offset 을 붙인 일시면 일반 일정이다. `--end` 가 필수이고 시작보다 뒤여야 한다.
+
+날짜와 일시를 섞은 값, offset 이 없는 일시, 실재하지 않는 날짜와 시각, 순서가 뒤집힌 값은
+API 를 부르기 전에 종료 코드 3 으로 거부한다.
+
+| 옵션 | 뜻 |
+| --- | --- |
+| `--title` | 제목. 필수 |
+| `--body`, `--body-file` | 본문. `-` 면 stdin 에서 읽는다. 없으면 본문 없이 만든다 |
+| `--mime-type` | 본문 형식. 기본 `text/x-markdown` |
+| `--location` | 장소 |
+| `--to`, `--cc` | 참석자와 참조자. organizationMemberId, 이메일, 정확한 이름, `me` 를 여러 개 줄 수 있다 |
+| `--alarm` | 알림. `10m`, `2h`, `1d`, `1w` 처럼 시작 몇 분·시간·일·주 전인지 적는다.<br>`mail:1d` 처럼 앞에 `mail:` 을 붙이면 메일 알림이고 기본은 앱 알림이다. 여러 번 줄 수 있다.<br>`--alarm` 을 주지 않으면 캘린더 설정의 기본 알림이 붙을 수 있다.<br>`edit` 로 일반 일정을 종일로 바꾸면 기존 알림이 지워지므로 필요하면 `--alarm` 을 함께 준다.<br>`edit` 에서 알림과 비공개는 함께 바뀐다. `--alarm` 만 주면 비공개 일정이 공개로, `--private` 만 주면 알림이 지워지므로 둘 다 준다 |
+| `--private` | 비공개 일정 |
+| `--repeat` | 반복 빈도. `daily`, `weekly`, `monthly`, `yearly` |
+| `--repeat-interval` | 반복 간격. 기본 1 |
+| `--repeat-until` | 반복 종료. 날짜만 주면 그 날 23:59:59 까지. 이미 반복 일정이던 것을 고칠 때는 그 일정의 반복 시간대, 그 밖에는 실행한 컴퓨터의 시간대 기준이다 |
+| `--repeat-byday` | 반복 요일. `TH`, `1 MO`(첫째 월요일), `-1 WE`(마지막 수요일) |
+| `--repeat-bymonth`, `--repeat-bymonthday` | 반복 월(1-12)과 일(1-31). `18,19,20` 처럼 쉼표로 여러 개를 줄 수 있다 |
+| `--dry-run` | 일정을 만들지 않고 보낼 요청 본문을 JSON 으로 낸다 |
+
+참석자는 조직 멤버만 넣을 수 있다. 조직에 없는 이메일은 외부 초대로 보내지 않고 거부한다.
+이름은 조직 전체에서 이름이 정확히 같은 사람만 찾는다. 같은 이름이 여럿이면 후보의 이름과 id 를 보여주고 멈추므로
+그 id 나 이메일로 다시 준다. `--repeat-*` 옵션은 `--repeat` 없이 쓸 수 없다.
+
+반복 요일과 날짜를 함께 주면 둘 다 맞는 날에 반복한다. 매월 18일에서 24일 사이의 목요일(정기점검 같은 일정)은 이렇게 만든다.
+
+```bash
+dooray calendar event create "팀 캘린더" --title "정기점검" \
+  --start 2026-10-22T10:00:00+09:00 --end 2026-10-22T12:00:00+09:00 \
+  --repeat monthly --repeat-byday TH --repeat-bymonthday 18,19,20,21,22,23,24
+```
+
+`--dry-run` 도 캘린더와 참석자 이름은 실제로 조회해서 푼다. 이름이 맞게 풀리는지 미리 확인하는 용도로 쓴다.
+`--quiet` 은 만든 일정의 id 를 낸다.
+
+## 일정 고치기
+
+```bash
+dooray calendar event edit "팀 캘린더" <eventId> --title "주간 회의 (변경)" --location "회의실 B"
+dooray calendar event edit "내 캘린더" <eventId> --start 2026-09-25 --end 2026-09-25   # 종일 일정을 25일 하루로
+```
+
+`create` 와 같은 옵션을 받고 모두 선택이다. **준 옵션의 항목만** 바뀐다.
+시각을 바꿀 때는 일반 일정과 종일 일정 모두 `--start` 와 `--end` 를 함께 준다. 지금 일정의 기간을 읽지 않아서,
+`--start` 만 받으면 여러 날 일정이 하루로 바뀔 수 있기 때문이다. 하루 일정이면 `--end` 에 같은 날짜를 준다.
+`--end` 만 줄 수도 없다.
+수정할 항목을 하나도 주지 않으면 편집기를 열지 않고 종료 코드 3 으로 멈춘다.
+
+`--to` 는 참석자 목록을, `--cc` 는 참조자 목록을 준 값으로 **바꾼다**. 기존 사람에 더해지지 않으므로 남길 사람도 함께 적는다.
+둘 중 하나만 주면 다른 쪽은 지금 일정에 있는 사람을 그대로 유지한다. `--cc` 만 고쳐도 참석자는 빠지지 않는다.
+
+반복 규칙은 `--repeat` 을 줄 때만 바뀐다. 반복 규칙은 통째로 바뀌므로, 빈도가 지금과 같으면
+주지 않은 `--repeat-interval`·`--repeat-until`·`--repeat-byday`·`--repeat-bymonth`·`--repeat-bymonthday` 는 지금 값을 유지한다.
+`--repeat monthly --repeat-until 2027-08-31` 은 간격과 요일 조건을 그대로 두고 종료일만 늦춘다.
+빈도를 바꾸면 종료일만 지금 값을 유지하고 나머지 세부 값은 유지하지 않으며, 지워질 항목을 경고로 알린다. 웹에서 정한 반복 횟수 같은 값도 지워진다고 알린다.
+경고에는 지워질 값을 그대로 다시 주는 옵션(예: `--repeat weekly --repeat-byday TH`)이 함께 나온다. 수정이 끝난 뒤에도 그 옵션으로 다시 실행하면 값을 되살린다.
+반복 횟수처럼 CLI 옵션이 없는 값은 원래 값만 알려 주므로 웹에서 다시 설정한다. 수정 전에 확인하려면 `--dry-run` 을 붙인다.
+
+반복 일정의 회차 id(`<eventId>-20261109T000000Z` 형태)로는 고칠 수 없다. 회차 하나만 고치는 방법이 없고,
+회차 id 로 고치면 남은 반복 전체가 바뀌기 때문에 종료 코드 3 으로 멈추고 원본 id 를 알려준다.
+반복 전체를 고치려면 그 원본 id 로 다시 실행한다. 회차 하나만 바꿔야 하면 웹에서 고친다.
+
+## 일정 지우기
+
+```bash
+dooray calendar event delete "팀 캘린더" <eventId>                 # 확인 후 삭제
+dooray calendar event delete "팀 캘린더" <eventId> --yes           # 확인 없이 삭제
+dooray calendar event delete "팀 캘린더" <eventId> --scope all     # 반복 일정 전체
+```
+
+삭제 전에 일정 제목과 시각을 보여주고 확인을 받는다. 기본 답은 아니오다.
+파이프나 스크립트처럼 터미널이 아닌 곳에서는 확인을 받을 수 없어 `--yes` 가 없으면 종료 코드 3 으로 멈춘다.
+
+반복 일정은 `--scope` 로 지울 범위를 고른다. `this` 는 그 회차만(기본), `from-this` 는 그 회차부터 이후 전체,
+`all` 은 반복 전체다. 반복 일정의 한 회차 id(`<eventId>-20240228T013000Z` 형태)는 받은 그대로 넘긴다.
+
+반복 일정의 원본 id 에 `this` 를 주면 그 회차가 아니라 반복 전체가 지워진다. 그래서 원본 id 를 `--scope` 없이(또는 `--scope this` 로)
+지우려 하면 확인을 묻기 전에 종료 코드 3 으로 멈춘다. 한 회차만 지우려면 `calendar event list` 로 그 회차 id 를 찾아 넘기고,
+반복 전체를 지우려면 `--scope all` 을 준다.

@@ -27,7 +27,7 @@ Dooray 공식 API 문서: [https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO
 그 스크립트의 `KNOWN_UNDOCUMENTED` 로 옮긴다.
 
 **공식 문서에 없는 endpoint 는 기본으로 쓰지 않는다.** 쓰려면 읽기 전용이어야 하고
-확인·실측·등록·경고 네 가지를 모두 채워야 한다. 조건과 그 이유는
+확인·실측·등록·경고를 모두 채워야 한다. 조건과 그 이유는
 [ADR-062](docs/adr/062-undocumented-endpoint-policy.md)가 소유한다.
 
 ## 빌드 & 실행
@@ -114,3 +114,5 @@ Claude Code 는 그 경로의 파일을 읽을 때 규칙을 불러온다.
 ## Git
 
 커밋 메시지와 PR 제목·본문은 한국어로 작성한다.
+
+이 저장소의 PR 본문, 이슈, 리뷰 회신과 PR 댓글은 미리보기 승인을 받지 않고 등록한다. 등록 전 `/fos-skills:korean-check` 스킬은 그대로 거친다(사용자 결정 2026-10-23).

@@ -211,6 +211,19 @@ describe("리뷰 반영", () => {
     expect(out.nonLiteral).toBe(1);
   });
 
+  it("apiPath tagged template 의 경로를 리터럴처럼 읽는다", () => {
+    const source =
+      'await this.api\n  .get(apiPath`project/v1/projects/${projectId}/posts`)\n  .json();\n' +
+      'const url = this.baseUrl + apiPath`wiki/v1/wikis/${wikiId}/pages/${pageId}/files`;\n' +
+      'await fetch(url, { method: "POST" });';
+    const out = extractImplEndpoints(source);
+    expect(out.nonLiteral).toBe(0);
+    expect(out.endpoints).toEqual([
+      "GET project/v1/projects/{id}/posts",
+      "POST wiki/v1/wikis/{id}/pages/{id}/files",
+    ]);
+  });
+
   it("뒤 슬래시가 있는 공식 경로를 같은 경로로 정규화한다", () => {
     const content = "GET /calendar/v1/calendars\nGET /calendar/v1/calendars/\n";
     expect(parseOfficialEndpoints(content)).toEqual(["GET calendar/v1/calendars"]);

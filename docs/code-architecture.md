@@ -28,17 +28,17 @@ src/
   resolvers/      # 사람이 준 이름·URL·부분 입력을 식별자로 바꾼다. 읽기 전용
   services/       # 캐시의 유효성을 깨는 변경. 성공 직후 해당 캐시를 지운다
   cache/          # ~/.dooray/cache/ 파일 CRUD 와 TTL
-  config/         # ~/.dooray/config.json CRUD
+  config/         # ~/.dooray/config.json CRUD 와 비밀값 저장소(macOS 키체인, ADR-069)
   skill/          # 번들 스킬의 설치 상태 판정과 install/update
   editor/         # $EDITOR 실행과 frontmatter 직렬화
   formatters/     # 엔티티별 표·JSON·quiet 출력
   utils/          # 오류, 종료 코드, 본문 입력, 마크업, 확인 절차 같은 공용 조각
   commands/       # 명령 하나에 파일 하나. 위 계층을 조합한다
-    messenger/  project/  member/  post/  wiki/  mail/  calendar/
+    messenger/  project/  member/  post/  wiki/  mail/  calendar/  stream/
 ```
 
 파일 하나하나가 무엇을 하는지는 여기 적지 않는다.
-같은 사실을 코드 주석과 ADR 과 이 문서 셋에 두면 갱신 지점이 셋이 되고, 그중 하나가 낡는다.
+같은 사실을 코드 주석과 ADR 과 이 문서에 함께 두면 갱신 지점이 여러 곳이 되고, 그중 하나가 낡는다.
 
 | 알고 싶은 것 | 보는 곳 |
 | --- | --- |
@@ -54,7 +54,7 @@ src/
 
 ```
 commands/* → resolvers/* → cache/store + api/client   (읽기: 이름 → id 번역)
-commands/mail/{get,reply} → resolvers/mail-input → api/imapClient   (캐시 없이 mail id → UID 조회)
+commands/mail/{get,attachment,reply} → resolvers/mail-input → api/imapClient   (캐시 없이 mail id → UID 조회)
 commands/* → services/*  → cache/store + api/client + config/store   (쓰기: 변경과 캐시 무효화, ADR-042)
 commands/* → formatters/*
 commands/* → utils/errors
@@ -85,7 +85,7 @@ editor/    → api/client (현재 데이터 fetch) + resolvers/member
 grep -n "^  async " src/api/client.ts
 ```
 
-메서드가 지키는 규약은 넷이다.
+메서드가 지키는 규약은 다음과 같다.
 
 - 생성자는 `apiKey` 와 `baseUrl` 만 받는다. 비즈니스 로직을 두지 않는다
 - 요청은 `api/rate-limiter` 의 토큰 버킷을 공유한다. 호출부는 요청 간격을 신경 쓰지 않는다
@@ -132,11 +132,10 @@ grep -n "^  async " src/api/client.ts
 
 - vitest (코로케이션 `*.test.ts` 패턴 — 소스 옆에 테스트 배치)
 - `pnpm test` (단발) / `pnpm test:watch` (개발 중)
-- `pnpm test` 가 도는 테스트 파일은 68개다. 세 곳에 나뉘어 있다.
-  - `src/` 의 `*.test.ts` 62개. `api`, `cache`, `config`, `editor`, `formatters`, `resolvers`,
-    `services`, `skill`, `utils` 와 `commands` 의 mail·messenger·post·project·wiki 계열이 대상이다.
-  - `scripts/` 의 `*.test.mjs` 3개. 문서 검사 스크립트와 endpoint 목록 스크립트를 본다 (ADR-048).
-  - `skills/dooray-persona/scripts/lib/` 의 `*.test.mjs` 3개.
+- `pnpm test` 가 도는 테스트 파일은 아래 위치에 있다.
+  - `src/` 의 `*.test.ts`. 테스트 대상 파일 옆에 둔다.
+  - `scripts/` 의 `*.test.mjs`. 문서 검사 스크립트와 endpoint 목록 스크립트를 본다 (ADR-048).
+  - `skills/dooray-persona/scripts/lib/` 의 `*.test.mjs`.
 - `vitest.config.ts` 가 `worktrees/**` 를 대상에서 뺀다. 그 아래는 git worktree 라 같은 테스트가 중복 수집된다.
 - 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 (ADR-020 도입 근거)
 

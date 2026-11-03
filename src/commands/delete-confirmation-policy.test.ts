@@ -16,6 +16,7 @@ import { deleteCommentFileCommand } from "./post/comment/file/delete.js";
 import { wikiPageDeleteCommand } from "./wiki/page-delete.js";
 import { wikiPageFileDeleteCommand } from "./wiki/page-file/delete.js";
 import { wikiPageCommentDeleteCommand } from "./wiki/page-comment/delete.js";
+import { calendarEventDeleteCommand } from "./calendar/event-delete.js";
 
 const { clientConstructor, deleteApi } = vi.hoisted(() => ({
   clientConstructor: vi.fn(),
@@ -38,6 +39,7 @@ vi.mock("../api/client.js", () => ({
     deleteWikiPage = deleteApi;
     deleteWikiPageComment = deleteApi;
     deleteWikiPageFile = deleteApi;
+    deleteCalendarEvent = deleteApi;
 
     constructor(...args: unknown[]) {
       clientConstructor(...args);
@@ -96,6 +98,11 @@ const cases: DeleteCommandCase[] = [
     name: "wiki page comment delete",
     command: wikiPageCommentDeleteCommand,
     args: ["my-project", "page-1", "comment-1"],
+  },
+  {
+    name: "calendar event delete",
+    command: calendarEventDeleteCommand,
+    args: ["1111222233334444555", "event-1"],
   },
 ];
 

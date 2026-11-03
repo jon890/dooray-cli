@@ -1,7 +1,7 @@
 ## ADR-063: 캘린더는 읽기 세 명령만 두고 기간은 항상 양끝을 보낸다
 
 **결정**: `calendar list` 와 `calendar event list` 와 `calendar event get` 셋을 둔다.
-일정 생성·수정·삭제는 두지 않는다.
+일정 생성·수정·삭제는 두지 않는다. (이 부분은 [ADR-070](070-calendar-event-write.md)으로 대체됐다.)
 `event list` 는 `--from` 과 `--to` 를 받아 **언제나 `timeMin` 과 `timeMax` 를 함께** 보낸다.
 한쪽만 주면 빠진 쪽을 **준 값과 같은 날**로 채워, 단독 지정은 그 날 하루가 된다.
 

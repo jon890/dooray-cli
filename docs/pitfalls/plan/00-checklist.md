@@ -8,7 +8,7 @@ source: [섹션 1 소진 체크리스트]
 related: []
 ---
 
-plan 제출 전 11개 패턴을 확인한다.
+plan 제출 전 아래 패턴을 확인한다.
 
 **판정은 `planning` 스킬의 `verify_task.py` 가 소유한다.**
 저장소는 별도 검사기를 두지 않는다. 같은 규칙을 둘이 가지면 서로 어긋난다.
@@ -40,7 +40,7 @@ python3 ~/.claude/skills/planning/scripts/verify_task.py plan065-...
 기대값 주석 유무를 보던 것을 `verify_task.py` 가 가지고 있지 않다.
 그 규칙이 필요하면 스킬에 넣는다. 저장소에 다시 만들지 않는다.
 
-`verify_task.py` 가 더 보는 것이 넷 있다. 위 11개 밖이다.
+`verify_task.py` 가 아래 항목을 더 본다. 위 표 밖이다.
 
 - `index.json` 이 스키마와 실제 phase 파일에 맞는가
 - phase 에 필수 절(`## 목표`, `**범위 외**`, `## 작업 항목`, `## Critical Files`, `## 검증`)이 있는가

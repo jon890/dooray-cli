@@ -38,6 +38,11 @@ export const OK_DOMAINS = [
   "dooray.com",
   "example.com",
   "example.dooray.com",
+  // 첨부 파일 서버. file-api.dooray.com 은 실측했고, 나머지는 같은 모양이라고 가정한 공개 주소다 (ADR-074).
+  "file-api.dooray.co.kr",
+  "file-api.dooray.com",
+  "file-api.gov-dooray.co.kr",
+  "file-api.gov-dooray.com",
   "github.com",
   "helpdesk.dooray.com",
   "my-org.dooray.com",
@@ -69,6 +74,11 @@ export const OK_IDS = [
   // JavaScript 의 안전 정수 경계값과 그 바로 위 값. 식별자가 아니라 언어 상수다 (ADR-051).
   "9007199254740991",
   "9007199254740993",
+  // streams 커서 예시. 나노초 timestamp 라 식별자가 아니다. 첫 값은 공식 문서의 예시다.
+  "1781768002000000000",
+  "1793581200000000000",
+  "1793502000000000000",
+  "1793404800000000000",
 ];
 
 // CLI 예시의 project 자리에 와도 되는 값.

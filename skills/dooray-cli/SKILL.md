@@ -1,6 +1,6 @@
 ---
 name: dooray-cli
-description: Dooray 업무 관리 CLI. 프로젝트/업무/댓글/위키 조회·생성·수정. AI 에이전트가 두레이 업무를 자동화할 때 사용.
+description: Dooray 업무 관리 CLI. 프로젝트/업무/댓글/위키 조회·생성·수정. AI 에이전트가 두레이 업무를 자동화할 때 사용. 팀 양식에 맞춰 업무 문서를 쓰거나 진행 기록 댓글을 남기는 일은 그 일을 맡은 업무 작성 스킬이 설치돼 있으면 그 스킬이 맡고, 이 스킬은 명령 문법과 조회, 단순 생성과 수정을 맡는다.
 ---
 
 # dooray-cli
@@ -12,27 +12,28 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 하려는 일 | reference |
 | --- | --- |
 | 설치·초기 설정, 출력 모드, API 제약, 에러 처리, 캐시, 피드백 등록 | [common.md](references/common.md) |
-| 업무 식별·생성·수정·삭제, 목록 거르기, 본문 일부 치환, 참조자·담당자 변경, 첨부 보호, 부모 지정, 태그 | [post.md](references/post.md) |
+| 업무 식별·생성·수정·삭제, 목록 필터링, 본문 일부 치환, 참조자·담당자 변경, 첨부 보호, 부모 지정, 태그 | [post.md](references/post.md) |
 | 업무 댓글 추가·필터·조회 | [comment.md](references/comment.md) |
 | 위키 페이지 조회·트리·삭제, 본문 일부 치환, 첨부와 인라인 이미지, 위키 댓글 | [wiki.md](references/wiki.md) |
 | 그룹 멘션·cc 판단, 멘션·링크 자동 삽입, Dooray 마크다운 링크 | [mention-link.md](references/mention-link.md) |
 | 워크플로우 판단 기준, 정형 task 자동화, 명령 체이닝 | [workflow.md](references/workflow.md) |
-| 메일 원본 선택, 답장 전 확인 | [mail.md](references/mail.md) |
-| 메신저 대화방 찾기, 메시지 읽기, 스레드 보고 | [messenger.md](references/messenger.md) |
-| 캘린더 기간 조회, 일정 상세, 참석자 | [calendar.md](references/calendar.md) |
+| 메일 원본 선택, 답장 전 확인, 첨부 저장 | [mail.md](references/mail.md) |
+| 메신저 대화방 찾기, 메시지·스레드 읽기, 파일 받기, 스레드 보고 | [messenger.md](references/messenger.md) |
+| 캘린더 기간 조회, 일정 상세, 참석자, 일정 생성·수정·삭제 | [calendar.md](references/calendar.md) |
+| 최근 활동(알림) 피드 읽기 | 이 파일의 「활동 피드」 절 |
 
 ## 대상 지정 방법
 
 `post get`/`edit`/`replace`/`done`/`workflow`, `post comment` 전체, `post file` 전체, `post comment file` 전체,
 `wiki page get` 과 `wiki page edit` 과 `wiki page replace`, `wiki page file` 과 `wiki page comment` 전체,
-그리고 `wiki page delete` 와 `wiki page move` 가 네 가지 형태를 모두 받는다.
+그리고 `wiki page delete` 와 `wiki page move` 가 아래 형태를 모두 받는다.
 
 - `<project> <number>` — 업무는 번호, 위키는 `<project> <page-id>`
 - `--id <postId>` / `--id <pageId>` — 위키는 `--project` 없이도 조회된다. 함께 주면 wikiId 를 해석하는 호출을 한 번 아낀다
 - `--url <url>`
 - 첫 인자에 Dooray URL 을 직접
 
-받아들이는 URL 형식은 셋이다.
+받아들이는 URL 형식은 다음과 같다.
 
 - `https://*.dooray.com/task/to/<postId>`
 - `https://*.dooray.com/task/<projectId>/<postId>` — 브라우저 주소창 복사본
@@ -69,7 +70,7 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 
 ## 삭제 명령의 확인 동작
 
-여섯 삭제 명령은 같은 안전 확인 정책을 따른다.
+아래 삭제 명령은 같은 안전 확인 정책을 따른다.
 
 | 명령 | 확인 | 자동화 |
 | --- | --- | --- |
@@ -115,10 +116,10 @@ NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작
 | 의도 | 커맨드 |
 | --- | --- |
 | 업무 목록 | `dooray post list <project>` — `--all` 로 모든 페이지를 이어 받는다 |
-| 태그로 거르기 | `dooray post list <project> --tag "<이름>"` — 반복 가능하고, 여러 번 주면 그 태그를 모두 가진 업무만 온다 |
-| 사람으로 거르기 | `dooray post list <project> --from me` — 등록자 `--from`, 담당자 `--to`, 참조자 `--cc`. 옵션마다 한 명이고 `me`·id·이메일·이름을 받는다 |
+| 태그로 필터링 | `dooray post list <project> --tag "<이름>"` — 반복 가능하고, 여러 번 주면 그 태그를 모두 가진 업무만 온다 |
+| 사람으로 필터링 | `dooray post list <project> --from me` — 등록자 `--from`, 담당자 `--to`, 참조자 `--cc`. 옵션마다 한 명이고 `me`·id·이메일·이름을 받는다 |
 | 하위 업무만 | `dooray post list <project> --parent <number>` — 이 프로젝트의 업무 번호다. `<project>/<number>` 와 postId 도 받는다 |
-| 기간으로 거르기 | `dooray post list <project> --created 2026-09-01~2026-09-30` — 수정 기간은 `--updated`. `A~`, `"~B"`(따옴표 필수), `prev-7d` 도 받는다 |
+| 기간으로 필터링 | `dooray post list <project> --created 2026-09-01~2026-09-30` — 수정 기간은 `--updated`. `A~`, `"~B"`(따옴표 필수), `prev-7d` 도 받는다 |
 | 정렬 바꾸기 | `dooray post list <project> --order -postUpdatedAt` — `createdAt`·`postUpdatedAt`·`postDueAt`, `-` 는 내림차순. 기본 `-createdAt` |
 | 업무 검색 | `dooray post search <project> "<keyword>"` — projectId(15자리 이상 numeric) 를 넣으면 캐시를 우회한다 |
 | 업무 상세 | `dooray post get <project> <number>` 또는 `dooray post get --id <postId>` — 일반 출력에는 태그가 이름으로 나온다 |
@@ -258,12 +259,13 @@ dooray post get <project> <number> --json --with-tag-names
 | 메일 목록 | `dooray mail list` |
 | 안 읽은 메일 | `dooray mail list --unread` |
 | 제목 검색 | `dooray mail list --search "<keyword>"` |
-| 메일 상세 | `dooray mail get <uid\|url\|mail-id>` — `mail list` 의 UID, 메일 웹 주소, 그 주소의 19자리 id 를 모두 받는다 |
-| 메일 발송 | `dooray mail send --to "..." --subject "..." --body "..."` — 숨은참조는 `--bcc`, HTML 본문은 `--html` |
-| 메일 답장 | `dooray mail reply <uid\|url\|mail-id> --body "..."` — HTML 본문은 `--html` |
+| 메일 상세 | `dooray mail get <uid\|url\|mail-id>` — `mail list` 의 UID, 메일 웹 주소, 그 주소의 19자리 id 를 모두 받는다. 첨부가 있으면 1부터 시작하는 순번과 함께 목록을 보여 주고, `--json` 은 `attachments` 배열을 준다 |
+| 메일 첨부 저장 | `dooray mail attachment <uid\|url\|mail-id> [--id <순번>]... [-o <dir>] [--force]` — 순번은 `mail get` 이 보여 준 값이고, 주지 않으면 모두 저장한다. 같은 이름의 파일이 있으면 그 첨부는 실패하고 `--force` 일 때만 덮어쓴다 |
+| 메일 발송 | `dooray mail send --to "..." --subject "..." --body "..."` — 숨은참조는 `--bcc`, HTML 본문은 `--html`, 파일 첨부는 `--attach <path>...`, 보낸메일함 저장 생략은 `--no-save-sent` |
+| 메일 답장 | `dooray mail reply <uid\|url\|mail-id> --body "..."` — HTML 본문은 `--html`, 파일 첨부는 `--attach <path>...`, 보낸메일함 저장 생략은 `--no-save-sent` |
 | 저장된 인증정보 제거 | `dooray mail logout` (비대화형 환경은 `--yes`) |
 
-답장하거나 메일 웹 주소로 원본을 고를 때는 [mail.md](references/mail.md) 를 먼저 읽는다.
+답장하거나 메일 웹 주소로 원본을 고르거나 첨부를 저장할 때는 [mail.md](references/mail.md) 를 먼저 읽는다.
 
 ## 메신저
 
@@ -273,9 +275,23 @@ dooray post get <project> <number> --json --with-tag-names
 | 대화방 메시지 | `dooray messenger channel-send --channel "<channelId\|이름>" --body "..."` — 이름으로는 자신이 속한 방만 찾는다 |
 | 대화방 스레드 열기 | `dooray messenger thread-send --channel "<channelId\|이름>" --body "..."` — `--thread-body` 나 `--thread-body-file` 로 첫 메시지를 함께 보내고, `--log <log-id>` 로 이미 올라간 메시지에 연다 |
 | 대화방 목록 | `dooray messenger channels [--type direct\|private\|me\|bot] [--search <이름>] [--since <날짜>] [--all]` — 수정 시각(updatedAt) 최신순, 보관·숨긴·`status` 가 `normal` 이 아닌 방은 `--all` 로 포함(빠진 방이 있으면 stderr 로 알림). `logs`·`channel-send` 에 넘길 channelId 를 여기서 찾는다 |
-| 대화방 메시지 읽기 | `dooray messenger logs "<channelId\|이름>" [-n\|--count <개수>]` — 최근 N건(기본 20, 최대 1000). 표는 오래된 것이 위, 최신이 아래 |
+| 대화방 메시지 읽기 | `dooray messenger logs "<channelId\|이름>" [-n\|--count <개수>]` — 최근 N건(기본 20, 최대 1000). 표는 오래된 것이 위, 최신이 아래. 마지막 참조 열에 `파일 <fileId>`·`스레드(<댓글 수>) <channelId>` 가 잘리지 않고 나온다. 스레드 channelId 를 다시 `logs` 에 넣으면 스레드 댓글을 읽는다. 공식 API 문서에 없는 endpoint 라 예고 없이 막힐 수 있다 |
+| 대화방 파일 받기 | `dooray messenger file download "<channelId\|이름>" <fileId> [-o <dir>] [--output-file <path>]` — 파일이 올라온 대화방을 준다(스레드의 파일은 스레드 channelId 나 부모 대화방 어느 쪽이든 된다). 공식 API 문서에 없는 endpoint 라 예고 없이 막힐 수 있다 |
 
-대화방을 찾거나 `logs` 로 메시지를 읽거나 진행 상황을 스레드에 보고할 때는 [messenger.md](references/messenger.md) 를 먼저 읽는다.
+대화방을 찾거나 `logs` 로 메시지·스레드를 읽거나 파일을 받거나 진행 상황을 스레드에 보고할 때는 [messenger.md](references/messenger.md) 를 먼저 읽는다.
+
+## 활동 피드
+
+| 의도 | 커맨드 |
+| --- | --- |
+| 최근 활동(알림) 목록 | `dooray stream list [--size <n>] [--unread]` — 최근 2주, 최신순. 업무·댓글(`event`)·위키·메일·일정 등 type 이 섞여 온다. 표는 시각, 타입, 작성자, 제목·내용 열이다 |
+| 어느 시각 이후 활동만 | `dooray stream list --since <YYYY-MM-DD\|ISO8601\|prev-<N>d>` — 그 시각보다 오래된 페이지가 나오면 멈춘다 |
+| 2주 치 전부 | `dooray stream list --all` — 빈 페이지가 올 때까지 넘긴다 |
+| 다음 페이지 이어 받기 | `dooray stream list --before <cursor>` — 한 페이지만 받으면 다음 커서를 stderr 에 `다음 페이지: --before <cursor>` 로 알린다 |
+
+- 한 페이지가 `--size` 보다 적게 와도 끝이 아니다. 끝까지 보려면 `--all` 이나 `--since` 를 쓴다.
+- `--json` 은 API 의 원소를 그대로 배열로 낸다. 원소는 `{ "type": "post", "post": {...} }` 처럼 type 이름의 키에 모델이 들어 있고, 모델은 type 마다 다르다.
+- 호출 한도(429)를 넘으면 종료 코드 6 으로 끝난다. 잠시 기다렸다 다시 부른다.
 
 ## 캘린더
 
@@ -285,8 +301,11 @@ dooray post get <project> <number> --json --with-tag-names
 | 오늘 일정 | `dooray calendar event list` |
 | 기간 일정 | `dooray calendar event list --from <일시> --to <일시>` — `YYYY-MM-DD` 또는 `2026-09-20T09:00:00+09:00` |
 | 일정 상세 | `dooray calendar event get <calendar-id> <event-id>` — 두 id 가 모두 필요하다 |
+| 일정 생성 | `dooray calendar event create <calendar> --title "..." --start <날짜\|일시> [--end ...] [--to <멤버...>]` — 캘린더는 id 나 이름, 날짜만 주면 종일 |
+| 일정 수정 | `dooray calendar event edit <calendar> <event-id> [--title ...] [--start ... --end ...]` — 준 항목만 바뀐다. 반복 일정 회차 id 는 거부된다 |
+| 일정 삭제 | `dooray calendar event delete <calendar> <event-id> [--scope this\|from-this\|all] --yes` — non-TTY 는 `--yes` 필수 |
 
-일정을 조회하기 전에 [calendar.md](references/calendar.md) 를 읽는다. 기간 해석과 조회 상한, 참석자를 확인하는 방법이 거기 있다.
+일정을 조회하거나 만들기 전에 [calendar.md](references/calendar.md) 를 읽는다. 기간 해석과 조회 상한, 참석자를 확인하는 방법, 종일 일정의 `--end` 해석이 거기 있다.
 
 ## 옵션 이름
 
@@ -296,4 +315,5 @@ dooray post get <project> <number> --json --with-tag-names
 
 `--from`·`--to` 는 명령마다 뜻이 다르다.
 `post list` 에서는 등록자·담당자 **멤버** 필터이고, `calendar event list` 에서는 조회 기간의 시작·끝 **날짜**다.
-업무를 기간으로 거르려면 `post list` 의 `--created`(등록)·`--updated`(수정)를 쓴다.
+`calendar event create`·`edit` 의 `--to` 는 참석자이고, 일정 시각은 `--start`·`--end` 로 준다.
+업무를 기간으로 필터링하려면 `post list` 의 `--created`(등록)·`--updated`(수정)를 쓴다.

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { getConfig } from "../config/store.js";
+import { configReadErrorMessage, getConfig } from "../config/store.js";
 import { updateConfigValue } from "../services/config.js";
 import { resolveConfigValue } from "../utils/config-value.js";
 import { DoorayCliError } from "../utils/errors.js";
@@ -47,8 +47,11 @@ configCommand
   .argument("[key]", "설정 키 (생략 시 전체 출력)")
   .action(async (key?: string) => {
     const result = await getConfig();
+    if (result.state === "invalid" || result.state === "unreadable") {
+      // 손상과 읽기 실패(키체인 포함)는 「파일이 없다」 로 뭉개지 않고 실제 이유를 보인다.
+      throw new DoorayCliError(configReadErrorMessage(result), EXIT_CONFIG_ERROR);
+    }
     if (result.state !== "ok") {
-      // config get 은 값 표시 명령이라 읽기 실패 원인은 세부 복구 흐름 없이 같은 오류로 다룬다.
       throw new DoorayCliError(
         "설정 파일이 없습니다. dooray config set 으로 설정하세요.",
         EXIT_CONFIG_ERROR,

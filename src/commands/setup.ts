@@ -4,7 +4,9 @@ import path from "path";
 import fs from "fs/promises";
 import { createSkillManagerContext } from "../skill/context.js";
 import { installSkill } from "../skill/manager.js";
-import { getConfig } from "../config/store.js";
+import { configReadErrorMessage, getConfig } from "../config/store.js";
+import { DoorayCliError } from "../utils/errors.js";
+import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
 import { replaceConfig } from "../services/config.js";
 import { DoorayApiClient } from "../api/client.js";
 import { ensureMe } from "../resolvers/me.js";
@@ -19,6 +21,11 @@ export const setupCommand = new Command("setup")
     );
 
     const existingResult = await getConfig();
+    // 키체인을 읽지 못하면 마지막 저장도 같은 읽기에서 실패한다.
+    // 마법사 입력을 다 받은 뒤 버리지 않도록 시작하기 전에 끝낸다.
+    if (existingResult.state === "unreadable" && existingResult.source === "keychain") {
+      throw new DoorayCliError(configReadErrorMessage(existingResult), EXIT_CONFIG_ERROR);
+    }
     const existing =
       existingResult.state === "ok" ? existingResult.config : undefined;
     if (existingResult.state === "unreadable") {

@@ -42,7 +42,13 @@ const mail = {
   internalDate: new Date("2026-01-02T03:04:05Z"),
   isRead: true,
   body: "본문",
+  attachments: [] as unknown[],
 };
+
+const attachments = [
+  { index: 1, fileName: "a.crt", size: 1228, contentType: "application/x-x509-ca-cert", inline: false },
+  { index: 2, fileName: "logo.png", size: 3072, contentType: "image/png", inline: true },
+];
 
 async function runMailGet(args: string[]): Promise<void> {
   vi.resetModules();
@@ -80,7 +86,40 @@ describe("mailGetCommand", () => {
       date: "2026-01-01T00:00:00.000Z",
       isRead: true,
       body: "본문",
+      attachments: [],
     });
+  });
+
+  it("JSON 에 첨부 목록을 그대로 담는다", async () => {
+    mocks.getMail.mockResolvedValue({ ...mail, attachments });
+    vi.resetModules();
+    const { mailGetCommand } = await import("./get.js");
+    const program = new Command().option("--json").addCommand(mailGetCommand);
+
+    await program.parseAsync(["--json", "get", "337"], { from: "user" });
+
+    const output = vi.mocked(process.stdout.write).mock.calls
+      .map(([value]) => String(value)).join("");
+    expect(JSON.parse(output).attachments).toEqual(attachments);
+  });
+
+  it("평문은 첨부가 있을 때만 첨부 목록을 출력한다", async () => {
+    mocks.getMail.mockResolvedValue({ ...mail, attachments });
+    await runMailGet(["337"]);
+    const withAttachments = vi.mocked(process.stdout.write).mock.calls
+      .map(([value]) => String(value)).join("");
+    expect(withAttachments).toContain("첨부:");
+    expect(withAttachments).toContain("2개");
+    expect(withAttachments).toContain("  1. a.crt");
+    expect(withAttachments).toContain("  2. logo.png");
+    expect(withAttachments.match(/\[인라인\]/g)).toHaveLength(1);
+
+    vi.mocked(process.stdout.write).mockClear();
+    mocks.getMail.mockResolvedValue(mail);
+    await runMailGet(["337"]);
+    const without = vi.mocked(process.stdout.write).mock.calls
+      .map(([value]) => String(value)).join("");
+    expect(without).not.toContain("첨부:");
   });
 
   it.each([

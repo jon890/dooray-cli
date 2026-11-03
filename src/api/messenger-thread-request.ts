@@ -1,3 +1,4 @@
+import { apiPath } from "./api-path.js";
 import type { ChannelThreadRequest, LogThreadRequest } from "./types.js";
 
 export interface ThreadRequest {
@@ -21,7 +22,7 @@ export function buildThreadRequest(
   if (opts?.logId) {
     const json: LogThreadRequest = { text };
     return {
-      path: `messenger/v1/channels/${channelId}/logs/${opts.logId}/threads/create-and-send`,
+      path: apiPath`messenger/v1/channels/${channelId}/logs/${opts.logId}/threads/create-and-send`,
       json,
     };
   }
@@ -31,7 +32,7 @@ export function buildThreadRequest(
     json.threadText = opts.threadText;
   }
   return {
-    path: `messenger/v1/channels/${channelId}/threads/create-and-send`,
+    path: apiPath`messenger/v1/channels/${channelId}/threads/create-and-send`,
     json,
   };
 }

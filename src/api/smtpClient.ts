@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import MailComposer from "nodemailer/lib/mail-composer/index.js";
 import type { Config } from "../config/types.js";
 import { DEFAULTS } from "../config/types.js";
 import { DoorayCliError } from "../utils/errors.js";
@@ -14,12 +15,18 @@ export interface SendMailOptions {
   html?: boolean;
   inReplyTo?: string;
   references?: string;
+  attachments?: { filename: string; path: string }[];
 }
 
 export interface SendMailResult {
   messageId: string;
   accepted: string[];
   rejected: string[];
+}
+
+// raw 는 SMTP 로 보낸 바이트 그대로다. 보낸메일함에 같은 원문을 넣는 데 쓴다 (ADR-077).
+export interface SentMail extends SendMailResult {
+  raw: Buffer;
 }
 
 export function getSmtpConfigOrThrow(config: Config) {
@@ -42,7 +49,7 @@ export function getSmtpConfigOrThrow(config: Config) {
 export async function sendMail(
   config: Config,
   opts: SendMailOptions,
-): Promise<SendMailResult> {
+): Promise<SentMail> {
   const smtp = getSmtpConfigOrThrow(config);
 
   const transporter = nodemailer.createTransport({
@@ -63,20 +70,34 @@ export async function sendMail(
   if (opts.cc?.length) mailOptions.cc = opts.cc.join(", ");
   if (opts.bcc?.length) mailOptions.bcc = opts.bcc.join(", ");
 
+  if (opts.attachments?.length) {
+    mailOptions.attachments = opts.attachments.map(({ filename, path }) => ({ filename, path }));
+  }
+
   if (opts.html) {
     mailOptions.html = opts.body;
   } else {
     mailOptions.text = opts.body;
   }
 
-  const info = await transporter.sendMail(mailOptions).catch((error: unknown) => {
-    throw toMailConnectionError("SMTP", smtp.host, smtp.port, error);
-  });
+  // 원문을 한 번만 만들어 SMTP 발송과 보낸메일함 저장이 같은 바이트를 쓰게 한다.
+  // 따로 두 번 만들면 Message-ID 와 Date 가 달라진다.
+  const node = new MailComposer(mailOptions).compile();
+  const messageId = node.messageId();
+  const raw = await node.build();
+  const recipients = [...opts.to, ...(opts.cc ?? []), ...(opts.bcc ?? [])];
+
+  const info = await transporter
+    .sendMail({ envelope: { from: smtp.username, to: recipients }, raw })
+    .catch((error: unknown) => {
+      throw toMailConnectionError("SMTP", smtp.host, smtp.port, error);
+    });
 
   return {
-    messageId: info.messageId,
+    messageId,
     accepted: (info.accepted ?? []) as string[],
     rejected: (info.rejected ?? []) as string[],
+    raw,
   };
 }
 

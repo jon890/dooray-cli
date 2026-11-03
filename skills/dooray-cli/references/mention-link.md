@@ -37,11 +37,11 @@ code 로 못 찾으면 15자리 이상 numeric ID 를 직접 넣을 수도 있�
 `text/html` 본문의 멘션과 링크 표기는 확인된 것이 없다.
 그 형식에서는 CLI 가 `--mention` 과 `--mention-group` 과 `--link-task` 를 종료 코드 3 으로 거절하고,
 `--mime-type text/x-markdown` 으로 형식을 바꾸는 방법을 안내한다.
-손으로 조립할 때도 마찬가지다. 아래 markdown 을 `text/html` 본문에 넣으면 평문으로 남아
+직접 조립할 때도 마찬가지다. 아래 markdown 을 `text/html` 본문에 넣으면 평문으로 남아
 링크로 렌더링되지 않고 멘션 알림도 가지 않는다.
 
 CLI 옵션(`--mention` 등)을 쓰면 아래 markdown 을 자동으로 만들어 주므로 직접 조립할 필요가 없다.
-본문을 손으로 쓸 때만 이 형식을 쓴다. Dooray 앱이 inline 멘션과 내부 이동으로 렌더링한다.
+본문을 직접 쓸 때만 이 형식을 쓴다. Dooray 앱이 inline 멘션과 내부 이동으로 렌더링한다.
 
 ### 멤버
 
@@ -79,7 +79,7 @@ title 은 workflow class 다. `registered`, `working`, `closed`, `backlog` 넷 �
 | `[my-project/524 &#91;MOD&#93; 한도 분리](dooray://...)` | 정상 |
 
 치환 대상은 표시 텍스트뿐이고 URL 은 해당 없다.
-`--link-task` 옵션을 쓰면 CLI 가 알아서 치환하므로 손으로 조립할 때만 신경 쓴다.
+`--link-task` 옵션을 쓰면 CLI 가 알아서 치환하므로 직접 조립할 때만 신경 쓴다.
 
 ### 위키 페이지
 

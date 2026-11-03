@@ -1,3 +1,6 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { Readable } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Config } from "../../config/types.js";
@@ -8,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getMail: vi.fn(),
   resolveUidByMailId: vi.fn(),
   sendMail: vi.fn(),
+  saveToSent: vi.fn(),
   confirm: vi.fn(),
   startSpinner: vi.fn(() => ({ text: "" })),
   stopSpinner: vi.fn(),
@@ -31,6 +35,7 @@ vi.mock("../../api/imapClient.js", () => ({
   connectImapClient: mocks.connectImapClient,
   closeImapClient: mocks.closeImapClient,
   getImapConfigOrThrow: vi.fn(),
+  saveToSent: mocks.saveToSent,
 }));
 
 vi.mock("../../api/smtpClient.js", () => ({
@@ -87,7 +92,9 @@ beforeEach(() => {
     messageId: "<reply@example.com>",
     accepted: ["sender@example.com"],
     rejected: [],
+    raw: Buffer.from("RAW"),
   });
+  mocks.saveToSent.mockResolvedValue({ saved: true });
   mocks.client.getMailboxLock.mockResolvedValue({ release: mocks.release });
   mocks.client.fetchOne.mockResolvedValue({
     envelope: { messageId: "<original@example.com>" },
@@ -367,5 +374,113 @@ describe("mailReplyCommand", () => {
       config,
       expect.objectContaining({ inReplyTo: undefined, references: undefined }),
     );
+  });
+});
+
+describe("mailReplyCommand --attach", () => {
+  let dir: string;
+  let photo: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "dooray-mail-reply-attach-"));
+    photo = join(dir, "photo.jpg");
+    await writeFile(photo, "x".repeat(2048));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("확인 화면에 첨부 이름과 크기를 보이고 attachments 로 넘긴다", async () => {
+    await runMailReply(["337", "--body", "본문", "--attach", photo]);
+
+    expect(mocks.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining("첨부: photo.jpg (2.0KB)"),
+      }),
+      { output: process.stderr },
+    );
+    expect(mocks.sendMail).toHaveBeenCalledWith(
+      config,
+      expect.objectContaining({
+        attachments: [{ path: photo, filename: "photo.jpg", size: 2048 }],
+      }),
+    );
+  });
+
+  it("--yes 이면 stderr 로 첨부 목록을 알린다", async () => {
+    await runMailReply(["337", "--body", "본문", "-y", "--attach", photo]);
+
+    expect(mocks.confirm).not.toHaveBeenCalled();
+    const err = vi.mocked(process.stderr.write).mock.calls.map((c) => String(c[0])).join("");
+    expect(err).toContain("첨부: photo.jpg (2.0KB)");
+    expect(mocks.sendMail).toHaveBeenCalledOnce();
+  });
+
+  it("확인을 거절하면 보내지 않는다", async () => {
+    mocks.confirm.mockResolvedValueOnce(false);
+    await runMailReply(["337", "--body", "본문", "--attach", photo]);
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+  });
+
+  it("없는 파일과 디렉터리는 원본 조회와 발송 전에 매개변수 오류다", async () => {
+    for (const bad of [join(dir, "none.jpg"), dir]) {
+      await expect(
+        runMailReply(["337", "--body", "본문", "-y", "--attach", photo, bad]),
+      ).rejects.toMatchObject({ exitCode: EXIT_PARAM_ERROR });
+    }
+    expect(mocks.getMail).not.toHaveBeenCalled();
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+  });
+
+  it("--json 에 첨부 파일 이름 목록이 든다", async () => {
+    vi.resetModules();
+    const { Command } = await import("commander");
+    const { mailReplyCommand } = await import("./reply.js");
+    const program = new Command().option("--json").addCommand(mailReplyCommand);
+    await program.parseAsync(
+      ["--json", "reply", "337", "--body", "본문", "-y", "--attach", photo],
+      { from: "user" },
+    );
+    const out = vi.mocked(process.stdout.write).mock.calls.map((c) => String(c[0])).join("");
+    expect(JSON.parse(out).attachments).toEqual(["photo.jpg"]);
+  });
+});
+
+describe("mailReplyCommand 보낸메일함 저장", () => {
+  it("발송한 원문을 보낸메일함에 저장한다", async () => {
+    await runMailReply(["991", "--body", "답장", "--yes"]);
+
+    expect(mocks.saveToSent).toHaveBeenCalledWith(config, Buffer.from("RAW"));
+  });
+
+  it("--no-save-sent 면 IMAP 저장을 시도하지 않는다", async () => {
+    await runMailReply(["991", "--body", "답장", "--yes", "--no-save-sent"]);
+
+    expect(mocks.sendMail).toHaveBeenCalledTimes(1);
+    expect(mocks.saveToSent).not.toHaveBeenCalled();
+  });
+
+  it("저장이 실패해도 재발송하지 않고 경고만 내며 정상 종료한다", async () => {
+    mocks.saveToSent.mockResolvedValue({ saved: false, reason: "APPEND 거부" });
+    const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+
+    await expect(runMailReply(["991", "--body", "답장", "--yes"])).resolves.toBeUndefined();
+
+    expect(mocks.sendMail).toHaveBeenCalledTimes(1);
+    expect(stderr.mock.calls.map((c) => String(c[0])).join("")).toContain("APPEND 거부");
+  });
+
+  it("사용자가 확인을 거절하면 저장도 시도하지 않는다", async () => {
+    const original = Object.getOwnPropertyDescriptor(process.stdin, "isTTY");
+    Object.defineProperty(process.stdin, "isTTY", { value: true, configurable: true });
+    mocks.confirm.mockResolvedValue(false);
+    try {
+      await runMailReply(["991", "--body", "답장"]);
+    } finally {
+      if (original) Object.defineProperty(process.stdin, "isTTY", original);
+      else delete (process.stdin as { isTTY?: boolean }).isTTY;
+    }
+
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+    expect(mocks.saveToSent).not.toHaveBeenCalled();
   });
 });

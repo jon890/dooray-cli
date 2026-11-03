@@ -72,6 +72,10 @@ export const doctorCommand = new Command("doctor")
       if (config.state === "invalid" || config.state === "unreadable") {
         payload.reason = config.reason;
       }
+      // 텍스트 모드는 키체인 실패와 파일 읽기 실패를 다른 줄로 보인다. JSON 도 구분할 수 있게 한다.
+      if (config.state === "unreadable") {
+        payload.source = config.source ?? "file";
+      }
       // 진단 명령이므로 「설정이 되었는가」 와 「실제로 접속되는가」 를 함께 낸다.
       // 설정이 갖춰지지 않아 시도하지 않은 경우를 skipped 로 구분한다.
       payload.apiConnection = apiKeyOk && baseUrlOk ? await probeApiConnection() : "skipped";
@@ -85,6 +89,10 @@ export const doctorCommand = new Command("doctor")
     // Config checks
     if (config.state === "invalid") {
       console.log(`  설정 파일: ${chalk.red("❌ 손상")}`);
+      console.log(`  이유:      ${config.reason}`);
+    } else if (config.state === "unreadable" && config.source === "keychain") {
+      // 키체인 실패는 이유에 대처 방법이 이미 들어 있다.
+      console.log(`  키체인:    ${chalk.red("❌ 읽기 실패")}`);
       console.log(`  이유:      ${config.reason}`);
     } else if (config.state === "unreadable") {
       console.log(`  설정 파일: ${chalk.red("❌ 읽기 실패")}`);
@@ -141,6 +149,8 @@ export const doctorCommand = new Command("doctor")
       console.log(chalk.green("✓ 기본 설정이 완료되었습니다."));
     } else if (config.state === "invalid") {
       console.log(chalk.yellow("⚠ 설정 파일이 손상되었습니다."));
+    } else if (config.state === "unreadable" && config.source === "keychain") {
+      console.log(chalk.yellow("⚠ 키체인에서 설정의 비밀값을 읽지 못했습니다."));
     } else if (config.state === "unreadable") {
       console.log(chalk.yellow("⚠ 설정 파일을 읽지 못했습니다."));
     } else {

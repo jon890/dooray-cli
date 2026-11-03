@@ -6,6 +6,8 @@ import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
 import { resolveMailTarget, resolveMailUid } from "../../resolvers/mail-input.js";
 import chalk from "chalk";
+import { formatSize } from "../../utils/format-size.js";
+import { sanitizeForTerminal } from "../../utils/sanitize.js";
 
 export const mailGetCommand = new Command("get")
   .description("메일 상세 조회")
@@ -35,14 +37,26 @@ export const mailGetCommand = new Command("get")
           date: mail.date?.toISOString() ?? null,
           isRead: mail.isRead,
           body: mail.body,
+          attachments: mail.attachments,
         });
       } else {
+        const attachmentLines =
+          mail.attachments.length > 0
+            ? `${chalk.bold("첨부:")} ${mail.attachments.length}개\n` +
+              mail.attachments
+                .map(
+                  (a) =>
+                    `  ${a.index}. ${sanitizeForTerminal(a.fileName)} (${formatSize(a.size)})${a.inline ? " [인라인]" : ""}\n`,
+                )
+                .join("")
+            : "";
         process.stdout.write(
           `${chalk.bold("제목:")} ${mail.subject}\n` +
             `${chalk.bold("보낸사람:")} ${mail.from}\n` +
             `${chalk.bold("받는사람:")} ${mail.to.join(", ")}\n` +
             `${chalk.bold("날짜:")} ${mail.date?.toLocaleString("ko-KR") ?? ""}\n` +
             `${chalk.bold("읽음:")} ${mail.isRead ? "예" : "아니오"}\n` +
+            attachmentLines +
             `\n${mail.body}\n`,
         );
       }

@@ -114,3 +114,63 @@ export function expandLocalDate(date: LocalDate, time: DayTime): string {
     localOffset(at)
   );
 }
+
+/** `timeZone` 에서 `utcMs` 순간의 offset(분, 동쪽이 양수). 시간대 이름이 잘못됐으면 `null`. */
+function zoneOffsetMinutes(utcMs: number, timeZone: string): number | null {
+  let name: string | undefined;
+  try {
+    name = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "longOffset" })
+      .formatToParts(new Date(utcMs))
+      .find((p) => p.type === "timeZoneName")?.value;
+  } catch {
+    return null;
+  }
+  if (name === "GMT") return 0;
+  const m = /^GMT([+-])(\d{2}):(\d{2})$/.exec(name ?? "");
+  if (m == null) return null;
+  return (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]));
+}
+
+/**
+ * 그 날짜의 `time` 시각을 IANA 시간대 `timeZone` 기준 ISO8601 문자열로 세운다. 시간대 이름이 잘못됐으면 `null`.
+ *
+ * `expandLocalDate` 는 실행 장비의 시간대를 쓴다. 일정처럼 시간대가 따로 정해진 값을 넓힐 때 쓴다.
+ * offset 은 그 날짜의 것을 쓴다. 벽시계 시각으로 offset 을 한 번 구하고, 그 offset 으로 옮긴 순간에서 다시 구해
+ * 서머타임 경계에서도 그 시각의 offset 이 붙게 한다.
+ * 자정이 서머타임으로 건너뛰어지는 날의 00:00:00 처럼 없는 시각에는 전환 뒤 offset 이 붙는다. 지금은 23:59:59 에만 쓴다.
+ */
+export function expandDateInZone(date: LocalDate, time: DayTime, timeZone: string): string | null {
+  const wall = Date.UTC(date.year, date.month - 1, date.day, time[0], time[1], time[2]);
+  const first = zoneOffsetMinutes(wall, timeZone);
+  if (first == null) return null;
+  const offset = zoneOffsetMinutes(wall - first * 60_000, timeZone) ?? first;
+  const sign = offset < 0 ? "-" : "+";
+  const abs = Math.abs(offset);
+  return (
+    `${formatLocalDate(date)}T${pad2(time[0])}:${pad2(time[1])}:${pad2(time[2])}` +
+    `${sign}${pad2(Math.floor(abs / 60))}:${pad2(abs % 60)}`
+  );
+}
+
+/**
+ * 날짜를 `n` 일 옮긴다. 지역 시간대를 거치지 않으려고 UTC 자정으로 세워 계산한다.
+ * UTC 에는 서머타임이 없어 하루가 항상 24시간이고, 월말과 윤년은 `Date` 가 넘긴다.
+ */
+export function addDays(date: LocalDate, n: number): LocalDate {
+  const at = new Date(Date.UTC(date.year, date.month - 1, date.day));
+  at.setUTCDate(at.getUTCDate() + n);
+  return { year: at.getUTCFullYear(), month: at.getUTCMonth() + 1, day: at.getUTCDate() };
+}
+
+/** `YYYY-MM-DD`. */
+export function formatLocalDate(date: LocalDate): string {
+  return `${pad4(date.year)}-${pad2(date.month)}-${pad2(date.day)}`;
+}
+
+/**
+ * 시각 없이 날짜와 그 날짜의 지역 offset 만 붙인 `2026-09-18+09:00` 형태.
+ * 캘린더 종일 일정이 이 형태로 오가고, offset 은 그 날 00:00 의 것을 쓴다.
+ */
+export function formatLocalDateWithOffset(date: LocalDate): string {
+  return formatLocalDate(date) + localOffset(new Date(date.year, date.month - 1, date.day));
+}

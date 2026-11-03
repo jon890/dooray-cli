@@ -16,31 +16,6 @@ import {
 
 const scriptPath = resolve("scripts/check-pii.mjs");
 const tempRoots = [];
-const APPROVED_DOMAINS = [
-  "anthropic.com",
-  "api.dooray.co.kr",
-  "api.dooray.com",
-  "api.gov-dooray.co.kr",
-  "api.gov-dooray.com",
-  "b.example.com",
-  "blog.fosworld.co.kr",
-  "claude.com",
-  "cli.github.com",
-  "dooray.com",
-  "example.com",
-  "example.dooray.com",
-  "github.com",
-  "helpdesk.dooray.com",
-  "my-org.dooray.com",
-  "other.example.com",
-  "www.anthropic.com",
-  "www.npmjs.com",
-  "www.youtube.com",
-  "x.com",
-  "x.dooray.com",
-  "y.example.com",
-];
-
 async function makeTempRoot() {
   const root = await mkdtemp(join(tmpdir(), "dooray-check-pii-"));
   tempRoots.push(root);
@@ -72,17 +47,25 @@ async function createCleanPiiRoot() {
   const skipAsRoot = process.getuid?.() === 0;
 
 describe("findForeignDomains", () => {
-  it("승인된 정확한 22개 도메인 목록을 유지한다", () => {
-    expect(OK_DOMAINS).toHaveLength(22);
-    expect(OK_DOMAINS).toEqual(APPROVED_DOMAINS);
+  // 목록 내용은 scripts/check-pii.mjs 의 OK_DOMAINS 한 곳이 소유한다. 추가와 삭제는 그 파일의 diff 로 리뷰한다.
+  // 여기서는 항목을 다시 적지 않고, 완전 일치 비교가 기대는 형식만 고정한다.
+  it("허용 도메인은 scheme·경로·와일드카드 없는 소문자 호스트다", () => {
+    for (const domain of OK_DOMAINS) {
+      expect(domain).toMatch(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/);
+    }
+  });
+
+  it("허용 도메인은 중복 없이 정렬돼 있다", () => {
+    expect(new Set(OK_DOMAINS).size).toBe(OK_DOMAINS.length);
+    expect([...OK_DOMAINS].sort()).toEqual(OK_DOMAINS);
   });
 
   it("화이트리스트 안의 URL 도메인을 통과시킨다", () => {
     expect(findForeignDomains("https://github.com/x", OK_DOMAINS)).toEqual([]);
   });
 
-  it("허용된 22개 도메인의 URL 과 이메일을 통과시킨다", () => {
-    const text = APPROVED_DOMAINS.flatMap((domain) => [`https://${domain}/x`, `user@${domain}`]).join("\n");
+  it("허용 도메인의 URL 과 이메일을 모두 통과시킨다", () => {
+    const text = OK_DOMAINS.flatMap((domain) => [`https://${domain}/x`, `user@${domain}`]).join("\n");
 
     expect(findForeignDomains(text, OK_DOMAINS)).toEqual([]);
   });

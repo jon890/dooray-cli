@@ -9,7 +9,7 @@ related: [empty-result-to-stderr, resolver-before-editor]
 ---
 
 **증상**: 필수 입력(본문 등)이 비었을 때 `process.stdout.write(안내) + return` 으로 처리.
-세 가지 회귀:
+회귀 사례:
 
 - exit 0 으로 정상 종료 → `cmd && echo OK` 자동화가 성공으로 오인.
 - 에러 안내가 stdout 으로 나감 → `데이터=stdout / 에러=stderr` 컨벤션 위반 (`--json` 파이프 파서 오염).

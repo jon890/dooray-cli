@@ -20,6 +20,10 @@ const KNOWN_UNDOCUMENTED = new Map([
     "GET messenger/v1/channels/{id}/logs",
     "대화방 메시지 읽기. 2026-09-21 에 공식 문서 Messenger > Channels 절에 없는 것을 확인했다 (ADR-061)",
   ],
+  [
+    "GET messenger/v1/channels/{id}/files/{id}",
+    "대화방 첨부 파일 받기. 2026-10-21 에 공식 문서 Messenger 절 11개 endpoint 에 없는 것을 확인했다 (ADR-072)",
+  ],
 ]);
 
 /**
@@ -70,6 +74,9 @@ function normalizePath(path) {
 function readFirstStringArgument(source, start) {
   let i = start;
   while (i < source.length && /\s/.test(source[i])) i += 1;
+
+  // `apiPath` tagged template 의 태그는 건너뛰고 템플릿 본문을 읽는다 (ADR-075).
+  if (source.startsWith("apiPath`", i)) i += "apiPath".length;
 
   const quote = source[i];
   if (quote !== '"' && quote !== "'" && quote !== "`") return null;
@@ -130,7 +137,7 @@ export function extractImplEndpoints(source) {
     found.add(`${match[1].toUpperCase()} ${normalizePath(path)}`);
   }
 
-  const rawFetchUrl = /`\$\{this\.baseUrl\}([^`]*)`/g;
+  const rawFetchUrl = /(?:`\$\{this\.baseUrl\}|this\.baseUrl\s*\+\s*apiPath`)([^`]*)`/g;
   for (const match of source.matchAll(rawFetchUrl)) {
     const after = match.index + match[0].length;
 

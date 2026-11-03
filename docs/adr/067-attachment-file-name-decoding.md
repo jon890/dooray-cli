@@ -43,5 +43,5 @@
   - 감당할 것: 저장 이름이 종전과 달라져, 깨진 이름을 전제로 한 자동화는 결과가 바뀐다.
     같은 이름의 파일은 덮어쓴다(종전과 같다). 문자셋을 모르는 encoded-word 는 대체 이름으로 간다.
 
-- **적용 범위**: `src/utils/content-disposition.ts`, `src/utils/download-target.ts`, `src/api/client.ts` 의 두 다운로드 메서드와 다운로드 명령 다섯 개.
+- **적용 범위**: `src/utils/content-disposition.ts`, `src/utils/download-target.ts`, `src/api/client.ts` 의 업무·위키 다운로드 메서드와 그 메서드를 쓰는 다운로드 명령.
   `--json` 출력 스키마는 [ADR-031](031-file-json-output-schema.md) 을 그대로 쓴다.
