@@ -47,9 +47,12 @@ CH=$(dooray messenger channels --search "홍길동" --type direct --quiet)
 파일 메시지의 내용 열은 `[파일] <파일명> (<크기>)` 로 시작한다.
 
 ```bash
-dooray messenger logs "<스레드 channelId>"                        # 스레드 안의 댓글 읽기
+dooray messenger logs "<스레드 channelId>"                        # 스레드 답글 읽기
 dooray messenger file download "배포알림" <fileId> -o ./files    # 원본 파일명으로 저장
 ```
+
+**스레드 답글을 읽는 별도 명령은 없다.** `thread-send` 는 쓰기 전용이고, 읽기는 스레드 channelId 를 `logs` 에 넣는다.
+표에 스레드가 있으면 stderr 에 `dooray messenger logs <스레드 channelId>` 안내가 한 줄 나온다.
 
 `--json` 에서는 `file.id` 와 `thread.channelId` 로 같은 값을 얻는다. 파일 판정은 `type` 이 아니라 `file` 필드 유무로 한다. `REPLY` 에도 파일이 붙는다.
 **`file download` 에는 그 파일이 올라온 대화방을 준다.** 스레드의 파일은 스레드 channelId 와 그 스레드가 달린 대화방 channelId 어느 쪽으로도 받아진다.
