@@ -54,13 +54,25 @@ function warnHasMore(hasMore: boolean | undefined): void {
   );
 }
 
+// 스레드 답글을 읽는 별도 명령은 없고 같은 logs 에 스레드 channelId 를 넣는다 (ADR-072).
+// 참조 열의 id 만으로는 그 방법이 드러나지 않아 표에 스레드가 있으면 다음 명령을 알린다.
+// 데이터가 아니라 안내이므로 stderr 이고, 표 모드에서만 낸다.
+function hintThreadReplies(logs: MessengerLog[]): void {
+  const first = logs.find((l) => l.thread?.channelId);
+  if (!first?.thread) return;
+  process.stderr.write(
+    `ℹ  스레드 답글은 참조 열의 스레드 channelId 를 logs 에 넣어 읽습니다: ` +
+      `dooray messenger logs ${sanitizeForTerminal(first.thread.channelId)}\n`,
+  );
+}
+
 export const messengerLogsCommand = new Command("logs")
   .description(
-    "메신저 대화방 메시지 조회 (최근 N건, 최대 1000건). " +
-      "참조 칸의 스레드 channelId 를 다시 logs 에 넣으면 스레드 댓글을, 파일 id 는 file download 로 받는다. " +
+    "메신저 대화방·스레드 메시지 조회 (최근 N건, 최대 1000건). " +
+      "스레드 답글은 참조 열의 스레드 channelId 를 <channel> 로 넣어 읽고, 파일 id 는 file download 로 받는다. " +
       "공식 API 문서에 없는 endpoint 라 예고 없이 막힐 수 있다",
   )
-  .argument("<channel>", "대화방 channelId 또는 이름 (부분일치)")
+  .argument("<channel>", "대화방 channelId 또는 이름 (부분일치). 스레드 답글은 스레드 channelId")
   .option("-n, --count <n>", `가져올 개수 (기본 ${DEFAULT_LOG_COUNT})`, String(DEFAULT_LOG_COUNT))
   .action(async (channel: string, opts: { count: string }) => {
     const globalOpts = messengerLogsCommand.optsWithGlobals() as OutputOptions;
@@ -149,4 +161,5 @@ export const messengerLogsCommand = new Command("logs")
       ids: ordered.map((l) => l.id),
     });
     warnHasMore(hasMore);
+    hintThreadReplies(ordered);
   });
