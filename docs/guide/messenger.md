@@ -67,10 +67,11 @@ dooray messenger logs "배포알림" --json       # 서버 응답 원형
 파일 메시지는 내용 열에 `[파일] 보고서.pdf (2.0KB)` 처럼 파일명과 크기가 나온다.
 표 마지막의 참조 열에는 다음 명령에 넣을 id 가 잘리지 않고 나온다.
 파일이 있으면 `파일 <fileId>`, 스레드가 달린 메시지면 `스레드(<댓글 수>) <channelId>` 다.
-스레드 안의 대화는 그 channelId 를 `logs` 에 다시 넣어 읽는다.
+스레드 안의 대화는 그 channelId 를 `logs` 에 다시 넣어 읽는다. 스레드 답글을 읽는 명령이 따로 있지 않다.
+표에 스레드가 있으면 stderr 에 그 명령을 한 줄로 알려 준다.
 
 ```bash
-dooray messenger logs <스레드 channelId>                                 # 스레드 댓글
+dooray messenger logs <스레드 channelId>                                 # 스레드 답글 읽기
 dooray messenger file download "배포알림" <fileId> -o ./files           # 파일 받기
 dooray messenger file download "배포알림" <fileId> --output-file ./보고서.pdf
 ```

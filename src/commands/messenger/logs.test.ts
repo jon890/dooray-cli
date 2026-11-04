@@ -398,6 +398,47 @@ describe("messenger logs", () => {
       expect(out).toContain(`스레드(3) ${THREAD_ID}`);
     });
 
+    describe("스레드 답글 안내", () => {
+      const threadLog: MessengerLog = {
+        id: "log-t",
+        ...base,
+        text: "배포 시작",
+        thread: { channelId: THREAD_ID, totalCount: "3" },
+      };
+
+      it("표에 스레드가 있으면 답글을 읽는 명령을 stderr 로 알리고 stdout 에는 내지 않는다", async () => {
+        stubLogs([threadLog]);
+        const out = await run(["messenger", "logs", CHANNEL_ID]);
+        expect(lastStderr).toContain(`dooray messenger logs ${THREAD_ID}`);
+        expect(out).not.toContain("스레드 답글은");
+      });
+
+      it("스레드가 여럿이면 안내는 한 번, 표에서 가장 위 스레드의 id 로 낸다", async () => {
+        const OTHER_ID = "2222333344445555666";
+        // 서버 순서는 최신이 앞이라 표에서는 뒤쪽 원소가 위로 간다.
+        stubLogs([
+          { ...threadLog, id: "log-new", thread: { channelId: OTHER_ID, totalCount: "1" } },
+          threadLog,
+        ]);
+        await run(["messenger", "logs", CHANNEL_ID]);
+        expect(lastStderr.match(/스레드 답글은/g)).toHaveLength(1);
+        expect(lastStderr).toContain(`dooray messenger logs ${THREAD_ID}`);
+      });
+
+      it("스레드가 없으면 안내하지 않는다", async () => {
+        await run(["messenger", "logs", CHANNEL_ID]);
+        expect(lastStderr).not.toContain("스레드 답글은");
+      });
+
+      it("--json 과 --quiet 에서는 안내하지 않는다", async () => {
+        stubLogs([threadLog]);
+        await run(["--json", "messenger", "logs", CHANNEL_ID]);
+        expect(lastStderr).not.toContain("스레드 답글은");
+        await run(["--quiet", "messenger", "logs", CHANNEL_ID]);
+        expect(lastStderr).not.toContain("스레드 답글은");
+      });
+    });
+
     it("파일과 스레드가 둘 다 있으면 참조 칸에 줄을 나눠 둘 다 보여준다", async () => {
       stubLogs([
         {
