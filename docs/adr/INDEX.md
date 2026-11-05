@@ -86,3 +86,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-075](075-api-path-encoding.md) — `client.ts` 의 API 경로는 `apiPath` tagged template 으로 만들어 끼운 값을 모두 `encodeURIComponent` 로 인코딩한다. `baseUrl`·쿼리·리터럴은 helper 밖에 두고, 인벤토리 스크립트가 `apiPath` 태그를 읽는다 (Issue #240)
 - [ADR-077](077-mail-save-sent.md) — `mail send`·`mail reply` 는 한 번 만든 원문을 SMTP 로 보내고 IMAP `\Sent` 메일함에 같은 바이트로 `APPEND` 하며, 발송 뒤 저장이 실패해도 재발송하지 않고 경고와 종료 코드 0 으로 끝낸다
 - [ADR-078](078-stream-list.md) — 활동 피드를 `stream list` 로 두고 `--all` 은 빈 배열까지, `--since` 는 응답 커서로 멈추며, 429 는 모든 명령에서 종료 코드 6 으로 끝낸다 (2주 5113건·한 페이지 189/200·나노초 커서·원소 시각 최대 29초 어긋남·`event.createdAt` 실측)
+- [ADR-079](079-member-get-with-org.md) — `member get --with-org` 으로 소속 회사·부서·직책을 바쁨 시간 조회 응답에서 채운다 (부서 이름이 있어도 `id` 가 null 실측)
