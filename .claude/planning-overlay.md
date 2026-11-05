@@ -70,7 +70,7 @@ planning 에서는 README 와 `skills/` 를 손대는 phase 마다 그 스크립
 - **반복 함정 목록**: 코어가 요구하는 task 제출 전 self-check 의 대상은 `docs/pitfalls/` 다. 어느 카테고리를 볼지는 그 안의 `INDEX.md` 라우터가 정한다.
 - **docs-verifier 흡수 원칙**: docs-verifier 의 반복 지적은 별도 회고 docs 를 신설하지 않는다.
   - 위 "변경 유형별 docs 영향 표"에 행 추가나 보강으로 흡수한다.
-  - `docs-check` 는 `.claude/docs-audit-axes.md` 를 읽고 이 표를 검증 기준으로 그대로 쓴다.
+  - `docs-audit` 는 `.claude/docs-audit-axes.md` 를 읽고 이 표를 검증 기준으로 그대로 쓴다.
   - `build-with-teams` 의 검토 역할은 공용 코어의 `role-docs-verifier.md` 가 수행한다.
 - **개인 식별 정보 노출 금지**: task 파일 제출 전 `node scripts/check-pii.mjs` 를 실행해 통과시킨다.
 

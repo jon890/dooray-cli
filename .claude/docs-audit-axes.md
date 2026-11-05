@@ -1,6 +1,6 @@
 # dooray-cli 문서 감사 축
 
-이 문서는 `docs-check` 의 dooray-cli 전용 6축 판정 기준을 소유한다.
+이 문서는 `docs-audit` 의 dooray-cli 전용 6축 판정 기준을 소유한다.
 `build-with-teams` 의 docs-verifier 는 공용 코어의 `references/role-docs-verifier.md` 를 쓴다.
 
 ## 준비
@@ -159,7 +159,7 @@ Bash 로 만든 `.md` 는 훅을 거치지 않는다.
 [PASS 시] 6축별 통과 요약 1줄씩
 ```
 
-docs-check 호출 시에는 위 형식에 Critical, Warning, Safe 분류를 더한다.
+docs-audit 호출 시에는 위 형식에 Critical, Warning, Safe 분류를 더한다.
 
 ## 자기 점검
 

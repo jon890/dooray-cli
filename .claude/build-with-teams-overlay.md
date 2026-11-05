@@ -26,7 +26,7 @@ phase 완료 조건은 `pnpm tsc --noEmit && pnpm run build && pnpm test` 다.
 
 docs-verifier 에 추가로 넘기는 문서 경로는 `docs/prd.md`, `docs/flow.md`,
 `docs/code-architecture.md`, `docs/data-schema.md`, `docs/adr/` 다.
-`docs-check` 는 별도 계약인 [.claude/docs-audit-axes.md](docs-audit-axes.md)의 6축 판정 기준을 쓴다.
+`docs-audit` 는 별도 계약인 [.claude/docs-audit-axes.md](docs-audit-axes.md)의 6축 판정 기준을 쓴다.
 
 ## planning 오버레이가 단일 소스인 항목
 
