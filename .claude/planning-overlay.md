@@ -57,13 +57,15 @@ planning 에서는 README 와 `skills/` 를 손대는 phase 마다 그 스크립
 
 ## 검증
 
-- **task 검사기**: 코어가 지시하는 `verify_task.py` 하나만 쓴다.
+- **task 검사기**: 코어가 지시하는 `verify_task.ts` 하나만 쓴다.
   그 스크립트는 **스킬 번들 안**에 있고 저장소에는 없다. cwd 는 타깃 레포 root 다.
 
   ```bash
   # cwd: <repo root>
-  python3 ~/.claude/skills/planning/scripts/verify_task.py plan{N}-{slug}
+  node "$SKILL_DIR/scripts/verify_task.ts" plan{N}-{slug}
   ```
+
+  `$SKILL_DIR` 은 plan 스킬이 설치된 디렉터리다. 하네스가 스킬을 열 때 알려주는 base 디렉터리를 쓴다.
 
   저장소는 별도 plan 검사기를 두지 않는다. 근거는 `docs/adr/059-plan-check-owned-by-skill.md` 다.
   같은 규칙을 저장소에 다시 만들면 그 결정이 무효가 된다.
