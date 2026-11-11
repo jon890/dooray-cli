@@ -87,7 +87,7 @@ node .claude/skills/health-check/scripts/trial-update.mjs --range "${PKGS[@]}"; 
 | 규모 | 경로 |
 | --- | --- |
 | 시험을 마친 의존성 갱신, 몇 줄짜리 결함 수정 | 이 세션에서 브랜치를 만들어 관심사별로 커밋한다 |
-| 파일이 여러 명령에 걸치거나 정책을 먼저 정해야 하는 것 | `planning` 으로 문서와 task 를 만든 뒤 `orchestration` 으로 별도 세션에 넘긴다 |
+| 파일이 여러 명령에 걸치거나 정책을 먼저 정해야 하는 것 | `plan` 으로 문서와 task 를 만든 뒤 `orchestration` 으로 별도 세션에 넘긴다 |
 
 어느 단위를 어느 경로로 할지는 사용자가 정한다. 권장안을 먼저 적고 묻는다.
 

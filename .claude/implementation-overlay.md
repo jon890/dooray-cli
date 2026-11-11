@@ -1,6 +1,6 @@
-# dooray-cli build-with-teams 오버레이
+# dooray-cli implementation 오버레이
 
-공용 코어(`~/.claude/skills/build-with-teams`)에 dooray-cli 특화를 주입한다.
+공용 코어(`~/.claude/skills/implementation`)에 dooray-cli 특화를 주입한다.
 
 ## 검증 명령
 
@@ -28,13 +28,13 @@ docs-verifier 에 추가로 넘기는 문서 경로는 `docs/prd.md`, `docs/flow
 `docs/code-architecture.md`, `docs/data-schema.md`, `docs/adr/` 다.
 `docs-audit` 는 별도 계약인 [.claude/docs-audit-axes.md](docs-audit-axes.md)의 6축 판정 기준을 쓴다.
 
-## planning 오버레이가 단일 소스인 항목
+## plan 오버레이가 단일 소스인 항목
 
-아래는 `.claude/planning-overlay.md` 가 정하고 이 워크플로가 그대로 따른다.
+아래는 `.claude/plan-overlay.md` 가 정하고 이 워크플로가 그대로 따른다.
 
-| 항목 | planning 오버레이의 절 |
+| 항목 | plan 오버레이의 절 |
 | --- | --- |
-| 회피 패턴 self-check 경로 | [검증](planning-overlay.md#검증) |
+| 회피 패턴 self-check 경로 | [검증](plan-overlay.md#검증) |
 
 브랜치와 worktree 운용은 아래 절을 따른다.
 
@@ -48,7 +48,7 @@ docs-verifier 에 추가로 넘기는 문서 경로는 `docs/prd.md`, `docs/flow
 
 worktree 를 만든 뒤에 할 일과 phase 검증 명령은 이 파일의 "검증 명령" 절을 따른다.
 
-task metadata 와 phase 파일 형식은 `planning` 코어의 `references/task-create.md` 가 소유한다.
+task metadata 와 phase 파일 형식은 `plan` 코어의 `references/task-create.md` 가 소유한다.
 이 저장소 고유 변형은 없다.
 
 정리는 PR 머지 뒤에 한다.

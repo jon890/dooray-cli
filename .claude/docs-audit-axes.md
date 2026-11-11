@@ -1,7 +1,7 @@
 # dooray-cli 문서 감사 축
 
 이 문서는 `docs-audit` 의 dooray-cli 전용 6축 판정 기준을 소유한다.
-`build-with-teams` 의 docs-verifier 는 공용 코어의 `references/role-docs-verifier.md` 를 쓴다.
+`implementation` 의 docs-verifier 는 공용 코어의 `references/role-docs-verifier.md` 를 쓴다.
 
 ## 준비
 
@@ -12,7 +12,7 @@
 | ADR 번호와 주제 | [docs/adr/INDEX.md](../docs/adr/INDEX.md) |
 | 캐시 파일 구조와 TTL | [docs/data-schema.md](../docs/data-schema.md) |
 | 코드 컨벤션, 개인 식별 정보 금지 유형 | [CLAUDE.md](../CLAUDE.md) 와 `scripts/check-pii.mjs` |
-| docs 갱신 범위 | [.claude/planning-overlay.md](planning-overlay.md)의 "변경 유형별 docs 영향 표" |
+| docs 갱신 범위 | [.claude/plan-overlay.md](plan-overlay.md)의 "변경 유형별 docs 영향 표" |
 | 글의 구조 규칙 | 글로벌 `~/.claude/rules/writing-structure.md` |
 | 마크다운 렌더링 규칙 | 글로벌 `~/.claude/rules/markdown-readability.md` |
 
@@ -164,7 +164,7 @@ docs-audit 호출 시에는 위 형식에 Critical, Warning, Safe 분류를 더�
 ## 자기 점검
 
 - 검증 기준을 새로 만들지 않는다.
-  `.claude/planning-overlay.md` 의 docs 영향 표를 기준으로 쓴다.
+  `.claude/plan-overlay.md` 의 docs 영향 표를 기준으로 쓴다.
 - 자기 면제 회신을 하지 않는다.
   검증을 생략할 수 있다고 판단하지 않는다.
 - dooray-cli repo 만 검증한다.

@@ -1,6 +1,6 @@
-# dooray-cli planning 오버레이
+# dooray-cli plan 오버레이
 
-공용 코어(`~/.claude/skills/planning`)에 dooray-cli 특화를 주입한다.
+공용 코어(`~/.claude/skills/plan`)에 dooray-cli 특화를 주입한다.
 코어의 8단계 skeleton 을 이 레포의 도메인(TypeScript CLI)·docs 컨벤션·검증·실행기 스키마에 맞춰 채운다.
 
 ## 도메인: CLI (TypeScript / Commander.js)
@@ -53,7 +53,7 @@
 
 규칙은 `.claude/rules/public-docs.md` 가 소유한다.
 검사는 `scripts/check-public-refs.mjs` 가 소유한다.
-planning 에서는 README 와 `skills/` 를 손대는 phase 마다 그 스크립트를 통과시킨다.
+plan 에서는 README 와 `skills/` 를 손대는 phase 마다 그 스크립트를 통과시킨다.
 
 ## 검증
 
@@ -73,7 +73,7 @@ planning 에서는 README 와 `skills/` 를 손대는 phase 마다 그 스크립
 - **docs-verifier 흡수 원칙**: docs-verifier 의 반복 지적은 별도 회고 docs 를 신설하지 않는다.
   - 위 "변경 유형별 docs 영향 표"에 행 추가나 보강으로 흡수한다.
   - `docs-audit` 는 `.claude/docs-audit-axes.md` 를 읽고 이 표를 검증 기준으로 그대로 쓴다.
-  - `build-with-teams` 의 검토 역할은 공용 코어의 `role-docs-verifier.md` 가 수행한다.
+  - `implementation` 의 검토 역할은 공용 코어의 `role-docs-verifier.md` 가 수행한다.
 - **개인 식별 정보 노출 금지**: task 파일 제출 전 `node scripts/check-pii.mjs` 를 실행해 통과시킨다.
 
 `docs/code-architecture.md` 는 파일 하나하나를 적지 않는다.

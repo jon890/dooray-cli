@@ -35,6 +35,6 @@ ls docs/*.md docs/adr/*.md docs/api/* docs/pitfalls/**/*.md docs/retrospectives/
 
 ## 실행 주기
 
-- `build-with-teams` 대규모 task 완료 후
+- `implementation` 대규모 task 완료 후
 - 외부 PR 머지 후
 - 분기별 정기
