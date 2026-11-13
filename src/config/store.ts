@@ -396,9 +396,14 @@ export async function warnConfigFileSecurity(): Promise<void> {
   const failures = (await readConfigFileSecurity()).filter((finding) => finding.status === "fail");
   if (failures.length === 0 || configFileSecurityWarned) return;
   configFileSecurityWarned = true;
-  process.stderr.write(failures.map((finding) =>
-    `⚠  ${finding.message}\n   수정: ${finding.fix}\n`,
-  ).join(""));
+  const explanation = failures.some((finding) => finding.kind === "plaintext-secret")
+    ? "다시 저장하면 비밀값이 키체인으로 옮겨지고 파일 권한이 0600 이 됩니다."
+    : "다시 저장하면 파일 권한이 0600 이 됩니다.";
+  const fixes = [...new Set(failures.flatMap((finding) => finding.fix ? [finding.fix] : []))];
+  process.stderr.write(
+    failures.map((finding) => `⚠  ${finding.message}\n`).join("") +
+    `   ${explanation}\n` + fixes.map((fix) => `   수정: ${fix}\n`).join(""),
+  );
 }
 
 export async function getConfigOrThrow(

@@ -57,6 +57,8 @@ describe("설정 파일 읽기 경고", () => {
     const warning = stderr.mock.calls.flat().join("");
     expect(warning).toContain("apiKey");
     expect(warning).toContain("dooray config set track-last-run false");
+    expect(warning.match(/dooray config set/g)).toHaveLength(1);
+    expect(warning).toContain("다시 저장하면 비밀값이 키체인으로 옮겨지고 파일 권한이 0600 이 됩니다.");
     expect(warning).not.toContain(base.apiKey);
     expect(stdout).not.toHaveBeenCalled();
     expect(await readFile(configPath, "utf8")).toBe(content);
@@ -107,6 +109,8 @@ describe("설정 파일 읽기 경고", () => {
     await store.getConfigOrThrow();
     expect(stderr.mock.calls.flat().join("")).toContain("0600");
     expect(stderr.mock.calls.flat().join("")).not.toContain("평문");
+    expect(stderr.mock.calls.flat().join("")).not.toContain("키체인");
+    expect(stderr.mock.calls.flat().join("")).toContain("다시 저장하면 파일 권한이 0600 이 됩니다.");
     expect(await store.readConfigFileSecurity()).toMatchObject([
       { kind: "plaintext-no-store", status: "warn" }, { kind: "wide-permission", status: "fail" },
     ]);

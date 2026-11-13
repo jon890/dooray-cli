@@ -149,7 +149,13 @@ export const doctorCommand = new Command("doctor")
       if (findings.length === 0) console.log(chalk.green("  ✅ 설정 파일의 비밀값과 권한에 문제가 없습니다."));
       for (const finding of findings) {
         console.log(finding.status === "fail" ? chalk.red(`  ❌ ${finding.message}`) : chalk.yellow(`  ⚠️ ${finding.message}`));
-        if (finding.fix) console.log(`  수정: ${finding.fix}`);
+      }
+      const fixes = [...new Set(findings.flatMap((finding) => finding.fix ? [finding.fix] : []))];
+      if (fixes.length) {
+        console.log(findings.some((finding) => finding.kind === "plaintext-secret")
+          ? "  다시 저장하면 비밀값이 키체인으로 옮겨지고 파일 권한이 0600 이 됩니다."
+          : "  다시 저장하면 파일 권한이 0600 이 됩니다.");
+        for (const fix of fixes) console.log(`  수정: ${fix}`);
       }
     }
 

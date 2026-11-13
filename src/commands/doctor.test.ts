@@ -207,6 +207,8 @@ describe("doctor 항목별 결과와 종료 코드", () => {
     expect(text).toContain("🔐 보안");
     expect(text).toContain("❌ apiKey 평문 비밀값");
     expect(text).toContain(fix);
+    expect(text.match(/dooray config set track-last-run true/g)).toHaveLength(1);
+    expect(text).toContain("다시 저장하면 비밀값이 키체인으로 옮겨지고 파일 권한이 0600 이 됩니다.");
     expect(text).toContain("⚠️ 키체인에 옮길 수 없어 평문으로 남은 값");
     expect(mocks.getConfigOrThrow.mock.calls.every(([opts]) => opts.securityWarning === false)).toBe(true);
     expect(process.exitCode).toBe(1);
