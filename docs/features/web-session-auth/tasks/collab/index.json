@@ -1,0 +1,83 @@
+{
+  "name": "collab",
+  "description": "messenger·calendar·stream 명령과 dooray-persona 스크립트를 웹 세션 방식으로 돌게 한다",
+  "pr_scope": "PR4: calendar·stream·messenger 웹 구현과 지원 목록, persona 스크립트의 CLI 호출 전환",
+  "deferred": [
+    {
+      "what": "messenger 보내기·스레드·파일 받기의 웹 경로 실측",
+      "why": "1단계에서 브라우저 권한 창으로 제어권이 넘어가 실측하지 못했다",
+      "after": "phase 03 의 첫 작업"
+    },
+    {
+      "what": "member get --with-org 소속 조회(phase 05)",
+      "why": "freebusy 요청 형식을 알아내지 못했다",
+      "after": "phase 05 실측"
+    },
+    {
+      "what": "persona 의 웹 방식 실행 확인",
+      "why": "post 명령의 웹 지원은 PR2 소관이다",
+      "after": "PR2 머지"
+    }
+  ],
+  "status": "pending",
+  "created_at": "2026-11-14",
+  "spec": "docs/features/web-session-auth/spec.md",
+  "design": "docs/features/web-session-auth/design.md",
+  "verification_plan": "verification-plan.md",
+  "requirements": [
+    "REQ6",
+    "REQ7",
+    "REQ8",
+    "REQ14"
+  ],
+  "total_phases": 5,
+  "current_phase": 1,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ6",
+        "REQ7",
+        "REQ8"
+      ]
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ6",
+        "REQ8"
+      ]
+    },
+    {
+      "number": 3,
+      "file": "phase-03.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ6",
+        "REQ7",
+        "REQ8"
+      ]
+    },
+    {
+      "number": 4,
+      "file": "phase-04.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ14"
+      ]
+    },
+    {
+      "number": 5,
+      "file": "phase-05.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ6",
+        "REQ8"
+      ]
+    }
+  ]
+}
