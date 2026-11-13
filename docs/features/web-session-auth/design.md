@@ -239,7 +239,7 @@ PR1 plan 의 첫 작업은 아래 실측이다. 결과를 `docs/api/web-endpoint
 
 | 결정 | 종류 | ADR 또는 필요 없음의 이유 | 현재 규칙의 원본 |
 | --- | --- | --- | --- |
-| 스펙 DECISION3·5·10·25·26, 이 설계 DECISION1·3·8·9·10 | architecture (areas: security, operations) | [ADR-080](../../adr/080-web-session-auth.md). [ADR-062](../../adr/062-undocumented-endpoint-policy.md) 에 대체된 부분 링크를 단다 | 이 설계, `src/api/dooray-client.ts`, `src/commands/web-support.ts`, `docs/api/web-endpoints.md` |
+| 스펙 DECISION3·5·10·25·26, 이 설계 DECISION1·3·8·9·10 | architecture (areas: security, operations) | [ADR-081](../../adr/081-web-session-auth.md). [ADR-062](../../adr/062-undocumented-endpoint-policy.md) 에 대체된 부분 링크를 단다 | 이 설계, `src/api/dooray-client.ts`, `src/commands/web-support.ts`, `docs/api/web-endpoints.md` |
 | 스펙 DECISION12 | 같은 ADR | [ADR-069](../../adr/069-macos-keychain-secret-store.md) 에 대체된 부분 링크를 단다. [ADR-069](../../adr/069-macos-keychain-secret-store.md) 의 「`apiKey` 가 없으면 `getConfigOrThrow` 가 setup 을 안내한다」 는 웹 방식에서 `isConfigComplete` 로 바뀐다 | `src/config/secret-store.ts` 의 `SECRET_FIELDS`, `src/config/web-auth.ts` |
 
 PR 마다 함께 고칠 문서(그 PR 이 닿는 것만):

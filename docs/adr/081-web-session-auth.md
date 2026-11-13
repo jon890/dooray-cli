@@ -1,4 +1,4 @@
-## ADR-080: 인증 방식을 `api-key` 와 `web` 둘로 두고, 웹 방식은 비공식 웹 API 를 쓰기까지 허용한다
+## ADR-081: 인증 방식을 `api-key` 와 `web` 둘로 두고, 웹 방식은 비공식 웹 API 를 쓰기까지 허용한다
 
 - **status**: `accepted`
 - **decision-type**: `architecture`

@@ -5,7 +5,7 @@ service 는 `dooray-cli`, account 는 필드 이름(`apiKey`, `imapPassword`)이
 config 경로가 계정 홈의 기본 경로가 아니면 account 에 경로 해시를 붙인다(아래 「account 규칙」).
 옵트인 설정 없이 기본으로 쓴다. macOS 가 아닌 OS 는 지금처럼 config.json 에 0600 평문으로 저장한다.
 
-**대체된 부분**: 비밀 필드에 웹 로그인 세션 쿠키(`sessionCookie`)가 더해졌다([ADR-080](080-web-session-auth.md)). 저장 위치와 읽기·쓰기 규칙은 이 ADR 을 그대로 따른다. 필드 목록의 원본은 `src/config/secret-store.ts` 의 `SECRET_FIELDS` 다.
+**대체된 부분**: 비밀 필드에 웹 로그인 세션 쿠키(`sessionCookie`)가 더해졌다([ADR-081](081-web-session-auth.md)). 저장 위치와 읽기·쓰기 규칙은 이 ADR 을 그대로 따른다. 필드 목록의 원본은 `src/config/secret-store.ts` 의 `SECRET_FIELDS` 다.
 
 - 비밀 저장소는 `src/config/secret-store.ts` 의 `SecretStore` 인터페이스(`get`·`set`·`delete`) 뒤에 둔다.
   `getSecretStore(configPath)` 가 macOS 에서 키체인 구현을, 그 밖에서 `null` 을 돌려준다.
