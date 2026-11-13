@@ -1,7 +1,7 @@
 # 웹 로그인 세션 API 확인 기록: wiki
 
 PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../features/web-session-auth/design.md)가 소유한다.
-공통 항목(프로젝트·멤버)은 [web-endpoints.md](../web-endpoints.md)에 있다.
+공통 규칙과 영역 색인은 [web-endpoints.md](../web-endpoints.md)에, 프로젝트·멤버 경로는 [project.md](project.md)·[member.md](member.md)에 있다.
 
 2026-11-14 로그인된 브라우저에서 읽은 `SESSION` 하나만 붙인 Node 요청(1초에 한 번 이하)으로 확인했다.
 이 문서의 어떤 경로도 `SESSION` 밖의 쿠키나 추가 헤더를 요구하지 않았다. 웹 화면이 보내는 `Dooray-*-Api-Version`, `X-Client-Request-Id` 도 없이 성공했다.
@@ -13,11 +13,11 @@ PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../fe
 | 항목 | 실측 |
 | --- | --- |
 | 응답 껍데기 | `{ header: { isSuccessful, resultCode, resultMessage }, result }`. 공개 API 와 같다. `result` 안쪽이 다르다 |
-| 위키 id | 경로의 `{wikiId}` 는 위키 id(`wikis` 목록의 `id`)와 위키가 속한 프로젝트 id(`projectId`) 둘 다 받는다. 웹 화면 주소 `/wiki/<a>/<b>` 의 `<a>` 는 프로젝트 id 다. CLI 는 위키 id 를 보낸다 |
+| 위키 id | 경로의 `{wikiId}` 는 위키 id(`wikis` 목록의 `id`)와 위키가 속한 프로젝트 id(`projectId`) 둘 다 받는다. 웹 화면 주소 `/wiki/<a>/<b>` 의 `<a>` 는 프로젝트 id 다. `--url`·`wiki page get <url>` 입력은 `<a>` 를 그대로 `{wikiId}` 자리에 넣으므로 이 동작에 기댄다. 프로젝트 id 를 `{wikiId}` 자리에 넣고 페이지 제목 수정, 댓글 추가, 파일 업로드·삭제, 이동, 페이지 삭제까지 모두 확인했다. 이동 쿼리의 `targetWikiId` 는 위키 id 로만 확인했다 |
 | 응용 오류의 상태 코드 | 없는 페이지·위키·파일, 잘못된 본문은 **HTTP 200** 에 `header.isSuccessful=false`, `resultCode=404`/`400`/`500` 으로 온다. 공개 API 는 HTTP 상태 자체가 404·400 이다 |
 | 없는 경로의 오류 | `header` 가 없는 `{ timestamp, status, error, path }` JSON 과 HTTP 404 다. 본문의 `path` 에 요청 경로가 들어 있어 메시지에 쓰면 안 된다 |
 | 필수 필드를 빠뜨렸을 때 | 400 또는 500(`Unknown Error`) 이다. 아래 쓰기 표에 경로마다 적었다 |
-| 제목 중복 | 거절하지 않는다. 같은 제목의 페이지를 만들거나 바꾸면 서버가 ` (1)`, ` (2)` 를 붙여 저장한다. 공식 문서의 409 는 나오지 않았다 |
+| 제목 중복 | 거절하지 않는다. **같은 부모 아래** 같은 제목이 있으면 생성·제목 수정·이동 모두 서버가 ` (1)`, ` (2)`, ` (3)` 을 붙여 저장한다. 다른 부모 아래의 같은 제목은 그대로 둔다. 자기 제목을 그대로 두고 본문만 고치면 바뀌지 않는다. 공식 문서는 생성·수정에서 제목이 겹치면 409 이므로 웹 클라이언트가 호출 전에 같은 부모의 형제 제목을 확인해 같은 결과(종료 코드 1)로 맞춘다 |
 | 호출 한도 | 1초 간격으로 200회 안팎을 불러 429 는 없었다 |
 | 날짜 | 오프셋을 단 ISO 8601(`+09:00`)이라 공식 표기와 같다 |
 | 식별자 | 모두 문자열이다 |
@@ -68,21 +68,21 @@ PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../fe
 - 업로드는 `type` 을 먼저, `file` 을 나중에 담은 multipart 로 통한다. `general`, `inline_image` 둘 다 확인했다. 3MB 파일과 한글 파일 이름도 통한다. 응답 상태는 200 이다(공식 201).
 - 업로드·다운로드 모두 307 이 오지 않았다. 설계 「웹 HTTP 층」 의 첨부 307 규칙은 방어용으로 둔다.
 - 페이지 상세의 `files[]`·`images[]` 항목에 `downloadUrl`(`/page-files/{fileId}`)이 있다. 이 경로를 `SESSION` 으로 부르면 바이트와 `content-disposition` 이 바로 온다. 공개 API 모양의 `…/pages/{pageId}/files/{fileId}` 와 `…/wikis/{wikiId}/attachFiles/{attachFileId}` 는 404 다.
-- 다운로드 경로에는 위키·페이지 id 가 없다. 파일이 그 페이지의 것인지 CLI 가 확인해야 하므로 페이지 상세를 먼저 읽어 `files[]`·`images[]` 에 `fileId` 가 있는 것을 확인한 뒤 그 항목의 `downloadUrl` 을 부른다. 이 조회가 이름 대체 값(`knownName`)도 준다.
+- 다운로드 경로에는 위키·페이지 id 가 없다. 파일이 그 페이지의 것인지 CLI 가 확인해야 하므로 페이지 상세를 먼저 읽어 `files[]`·`images[]` 에 `fileId` 가 있는 것을 확인한 뒤 `/page-files/{fileId}` 를 `apiPath` 로 만들어 부른다. 응답이 준 `downloadUrl` 문자열을 그대로 요청 주소로 쓰지 않는다. 이 조회가 이름 대체 값(`knownName`)도 준다. 저장 이름은 `Content-Disposition` 을 `src/utils/content-disposition.ts`(ADR-067)로 풀어 정한다.
 - 삭제도 경로에 페이지 id 가 없다. 같은 확인을 먼저 한다. 없는 파일은 HTTP 200 에 `resultCode=404` 다.
 - `files[].id` 와 `pageFileId` 는 같은 값이다. `attachFileId` 는 다른 값이고 본문 참조(`/wikis/{wikiId}/files/{attachFileId}`)에 쓴다.
 
 ## 공식 응답 필드와 변환
 
 웹 내부 필드를 그대로 공개하지 않고 아래 공식 필드 가운데 웹에서 얻은 것만 낸다. 웹에 없는 값은 키를 만들지 않는다.
-공식 필수 필드(`id`, 목록은 `wikiId`·`version`·`root`·`subject` 포함)가 없거나 모양이 틀리면 오류로 끝낸다.
+공식 필수 필드가 없거나 모양이 틀리면 오류로 끝낸다. 필수로 보는 것: 위키 목록은 `id`, `name`, `project.id`, `home.pageId`(`resolvers/wiki.ts` 가 쓴다). 페이지 목록·상세는 `id`, `wikiId`, `version`, `root`, `subject`. 댓글은 `id`, `page.id`, `createdAt`, `creator.member.organizationMemberId`, `creator.member.name`, `body.content`.
 
 | 메서드 | 공식 result 필드 | 웹과 다른 점 |
 | --- | --- | --- |
-| getWikis | `id`, `project.id`, `name`, `type`, `scope`, `home.pageId`, 위쪽 `totalCount` | `result.contents` 를 꺼내고 `totalCount` 를 위로 올린다. `projectId` 를 `project.id` 로 바꾼다. `home` 은 `pageId` 만 남긴다. `tenantId`, `hiddenFlag`, `isMine` 은 공식 필드가 아니라 뺀다 |
+| getWikis | `id`, `project.id`, `name`, `type`, `scope`, `home.pageId`, 위쪽 `totalCount`(`name`, `project.id`, `home.pageId` 는 필수) | `result.contents` 를 꺼내고 `totalCount` 를 위로 올린다. `projectId` 를 `project.id` 로 바꾼다. `home` 은 `pageId` 만 남긴다. `tenantId`, `hiddenFlag`, `isMine` 은 공식 필드가 아니라 뺀다 |
 | getWikiPages | `id`, `wikiId`, `version`, `root`, `creator.type`, `creator.member.organizationMemberId`, `subject`, `parentPageId` | `contents` 를 꺼낸다. `pageId` → `id`. `createOrganizationMemberId` → `creator`(`type: "member"`). 홈 페이지는 `parentPageId: null` 이라 키를 뺀다. `order`, `status`, `hasChildren`, `restricted` 등은 뺀다 |
 | getWikiPage | `id`, `wikiId`, `version`, `parentPageId`, `subject`, `body.mimeType`, `body.content`, `root`, `createdAt`, `updatedAt`, `creator`, `referrers`, `files`, `images` | `content` 를 꺼낸다. `pageId` → `id`. `create.dateTime`/`create.member` → `createdAt`/`creator`, `lastUpdate.dateTime` → `updatedAt`. 참조자·작성자는 `organizationMemberId` 만 남겨 `{ type: "member", member: { organizationMemberId } }` 로 만든다. `body.contentId`, `breadcrumb`, `me`, `reactions` 등은 뺀다. 모든 페이지가 `text/x-markdown` 이었다 |
-| getWikiPage 의 files, images | `id`, `name`, `size`, `attachFileId` | 웹 항목에서 이 네 필드만 남긴다. `downloadUrl` 은 변환 함수가 내부에서만 쓰고 낸 결과에 넣지 않는다 |
+| getWikiPage 의 files, images | `id`, `name`, `size`, `attachFileId` | 공식 문서는 단건 조회 예시에 `attachFileId` 가 없는 곳과 있는 곳(단독 조회 예시, 「Attach Files」·「Files」 절의 `$.result.files[].attachFileId` 설명)으로 갈린다. 첨부 가이드가 이 필드를 말하므로 공식 필드로 본다. 웹 항목에서 이 네 필드만 남긴다. `downloadUrl` 은 변환 함수가 내부에서만 쓰고 낸 결과에 넣지 않는다 |
 | getWikiPageStandalone | getWikiPage 와 같다 | 가벼운 응답으로 `wikiId` 를 얻은 뒤 상세를 한 번 더 부른다 |
 | createWikiPage | `id`, `wikiId`, `parentPageId`, `version` | `pageId` → `id` |
 | updateWikiPage, updateWikiPageTitle, updateWikiPageContent, moveWikiPage | `null` | 웹은 `{ wikiId, pageId, version, … }` 를 돌려준다. `null` 로 바꾼다. `version` 은 수정마다 올라간다 |
@@ -98,11 +98,11 @@ PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../fe
 
 | 명령·옵션 | 이유 |
 | --- | --- |
-| `wiki page edit --mime-type text/html`(그 밖에 `text/x-markdown` 이 아닌 값) | 웹은 `body.mimeType` 이 `text/x-markdown` 이 아니면 400(`입력한 내용에 오류가 있습니다.`)으로 거절한다. `text/html`, `text/plain` 을 `PUT …/content` 와 `PUT …/pages/{pageId}` 로 시도했다 |
-| `wiki page move --to-wiki` | 다른 위키로 옮기는 경로를 실측하지 못했다. 같은 위키 id 는 통하지만 그 옵션의 뜻은 다른 위키로 옮기기다 |
+| `wiki page edit --mime-type`(값과 관계없이 옵션 전체) | 웹은 `body.mimeType` 이 `text/x-markdown` 이 아니면 400(`입력한 내용에 오류가 있습니다.`)으로 거절한다. `text/html`, `text/plain` 을 `PUT …/content` 와 `PUT …/pages/{pageId}` 로 시도했다. 값이 `text/x-markdown` 인지는 명령이 `getWikiPage` 를 부른 뒤에야 알 수 있어 값 조건으로 막으면 「API 를 부르지 않고」(스펙 REQ8)를 어기므로 옵션 전체를 막는다 |
+| `wiki page move --to-wiki` | 실측하지 못해 막는다. 허용된 실측 장소에 위키가 하나뿐이라 다른 위키로 옮기는 쓰기를 해 보지 못했다. 같은 위키 id 는 통하지만 그 옵션의 뜻은 다른 위키로 옮기기다 |
 
 - 위 표 밖의 `wiki` 명령은 모두 웹 경로가 있다(`wiki list`, `pages`, `tree`, `page get/create/edit/replace/move/delete`, `page file list/upload/download/download-all/delete`, `page comment list/latest/get/add/edit/delete`).
-- 기존 본문의 `mimeType` 이 `text/x-markdown` 이 아닌 페이지는 이번에 찾지 못했다(허용 위키의 최상위 아래 13쪽 모두 markdown). 그런 페이지를 고치면 서버가 400 을 주고 CLI 는 서버 메시지로 끝낸다.
+- 기존 본문의 `mimeType` 이 `text/x-markdown` 이 아닌 페이지는 이번에 찾지 못했다(허용 위키의 최상위 아래 13쪽 모두 markdown). 명령은 기존 형식을 보존해 보내므로 그런 페이지를 고치면 서버가 400 을 줄 것이다. 웹 클라이언트는 쓰기 전에 `body.mimeType` 이 `text/x-markdown` 이 아니면 호출 없이 `EXIT_PARAM_ERROR`(웹 방식 안내)로 끝낸다. 옵션은 명령에서, 기존 페이지의 형식은 클라이언트에서 막는 두 곳이 같은 이유다.
 
 ## 실측 기록
 
@@ -110,10 +110,10 @@ PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../fe
 
 | 한 일 | 개수 | 뒤처리 |
 | --- | --- | --- |
-| `[cli-web-probe]` 페이지 생성 | 7(이동·정렬·삭제 실험 용도 포함) | 모두 삭제. 위키 최상위 아래 페이지 수가 실측 전 13건으로 돌아온 것을 확인했다 |
+| `[cli-web-probe]` 페이지 생성 | 13(두 번에 걸쳐. 이동·정렬·삭제·제목 중복 실험 용도 포함) | 모두 삭제. 위키 최상위 아래 페이지 수가 실측 전 13건으로 돌아온 것을 두 번 모두 확인했다 |
 | 제목·본문·전체 수정, 참조자 지정 | 여러 번 | 페이지와 함께 삭제 |
-| 댓글 추가·수정·삭제 | 추가 4(화면에서 1) | 페이지와 함께 삭제 |
-| 파일 업로드·삭제 | 3(텍스트, 인라인 이미지, 3MB 이진) | 모두 삭제 |
-| 이동·정렬 | 여러 번(`beforePageId=0` 로 맨 앞에 둔 것 포함) | 프로브 페이지만 움직였다. 한때 프로브 페이지가 기존 페이지 앞에 있었다. 그 뒤 다른 이동·정렬을 거쳐 프로브 페이지가 모두 맨 뒤에 있는 것을 목록으로 확인했다. 기존 페이지끼리의 순서를 실측 전 값과 일일이 대조하지는 않았다 |
+| 댓글 추가·수정·삭제 | 추가 5(화면에서 1) | 페이지와 함께 삭제 |
+| 파일 업로드·삭제 | 4(텍스트 둘, 인라인 이미지, 3MB 이진) | 모두 삭제 |
+| 이동·정렬 | 여러 번(첫 번째 실측에서 `beforePageId=0` 로 맨 앞에 둔 것 포함. 두 번째 실측은 프로브 부모 페이지 아래에서만 했다) | 프로브 페이지만 움직였다. 한때 프로브 페이지가 기존 페이지 앞에 있었다. 그 뒤 다른 이동·정렬을 거쳐 프로브 페이지가 모두 맨 뒤에 있는 것을 목록으로 확인했다. 기존 페이지끼리의 순서를 실측 전 값과 일일이 대조하지는 않았다 |
 
 위키 목록과 기존 페이지는 읽기만 했다. 삭제한 페이지가 위키 휴지통에 남는지는 확인하지 않았다.

@@ -5,12 +5,12 @@
   "deferred": [
     {
       "what": "wiki page move --to-wiki 의 웹 지원",
-      "why": "허용된 실측 장소에 위키가 하나뿐이라 다른 위키로 옮기는 쓰기를 실측하지 못했다",
+      "why": "허용된 실측 장소에 위키가 하나뿐이라 다른 위키로 옮기는 쓰기를 실측하지 못해 막는다",
       "after": "다른 위키로 옮겨도 되는 실측 장소를 정한 뒤"
     },
     {
-      "what": "wiki page edit --mime-type text/html 의 웹 지원",
-      "why": "웹 쓰기 경로가 text/x-markdown 만 받는다(400 실측)",
+      "what": "wiki page edit --mime-type 의 웹 지원",
+      "why": "웹 쓰기 경로가 text/x-markdown 만 받는다(400 실측). 값 조건 대신 옵션 전체를 막는다",
       "after": "웹이 다른 본문 형식을 받는 경로를 찾은 뒤"
     }
   ],
@@ -20,9 +20,11 @@
   "design": "docs/features/web-session-auth/design.md",
   "verification_plan": "verification-plan.md",
   "requirements": [
+    "REQ4",
     "REQ6",
     "REQ7",
-    "REQ8"
+    "REQ8",
+    "REQ17"
   ],
   "total_phases": 3,
   "current_phase": 1,
@@ -49,9 +51,11 @@
       "file": "phase-03.md",
       "execution_profile": "standard",
       "requirements": [
+        "REQ4",
         "REQ6",
         "REQ7",
-        "REQ8"
+        "REQ8",
+        "REQ17"
       ]
     }
   ]
