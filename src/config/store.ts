@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir, rename, chmod, unlink } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rename, chmod, unlink, stat } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { homedir } from "node:os";
@@ -6,6 +6,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR, EXIT_IO_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import type { Config } from "./types.js";
 import { CONFIG_SET_KEYS, DEFAULTS } from "./types.js";
+import { assessConfigFileSecurity, getConfigFileSecurityFixAdvice, type ConfigFileSecurityFinding } from "./file-security.js";
 import type { SecretField, SecretStore } from "./secret-store.js";
 import {
   assertStorableSecret,
@@ -372,8 +373,37 @@ export async function getConfig(): Promise<ConfigReadResult> {
   return fillSecrets(file.stored, secrets);
 }
 
-export async function getConfigOrThrow(): Promise<Config> {
+/** 설정 파일의 평문과 권한만 읽는다. 키체인 값은 조회하지 않는다. */
+export async function readConfigFileSecurity(): Promise<ConfigFileSecurityFinding[]> {
+  const file = await readConfigFile();
+  if (file.state !== "ok") return [];
+  const mode = await stat(CONFIG_PATH).then((info) => info.mode).catch(() => undefined);
+  return assessConfigFileSecurity({
+    platform: process.platform, mode, stored: file.stored,
+    hasSecretStore: getSecretStore(CONFIG_PATH) !== null,
+  });
+}
+
+let configFileSecurityWarned = false;
+
+/** 고칠 수 있는 보안 문제만 프로세스마다 한 번 알린다. 읽기 경로에서는 저장하지 않는다. */
+export async function warnConfigFileSecurity(): Promise<void> {
+  if (configFileSecurityWarned) return;
+  const failures = (await readConfigFileSecurity()).filter((finding) => finding.status === "fail");
+  if (failures.length === 0 || configFileSecurityWarned) return;
+  configFileSecurityWarned = true;
+  const { fixes, explanation } = getConfigFileSecurityFixAdvice(failures);
+  process.stderr.write(
+    failures.map((finding) => `⚠  ${finding.message}\n`).join("") +
+    `   ${explanation}\n` + fixes.map((fix) => `   수정: ${fix}\n`).join(""),
+  );
+}
+
+export async function getConfigOrThrow(
+  { securityWarning = true }: { securityWarning?: boolean } = {},
+): Promise<Config> {
   const result = await getConfig();
+  if (result.state === "ok" && securityWarning) await warnConfigFileSecurity();
   if (result.state === "invalid" || result.state === "unreadable") {
     throw new DoorayCliError(configReadErrorMessage(result), EXIT_CONFIG_ERROR);
   }

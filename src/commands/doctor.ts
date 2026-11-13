@@ -7,7 +7,8 @@ import {
   SKILL_AGENT_NAMES,
   type SkillStatus,
 } from "../skill/manager.js";
-import { getConfig, getConfigOrThrow } from "../config/store.js";
+import { getConfig, getConfigOrThrow, readConfigFileSecurity } from "../config/store.js";
+import { getConfigFileSecurityFixAdvice } from "../config/file-security.js";
 import { getCacheStats } from "../cache/store.js";
 import { DoorayApiClient } from "../api/client.js";
 import { ensureMe } from "../resolvers/me.js";
@@ -43,7 +44,7 @@ function formatSkillStatus(status: SkillStatus): string {
  */
 async function probeApiConnection(): Promise<"ok" | "failed"> {
   try {
-    const validConfig = await getConfigOrThrow();
+    const validConfig = await getConfigOrThrow({ securityWarning: false });
     const client = new DoorayApiClient(validConfig.apiKey, validConfig.baseUrl);
     await client.getProjects({ page: 0, size: 1 });
     await ensureMe(client);
@@ -51,6 +52,13 @@ async function probeApiConnection(): Promise<"ok" | "failed"> {
   } catch {
     return "failed";
   }
+}
+
+interface DoctorCheck {
+  id: string;
+  status: "pass" | "warn" | "fail";
+  message: string;
+  fix?: string;
 }
 
 export const doctorCommand = new Command("doctor")
@@ -61,6 +69,72 @@ export const doctorCommand = new Command("doctor")
     const apiKeyOk = config.state === "ok" && !!config.config.apiKey;
     const baseUrlOk = config.state === "ok" && !!config.config.baseUrl;
     const json = opts.json || !!command.parent?.opts().json;
+    const checks: DoctorCheck[] = [];
+    if (config.state === "ok") {
+      checks.push({ id: "config", status: "pass", message: "설정 파일을 읽었습니다." });
+      checks.push({ id: "api-key", status: apiKeyOk ? "pass" : "fail", message: apiKeyOk ? "API 키가 설정되어 있습니다." : "API 키가 없습니다.", ...(!apiKeyOk && { fix: "dooray setup" }) });
+      checks.push({ id: "base-url", status: baseUrlOk ? "pass" : "fail", message: baseUrlOk ? "Base URL 이 설정되어 있습니다." : "Base URL 이 없습니다.", ...(!baseUrlOk && { fix: "dooray setup" }) });
+    } else {
+      const message = config.state === "absent" ? "설정 파일이 없습니다."
+        : config.state === "invalid" ? `설정 파일이 손상되었습니다: ${config.reason}`
+        : config.source === "keychain" ? `키체인에서 설정의 비밀값을 읽지 못했습니다: ${config.reason}`
+        : `설정 파일을 읽지 못했습니다: ${config.reason}`;
+      checks.push({ id: "config", status: "fail", message, ...(config.state === "absent" && { fix: "dooray setup" }) });
+    }
+
+    const canInspectSecurity = config.state === "ok" || (config.state === "unreadable" && config.source === "keychain");
+    const findings = canInspectSecurity ? await readConfigFileSecurity() : [];
+    const { fixes, explanation } = getConfigFileSecurityFixAdvice(findings);
+    if (canInspectSecurity) {
+      checks.push({
+        id: "config-file-security",
+        status: findings.some((finding) => finding.status === "fail") ? "fail" : findings.length ? "warn" : "pass",
+        message: findings.length ? findings.map((finding) => finding.message).join("\n") : "설정 파일의 비밀값과 권한에 문제가 없습니다.",
+        ...(fixes.length && { fix: fixes.join("\n") }),
+      });
+    }
+    if (!json) {
+      console.log(chalk.bold("\n🔍 Dooray CLI 진단\n"));
+  
+      // Config checks
+      if (config.state === "invalid") {
+        console.log(`  설정 파일: ${chalk.red("❌ 손상")}`);
+        console.log(`  이유:      ${config.reason}`);
+      } else if (config.state === "unreadable" && config.source === "keychain") {
+        // 키체인 실패는 이유에 대처 방법이 이미 들어 있다.
+        console.log(`  키체인:    ${chalk.red("❌ 읽기 실패")}`);
+        console.log(`  이유:      ${config.reason}`);
+      } else if (config.state === "unreadable") {
+        console.log(`  설정 파일: ${chalk.red("❌ 읽기 실패")}`);
+        console.log(`  이유:      ${config.reason}`);
+        console.log("  파일 권한을 확인하세요.");
+      } else {
+        // state 가 ok 일 때만 config 에 접근할 수 있다. 지역 변수로 좁힘을 캐시해
+        // 템플릿 안에서 도달 불가 분기를 만들지 않는다.
+        const okConfig = config.state === "ok" ? config.config : undefined;
+        console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
+        console.log(`  Base URL: ${okConfig?.baseUrl ? chalk.green(`✅ ${okConfig.baseUrl}`) : chalk.red("❌ 미설정")}`);
+      }
+  
+      if (canInspectSecurity) {
+        console.log(chalk.bold("\n🔐 보안\n"));
+        if (findings.length === 0) console.log(chalk.green("  ✅ 설정 파일의 비밀값과 권한에 문제가 없습니다."));
+        for (const finding of findings) {
+          console.log(finding.status === "fail" ? chalk.red(`  ❌ ${finding.message}`) : chalk.yellow(`  ⚠️ ${finding.message}`));
+        }
+        if (fixes.length) {
+          console.log(`  ${explanation}`);
+          for (const fix of fixes) console.log(`  수정: ${fix}`);
+        }
+      }
+      if (apiKeyOk && baseUrlOk) console.log(chalk.bold("\n🌐 API 연결 테스트\n"));
+    }
+    const apiConnection = apiKeyOk && baseUrlOk ? await probeApiConnection() : "skipped";
+    if (apiConnection !== "skipped") checks.push({
+      id: "api-connection", status: apiConnection === "ok" ? "pass" : "fail",
+      message: apiConnection === "ok" ? "API 연결에 성공했습니다." : "API 연결에 실패했습니다. API 키 또는 URL 을 확인하세요.",
+    });
+    process.exitCode = checks.some((check) => check.status === "fail") ? 1 : 0;
     if (json) {
       const payload: Record<string, unknown> = {
         configState: config.state,
@@ -78,41 +152,19 @@ export const doctorCommand = new Command("doctor")
       }
       // 진단 명령이므로 「설정이 되었는가」 와 「실제로 접속되는가」 를 함께 낸다.
       // 설정이 갖춰지지 않아 시도하지 않은 경우를 skipped 로 구분한다.
-      payload.apiConnection = apiKeyOk && baseUrlOk ? await probeApiConnection() : "skipped";
+      payload.apiConnection = apiConnection;
+      payload.checks = checks;
       payload.skill = await inspectSkill(createSkillManagerContext());
       console.log(JSON.stringify(payload, null, 2));
       return;
     }
 
-    console.log(chalk.bold("\n🔍 Dooray CLI 진단\n"));
-
-    // Config checks
-    if (config.state === "invalid") {
-      console.log(`  설정 파일: ${chalk.red("❌ 손상")}`);
-      console.log(`  이유:      ${config.reason}`);
-    } else if (config.state === "unreadable" && config.source === "keychain") {
-      // 키체인 실패는 이유에 대처 방법이 이미 들어 있다.
-      console.log(`  키체인:    ${chalk.red("❌ 읽기 실패")}`);
-      console.log(`  이유:      ${config.reason}`);
-    } else if (config.state === "unreadable") {
-      console.log(`  설정 파일: ${chalk.red("❌ 읽기 실패")}`);
-      console.log(`  이유:      ${config.reason}`);
-      console.log("  파일 권한을 확인하세요.");
-    } else {
-      // state 가 ok 일 때만 config 에 접근할 수 있다. 지역 변수로 좁힘을 캐시해
-      // 템플릿 안에서 도달 불가 분기를 만들지 않는다.
-      const okConfig = config.state === "ok" ? config.config : undefined;
-      console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
-      console.log(`  Base URL: ${okConfig?.baseUrl ? chalk.green(`✅ ${okConfig.baseUrl}`) : chalk.red("❌ 미설정")}`);
-    }
-
     // API connection test
     if (apiKeyOk && baseUrlOk) {
-      console.log(chalk.bold("\n🌐 API 연결 테스트\n"));
       // 판정은 probeApiConnection 이 소유한다. --json 과 같은 결과를 쓴다.
       // 텍스트 모드만 성공 시 표시명을 덧붙이므로 me 를 따로 읽는다.
-      if ((await probeApiConnection()) === "ok") {
-        const validConfig = await getConfigOrThrow();
+      if (apiConnection === "ok") {
+        const validConfig = await getConfigOrThrow({ securityWarning: false });
         const client = new DoorayApiClient(validConfig.apiKey, validConfig.baseUrl);
         const me = await ensureMe(client);
         console.log(`  연결:     ${chalk.green("✅ 성공")} (${me.name})`);
@@ -145,7 +197,9 @@ export const doctorCommand = new Command("doctor")
 
     // Summary
     console.log();
-    if (apiKeyOk && baseUrlOk) {
+    if (apiKeyOk && baseUrlOk && process.exitCode === 1) {
+      console.log(chalk.red("❌ 진단에서 실패한 항목을 확인하세요."));
+    } else if (apiKeyOk && baseUrlOk) {
       console.log(chalk.green("✓ 기본 설정이 완료되었습니다."));
     } else if (config.state === "invalid") {
       console.log(chalk.yellow("⚠ 설정 파일이 손상되었습니다."));

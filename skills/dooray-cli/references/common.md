@@ -22,6 +22,13 @@ dooray config set api-key <YOUR_API_TOKEN>   # https://{org}.dooray.com/setting/
 dooray doctor                                 # 설정 검증
 ```
 
+`doctor` 는 설정 손상·읽기 실패·미설정, API 연결 실패, 설정 파일 보안 실패가 있으면 종료 코드 1 로 끝난다.
+경고만 있거나 스킬 미설치만 있으면 0 이다.
+`doctor --json` 은 기존 평면 키를 유지하고 `checks` 배열에 `{ id, status, message, fix? }` 를 추가한다.
+`status` 는 `pass`, `warn`, `fail` 이고 스킬 상태는 `checks` 에 포함하지 않는다.
+보안 실패 시 `fix` 에 나온 `config set track-last-run` 명령은 현재 실행 기록 값을 유지하며 파일을 다시 저장한다.
+읽기 명령은 파일이나 키체인을 자동으로 고치지 않는다.
+
 값 자리에 `-` 를 주면 stdin 에서 읽는다. 토큰을 명령 인자로 넘기지 않을 때 쓴다.
 
 저장된 값은 `dooray config get <key>` 로 확인한다. 키를 생략하면 전체를 낸다.

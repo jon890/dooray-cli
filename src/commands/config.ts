@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import chalk from "chalk";
-import { configReadErrorMessage, getConfig } from "../config/store.js";
+import { configReadErrorMessage, getConfig, warnConfigFileSecurity } from "../config/store.js";
 import { updateConfigValue } from "../services/config.js";
 import { resolveConfigValue } from "../utils/config-value.js";
 import { DoorayCliError } from "../utils/errors.js";
@@ -58,6 +58,7 @@ configCommand
       );
     }
     const config = result.config;
+    await warnConfigFileSecurity();
 
     const display: Record<string, string> = {
       "api-key": config.apiKey ? maskApiKey(config.apiKey) : "(미설정)",

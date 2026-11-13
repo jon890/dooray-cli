@@ -147,7 +147,7 @@ dooray post comment add --id "$POST_ID" --body "시작합니다"
 
 ## 문제가 생기면
 
-- 설정이 의심되면 `dooray doctor` 를 먼저 실행해 보세요. 설정과 API 연결, 스킬 상태를 한 번에 확인해요.
+- 설정이 의심되면 `dooray doctor` 를 먼저 실행해 보세요. 설정과 API 연결, 설정 파일 보안, 스킬 상태를 한 번에 확인해요. 설정·연결·보안에 실패 항목이 있으면 종료 코드 1, 경고나 스킬 미설치만 있으면 0이에요.
 - 에이전트가 새 명령을 모르면 `dooray skill update` 를 실행해 주세요.
 - 버그나 제안은 [GitHub Issues](https://github.com/jon890/dooray-cli/issues) 에 남겨 주세요. `dooray feedback` 으로 터미널에서 바로 올릴 수도 있어요.
 

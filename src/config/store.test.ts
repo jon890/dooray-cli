@@ -21,6 +21,7 @@ const {
   mkdirMock,
   renameMock,
   chmodMock,
+  statMock,
   unlinkMock,
 } = vi.hoisted(() => ({
   readFileMock: vi.fn(),
@@ -28,6 +29,7 @@ const {
   mkdirMock: vi.fn(),
   renameMock: vi.fn(),
   chmodMock: vi.fn(),
+  statMock: vi.fn().mockResolvedValue({ mode: 0o600 }),
   unlinkMock: vi.fn(),
 }));
 
@@ -38,6 +40,7 @@ vi.mock("node:fs/promises", () => ({
   rename: renameMock,
   chmod: chmodMock,
   unlink: unlinkMock,
+  stat: statMock,
 }));
 
 // 실행 OS 와 무관하게 파일 모드로 고정한다. macOS 에서 실제 키체인을 건드리지 않게 한다.

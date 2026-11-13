@@ -1,4 +1,5 @@
-import { readFile, writeFile, rm, mkdir, readdir, stat } from "node:fs/promises";
+import { readFile, writeFile, rm, mkdir, readdir, stat, chmod, rename, unlink } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 import type {
@@ -30,7 +31,11 @@ const TEMPLATES_DIR = join(CACHE_DIR, "templates");
 // ─── Helpers ──────────────────────────────────────────────
 
 async function ensureDir(dir: string): Promise<void> {
-  await mkdir(dir, { recursive: true });
+  await mkdir(dir, { recursive: true, mode: 0o700 });
+  // 기존 폴더도 소유자만 열게 맞춘다. POSIX 권한이 없는 환경에서는 저장을 계속한다.
+  for (const directory of new Set([CACHE_DIR, dir])) {
+    await chmod(directory, 0o700).catch(() => undefined);
+  }
 }
 
 async function readJson<T>(path: string): Promise<T | null> {
@@ -45,7 +50,14 @@ async function readJson<T>(path: string): Promise<T | null> {
 async function writeJson(path: string, data: unknown): Promise<void> {
   const dir = dirname(path);
   await ensureDir(dir);
-  await writeFile(path, JSON.stringify(data, null, 2) + "\n");
+  const tmp = `${path}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    await writeFile(tmp, JSON.stringify(data, null, 2) + "\n", { mode: 0o600, flag: "wx" });
+    await rename(tmp, path);
+  } catch (err) {
+    await unlink(tmp).catch(() => undefined);
+    throw err;
+  }
 }
 
 export function isExpired(updatedAt: string, ttlMs: number): boolean {
