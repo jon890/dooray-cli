@@ -26,7 +26,7 @@ assessConfigFileSecurity 순수 함수가 SECRET_FIELDS 와 isStorableSecret 로
 
 assessConfigFileSecurity 순수 함수가 SECRET_FIELDS 와 isStorableSecret 로 등급·필드 이름·안내만 반환한다. readConfigFileSecurity 는 stat 실패만 건너뛰고 파일의 평문을 읽는다. getConfigOrThrow 와 config get 은 ok 상태에서만 warnConfigFileSecurity 를 호출하며 프로세스당 한 번만 fail 발견을 stderr 로 쓴다. config set 은 경고 경로를 호출하지 않는다.
 
-getConfigOrThrow(options?: { securityWarning?: boolean }) 의 기본값은 true 이고 resetConfigFileSecurityWarningForTest 를 내보낸다.
+getConfigOrThrow(options?: { securityWarning?: boolean }) 의 기본값은 true 이다. 테스트는 모듈을 다시 불러 초기화한다.
 
 ### 2. 개발 테스트
 

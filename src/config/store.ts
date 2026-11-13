@@ -386,10 +386,6 @@ export async function readConfigFileSecurity(): Promise<ConfigFileSecurityFindin
 
 let configFileSecurityWarned = false;
 
-export function resetConfigFileSecurityWarningForTest(): void {
-  configFileSecurityWarned = false;
-}
-
 /** 고칠 수 있는 보안 문제만 프로세스마다 한 번 알린다. 읽기 경로에서는 저장하지 않는다. */
 export async function warnConfigFileSecurity(): Promise<void> {
   if (configFileSecurityWarned) return;

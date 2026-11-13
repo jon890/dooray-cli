@@ -61,7 +61,7 @@
 
 - `getConfig` 가 `ok` 일 때만 판정한다. `absent`·`invalid`·`unreadable` 이면 이미 다른 오류로 끝난다.
 - 판정은 설정이 「미완료」 여도 한다. 평문이 있으면 미완료 오류보다 먼저 경고가 나간다.
-- 경고는 모듈 변수로 프로세스마다 한 번만 낸다. 테스트가 이 표시를 초기화하는 함수(`resetConfigFileSecurityWarningForTest`)를 함께 내보낸다.
+- 경고는 모듈 변수로 프로세스마다 한 번만 낸다. 테스트는 모듈을 다시 불러 초기화한다.
 - `doctor` 는 `getConfigOrThrow` 를 부르는 두 자리(`probeApiConnection`, 텍스트 모드의 연결 성공 뒤 `me` 읽기) 모두 `securityWarning: false` 로 부른다. 같은 내용을 「보안」 절에 보이므로 stderr 에 다시 내지 않는다.
 
 `doctor --json` 의 기존 평면 키(`configState`, `apiKeyOk`, `baseUrlOk`, `apiConnection`, `skill`, `reason`, `source`)는 그대로 둔다.
