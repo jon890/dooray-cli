@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveWiki, resolveWikiHomePageId } from "../../resolvers/wiki.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { readBodyInput } from "../../utils/body-input.js";
@@ -17,7 +17,7 @@ export const wikiPageCreateCommand = new Command("create")
   .action(async (project, opts) => {
     const globalOpts = wikiPageCreateCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const bodyContent = await readBodyInput(opts);
 

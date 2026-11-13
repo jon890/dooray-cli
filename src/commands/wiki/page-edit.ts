@@ -1,6 +1,6 @@
 import { Command, Option } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveWikiPageInput } from "../../resolvers/wiki-page-input.js";
 import {
   openInEditor,
@@ -28,7 +28,7 @@ export const wikiPageEditCommand = new Command("edit")
   )
   .action(async (arg1, arg2, opts) => {
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const hasTitle = opts.title != null;
     const hasBody = opts.body != null || opts.bodyFile != null;

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { formatMemberSearchResults } from "../../formatters/member.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { DoorayCliError } from "../../utils/errors.js";
@@ -35,7 +35,7 @@ export const memberSearchCommand = new Command("search")
     }
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const size = Math.min(Math.max(1, Number(opts.size) || 20), 100);
     const page = Math.max(0, Number(opts.page) || 0);

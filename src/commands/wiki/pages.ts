@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveWiki } from "../../resolvers/wiki.js";
 import { formatWikiPages } from "../../formatters/wiki.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
@@ -13,7 +13,7 @@ export const wikiPagesCommand = new Command("pages")
   .action(async (project, opts) => {
     const globalOpts = wikiPagesCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("위키 페이지 목록 조회 중...");
     const wikiId = await resolveWiki(client, project);

@@ -15,7 +15,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | REQ3 | `sessionCookie` 를 `SECRET_FIELDS` 에 더한다. 웹 HTTP 층의 오류 메시지는 URL·호스트·쿠키를 담지 않는다 |
 | REQ4 | 웹 HTTP 층이 요청마다 origin 을 확인하고, 리다이렉트를 따라가지 않는다. 첨부 307 은 기존 `isTrustedFileHost` 에 공개 API 주소를 기준으로 넘겨 판정한다 |
 | REQ5 | `resolveWebBaseUrl(config)` 가 `base-url` 을 알려진 클라우드 표로 바꾼다 |
-| REQ6 | 웹 클라이언트 메서드가 웹 응답을 공식 문서의 그 endpoint 응답 스키마 모양으로 바꿔 돌려준다. 포매터는 바꾸지 않는다 |
+| REQ6 | 영역별 웹 클라이언트 메서드가 웹 응답을 공식 문서의 그 endpoint 응답 스키마 모양으로 바꿔 돌려준다. 포매터는 바꾸지 않는다 |
 | REQ7 | 쓰기 메서드도 같은 방법으로 웹 경로에 붙인다. PR 마다 지정된 테스트 장소에서 실측한다 |
 | REQ8 | `assertWebSupported(명령 경로, 옵션, 방식)` 가 `src/index.ts` 의 `preAction` 에서 API 호출 전에 막는다. 지원하지 않는 옵션도 같은 함수가 막는다 |
 | REQ9 | 웹 HTTP 층이 401·로그인 리다이렉트와 403 을 나눠 `DoorayCliError` 로 바꾼다 |
@@ -35,7 +35,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | `src/api/client.ts` | 지금의 공개 API 클라이언트. 동작을 바꾸지 않는다. `DoorayClient` 를 구현한다고 선언만 더한다 |
 | `src/api/dooray-client.ts` (새 파일) | `DoorayClient` 인터페이스(`DoorayApiClient` 의 공개 메서드 시그니처 그대로)와 `createClient(config)` |
 | `src/api/web-http.ts` (새 파일) | 웹용 ky 인스턴스. 쿠키 헤더, origin 확인, 리다이렉트 처리, 오류 변환(URL 없는 메시지), 토큰 버킷, 큰 정수 파서 |
-| `src/api/web-client.ts` (새 파일) | `DoorayClient` 의 웹 구현. 메서드마다 웹 경로를 부르고 공식 응답 스키마 모양으로 바꾼다. 붙이지 않은 메서드는 지원하지 않음 오류를 던진다 |
+| `src/api/web/index.ts`, `web/project.ts`, `web/member.ts`, `web/convert.ts`, `web/context.ts` (새 파일) | `DoorayClient` 의 웹 구현. 메서드마다 웹 경로를 부르고 공식 응답 스키마 모양으로 바꾼다. 붙이지 않은 메서드는 지원하지 않음 오류를 던진다 |
 | `src/config/web-auth.ts` (새 파일) | `resolveWebBaseUrl`, `parseSessionCookie`, `isConfigComplete`. 파일 시스템과 키체인을 쓰지 않는 순수 함수 |
 | `src/config/store.ts`, `types.ts` | `authMode`, `sessionCookie` 필드와 검사, `config set` 키, `readAuthModeFromFile()`(파일만 읽어 방식을 돌려준다) |
 | `src/commands/web-support.ts` (새 파일) | 웹 방식에서 지원하는 명령 경로와 명령별 미지원 옵션, 순수 함수 `assertWebSupported` |
@@ -45,7 +45,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | `src/commands/*` | `new DoorayApiClient(...)` 를 `createClient(config)` 로 바꾼다. `doctor`·`setup`·`config` 는 아래 절대로 고친다 |
 | `docs/api/web-endpoints.md` (새 파일) | 메서드마다 부르는 웹 경로, 쿼리, 실측 날짜, 공식 스키마와 다른 점. [ADR-062](../../adr/062-undocumented-endpoint-policy.md) 조건 2 의 자리다 |
 
-- 의존 방향은 `commands → api/dooray-client → (api/client | api/web-client → api/web-http)` 다. resolver·services·editor 는 `DoorayClient` 타입만 안다.
+- 의존 방향은 `commands → api/dooray-client → (api/client | api/web/index → api/web-http)` 다. resolver·services·editor 는 `DoorayClient` 타입만 안다.
 - `DoorayApiClient` 는 private 필드가 있어 TypeScript 가 다른 구현을 그 타입으로 받지 않는다. 그래서 인터페이스로 바꾸는 일은 resolver·services 매개변수까지 간다.
 - 웹 클라이언트를 공개 클라이언트의 하위 클래스로 만들지 않는다. 덮지 않은 메서드가 공개 API 를 부르는 사고가 난다.
 - `web-support.ts` 는 명령 경로를 다루므로 `commands/` 에 둔다. api 층은 CLI 명령을 모른다.
@@ -151,7 +151,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 
 `/v2/wapi/members/search` 는 200 이지만 `result.content` 가 문자열이라 쓰지 않는다.
 
-PR1 plan 의 첫 작업은 아래 실측이다. 결과를 `docs/api/web-endpoints.md` 에 적은 뒤 구현한다.
+아래 실측은 2026-11-14 완료했고 [웹 경로 색인](../../api/web-endpoints.md)에서 영역별 기록을 찾는다. 쓰기는 새 임시 그룹에서만 했고 웹 화면에서 정리했다. 반복해서 쓰지 않는다.
 
 - 공개 호출이 쓰는 쿼리(`member=me`, `type`, `scope`, `state`, `page`, `size`, `externalEmailAddresses`, `userCode`)를 웹이 받는지. `page` 를 무시하면 목록 루프(`src/resolvers/project.ts`)가 같은 페이지를 거듭 받으므로 페이지 넘기기를 꼭 본다.
 - `ensureMe` 가 쓰는 `defaultOrganization` 의 id 를 웹 `me` 응답에서 얻는 법.
@@ -160,10 +160,12 @@ PR1 plan 의 첫 작업은 아래 실측이다. 결과를 `docs/api/web-endpoint
 
 ### 지원 범위 막기(`web-support.ts`)
 
-- 목록은 웹 방식으로 돌 수 있는 명령 경로와, 명령마다 웹에서 지원하지 않는 옵션이다. 예: PR1 의 `member search` 는 `--email`·`--user-code`·`--user-code-exact` 를 웹 경로에서 받는지 실측해 정한다.
+- 목록은 `commands/web-support/project.ts`, `member.ts` 처럼 영역별 파일에 두고 `web-support.ts` 가 모은다. 판정 함수는 하나다. 목록은 웹 방식으로 돌 수 있는 명령 경로와, 명령마다 웹에서 지원하지 않는 옵션이다. PR1 의 `member get --with-org` 는 캘린더 경로가 필요해 막는다. 예: PR1 의 `member search` 는 `--email`·`--user-code`·`--user-code-exact` 를 웹 경로에서 받는지 실측해 정한다.
 - `assertWebSupported(path, opts, mode)` 는 순수 함수다. 방식이 `web` 이고 명령이 목록에 없거나 미지원 옵션 값이 있으면 스펙 REQ8 의 메시지와 `EXIT_PARAM_ERROR` 를 던진다.
 - 설정을 쓰지 않는 명령(`setup`, `config`, `doctor`, `cache`, `skill`, `feedback`)과 `mail` 은 목록과 무관하게 통과한다.
 - `preAction` 은 `readAuthModeFromFile()` 로 파일만 읽는다. 키체인을 읽지 않고, 보안 경고도 내지 않는다. 비밀값·캐시 파일 보호 강화 설계가 `config`·`setup` 에서 경고하지 않기로 한 것을 지킨다.
+- `web/index.ts` 가 영역별 메서드를 조립한다. 지원하지 않음 기본 구현은 index 에만 두고 뒤 PR 은 자기 영역 파일과 등록 줄을 더한다.
+
 - 웹 클라이언트의 붙이지 않은 메서드도 같은 오류를 던진다. 목록에 넣은 명령이 붙이지 않은 메서드를 부르는 실수를 런타임에도 막는다.
 - 가이드의 「웹 방식에서 지원하지 않는 명령·옵션」 표는 문서에 적고, vitest 테스트가 그 표와 목록이 같은지 본다. CI 의 문서 검사는 의존성 설치 전에 돌아 TS 파일을 불러올 수 없다([ADR-048](../../adr/048-checks-to-mjs.md)).
 
@@ -225,7 +227,7 @@ PR1 plan 의 첫 작업은 아래 실측이다. 결과를 `docs/api/web-endpoint
 | DECISION1 | 두 방식을 나누는 경계 | `DoorayClient` 인터페이스와 구현 두 개, `createClient` 로 고른다. resolver·services 의 매개변수 타입도 인터페이스로 바꾼다 | 작성자 | 명령·포매터를 바꾸지 않는다. 하위 클래스는 덮지 않은 메서드가 공개 API 를 부른다 |
 | DECISION2 | 응답 변환 자리와 기준 | 웹 클라이언트 메서드 안, 기준은 공식 응답 스키마 | 작성자 | 포매터가 한 모양만 안다. `types.ts` 는 필드 일부만 담는다(스펙 DECISION26) |
 | DECISION3 | 지원 범위의 원본 | `src/commands/web-support.ts` 의 명령·옵션 목록과 순수 판정 함수 | 작성자 | REQ8 을 명령 시작에서 지키고 단위 테스트로 본다 |
-| DECISION4 | 웹 경로 명세 자리 | `docs/api/web-endpoints.md` 한 파일 | 작성자 | 스펙 DECISION25 |
+| DECISION4 | 웹 경로 명세 자리 | `docs/api/web-endpoints.md` 색인과 영역별 `web-endpoints/*.md` | 작성자 | 스펙 DECISION25 |
 | DECISION5 | 테넌트 웹 주소 | 네 클라우드 표. 웹 방식의 `example` 은 미설정 | 작성자 | `dooray.com` 실측과 같은 규칙. `example` 은 `setup` 기본값이라 그대로 두면 엉뚱한 호스트로 쿠키가 나간다 |
 | DECISION6 | 리다이렉트 판정 | `/auth/signin` 은 세션 만료, 그 밖은 따라가지 않는 API 오류 | 작성자 | 2026-11-13 실측 |
 | DECISION7 | 공개 클라이언트 | 동작을 바꾸지 않는다 | 작성자 | API 가 복구되면 지금 동작 그대로 돌아가야 한다 |
@@ -249,3 +251,5 @@ PR 마다 함께 고칠 문서(그 PR 이 닿는 것만):
 - `docs/data-schema.md`: 비밀 필드 목록, `tenantName` 이 캐시와 무관하다는 서술. PR1.
 - `docs/guide/setup.md`, `README.md`, `skills/dooray-cli/SKILL.md`: 웹 방식 켜는 법, 비공식 API 경고, 쿠키 꺼내는 법, 지원하지 않는 명령 표. PR1 에서 만들고 PR 마다 표를 늘린다.
 - [ADR-042](../../adr/042-cache-invalidation-on-mutation.md): 무효화 대상 키. PR1.
+
+구현 배치 보완(사용자 결정 2026-11-14): 웹 메서드·지원 목록·웹 경로 명세·고정 응답은 영역별 파일로 나눈다. 뒤 PR 들이 동시에 자기 영역을 구현할 수 있게 한다. 기존 책임 경계와 보안 규칙은 유지한다.

@@ -1,4 +1,4 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { DoorayClient } from "../api/dooray-client.js";
 import type { CreateTagRequest, UpdateTagGroupRequest } from "../api/types.js";
 import { clearTags } from "../cache/store.js";
 
@@ -20,7 +20,7 @@ async function invalidateTags(projectId: string): Promise<void> {
 
 /** 태그를 만들고 그 프로젝트의 태그 캐시를 지운다. 반환값은 만들어진 태그 id 다. */
 export async function createTag(
-  client: DoorayApiClient,
+  client: DoorayClient,
   projectId: string,
   body: CreateTagRequest,
 ): Promise<string> {
@@ -31,7 +31,7 @@ export async function createTag(
 
 /** 태그 그룹 속성을 바꾸고 그 프로젝트의 태그 캐시를 지운다. */
 export async function updateTagGroup(
-  client: DoorayApiClient,
+  client: DoorayClient,
   projectId: string,
   tagGroupId: string,
   body: UpdateTagGroupRequest,

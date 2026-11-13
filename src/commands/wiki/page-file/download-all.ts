@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import {
   resolveWikiPageInput,
   WIKI_PAGE_ID_OPTION_DESC,
@@ -25,7 +25,7 @@ export const wikiPageFileDownloadAllCommand = new Command("download-all")
   .action(async (project, pageIdArg, opts) => {
     const globalOpts = wikiPageFileDownloadAllCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     // resolveWikiPageInput 을 startSpinner 보다 먼저 호출 (1-1 회피)
     const { wikiId, pageId } = await resolveWikiPageInput(client, {

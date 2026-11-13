@@ -6,7 +6,7 @@
  * 구독 캘린더(`subscription`)는 외부에서 가져온 읽기 전용 캘린더라 이름 후보에서 뺀다.
  */
 
-import type { DoorayApiClient } from "../api/client.js";
+import type { DoorayClient } from "../api/dooray-client.js";
 import type { Calendar } from "../api/types.js";
 import { sanitizeForTerminal } from "../utils/sanitize.js";
 import { matchByName } from "./match.js";
@@ -23,7 +23,7 @@ export interface ResolvedCalendar {
 }
 
 export async function resolveWritableCalendar(
-  client: DoorayApiClient,
+  client: DoorayClient,
   input: string,
 ): Promise<ResolvedCalendar> {
   if (CALENDAR_ID_RE.test(input)) return { id: input };

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { basename } from "node:path";
 import { getConfigOrThrow } from "../../../../config/store.js";
-import { DoorayApiClient } from "../../../../api/client.js";
+import { createClient } from "../../../../api/dooray-client.js";
 import {
   resolveCommentFileInput,
   FILE_ID_SECONDARY_LABEL,
@@ -29,7 +29,7 @@ export const downloadCommentFileCommand = new Command("download")
     const globalOpts = downloadCommentFileCommand.optsWithGlobals() as OutputOptions;
     await checkOutputFile({ command: downloadCommentFileCommand, dirKey: "out", dirFlag: "--out", outputFile: opts.outputFile });
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     // commentId 는 UX 일관성 목적으로 받지만 download API 호출에는 사용 안 함
     const { projectId, postId, secondary: fileId } = await resolveCommentFileInput(client, {

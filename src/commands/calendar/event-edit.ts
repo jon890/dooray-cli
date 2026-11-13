@@ -12,7 +12,7 @@
 
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import type { CalendarEventWriteRequest } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
@@ -141,7 +141,7 @@ export const calendarEventEditCommand = addEventFieldOptions(
   warnPersonalSettingsReset(opts);
 
   const config = await getConfigOrThrow();
-  const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+  const client = createClient(config);
 
   startSpinner(opts.dryRun ? "이름 해석 중..." : "일정 수정 중...");
   let calendar: ResolvedCalendar;

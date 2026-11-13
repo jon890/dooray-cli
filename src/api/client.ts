@@ -1,3 +1,4 @@
+import type { DoorayClient } from "./dooray-client.js";
 import ky, { type KyInstance, HTTPError } from "ky";
 import { createReadStream } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
@@ -176,7 +177,7 @@ async function toDoorayCliError(error: unknown): Promise<never> {
   throw error;
 }
 
-export class DoorayApiClient {
+export class DoorayApiClient implements DoorayClient {
   private readonly api: KyInstance;
   private readonly authHeader: string;
   private readonly baseUrl: string;

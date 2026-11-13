@@ -8,7 +8,7 @@
 
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient, type DoorayClient } from "../../api/dooray-client.js";
 import type { StreamItem, StreamListResponse } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { output, printJson, truncate } from "../../formatters/table.js";
@@ -194,7 +194,7 @@ export interface FetchStreamsResult {
  *   시각이 없는 원소(schedule 등)는 그 페이지 커서가 since 이후일 때만 남긴다.
  */
 export async function fetchStreams(
-  client: Pick<DoorayApiClient, "getStreams">,
+  client: Pick<DoorayClient, "getStreams">,
   opts: FetchStreamsOptions,
 ): Promise<FetchStreamsResult> {
   const items: StreamItem[] = [];
@@ -257,7 +257,7 @@ export const streamListCommand = new Command("list")
     }
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("활동 조회 중...");
     let result: FetchStreamsResult;

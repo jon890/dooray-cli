@@ -9,7 +9,7 @@
 
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
 import { formatCalendarLabel, resolveWritableCalendar } from "../../resolvers/calendar.js";
@@ -44,7 +44,7 @@ export const calendarEventCreateCommand = addEventFieldOptions(
   if (opts.dryRun) warnDryRunOutputOptions(globalOpts);
 
   const config = await getConfigOrThrow();
-  const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+  const client = createClient(config);
 
   startSpinner(opts.dryRun ? "이름 해석 중..." : "일정 생성 중...");
   let calendar;

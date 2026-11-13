@@ -1,6 +1,6 @@
 import { Command, Option } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { ensureProjects, ensurePrivateProjects } from "../../resolvers/project.js";
 import { output, type OutputOptions } from "../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
@@ -16,7 +16,7 @@ export const projectListCommand = new Command("list")
   .action(async (opts) => {
     const globalOpts = projectListCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const isPrivate = opts.type === "private";
     startSpinner(isPrivate ? "개인 프로젝트 목록 조회 중..." : "프로젝트 목록 조회 중...");

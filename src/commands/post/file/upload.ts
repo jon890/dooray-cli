@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { basename } from "node:path";
 import type { OutputOptions } from "../../../formatters/table.js";
@@ -20,7 +20,7 @@ export const fileUploadCommand = new Command("upload")
   .action(async (arg1, arg2, arg3, opts) => {
     const globalOpts = fileUploadCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     let projectArg: string | undefined;
     let postNumberArg: string | undefined;

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolvePostInput } from "../../resolvers/post-input.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 
@@ -12,7 +12,7 @@ export const postDoneCommand = new Command("done")
   .option("--url <url>", "Dooray 업무 URL (project/post-number 대신)")
   .action(async (project, postNumberStr, opts) => {
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("업무 완료 처리 중...");
     const { projectId, postId, postNumber } = await resolvePostInput(client, {

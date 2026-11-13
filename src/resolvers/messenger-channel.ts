@@ -1,4 +1,4 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { DoorayClient } from "../api/dooray-client.js";
 import { matchByName } from "./match.js";
 
 // resolveMember 의 MEMBER_ID_RE 와 동일 패턴
@@ -11,7 +11,7 @@ const CHANNEL_ID_RE = /^\d{15,}$/;
  *    title 빈값(direct/me 방)은 이름 매칭 불가 → 후보에서 제외 (member-group code 누락 가드와 동일 패턴)
  */
 export async function resolveMessengerChannel(
-  client: DoorayApiClient,
+  client: DoorayClient,
   input: string,
 ): Promise<string> {
   if (CHANNEL_ID_RE.test(input)) {

@@ -11,7 +11,7 @@
 
 import { Command, Option } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient, type DoorayClient } from "../../api/dooray-client.js";
 import type { CalendarEventDeleteType, CalendarEventDetail } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { emitDeleteResult } from "../../formatters/file-output.js";
@@ -46,7 +46,7 @@ const SCOPE_LABEL: Record<DeleteScope, string> = {
 };
 
 export interface DeleteContext {
-  client: DoorayApiClient;
+  client: DoorayClient;
   calendar: ResolvedCalendar;
 }
 
@@ -108,7 +108,7 @@ export const calendarEventDeleteCommand = new Command("delete")
     const load = async (): Promise<DeleteContext> => {
       if (ctx != null) return ctx;
       const config = await getConfigOrThrow();
-      const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+      const client = createClient(config);
       const calendar = await resolveWritableCalendar(client, calendarInput);
       ctx = { client, calendar };
       return ctx;

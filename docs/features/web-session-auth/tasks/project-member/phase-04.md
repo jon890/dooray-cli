@@ -18,6 +18,8 @@
 
 ### 1. web-support 와 preAction
 
+web-support/project.ts·member.ts 가 각 영역의 명령·미지원 옵션 목록을 소유하고 web-support.ts 는 목록을 모아 한 판정 함수로 처리한다. 뒤 영역도 자기 목록을 추가한다. 가이드 표는 영역별 절로 나눈다.
+
 명령 경로·미지원 옵션의 원본을 src/commands/web-support.ts 에 둔다. member get --with-org 는 미지원으로 막고 설정·mail 은 통과시킨다. preAction 은 키체인 없이 파일만 읽는다.
 
 ### 2. `src/commands/web-support.test.ts`
@@ -43,5 +45,7 @@ node scripts/check-public-refs.mjs
 | --- | --- |
 | `src/commands/web-support.ts` | 신규 |
 | `src/commands/web-support.test.ts` | 신규 |
+| `src/commands/web-support/project.ts` | 신규 |
+| `src/commands/web-support/member.ts` | 신규 |
 | `src/index.ts` | 수정 |
 | `docs/guide/setup.md` | 수정 |

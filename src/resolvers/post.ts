@@ -1,9 +1,9 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { DoorayClient } from "../api/dooray-client.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 export async function resolvePost(
-  client: DoorayApiClient,
+  client: DoorayClient,
   projectId: string,
   postNumber: number,
 ): Promise<string> {

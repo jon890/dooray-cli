@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import {
   resolveWikiPageInput,
   WIKI_PAGE_ID_OPTION_DESC,
@@ -20,7 +20,7 @@ export const wikiPageGetCommand = new Command("get")
   .action(async (arg1, arg2, opts) => {
     const globalOpts = wikiPageGetCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     // resolveWikiPageInput 을 스피너보다 먼저 호출 (validation-before-spinner)
     const { wikiId, pageId } = await resolveWikiPageInput(client, {
