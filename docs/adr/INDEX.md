@@ -84,3 +84,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-075](075-api-path-encoding.md) — `client.ts` 의 API 경로는 `apiPath` tagged template 으로 만들어 끼운 값을 모두 `encodeURIComponent` 로 인코딩한다. `baseUrl`·쿼리·리터럴은 helper 밖에 두고, 인벤토리 스크립트가 `apiPath` 태그를 읽는다 (Issue #240)
 - [ADR-077](077-mail-save-sent.md) — `mail send`·`mail reply` 는 한 번 만든 원문을 SMTP 로 보내고 IMAP `\Sent` 메일함에 같은 바이트로 `APPEND` 하며, 발송 뒤 저장이 실패해도 재발송하지 않고 경고와 종료 코드 0 으로 끝낸다
 - [ADR-078](078-stream-list.md) — 활동 피드를 `stream list` 로 두고 `--all` 은 빈 배열까지, `--since` 는 응답 커서로 멈추며, 429 는 모든 명령에서 종료 코드 6 으로 끝낸다 (2주 5113건·한 페이지 189/200·나노초 커서·원소 시각 최대 29초 어긋남·`event.createdAt` 실측)
+- [ADR-079](079-secret-file-exposure-warning.md) — `config.json` 의 평문 비밀값(macOS)과 비밀값을 담은 파일의 넓은 권한(macOS·Linux)은 고치지 않고 설정을 읽는 명령마다 경고하고, `doctor` 는 실패가 있으면 종료 코드 1 로 끝내며, 캐시는 폴더 0700·파일 0600 으로 쓴다 (2026-11-13 0644 평문 실측)
