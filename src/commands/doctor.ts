@@ -92,6 +92,45 @@ export const doctorCommand = new Command("doctor")
         ...(fixes.length && { fix: fixes.join("\n") }),
       });
     }
+    if (!json) {
+      console.log(chalk.bold("\n🔍 Dooray CLI 진단\n"));
+  
+      // Config checks
+      if (config.state === "invalid") {
+        console.log(`  설정 파일: ${chalk.red("❌ 손상")}`);
+        console.log(`  이유:      ${config.reason}`);
+      } else if (config.state === "unreadable" && config.source === "keychain") {
+        // 키체인 실패는 이유에 대처 방법이 이미 들어 있다.
+        console.log(`  키체인:    ${chalk.red("❌ 읽기 실패")}`);
+        console.log(`  이유:      ${config.reason}`);
+      } else if (config.state === "unreadable") {
+        console.log(`  설정 파일: ${chalk.red("❌ 읽기 실패")}`);
+        console.log(`  이유:      ${config.reason}`);
+        console.log("  파일 권한을 확인하세요.");
+      } else {
+        // state 가 ok 일 때만 config 에 접근할 수 있다. 지역 변수로 좁힘을 캐시해
+        // 템플릿 안에서 도달 불가 분기를 만들지 않는다.
+        const okConfig = config.state === "ok" ? config.config : undefined;
+        console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
+        console.log(`  Base URL: ${okConfig?.baseUrl ? chalk.green(`✅ ${okConfig.baseUrl}`) : chalk.red("❌ 미설정")}`);
+      }
+  
+      if (canInspectSecurity) {
+        console.log(chalk.bold("\n🔐 보안\n"));
+        if (findings.length === 0) console.log(chalk.green("  ✅ 설정 파일의 비밀값과 권한에 문제가 없습니다."));
+        for (const finding of findings) {
+          console.log(finding.status === "fail" ? chalk.red(`  ❌ ${finding.message}`) : chalk.yellow(`  ⚠️ ${finding.message}`));
+        }
+        const fixes = [...new Set(findings.flatMap((finding) => finding.fix ? [finding.fix] : []))];
+        if (fixes.length) {
+          console.log(findings.some((finding) => finding.kind === "plaintext-secret")
+            ? "  다시 저장하면 비밀값이 키체인으로 옮겨지고 파일 권한이 0600 이 됩니다."
+            : "  다시 저장하면 파일 권한이 0600 이 됩니다.");
+          for (const fix of fixes) console.log(`  수정: ${fix}`);
+        }
+      }
+      if (apiKeyOk && baseUrlOk) console.log(chalk.bold("\n🌐 API 연결 테스트\n"));
+    }
     const apiConnection = apiKeyOk && baseUrlOk ? await probeApiConnection() : "skipped";
     if (apiConnection !== "skipped") checks.push({
       id: "api-connection", status: apiConnection === "ok" ? "pass" : "fail",
@@ -122,46 +161,8 @@ export const doctorCommand = new Command("doctor")
       return;
     }
 
-    console.log(chalk.bold("\n🔍 Dooray CLI 진단\n"));
-
-    // Config checks
-    if (config.state === "invalid") {
-      console.log(`  설정 파일: ${chalk.red("❌ 손상")}`);
-      console.log(`  이유:      ${config.reason}`);
-    } else if (config.state === "unreadable" && config.source === "keychain") {
-      // 키체인 실패는 이유에 대처 방법이 이미 들어 있다.
-      console.log(`  키체인:    ${chalk.red("❌ 읽기 실패")}`);
-      console.log(`  이유:      ${config.reason}`);
-    } else if (config.state === "unreadable") {
-      console.log(`  설정 파일: ${chalk.red("❌ 읽기 실패")}`);
-      console.log(`  이유:      ${config.reason}`);
-      console.log("  파일 권한을 확인하세요.");
-    } else {
-      // state 가 ok 일 때만 config 에 접근할 수 있다. 지역 변수로 좁힘을 캐시해
-      // 템플릿 안에서 도달 불가 분기를 만들지 않는다.
-      const okConfig = config.state === "ok" ? config.config : undefined;
-      console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
-      console.log(`  Base URL: ${okConfig?.baseUrl ? chalk.green(`✅ ${okConfig.baseUrl}`) : chalk.red("❌ 미설정")}`);
-    }
-
-    if (canInspectSecurity) {
-      console.log(chalk.bold("\n🔐 보안\n"));
-      if (findings.length === 0) console.log(chalk.green("  ✅ 설정 파일의 비밀값과 권한에 문제가 없습니다."));
-      for (const finding of findings) {
-        console.log(finding.status === "fail" ? chalk.red(`  ❌ ${finding.message}`) : chalk.yellow(`  ⚠️ ${finding.message}`));
-      }
-      const fixes = [...new Set(findings.flatMap((finding) => finding.fix ? [finding.fix] : []))];
-      if (fixes.length) {
-        console.log(findings.some((finding) => finding.kind === "plaintext-secret")
-          ? "  다시 저장하면 비밀값이 키체인으로 옮겨지고 파일 권한이 0600 이 됩니다."
-          : "  다시 저장하면 파일 권한이 0600 이 됩니다.");
-        for (const fix of fixes) console.log(`  수정: ${fix}`);
-      }
-    }
-
     // API connection test
     if (apiKeyOk && baseUrlOk) {
-      console.log(chalk.bold("\n🌐 API 연결 테스트\n"));
       // 판정은 probeApiConnection 이 소유한다. --json 과 같은 결과를 쓴다.
       // 텍스트 모드만 성공 시 표시명을 덧붙이므로 me 를 따로 읽는다.
       if (apiConnection === "ok") {

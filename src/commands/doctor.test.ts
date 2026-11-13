@@ -235,3 +235,19 @@ describe("doctor 항목별 결과와 종료 코드", () => {
     expect(process.exitCode).toBe(0);
   });
 });
+
+
+it("텍스트 진단은 연결 응답을 기다리기 전에 설정과 보안을 보여 준다", async () => {
+  mocks.getConfig.mockResolvedValue({ state: "ok", config: validConfig });
+  mocks.getProjects.mockImplementationOnce(async () => {
+    const shown = output.join("\n");
+    expect(shown).toContain("Dooray CLI 진단");
+    expect(shown).toContain("API Key:");
+    expect(shown).toContain("🔐 보안");
+    expect(shown).toContain("API 연결 테스트");
+    expect(shown).not.toContain("✅ 성공");
+    return [];
+  });
+  expect(await runDoctor()).toContain("✅ 성공");
+  expect(process.exitCode).toBe(0);
+});
