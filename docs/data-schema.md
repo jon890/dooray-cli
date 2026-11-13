@@ -40,6 +40,12 @@ ${XDG_DATA_HOME}/dooray-cli/              # XDG_DATA_HOME이 절대 경로일 �
   stats.json
 ```
 
+캐시를 쓸 때 캐시 루트와 쓴 파일의 폴더는 0700, 파일은 0600 으로 맞춘다.
+이미 있던 파일도 고유한 임시 파일에 쓴 뒤 rename 으로 교체하여 권한을 맞춘다.
+기존 캐시를 한꺼번에 바꾸지 않으며, `dooray cache clear` 뒤 다시 조회하면 새 권한으로 만들어진다.
+직전 실행 기록을 쓸 때도 `~/.dooray` 를 0700 으로 만들거나 맞추고, `last-run.json` 을 pid·UUID 가 들어간 0600 임시 파일로 교체한다.
+POSIX 권한 설정을 지원하지 않는 파일 시스템에서는 chmod 실패를 무시한다.
+
 `templates/{projectId}.json` — `GET /project/v1/projects/{projectId}/templates` 응답의 id/templateName/메타만 보존 (body 는 미포함 — list 응답 자체가 body 제외).
 `--template <name|id>` 시 캐시에서 templateName 부분일치 후 단건 GET 으로 본문/interpolation 받음.
 

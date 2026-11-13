@@ -1,4 +1,5 @@
-import { readFile, writeFile, mkdir, rename } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rename, chmod, unlink } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -34,8 +35,15 @@ export async function readLastRun(): Promise<LastRun | null> {
 }
 
 export async function writeLastRun(data: LastRun): Promise<void> {
-  await mkdir(join(homedir(), ".dooray"), { recursive: true });
-  const tmp = LAST_RUN_PATH + ".tmp";
-  await writeFile(tmp, JSON.stringify(data, null, 2) + "\n", { mode: 0o600 });
-  await rename(tmp, LAST_RUN_PATH);
+  const dir = join(homedir(), ".dooray");
+  await mkdir(dir, { recursive: true, mode: 0o700 });
+  await chmod(dir, 0o700).catch(() => undefined);
+  const tmp = `${LAST_RUN_PATH}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    await writeFile(tmp, JSON.stringify(data, null, 2) + "\n", { mode: 0o600, flag: "wx" });
+    await rename(tmp, LAST_RUN_PATH);
+  } catch (err) {
+    await unlink(tmp).catch(() => undefined);
+    throw err;
+  }
 }
