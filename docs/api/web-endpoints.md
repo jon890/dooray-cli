@@ -28,6 +28,9 @@ PR1(project·member)의 경로다. 인증·보안 규칙은 [기술 설계](../f
 `type=project/normal` 과 `state=registered` 는 입력 오류다. 공식 쿼리 값만 보낸다.
 다른 쿠키·추가 인증 헤더는 필요하지 않았다. 쓰기는 `<project>` 의 새 임시 그룹에서만 했고 기존 그룹은 바꾸지 않았다.
 실측용 태그와 그룹은 웹 설정 화면에서 삭제한 뒤 화면에 남지 않은 것을 확인했다.
+프로젝트 멤버 응답의 totalCount 는 최상위, 검색 응답의 totalCount 는 result 안에 있었다. 두 값 모두 최상위 totalCount 로 돌려줘 페이지 조회가 조기에 끝나지 않게 한다.
+태그 그룹 PUT 뒤 같은 그룹의 name·id 가 남아 있고 mandatory·selectOne 만 바뀐 것을 읽기로 확인했다.
+멤버 그룹의 createdAt·updatedAt 은 문자열이다. 마일스톤은 실측 프로젝트에 없어 날짜 값을 실측하지 못했으며, 공식 스키마의 날짜·오프셋 변환은 가짜 응답 테스트로 검증한다.
 
 ## 공식 응답 필드와 변환
 
