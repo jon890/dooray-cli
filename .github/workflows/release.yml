@@ -33,6 +33,12 @@ jobs:
           cache: "pnpm"
           registry-url: "https://registry.npmjs.org"
 
+      # Trusted publishing 은 npm 11.5.1 이상에서만 OIDC 신원으로 게시한다.
+      # Node 22 에 들어 있는 npm 은 10.x 라 그대로 두면 아래 게시 단계가 인증 실패로 끝난다.
+      # 게시 권한을 가진 job 이라 릴리스마다 다른 npm 이 깔리지 않게 정확한 버전으로 고정한다.
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@11.21.2
+
       # 의존성 설치 전에 돈다. setup-node 가 앞에 있어 Node 는 준비돼 있고,
       # 공개 저장소라 식별자 노출은 한 번 새면 되돌리기 어렵다.
       - name: Check for exposed identifiers
