@@ -20,7 +20,7 @@
   - **스킬 미설치도 종료 코드에 넣기** — CLI 는 스킬 없이 동작한다. 동작을 막는 문제만 실패로 센다.
 - **결과**:
   - 얻는 것: 평문과 넓은 권한이 생긴 다음 명령에서 사용자가 알아챈다. `dooray doctor` 의 종료 코드로 CI 와 스크립트가 확인할 수 있다. 캐시의 사내 정보가 다른 계정에 보이지 않는다.
-  - 감당할 것: 고치기 전까지 명령마다 stderr 에 경고가 나온다. 판정을 위해 명령마다 `stat` 한 번이 더 든다. `doctor` 종료 코드가 0 에서 1 로 바뀌는 환경이 생긴다. 이미 있는 캐시 파일은 다시 쓸 때까지 예전 권한으로 남는다. Windows 는 POSIX 권한을 보지 않는다.
+  - 감당할 것: 고치기 전까지 명령마다 stderr 에 경고가 나온다. 설정을 읽는 명령마다 config.json 읽기와 stat 이 한 번씩 더 든다. `doctor` 종료 코드가 0 에서 1 로 바뀌는 환경이 생긴다. 이미 있는 캐시 파일은 다시 쓸 때까지 예전 권한으로 남는다. Windows 는 POSIX 권한을 보지 않는다.
     macOS 와 Linux 가 같은 `config.json` 을 동기화하면 경고대로 `config set` 을 돌린 순간 파일에서 평문이 빠져 Linux 쪽이 「설정 미완료」 가 된다. [ADR-069](069-macos-keychain-secret-store.md) 가 감수한 동작을 이 경고가 권하게 된다.
     POSIX 권한이 늘 넓게 보이는 파일 시스템에서는 `config set` 으로도 권한 경고가 풀리지 않는다.
-- **확인 방법**: `src/config/file-security.test.ts` 가 OS·권한·비밀 필드 조합을, `src/commands/doctor.test.ts` 가 종료 코드를, `src/cache/store.test.ts` 가 캐시 권한을 본다. 설계의 근거는 [기술 설계](../features/secret-file-hardening/design.md)다.
+- **확인 방법**: `src/config/file-security.test.ts` 가 OS·권한·비밀 필드 조합을, `src/commands/doctor.test.ts` 가 종료 코드를, `src/cache/store.test.ts` 가 캐시 권한을 본다. `src/config/store.security.test.ts` 는 읽기 경고와 저장 후 해소를, `src/cache/last-run.test.ts` 는 실행 기록 권한과 동시 쓰기를 본다. 설계의 근거는 [기술 설계](../features/secret-file-hardening/design.md)다.
