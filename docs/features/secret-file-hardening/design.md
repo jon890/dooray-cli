@@ -7,15 +7,15 @@
 | ID | 해결 방법 |
 | --- | --- |
 | REQ1 | `getConfigOrThrow` 와 `config get` 이 `config.json` 의 보안 판정에서 `fail` 등급을 stderr 로 한 번 낸다 |
-| REQ1A | 판정이 평문 값마다 키체인에 넣을 수 있는지(`isStorableSecret`)를 본다. 넣을 수 없으면 `warn` 등급의 별도 발견으로 내고 명령 경고에서 뺀다 |
 | REQ2 | 같은 판정이 macOS·Linux 에서 파일 권한의 그룹·기타 비트를 보고, 비밀값이 있을 때만 `fail` 로 낸다 |
 | REQ3 | 판정은 `stat` 과 읽기만 한다. 경고 경로는 쓰기 함수를 부르지 않는다 |
 | REQ4 | `doctor` 가 같은 판정을 「보안」 절과 `--json` 의 `checks` 목록으로 보인다 |
-| REQ4A | `doctor` 가 `checks` 에 `fail` 이 하나라도 있으면 `process.exitCode = 1` 로 끝난다 |
 | REQ5 | 저장소가 없는 OS 의 평문은 판정의 `warn` 등급이다. 명령 경고는 `fail` 등급만 낸다 |
 | REQ6 | `src/cache/store.ts` 의 `writeJson` 이 폴더를 0700 으로 맞추고, 파일을 0600 tmp 파일에 쓴 뒤 rename 한다 |
 | REQ7 | 캐시 권한 맞추기의 `chmod` 실패는 삼키고 기록하지 않는다 |
 | REQ8 | `src/cache/last-run.ts` 의 `writeLastRun` 이 `~/.dooray` 를 0700 으로 만들고, tmp 이름에 pid 와 UUID 를 넣는다 |
+| REQ9 | 판정이 평문 값마다 키체인에 넣을 수 있는지(`isStorableSecret`)를 본다. 넣을 수 없으면 `warn` 등급의 별도 발견으로 내고 명령 경고에서 뺀다 |
+| REQ10 | `doctor` 가 `checks` 에 `fail` 이 하나라도 있으면 `process.exitCode = 1` 로 끝난다 |
 
 ## 책임과 경계
 
@@ -75,7 +75,7 @@
 | `unreadable` | `fail`(`source` 가 `keychain` 이면 키체인 실패) | 넣지 않는다 | 넣지 않는다 | `source` 가 `keychain` 이면 판정해서 넣는다. 파일은 읽혔기 때문이다. 파일 읽기 실패면 넣지 않는다 |
 
 - `api-key`·`base-url` 은 설정이 `ok` 일 때만 넣는다. 손상과 미설정이 겹쳐 보이지 않게 하기 위해서다.
-- 스킬 상태는 `checks` 에 넣지 않는다(스펙 REQ4A). 텍스트의 빨간 「미설치」 표시는 그대로 둔다.
+- 스킬 상태는 `checks` 에 넣지 않는다(스펙 REQ10). 텍스트의 빨간 「미설치」 표시는 그대로 둔다.
 - 텍스트 모드는 「보안」 절을 설정 절 아래에 둔다. `fail` 은 ❌ 와 고치는 명령, `warn` 은 ⚠️ 로 보인다.
 
 캐시 쓰기(`writeJson`)는 `docs/pitfalls/code-review/sensitive-file-mode-missing.md` 의 Good 형태를 따른다.
@@ -101,10 +101,10 @@
 
 | ID | 경계 | 방법 |
 | --- | --- | --- |
-| REQ1, REQ1A, REQ2, REQ5 | `assessConfigFileSecurity` | 새 `src/config/file-security.test.ts`. 순수 함수라 mock 이 없다. OS(`darwin`·`linux`·`win32`), `mode`(0600·0644·0640·없음), 비밀 필드(없음·`apiKey`·비ASCII `imapPassword`·빈 문자열), 저장소 유무의 조합 |
+| REQ1, REQ9, REQ2, REQ5 | `assessConfigFileSecurity` | 새 `src/config/file-security.test.ts`. 순수 함수라 mock 이 없다. OS(`darwin`·`linux`·`win32`), `mode`(0600·0644·0640·없음), 비밀 필드(없음·`apiKey`·비ASCII `imapPassword`·빈 문자열), 저장소 유무의 조합 |
 | REQ1, REQ3 | `getConfigOrThrow`, `config get` | 새 테스트 파일 하나. `store.fs.test.ts` 처럼 hoisted `homedir` mock 으로 실제 임시 HOME 을 쓰고, `secret-store.js` 를 mock 해 가짜 저장소를 넣는다. `store.keychain.test.ts` 는 `node:fs/promises` 를 통째로 mock 하고 `stat` 이 없어 이 판정을 관측하지 못하므로 쓰지 않는다. stderr 한 번, 두 번 불러도 한 번, `securityWarning: false` 면 없음, 호출 뒤 파일 내용·권한·mtime 이 같음 |
 | REQ1 (고친 뒤 경고 없음) | `setConfigValue` → `readConfigFileSecurity` | 같은 파일에서 `config set track-last-run` 경로로 저장한 뒤 `readConfigFileSecurity()` 의 `fail` 이 빈 목록인지 본다. stderr 로 보지 않는다. 한 번만 내는 표시 때문에 증거가 되지 않기 때문이다 |
-| REQ4, REQ4A | `doctor` | `doctor.test.ts` 의 store mock 에 `readConfigFileSecurity` 를 더한다. `fail` 발견, 미설정, 연결 실패면 `checks` 와 `process.exitCode === 1`, `warn` 만이면 0, 스킬 미설치만이면 0. `afterEach` 에서 `process.exitCode` 를 되돌린다(`src/commands/post/file/download-all.test.ts` 선례) |
+| REQ4, REQ10 | `doctor` | `doctor.test.ts` 의 store mock 에 `readConfigFileSecurity` 를 더한다. `fail` 발견, 미설정, 연결 실패면 `checks` 와 `process.exitCode === 1`, `warn` 만이면 0, 스킬 미설치만이면 0. `afterEach` 에서 `process.exitCode` 를 되돌린다(`src/commands/post/file/download-all.test.ts` 선례) |
 | REQ6, REQ7 | `writeJson` | `src/cache/store.test.ts` 는 `CACHE_DIR` 이 모듈을 불러올 때 고정되는데 테스트마다 HOME 을 바꿔 다시 import 한다. 테스트마다 `vi.resetModules()` 를 하도록 고친다. 0755 폴더·0644 파일을 만들고 다시 써서 0700·0600 을 확인한다. REQ7 은 `node:fs/promises` 의 `chmod` 만 실패하게 하는 별도 테스트 파일에서 쓰기 성공과 stderr 없음을 확인한다 |
 | REQ8 | `writeLastRun` | 임시 HOME 에 `~/.dooray` 가 없을 때 쓰면 0700 이고, 같은 프로세스에서 두 번 동시에 불러도 `last-run.json` 이 올바른 JSON 이다 |
 | 전체 | 빌드한 CLI, macOS | 임시 HOME 에 0644 평문 `config.json` 을 만들고 `dooray project list` 를 돌려 경고를 확인한다. 안내 명령 뒤 경고가 사라지는지 본다. 이 경로는 실제 로그인 키체인에 경로 해시 account 항목을 만들므로 확인 뒤 지운다([ADR-069](../../adr/069-macos-keychain-secret-store.md) 「account 규칙」) |
