@@ -5,6 +5,8 @@ service 는 `dooray-cli`, account 는 필드 이름(`apiKey`, `imapPassword`)이
 config 경로가 계정 홈의 기본 경로가 아니면 account 에 경로 해시를 붙인다(아래 「account 규칙」).
 옵트인 설정 없이 기본으로 쓴다. macOS 가 아닌 OS 는 지금처럼 config.json 에 0600 평문으로 저장한다.
 
+**대체된 부분**: 비밀 필드에 웹 로그인 세션 쿠키(`sessionCookie`)가 더해졌다([ADR-080](080-web-session-auth.md)). 저장 위치와 읽기·쓰기 규칙은 이 ADR 을 그대로 따른다. 필드 목록의 원본은 `src/config/secret-store.ts` 의 `SECRET_FIELDS` 다.
+
 - 비밀 저장소는 `src/config/secret-store.ts` 의 `SecretStore` 인터페이스(`get`·`set`·`delete`) 뒤에 둔다.
   `getSecretStore(configPath)` 가 macOS 에서 키체인 구현을, 그 밖에서 `null` 을 돌려준다.
   Linux·Windows 백엔드는 이 인터페이스를 구현해 붙인다.
@@ -12,7 +14,7 @@ config 경로가 계정 홈의 기본 경로가 아니면 account 에 경로 해
   저장 위치를 감춘다.
 - 키체인은 네이티브 모듈 없이 `/usr/bin/security` 를 절대경로로, shell 없이 띄워 다룬다.
 
-**ADR-007 과의 관계**: ADR-007 의 「환경변수로 받지 않는다」 는 그대로다.
+**[ADR-007](007-config-file-only.md) 과의 관계**: [ADR-007](007-config-file-only.md) 의 「환경변수로 받지 않는다」 는 그대로다.
 이번 결정은 저장 위치만 넓힌다. 값을 넣는 경로는 여전히 `dooray setup` 과 `dooray config set` 이고,
 `config set <key> -` 의 stdin 경로도 그대로 쓴다.
 
@@ -96,7 +98,7 @@ config 경로가 계정 홈의 기본 경로가 아니면 account 에 경로 해
   macOS 에서 옮긴 config.json 은 `apiKey` 가 없고, 이 파일이 dotfiles 동기화로 Linux 에 가면 손상 판정이 났다.
   손상이면 `dooray setup` 대신 파일을 고치라는 안내가 나가 복구가 어렵다. 없으면 `getConfig` 가 `apiKey: ""` 를 채우고
   `getConfigOrThrow` 가 `dooray setup` 을 안내한다. `isConfig` 는 `Config` 타입 가드라 `apiKey` 를 계속 요구한다.
-- **키체인 읽기 실패는 `unreadable` 에 `source: "keychain"` 을 붙여 돌려준다.** ADR-049 의 `unreadable` 은
+- **키체인 읽기 실패는 `unreadable` 에 `source: "keychain"` 을 붙여 돌려준다.** [ADR-049](049-config-read-result-states.md) 의 `unreadable` 은
   「설정은 있지만 지금 읽을 수 없다」 는 상태라 키체인 잠김과 뜻이 같다. `getConfigOrThrow`, `config get`, `doctor` 가
   이것을 보고 파일 권한 대신 키체인 실패와 이유를 보인다. 오류 메시지에는 잠금 해제(`security unlock-keychain`)와
   항목 삭제 뒤 `dooray setup` 이라는 해결 방법을 넣는다. `doctor --json` 은 `source` 에 `keychain` 이나 `file` 을 담는다.
