@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assessConfigFileSecurity, type ConfigFileSecurityInput } from "./file-security.js";
+import { assessConfigFileSecurity, getConfigFileSecurityFixAdvice, type ConfigFileSecurityInput } from "./file-security.js";
 import { SECRET_FIELDS } from "./secret-store.js";
 
 function assess(overrides: Partial<ConfigFileSecurityInput> = {}) {
@@ -55,5 +55,19 @@ describe("설정 파일 보안 평가", () => {
   it.each([true, false, undefined])("고치는 명령은 현재 실행 기록 설정 %s 을 유지한다", (trackLastRun) => {
     expect(assess({ stored: { apiKey: "dummy-token", trackLastRun } })[0].fix)
       .toBe(`dooray config set track-last-run ${trackLastRun === true}`);
+  });
+
+  it("겹치는 수정 명령은 한 번만 안내하고 저장 효과를 함께 설명한다", () => {
+    const advice = getConfigFileSecurityFixAdvice(assess({ mode: 0o644 }));
+    expect(advice.fixes).toEqual(["dooray config set track-last-run false"]);
+    expect(advice.explanation).toContain("비밀값이 키체인으로 옮겨지고");
+  });
+
+  it("저장소가 없으면 권한 수정만 설명하고 경고만 있으면 수정 명령을 만들지 않는다", () => {
+    const findings = assess({ platform: "linux", mode: 0o644, hasSecretStore: false });
+    const advice = getConfigFileSecurityFixAdvice(findings);
+    expect(advice.explanation).toBe("다시 저장하면 파일 권한이 0600 이 됩니다.");
+    expect(getConfigFileSecurityFixAdvice(findings.filter((finding) => finding.status === "warn")))
+      .toEqual({ fixes: [] });
   });
 });

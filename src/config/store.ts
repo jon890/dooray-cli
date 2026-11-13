@@ -6,7 +6,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR, EXIT_IO_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import type { Config } from "./types.js";
 import { CONFIG_SET_KEYS, DEFAULTS } from "./types.js";
-import { assessConfigFileSecurity, type ConfigFileSecurityFinding } from "./file-security.js";
+import { assessConfigFileSecurity, getConfigFileSecurityFixAdvice, type ConfigFileSecurityFinding } from "./file-security.js";
 import type { SecretField, SecretStore } from "./secret-store.js";
 import {
   assertStorableSecret,
@@ -392,10 +392,7 @@ export async function warnConfigFileSecurity(): Promise<void> {
   const failures = (await readConfigFileSecurity()).filter((finding) => finding.status === "fail");
   if (failures.length === 0 || configFileSecurityWarned) return;
   configFileSecurityWarned = true;
-  const explanation = failures.some((finding) => finding.kind === "plaintext-secret")
-    ? "다시 저장하면 비밀값이 키체인으로 옮겨지고 파일 권한이 0600 이 됩니다."
-    : "다시 저장하면 파일 권한이 0600 이 됩니다.";
-  const fixes = [...new Set(failures.flatMap((finding) => finding.fix ? [finding.fix] : []))];
+  const { fixes, explanation } = getConfigFileSecurityFixAdvice(failures);
   process.stderr.write(
     failures.map((finding) => `⚠  ${finding.message}\n`).join("") +
     `   ${explanation}\n` + fixes.map((fix) => `   수정: ${fix}\n`).join(""),

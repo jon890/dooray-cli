@@ -8,6 +8,7 @@ import {
   type SkillStatus,
 } from "../skill/manager.js";
 import { getConfig, getConfigOrThrow, readConfigFileSecurity } from "../config/store.js";
+import { getConfigFileSecurityFixAdvice } from "../config/file-security.js";
 import { getCacheStats } from "../cache/store.js";
 import { DoorayApiClient } from "../api/client.js";
 import { ensureMe } from "../resolvers/me.js";
@@ -83,8 +84,8 @@ export const doctorCommand = new Command("doctor")
 
     const canInspectSecurity = config.state === "ok" || (config.state === "unreadable" && config.source === "keychain");
     const findings = canInspectSecurity ? await readConfigFileSecurity() : [];
+    const { fixes, explanation } = getConfigFileSecurityFixAdvice(findings);
     if (canInspectSecurity) {
-      const fixes = [...new Set(findings.flatMap((finding) => finding.fix ? [finding.fix] : []))];
       checks.push({
         id: "config-file-security",
         status: findings.some((finding) => finding.status === "fail") ? "fail" : findings.length ? "warn" : "pass",
@@ -121,11 +122,8 @@ export const doctorCommand = new Command("doctor")
         for (const finding of findings) {
           console.log(finding.status === "fail" ? chalk.red(`  ❌ ${finding.message}`) : chalk.yellow(`  ⚠️ ${finding.message}`));
         }
-        const fixes = [...new Set(findings.flatMap((finding) => finding.fix ? [finding.fix] : []))];
         if (fixes.length) {
-          console.log(findings.some((finding) => finding.kind === "plaintext-secret")
-            ? "  다시 저장하면 비밀값이 키체인으로 옮겨지고 파일 권한이 0600 이 됩니다."
-            : "  다시 저장하면 파일 권한이 0600 이 됩니다.");
+          console.log(`  ${explanation}`);
           for (const fix of fixes) console.log(`  수정: ${fix}`);
         }
       }

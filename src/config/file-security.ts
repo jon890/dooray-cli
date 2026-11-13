@@ -16,6 +16,21 @@ export interface ConfigFileSecurityFinding {
   fix?: string;
 }
 
+/** 호출부가 고른 발견에 대해 수정 명령과 저장 효과를 한곳에서 만든다. */
+export function getConfigFileSecurityFixAdvice(findings: readonly ConfigFileSecurityFinding[]): {
+  fixes: string[];
+  explanation?: string;
+} {
+  const fixes = [...new Set(findings.flatMap((finding) => finding.fix ? [finding.fix] : []))];
+  if (fixes.length === 0) return { fixes };
+  return {
+    fixes,
+    explanation: findings.some((finding) => finding.kind === "plaintext-secret")
+      ? "다시 저장하면 비밀값이 키체인으로 옮겨지고 파일 권한이 0600 이 됩니다."
+      : "다시 저장하면 파일 권한이 0600 이 됩니다.",
+  };
+}
+
 export function assessConfigFileSecurity({
   platform, mode, stored, hasSecretStore,
 }: ConfigFileSecurityInput): ConfigFileSecurityFinding[] {
