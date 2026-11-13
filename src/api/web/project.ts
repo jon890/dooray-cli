@@ -34,6 +34,13 @@ function user(source: Row): PostUser {
     const email = row(source.emailUser ?? source.emailuser);
     return { type, [source.emailuser ? "emailuser" : "emailUser"]: { name: text(email.name), emailAddress: text(email.emailAddress) } };
   }
+  if (type === "group") {
+    const group = row(source.group);
+    return { type, group: {
+      projectMemberGroupId: identifier(group.projectMemberGroupId),
+      members: rows(group.memberList ?? group.members).map((m) => ({ organizationMemberId: identifier(m.organizationMemberId), ...pick(m, ["name"]) })),
+    } };
+  }
   // 공식 템플릿의 사용자 형태에 대응하지 않는 값은 조용히 버리지 않는다.
   return invalidResponse();
 }

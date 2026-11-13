@@ -39,3 +39,4 @@
 태그 생성은 배열 본문이며 SESSION 과 Content-Type 만으로 성공했다. 임시 그룹의 PUT 뒤 name·id 가 남고 mandatory·selectOne 만 바뀐 것을 확인했다.
 코디네이터 지시 프로젝트의 새 임시 그룹만 썼고 기존 그룹은 바꾸지 않았다. 만든 태그와 그룹은 웹 화면에서 삭제한 뒤 남지 않은 것을 확인했다.
 멤버 그룹의 createdAt·updatedAt 은 문자열이다. 마일스톤은 실측 프로젝트에 없어 날짜 값을 실측하지 못했다. 오프셋 변환은 직접 쓴 가짜 응답 테스트로 확인한다.
+CLI 실측에서 템플릿 참조자가 group 인 경우도 확인했다. 웹의 group.memberList 는 공식 group.members 로 옮기며 organizationMemberId·name 만 남긴다.

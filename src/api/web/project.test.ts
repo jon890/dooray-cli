@@ -80,6 +80,13 @@ describe("웹 프로젝트 공식 응답 변환", () => {
     expect(response.result.body).toEqual({ mimeType: "text/x-markdown", content: "본문" });
     expect(response.result).toHaveProperty("guide", { mimeType: "text/plain", content: "안내" });
   });
+  it("템플릿 그룹 참조자의 memberList 를 공식 members 로 변환한다", async () => {
+    const fixture = structuredClone(fixtures.templates);
+    fixture.result.contents[0].users.cc = [{ type: "group", group: { projectMemberGroupId: "group-1", memberList: [{ organizationMemberId: "member-1", name: "홍길동", tenantId: "internal" }] } }];
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json(fixture)));
+    const result = (await client().getProjectTemplates("project-1")).result[0];
+    expect(result).toMatchObject({ users: { cc: [{ type: "group", group: { projectMemberGroupId: "group-1", members: [{ organizationMemberId: "member-1", name: "홍길동" }] } }] } });
+  });
   it.each([{}, { contents: [{}], totalCount: 1 }, { contents: [], totalCount: undefined }])("필수 구조가 없으면 오류로 끝낸다", async (result) => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ header: fixtures.tags.header, result })));
     await expect(client().getProjectTags("project-1")).rejects.toMatchObject({ exitCode: 1 });
