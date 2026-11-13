@@ -1,0 +1,19 @@
+{
+  "name": "post",
+  "description": "웹 세션으로 업무·댓글·첨부 명령을 실행한다",
+  "pr_scope": "PR2에서 업무·댓글·첨부와 템플릿 적용을 웹 방식으로 지원하고 미지원 옵션을 실행 전에 막는다.",
+  "deferred": [],
+  "status": "pending",
+  "created_at": "2026-11-14",
+  "spec": "docs/features/web-session-auth/spec.md",
+  "design": "docs/features/web-session-auth/design.md",
+  "verification_plan": "verification-plan.md",
+  "requirements": ["REQ3", "REQ4", "REQ6", "REQ7", "REQ8", "REQ9", "REQ17"],
+  "total_phases": 3,
+  "current_phase": 1,
+  "phases": [
+    {"number": 1, "file": "phase-01.md", "execution_profile": "standard", "requirements": ["REQ6", "REQ7", "REQ9"]},
+    {"number": 2, "file": "phase-02.md", "execution_profile": "standard", "requirements": ["REQ3", "REQ4", "REQ6", "REQ7"]},
+    {"number": 3, "file": "phase-03.md", "execution_profile": "standard", "requirements": ["REQ6", "REQ7", "REQ8", "REQ17"]}
+  ]
+}
