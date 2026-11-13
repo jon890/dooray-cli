@@ -1,0 +1,88 @@
+{
+  "name": "project-member",
+  "description": "웹 세션 인증 기반과 프로젝트·멤버 명령을 구현한다",
+  "pr_scope": "PR1: 인증 설정, 웹 HTTP, project·member 명령과 설정 진단",
+  "deferred": [
+    {
+      "what": "PR2 post 명령: PR1 머지 뒤",
+      "why": "확인된 스펙의 PR 순서를 따른다",
+      "after": "PR1 머지"
+    },
+    {
+      "what": "PR3 wiki 명령: PR2 뒤",
+      "why": "확인된 스펙의 PR 순서를 따른다",
+      "after": "PR1 머지"
+    },
+    {
+      "what": "PR4 messenger·calendar·stream·persona: PR3 뒤",
+      "why": "확인된 스펙의 PR 순서를 따른다",
+      "after": "PR1 머지"
+    }
+  ],
+  "status": "pending",
+  "created_at": "2026-11-14",
+  "spec": "docs/features/web-session-auth/spec.md",
+  "design": "docs/features/web-session-auth/design.md",
+  "verification_plan": "verification-plan.md",
+  "requirements": [
+    "REQ1",
+    "REQ2",
+    "REQ3",
+    "REQ4",
+    "REQ5",
+    "REQ6",
+    "REQ7",
+    "REQ8",
+    "REQ9",
+    "REQ10",
+    "REQ11",
+    "REQ12",
+    "REQ13",
+    "REQ15",
+    "REQ16",
+    "REQ17"
+  ],
+  "total_phases": 3,
+  "current_phase": 1,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ6",
+        "REQ7"
+      ]
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ1",
+        "REQ2",
+        "REQ3",
+        "REQ4",
+        "REQ5",
+        "REQ9",
+        "REQ13",
+        "REQ15",
+        "REQ16"
+      ]
+    },
+    {
+      "number": 3,
+      "file": "phase-03.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ6",
+        "REQ7",
+        "REQ8",
+        "REQ10",
+        "REQ11",
+        "REQ12",
+        "REQ17"
+      ]
+    }
+  ]
+}
