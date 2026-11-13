@@ -55,18 +55,18 @@ registry 는 인증 없는 scoped 패키지의 PUT 에 401 대신 404 를 낸다
 
 ## Trusted Publishing 등록
 
-CI 게시를 켜려면 먼저 npm 에 신뢰 관계를 등록하고 변수를 켠다.
+2026-11-13 에 등록했고 변수를 켰다. 등록이 사라졌거나 저장소·워크플로 이름이 바뀌어 다시 등록할 때만 이 절을 따른다.
 
 ```bash
-npm trust list @bifos/dooray-cli
-npm trust github @bifos/dooray-cli --file release.yml --repo jon890/dooray-cli
+npm trust github @bifos/dooray-cli --file release.yml --repo jon890/dooray-cli --allow-publish --yes
 gh variable set NPM_TRUSTED_PUBLISHING --body true
 ```
 
-**2026-09-07 시점에 등록이 되지 않는다.** registry 가 본문 없이 400 을 낸다.
-공개 저장소, 기본 브랜치 `main`, `main` 에 있는 `release.yml`, `auth-and-writes` 2단계 인증,
-200 으로 통과한 OTP 교환, npm CLI 소스로 확인한 정확한 요청 본문까지 전제가 모두 충족된 상태였다.
+- **`--allow-publish` 가 없으면 npm 11.19 는 `At least one permission flag is required` 로 거부한다.**
+- **등록과 `npm trust list` 는 사용자가 별도 터미널에서 실행한다.** 둘 다 2단계 인증이 필요하고,
+  npm 이 브라우저 인증 URL 을 띄운 뒤 ENTER 를 기다린다. 에이전트 세션의 `!` 로 실행하면 기다리지 못하고 `EOTP` 로 끝난다.
+- `401 ... You must be logged in` 이면 로그인이 만료된 것이다. `npm login` 뒤 같은 명령을 다시 실행한다.
+- 2026-09-07 에는 같은 등록이 본문 없는 400 으로 실패했다. 그때 명령에는 `--allow-publish` 가 없었다.
 
-**같은 400 이 다시 나오면 원인을 더 좁히려 시도하지 않는다.** 로컬 게시로 진행하고
-npm 쪽 문제로 남긴다. 로컬 토큰으로 endpoint 를 직접 부르면 2단계 인증 때문에 401 이라
-CLI 경로 밖에서 확인할 방법이 없다.
+CI 의 게시 단계가 인증 오류(`ENEEDAUTH`, `E401`, `E404`)로 실패하면 등록이 사라졌을 수 있다.
+태그와 Release 는 그대로 두고 「로컬 게시」 로 이번 버전을 내보낸 뒤, 사용자에게 재등록을 요청한다.
