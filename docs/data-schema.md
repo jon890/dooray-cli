@@ -4,8 +4,8 @@
 
 ```
 ~/.dooray/
-  config.json                 # 인증·연결 설정 (macOS 에서는 apiKey·imapPassword 를 키체인에 둔다, ADR-069)
-  last-run.json               # 직전 명령 sanitized argv + 에러 (ADR-023, opt-in)
+  config.json                 # 인증·연결 설정 (macOS 에서는 apiKey·imapPassword 를 키체인에 둔다, [ADR-069](adr/069-macos-keychain-secret-store.md))
+  last-run.json               # 직전 명령 sanitized argv + 에러 ([ADR-023](adr/023-feedback-last-run-tracking.md), opt-in)
   cache/
     me.json                   # 내 정보 캐시
     projects.json             # 프로젝트 목록 캐시
@@ -13,10 +13,10 @@
     wikis.json                # 위키 목록 캐시 (projectId → wikiId 매핑)
     members/{projectId}.json       # 프로젝트별 멤버 캐시
     workflows/{projectId}.json      # 프로젝트별 워크플로우 캐시
-    tags/{projectId}.json           # 프로젝트별 태그 캐시 (ADR-019)
-    milestones/{projectId}.json     # 프로젝트별 마일스톤 캐시 (ADR-019)
+    tags/{projectId}.json           # 프로젝트별 태그 캐시 ([ADR-019](adr/019-post-create-metadata-options.md))
+    milestones/{projectId}.json     # 프로젝트별 마일스톤 캐시 ([ADR-019](adr/019-post-create-metadata-options.md))
     member-groups/{projectId}.json  # 프로젝트별 멤버 그룹 캐시 (`--mention-group`)
-    templates/{projectId}.json      # 프로젝트별 템플릿 목록 캐시 (ADR-027, TTL 24h)
+    templates/{projectId}.json      # 프로젝트별 템플릿 목록 캐시 ([ADR-027](adr/027-post-create-template.md), TTL 24h)
 
 ${XDG_DATA_HOME}/dooray-cli/              # XDG_DATA_HOME이 절대 경로일 때
 ~/.local/share/dooray-cli/                # XDG_DATA_HOME이 없거나 상대 경로일 때
@@ -32,7 +32,7 @@ ${XDG_DATA_HOME}/dooray-cli/              # XDG_DATA_HOME이 절대 경로일 �
 ~/.agents/skills/
   dooray-cli -> <dataRoot>/skills/{packageVersion}-{contentDigestHex}/
 
-~/.claude/dooray-persona.config.json       # dooray-persona 스킬 설정 (ADR-038)
+~/.claude/dooray-persona.config.json       # dooray-persona 스킬 설정 ([ADR-038](adr/038-persona-skill-outside-managed-install.md))
 ~/.local/share/dooray-persona/             # dooray-persona 중간 산출물
   candidates.json
   corpus.jsonl
@@ -131,7 +131,7 @@ const API_ENDPOINTS = {
 - env var 폴백 없음 (보안 원칙)
 - IMAP/SMTP 서버 정보는 기본값 제공. 사용자는 username/password만 설정하면 됨
 
-### 비밀 필드의 저장 위치 (ADR-069)
+### 비밀 필드의 저장 위치 ([ADR-069](adr/069-macos-keychain-secret-store.md))
 
 `apiKey` 와 `imapPassword` 는 OS 에 따라 저장 위치가 다르다.
 
@@ -158,11 +158,11 @@ const API_ENDPOINTS = {
   macOS 에서 옮긴 파일을 다른 OS 로 동기화한 경우도 이에 해당한다.
   `getConfig` 는 그때 `apiKey: ""` 를 채워 돌려주므로 키체인에도 없으면 「설정 미완료」 로 안내한다.
 
-`getConfig` 는 설정 파일 읽기 결과를 네 상태로 돌려준다 (ADR-049).
+`getConfig` 는 설정 파일 읽기 결과를 네 상태로 돌려준다 ([ADR-049](adr/049-config-read-result-states.md)).
 
 - `absent`: `config.json` 파일이 없다.
 - `invalid`: 파일은 있지만 JSON 파싱이나 필드 검증에 실패했다.
-- `unreadable`: 파일 권한이나 입출력 문제로 내용을 읽지 못했다. macOS 키체인에 접근하지 못한 경우도 여기에 들어가며 `source: "keychain"` 이 붙는다 (ADR-069).
+- `unreadable`: 파일 권한이나 입출력 문제로 내용을 읽지 못했다. macOS 키체인에 접근하지 못한 경우도 여기에 들어가며 `source: "keychain"` 이 붙는다 ([ADR-069](adr/069-macos-keychain-secret-store.md)).
 - `ok`: 파일을 읽었고 `Config` 형식 검증을 통과했다.
 
 ---
@@ -233,7 +233,7 @@ interface CachedWorkflow {
 }
 ```
 
-### tags/{projectId}.json (ADR-019)
+### tags/{projectId}.json ([ADR-019](adr/019-post-create-metadata-options.md))
 
 ```typescript
 interface CachedTag {
@@ -245,17 +245,17 @@ interface CachedTag {
 ```
 
 `post create/edit --tag <name>` 시 사전 검증 (mandatory-tag 그룹 누락 시 클라이언트 에러).
-`post edit --tag-remove`/`--tag-clear` 도 동일 캐시 사용 (Issue #66, ADR-019 확장).
+`post edit --tag-remove`/`--tag-clear` 도 동일 캐시 사용 (Issue #66, [ADR-019](adr/019-post-create-metadata-options.md) 확장).
 
 `project tags create` 와 `project tags group` 은 성공 직후 이 파일을 삭제한다.
 TTL 이 24시간이라 삭제하지 않으면 방금 만든 태그와 바뀐 그룹 속성을 `post create --tag` 가
 최대 24시간 보지 못한다. 삭제만 하고 재조회하지 않으며, 다음 조회가 API 에서 다시 채운다.
-삭제를 누가 언제 하는지는 ADR-042 가 소유한다 (`src/services/` 의 쓰기 함수).
+삭제를 누가 언제 하는지는 [ADR-042](adr/042-cache-invalidation-on-mutation.md) 가 소유한다 (`src/services/` 의 쓰기 함수).
 
 그룹 정보는 별도 캐시가 없다. 그룹 목록을 주는 API 경로가 없어 `tagGroup` 필드에서 파생하므로,
 태그가 하나도 없는 그룹은 이 캐시에 나타나지 않는다.
 
-### milestones/{projectId}.json (ADR-019)
+### milestones/{projectId}.json ([ADR-019](adr/019-post-create-metadata-options.md))
 
 ```typescript
 interface CachedMilestone {
@@ -271,7 +271,7 @@ interface CachedMilestone {
 ```typescript
 interface CachedMemberGroup {
   id: string;
-  code?: string;  // optional — 실제 API 응답에서 누락 케이스 존재 (ADR-026 함정 묶음, Issue #65)
+  code?: string;  // optional — 실제 API 응답에서 누락 케이스 존재 ([ADR-026](adr/026-wiki-api-pitfalls.md) 함정 묶음, Issue #65)
 }
 ```
 
@@ -290,20 +290,20 @@ resolver 는 code 누락 그룹을 사전 필터링하고 후보 5개 안내 출
 | tags          | 24h | 태그 추가/변경 빈도 낮음 (mandatory 그룹 정책 변경 빈도 기준) |
 | milestones    | 24h | 분기/스프린트 단위로 추가됨          |
 | member-groups | 24h | 그룹 구성 변경 빈도 낮음             |
-| templates     | 24h | 정형 task 템플릿 변경 빈도 낮음 (ADR-027) |
+| templates     | 24h | 정형 task 템플릿 변경 빈도 낮음 ([ADR-027](adr/027-post-create-template.md)) |
 | wikis         | 24h | 위키 home page 거의 불변             |
 
-### 캐시 전체가 무효해지는 조건 (ADR-042)
+### 캐시 전체가 무효해지는 조건 ([ADR-042](adr/042-cache-invalidation-on-mutation.md))
 
 `dooray config set` 과 `dooray setup` 은 `config.json` 의 `apiKey` 나 `baseUrl` 이
 실제로 달라졌을 때 `~/.dooray/cache/` 전체를 지운다.
 같은 값을 다시 설정하는 경우와 이전 설정이 없는 최초 설정은 지우지 않는다.
 `tenantName`, IMAP·SMTP 설정, `trackLastRun` 은 캐시 내용에 영향을 주지 않아 대상이 아니다.
 설정 파일이 손상됐거나 읽히지 않으면 `dooray config set` 은 기존 파일을 덮지 않고 오류로 끝난다.
-`dooray setup` 이 전체 설정 저장에 성공하면 이전 계정을 알 수 없으므로 캐시 전체를 지운다 (ADR-049).
+`dooray setup` 이 전체 설정 저장에 성공하면 이전 계정을 알 수 없으므로 캐시 전체를 지운다 ([ADR-049](adr/049-config-read-result-states.md)).
 
 지운 것이 있었을 때만 사용자에게 알린다. 지울 캐시가 없었으면 알리지 않는다.
-두 값이 바뀌었을 때 남은 캐시가 전부 무효가 되는 이유는 ADR-042 가 소유한다.
+두 값이 바뀌었을 때 남은 캐시가 전부 무효가 되는 이유는 [ADR-042](adr/042-cache-invalidation-on-mutation.md) 가 소유한다.
 
 ### Lazy Loading 전략
 
@@ -374,11 +374,11 @@ resolver 는 code 누락 그룹을 사전 필터링하고 후보 5개 안내 출
 
 ---
 
-## dooray-persona 스킬 데이터 (ADR-038)
+## dooray-persona 스킬 데이터 ([ADR-038](adr/038-persona-skill-outside-managed-install.md))
 
 CLI가 아니라 스킬 스크립트가 읽고 쓴다.
 인증은 `~/.dooray/config.json`의 `apiKey`와 `baseUrl`을 **읽기 전용**으로 참조하고, 그 파일을 수정하지 않는다.
-macOS 에서 파일에 `apiKey` 가 없거나 비었으면 키체인의 `dooray-cli`/`apiKey` 항목을 읽는다 (ADR-069).
+macOS 에서 파일에 `apiKey` 가 없거나 비었으면 키체인의 `dooray-cli`/`apiKey` 항목을 읽는다 ([ADR-069](adr/069-macos-keychain-secret-store.md)).
 
 ### dooray-persona.config.json
 
@@ -435,7 +435,7 @@ interface CorpusEntry {
 ```
 
 `assigneeKind`는 수신자 축 판정의 근거다.
-그룹으로 접수된 업무가 대외 문의 성격을 띤다는 실측(ADR-037)이 여기서 문체 추출로 이어진다.
+그룹으로 접수된 업무가 대외 문의 성격을 띤다는 실측([ADR-037](adr/037-bulk-post-collection-pitfalls.md))이 여기서 문체 추출로 이어진다.
 
 `classified.jsonl`은 위 필드에 분류 결과를 더한다.
 
