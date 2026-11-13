@@ -1,6 +1,6 @@
 /** post 영역의 공개 메서드 계약. DTO 는 api/types.ts 가 소유한다. */
 import type { PostListResponse, PostDetailResponse, CreatePostApiResponse, CreatePostRequest, UpdatePostRequest, UpdatePostResponse, PostCommentListResponse, PostCommentDetailResponse, CreateCommentApiResponse, CreateCommentRequest, UpdateCommentRequest, UpdateCommentResponse, DeleteCommentResponse, DoorayApiUnitResponse, PostFileListResponse, PostFileMetaResponse, UploadFileResponse } from "../types.js";
-import type { GetPostsParams, GetPostCommentsParams } from "../client.js";
+import type { GetPostsParams, GetPostCommentsParams } from "../types.js";
 
 export interface PostClient {
   getPosts(projectId: string, params?: GetPostsParams): Promise<PostListResponse>;

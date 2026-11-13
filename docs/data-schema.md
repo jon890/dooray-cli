@@ -128,7 +128,7 @@ const API_ENDPOINTS = {
 ```
 
 - `tenantName`은 웹 방식의 요청 호스트와 API Key 발급 링크(`https://{tenant}.dooray.com/setting/api/token`)와 메일 설정 링크 생성에 사용
-- `baseUrl`은 `src/config/types.ts` 의 `API_ENDPOINTS` 에 있는 환경 중 하나로 고정 (자유 입력 아님)
+- setup 의 baseUrl 선택지는 API_ENDPOINTS 를 따른다. API 방식의 config set 은 기존 자유 입력을 유지하며 웹 방식은 알려진 클라우드의 https 주소만 받는다.
 - 미설정 키 접근 시 에러와 `dooray setup` 안내 출력
 - env var 폴백 없음 (보안 원칙)
 - IMAP/SMTP 서버 정보는 기본값 제공. 사용자는 username/password만 설정하면 됨

@@ -19,5 +19,5 @@ export function createClient(config: Config): DoorayClient {
   if (config.authMode !== "web") return new DoorayApiClient(config.apiKey, config.baseUrl);
   const baseUrl = resolveWebBaseUrl(config);
   if (!config.sessionCookie) throw new DoorayCliError("SESSION 쿠키가 없습니다. dooray setup 을 실행하세요.", EXIT_CONFIG_ERROR);
-  return createWebClient(parseSessionCookie(config.sessionCookie), baseUrl);
+  return createWebClient(parseSessionCookie(config.sessionCookie), baseUrl, config.baseUrl);
 }

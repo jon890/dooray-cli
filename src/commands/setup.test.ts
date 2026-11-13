@@ -89,7 +89,8 @@ describe("setup 웹 인증", () => {
     webInputs();
     mocks.getMe.mockImplementationOnce(async () => {
       const { DoorayCliError } = await import("../utils/errors.js");
-      throw new DoorayCliError("SESSION 쿠키를 다시 넣으세요", 2);
+      const { SESSION_EXPIRED_MESSAGE } = await import("../api/web/http.js");
+      throw new DoorayCliError(SESSION_EXPIRED_MESSAGE, 2);
     });
     await runSetup();
     expect(mocks.password).toHaveBeenCalledTimes(2);

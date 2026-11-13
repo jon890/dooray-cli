@@ -4,7 +4,7 @@ import type { PostUser, Tag, TemplateDetail } from "../types.js";
 import { apiPath } from "../api-path.js";
 import { count, date, identifier, invalidResponse, pick, project, referenceMap, row, rows, text, type Row } from "../web/convert.js";
 import type { WebContext } from "../web/context.js";
-import type { WebEnvelope } from "../web-http.js";
+import type { WebEnvelope } from "../web/http.js";
 
 
 function paged(response: WebEnvelope): { content: Row[]; totalCount: number; references: unknown } {

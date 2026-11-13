@@ -13,6 +13,7 @@ import { apiPath } from "./api-path.js";
 import { parseJsonPreservingLargeIntegers } from "./json-large-integer.js";
 import { buildThreadRequest } from "./messenger-thread-request.js";
 import type {
+  GetPostsParams, GetProjectsParams, GetPostCommentsParams, GetMembersParams, SearchMembersParams, GetWikisParams,
   ProjectListResponse,
   PostListResponse,
   PostDetailResponse,
@@ -84,58 +85,7 @@ import type {
   BusyHoursResponse,
 } from "./types.js";
 
-export interface GetPostsParams {
-  page?: number;
-  size?: number;
-  fromMemberIds?: string[];
-  toMemberIds?: string[];
-  ccMemberIds?: string[];
-  tagIds?: string[];
-  parentPostId?: string;
-  postNumber?: string;
-  postWorkflowClasses?: string[];
-  postWorkflowIds?: string[];
-  milestoneIds?: string[];
-  subjects?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  dueAt?: string;
-  order?: string;
-}
-
-export interface GetProjectsParams {
-  page?: number;
-  size?: number;
-  type?: string;
-  scope?: string;
-  state?: string;
-}
-
-export interface GetPostCommentsParams {
-  page?: number;
-  size?: number;
-  order?: "createdAt" | "-createdAt";
-}
-
-export interface GetMembersParams {
-  page?: number;
-  size?: number;
-}
-
-export interface SearchMembersParams {
-  name?: string;
-  externalEmailAddresses?: string;
-  userCode?: string;
-  userCodeExact?: string;
-  idProviderUserId?: string;
-  page?: number;
-  size?: number;
-}
-
-export interface GetWikisParams {
-  page?: number;
-  size?: number;
-}
+export type { GetPostsParams, GetProjectsParams, GetPostCommentsParams, GetMembersParams, SearchMembersParams, GetWikisParams } from "./types.js";
 
 function joinIds(ids: string[] | undefined): string | undefined {
   return ids && ids.length > 0 ? ids.join(",") : undefined;

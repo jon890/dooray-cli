@@ -1,6 +1,6 @@
 /** wiki 영역의 공개 메서드 계약. DTO 는 api/types.ts 가 소유한다. */
 import type { WikiListResponse, WikiPage, WikiPagesResponse, WikiPageResponse, CreateWikiPageRequest, CreateWikiPageResponse, UpdateWikiPageRequest, UpdateWikiPageTitleRequest, UpdateWikiPageContentRequest, MoveWikiPageRequest, WikiPageFileType, UploadWikiPageFileResponse, WikiCommentListResponse, WikiCommentDetailResponse, CreateWikiCommentRequest, UpdateWikiCommentRequest, CreateWikiCommentApiResponse, DoorayApiUnitResponse } from "../types.js";
-import type { GetWikisParams } from "../client.js";
+import type { GetWikisParams } from "../types.js";
 
 export interface WikiClient {
   getWikis(params?: GetWikisParams): Promise<WikiListResponse>;

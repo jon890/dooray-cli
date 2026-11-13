@@ -32,6 +32,8 @@ async function fetchAllMembers(
   // Step 2: enrich with /common/v1/members/{id} (all parallel)
   const all = await Promise.all(
     memberIds.map(async (id) => {
+      const listedName = client.getMemberNameFromList?.(id);
+      if (listedName !== undefined) return { organizationMemberId: id, name: listedName };
       try {
         const detail = await client.getMemberDetail(id);
         return {

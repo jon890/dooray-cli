@@ -9,6 +9,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR, EXIT_AUTH_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import { replaceConfig } from "../services/config.js";
 import { createClient } from "../api/dooray-client.js";
+import { SESSION_EXPIRED_MESSAGE } from "../api/web/http.js";
 import { parseSessionCookie, resolveWebBaseUrl, WEB_AUTH_WARNING } from "../config/web-auth.js";
 import { ensureMe } from "../resolvers/me.js";
 import { API_ENDPOINTS, DEFAULTS } from "../config/types.js";
@@ -81,7 +82,7 @@ export const setupCommand = new Command("setup")
             console.log(chalk.green(`  ✓ 웹 연결 성공 (${response.result.name})`));
             verified = true;
           } catch (error) {
-            if (error instanceof DoorayCliError && (error.exitCode === EXIT_PARAM_ERROR || (error.exitCode === EXIT_AUTH_ERROR && error.message.includes("SESSION")))) {
+            if (error instanceof DoorayCliError && (error.exitCode === EXIT_PARAM_ERROR || (error.exitCode === EXIT_AUTH_ERROR && error.message === SESSION_EXPIRED_MESSAGE))) {
               console.log(chalk.red(error.message));
               continue;
             }

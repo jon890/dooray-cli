@@ -6,7 +6,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR, EXIT_IO_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import type { Config } from "./types.js";
 import { CONFIG_SET_KEYS, DEFAULTS } from "./types.js";
-import { isConfigComplete, parseSessionCookie } from "./web-auth.js";
+import { isConfigComplete, parseSessionCookie, resolveWebBaseUrl } from "./web-auth.js";
 import { assessConfigFileSecurity, getConfigFileSecurityFixAdvice, type ConfigFileSecurityFinding } from "./file-security.js";
 import type { SecretField, SecretStore } from "./secret-store.js";
 import {
@@ -464,6 +464,7 @@ export async function setConfigValue(
   switch (key) {
     case "auth-mode":
       if (value !== "api-key" && value !== "web") throw new DoorayCliError("auth-mode 는 api-key 또는 web 이어야 합니다.", EXIT_PARAM_ERROR);
+      if (value === "web") resolveWebBaseUrl(config);
       config.authMode = value;
       break;
     case "session-cookie":
@@ -473,11 +474,11 @@ export async function setConfigValue(
       config.apiKey = value;
       break;
     case "base-url":
-      try {
-        const url = new URL(value);
-        if (url.protocol !== "https:" || url.username || url.password) throw new Error();
-      } catch { throw new DoorayCliError("base-url 은 https 주소여야 합니다.", EXIT_PARAM_ERROR); }
-      config.baseUrl = value.replace(/\/+$/, "");
+      if (config.authMode === "web") {
+        try { resolveWebBaseUrl({ ...config, baseUrl: value }); }
+        catch { throw new DoorayCliError("웹 방식의 base-url 은 알려진 클라우드의 https 주소여야 합니다.", EXIT_PARAM_ERROR); }
+      }
+      config.baseUrl = config.authMode === "web" ? value.replace(/\/+$/, "") : value;
       break;
     case "imap-host":
       config.imapHost = value;
@@ -495,7 +496,10 @@ export async function setConfigValue(
       config.smtpHost = value;
       break;
     case "tenant-name":
-      if (!/^[a-z0-9-]+$/.test(value)) throw new DoorayCliError("tenant-name 은 영문 소문자·숫자·- 만 쓸 수 있습니다.", EXIT_PARAM_ERROR);
+      if (config.authMode === "web") {
+        try { resolveWebBaseUrl({ ...config, tenantName: value }); }
+        catch { throw new DoorayCliError("웹 방식의 tenant-name 을 확인하세요. 영문 소문자·숫자·- 만 쓸 수 있습니다.", EXIT_PARAM_ERROR); }
+      }
       config.tenantName = value;
       break;
     case "smtp-port":

@@ -1,3 +1,4 @@
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "./dooray-client.js";
 import { DoorayApiClient } from "./client.js";
@@ -22,11 +23,15 @@ describe("인증 방식 선택", () => {
     expect(() => createClient({ ...base, authMode: "web", tenantName, sessionCookie: "fake-session" })).toThrow(expect.objectContaining({ exitCode: 4 }));
     expect(fetch).not.toHaveBeenCalled();
   });
-  it.each(["getPosts", "getWikis", "getMessengerChannels", "getCalendars", "getStreams"])("미지원 영역의 %s 는 공개 API 로 빠지지 않는다", async (method) => {
+  it("아직 web.ts 가 없는 영역의 메서드는 공개 API 로 빠지지 않는다", async () => {
+    const areas = readdirSync(new URL("./", import.meta.url), { withFileTypes: true }).filter((entry) => entry.isDirectory() && existsSync(new URL(`./${entry.name}/types.ts`, import.meta.url)) && !existsSync(new URL(`./${entry.name}/web.ts`, import.meta.url)));
+    const methods = areas.flatMap((entry) => [...readFileSync(new URL(`./${entry.name}/types.ts`, import.meta.url), "utf8").matchAll(/^\s+(\w+)\??\(/gm)].map((match) => match[1]));
     const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
     const client = createClient({ ...base, authMode: "web", tenantName: "my-org", sessionCookie: "fake-session" });
-    const call = Reflect.get(client, method) as (...args: unknown[]) => Promise<unknown>;
-    await expect(call("project")).rejects.toMatchObject({ exitCode: 3, message: expect.stringContaining("웹 방식에서는 지원하지 않습니다") });
+    for (const method of methods.length ? methods : ["__unregistered__"]) {
+      const call = Reflect.get(client, method) as (...args: unknown[]) => Promise<unknown>;
+      await expect(call("project")).rejects.toMatchObject({ exitCode: 3, message: expect.stringContaining("웹 방식에서는 지원하지 않습니다") });
+    }
     expect(fetch).not.toHaveBeenCalled();
   });
 });

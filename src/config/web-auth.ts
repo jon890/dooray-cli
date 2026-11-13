@@ -11,6 +11,8 @@ export function parseSessionCookie(input: string): string {
   if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) value = value.slice(1, -1).trim();
   const header = /^Cookie:\s*/i.test(value);
   value = value.replace(/^Cookie:\s*/i, "");
+  const pair = /^([^=;\s]+)=(.*)$/.exec(value);
+  if (!header && pair && pair[1] !== "SESSION" && (!/^={0,1}$/.test(pair[2]) || /^(?:session|JSESSIONID)$/.test(pair[1]))) throw cookieError();
   if (header || value.includes(";") || value.startsWith("SESSION=")) {
     const values = new Set(value.split(";").flatMap((part) => {
       const index = part.indexOf("=");

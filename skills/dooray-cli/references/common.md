@@ -60,14 +60,7 @@ doctor 는 API 키가 없어도 웹 설정을 검사하며 캐시 없이 getMe �
 `config get session-cookie` 는 유무만 보여 준다. auth-mode 를 api-key 로 바꿔도 저장한 쿠키는 지우지 않는다.
 인증 방식·쿠키를 바꾸면 캐시를 비우고, 웹 방식은 테넌트 이름 변경도 같다.
 
-| 영역 | 지원 범위 |
-| --- | --- |
-| 프로젝트 | list·members·workflows·groups·tags(list/create/group)·templates |
-| 멤버 | list·get·search. get --with-org 는 지원하지 않음 |
-| 설정·메일 | setup·config·doctor·cache·skill·feedback·mail 은 사용 가능 |
-| 업무·위키·메신저·캘린더·활동 | 아직 웹 방식에서 지원하지 않음. 요청 전 종료 코드 3 |
-
-없는 웹 필드는 만들어 내지 않는다. 멤버 목록에서 재사용한 상세에는 사용자 코드·외부 이메일·기본 조직이 없을 수 있다.
+지원 명령·옵션과 빠질 수 있는 필드는 [설정 가이드의 웹 방식 지원 범위](https://github.com/jon890/dooray-cli/blob/main/docs/guide/setup.md#웹-방식의-지원-범위)를 따른다.
 API 방식의 사용법과 출력은 유지한다.
 
 ## Claude Code·Codex 스킬 관리

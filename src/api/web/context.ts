@@ -1,15 +1,16 @@
 /** 한 CLI 실행 안에서 멤버·프로젝트 참조를 공유해 불필요한 웹 호출을 줄인다. */
-import { WebHttp } from "../web-http.js";
+import { WebHttp } from "./http.js";
 import { apiPath } from "../api-path.js";
 import type { MemberDetail, Project } from "../types.js";
 import { project, row } from "./convert.js";
 
 export class WebContext {
   readonly http: WebHttp;
-  readonly members = new Map<string, MemberDetail>();
+  readonly memberNames = new Map<string, string>();
+  readonly memberDetails = new Map<string, MemberDetail>();
   readonly projects = new Map<string, Project>();
   private readonly projectRequests = new Map<string, Promise<Project>>();
-  constructor(cookie: string, baseUrl: string) { this.http = new WebHttp(baseUrl, cookie); }
+  constructor(cookie: string, baseUrl: string, publicApiBaseUrl: string) { this.http = new WebHttp(baseUrl, cookie, publicApiBaseUrl); }
   async project(id: string): Promise<Project> {
     const cached = this.projects.get(id);
     if (cached) return cached;

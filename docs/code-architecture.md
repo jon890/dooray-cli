@@ -15,7 +15,7 @@
 | IMAP 클라이언트 | imapflow (메일 조회)                  |
 | SMTP 클라이언트 | nodemailer (메일 발송)                |
 | 메일 파서       | mailparser (메일 본문 파싱)           |
-| 문서 검사       | `node:` 빌트인만 쓰는 `.mjs` 스크립트. CI 에서 의존성 설치 전에 실행한다 (ADR-048) |
+| 문서 검사       | `node:` 빌트인만 쓰는 `.mjs` 스크립트. CI 에서 의존성 설치 전에 실행한다 ([ADR-048](adr/048-checks-to-mjs.md)) |
 
 ## 디렉터리 구조
 
@@ -62,16 +62,16 @@ commands/setup|doctor|skill → skill/manager → skill/manifest
 editor/    → api/types + cache/types + utils (편집 데이터 타입과 임시 파일)
 ```
 
-- `commands/setup.ts`는 services/config, api/dooray-client, @inquirer/prompts에 의존하고 스킬 파일시스템 처리는 `skill/manager.ts`에 위임. config 저장을 `services/config`로 보내 계정·환경이 바뀌면 캐시가 함께 비워지게 한다 (ADR-042)
+- `commands/setup.ts`는 services/config, api/dooray-client, @inquirer/prompts에 의존하고 스킬 파일시스템 처리는 `skill/manager.ts`에 위임. config 저장을 `services/config`로 보내 계정·환경이 바뀌면 캐시가 함께 비워지게 한다 ([ADR-042](adr/042-cache-invalidation-on-mutation.md))
 - `skill/context.ts`는 절대 경로 `XDG_DATA_HOME`이 있으면 `dataRoot`를 `$XDG_DATA_HOME/dooray-cli`로 주입하고, 없거나 상대 경로이면 `homeDir/.local/share/dooray-cli`를 주입한다.
 - `skill/manager.ts`는 경로·현재 버전을 주입받아 명령 출력과 분리된 순수 상태 전이를 제공한다. 테스트 전용 등으로 `SkillManagerContext.dataRoot?`가 없으면 `homeDir/.local/share/dooray-cli`를 사용한다.
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
-- `api/dooray-client`는 인증 방식에 맞는 구현을 고른다. 공개 HTTP 는 `api/client`, 웹 HTTP 는 `api/web-http` 가 맡는다.
-- 두 HTTP 구현은 `api/rate-limiter`의 토큰 버킷을 재사용한다. 호출부는 요청 간격을 신경 쓰지 않는다 (ADR-039)
+- `api/dooray-client`는 인증 방식에 맞는 구현을 고른다. 공개 HTTP 는 `api/client`, 웹 HTTP 는 `api/web/http` 가 맡는다.
+- 두 HTTP 구현은 `api/rate-limiter`의 토큰 버킷을 재사용한다. 호출부는 요청 간격을 신경 쓰지 않는다 ([ADR-039](adr/039-rate-limit-token-bucket.md))
 - 이름을 id 로 바꾸는 resolver 는 필요한 영역 계약을 받아 캐시를 우선 조회하고, 만료 시 `api/dooray-client` 를 호출한다.
 - `resolvers/mail-input` 은 입력 형태를 분류하고, mail id 는 캐시 없이 `api/imapClient` 에서 UID 로 조회한다.
 - `resolvers/*`는 읽기 전용이다. 쓰기 함수를 넣지 않는다
-- 캐시의 유효성을 깨는 변경은 `services/*`를 거친다. 그 함수가 성공 직후 무효해진 캐시를 지운다 (ADR-042)
+- 캐시의 유효성을 깨는 변경은 `services/*`를 거친다. 그 함수가 성공 직후 무효해진 캐시를 지운다 ([ADR-042](adr/042-cache-invalidation-on-mutation.md))
   - 엔티티를 바꾸는 API 호출은 그 엔티티의 캐시 파일 하나를, 인증 계정·환경 변경은 전체 캐시를 지운다
 - `services/*`는 `resolvers/*`를 의존하지 않는다. 둘을 조합하는 것은 `commands/*`의 몫이다
 - `commands/*`는 resolvers, api/dooray-client, formatters 조합
@@ -79,11 +79,11 @@ editor/    → api/types + cache/types + utils (편집 데이터 타입과 임�
 ## API Client 구조
 
 `src/api/dooray-client.ts` 의 영역별 인터페이스 교집합인 DoorayClient 를 공개 API 구현(`client.ts`)과 웹 구현(`web/index.ts`)이 구현한다. 명령은 createClient(config) 로 고른다.
-영역 계약은 api/<영역>/types.ts, 웹 구현은 api/<영역>/web.ts 에 둔다. DTO 는 api/types.ts 를 유지한다. 웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web-http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
+영역 계약은 api/<영역>/types.ts, 웹 구현은 api/<영역>/web.ts 에 둔다. DTO 는 api/types.ts 를 유지한다. 웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web/http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
 메서드 목록은 여기 적지 않는다. 메서드가 늘 때마다 낡고, 그 파일을 열면 바로 보인다.
 
 ```bash
-rg "^  async " src/api/client.ts src/api/web/
+rg "async \w+\(" src/api/client.ts src/api/*/web.ts
 ```
 
 메서드가 지키는 규약은 다음과 같다.
@@ -135,10 +135,10 @@ rg "^  async " src/api/client.ts src/api/web/
 - `pnpm test` (단발) / `pnpm test:watch` (개발 중)
 - `pnpm test` 가 도는 테스트 파일은 아래 위치에 있다.
   - `src/` 의 `*.test.ts`. 테스트 대상 파일 옆에 둔다.
-  - `scripts/` 의 `*.test.mjs`. 문서 검사 스크립트와 endpoint 목록 스크립트를 본다 (ADR-048).
+  - `scripts/` 의 `*.test.mjs`. 문서 검사 스크립트와 endpoint 목록 스크립트를 본다 ([ADR-048](adr/048-checks-to-mjs.md)).
   - `skills/dooray-persona/scripts/lib/` 의 `*.test.mjs`.
 - `vitest.config.ts` 가 `worktrees/**` 를 대상에서 뺀다. 그 아래는 git worktree 라 같은 테스트가 중복 수집된다.
-- 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 (ADR-020 도입 근거)
+- 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 ([ADR-020](adr/020-post-input-unification-vitest.md) 도입 근거)
 
 ## 빌드·배포
 

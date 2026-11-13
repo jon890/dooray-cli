@@ -7,11 +7,12 @@ import type { WebContext } from "../web/context.js";
 export function createMemberWeb(context: WebContext): MemberClient {
   const http = context.http;
   return {
+    getMemberNameFromList(memberId) { return context.memberNames.get(memberId); },
     async getProjectMembers(projectId, params) {
       const response = await http.request(apiPath`wapi/task/v1/projects/!${projectId}/members`, { searchParams: { member: "me", ...params } });
       const result = rows(response.result).map((source) => {
         const m = member(source.member);
-        if (!context.members.has(m.id)) context.members.set(m.id, m);
+        context.memberNames.set(m.id, m.name);
         return { organizationMemberId: m.id, ...pick(source, ["role"]) };
       });
       return { header: response.header, result, totalCount: count(response.totalCount) };
@@ -23,11 +24,11 @@ export function createMemberWeb(context: WebContext): MemberClient {
       return { header: response.header, result: { ...result, defaultOrganization: result.defaultOrganization } };
     },
     async getMemberDetail(memberId) {
-      const cached = context.members.get(memberId);
+      const cached = context.memberDetails.get(memberId);
       if (cached) return { header: { isSuccessful: true, resultCode: 0, resultMessage: "" }, result: cached };
       const response = await http.request(apiPath`v2/wapi/members/${memberId}`);
       const result = member(row(response.result).content);
-      context.members.set(memberId, result);
+      context.memberDetails.set(memberId, result);
       return { header: response.header, result };
     },
     async searchMembers(params) {

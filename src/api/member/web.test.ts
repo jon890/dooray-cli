@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWebClient } from "../web/index.js";
 const fixtures = JSON.parse(readFileSync(new URL("../web/fixtures/member/responses.json", import.meta.url), "utf8"));
-const client = () => createWebClient("fake-session", "https://my-org.dooray.com");
+const client = () => createWebClient("fake-session", "https://my-org.dooray.com", "https://api.dooray.com");
 afterEach(() => vi.unstubAllGlobals());
 describe("웹 멤버 공식 응답 변환", () => {
   it("me 의 기본 조직과 공개 상세 필드를 변환한다", async () => {
@@ -25,14 +25,18 @@ describe("웹 멤버 공식 응답 변환", () => {
     expect((await client().getMemberDetail("member/id")).result.name).toBe("홍길동");
     expect((mock.mock.calls as unknown[][])[0][0]).toMatchObject({ url: expect.stringContaining("member%2Fid") });
   });
-  it("프로젝트 멤버 totalCount 를 보존하고 상세 재조회 없이 이름을 재사용한다", async () => {
-    const mock = vi.fn(async () => Response.json(fixtures.projectMembers)); vi.stubGlobal("fetch", mock);
+  it("목록 이름을 재사용하되 상세 응답 캐시는 목록과 분리한다", async () => {
+    const mock = vi.fn(async (request: Request) => Response.json(new URL(request.url).pathname.startsWith("/wapi/task/") ? fixtures.projectMembers : fixtures.me)); vi.stubGlobal("fetch", mock);
     const c = client();
     const members = await c.getProjectMembers("project-1", { page: 1, size: 100 });
     expect(members.totalCount).toBe(101);
     expect(members.result).toEqual([{ organizationMemberId: "1234567890123456789", role: "admin" }]);
-    expect((await c.getMemberDetail(members.result[0].organizationMemberId)).result).toEqual({ id: "1234567890123456789", name: "홍길동" });
+    expect(c.getMemberNameFromList?.(members.result[0].organizationMemberId)).toBe("홍길동");
     expect(mock).toHaveBeenCalledTimes(1);
+    const detail = await c.getMemberDetail(members.result[0].organizationMemberId);
+    expect(detail.result).toMatchObject({ name: "홍길동", userCode: "test-user", defaultOrganization: { id: "2222333344445555666" } });
+    expect(await c.getMemberDetail(members.result[0].organizationMemberId)).toEqual(detail);
+    expect(mock).toHaveBeenCalledTimes(2);
   });
   it("검색 쿼리와 페이지를 전달하고 공식 목록 필드만 돌려준다", async () => {
     const mock = vi.fn(async () => Response.json(fixtures.search)); vi.stubGlobal("fetch", mock);

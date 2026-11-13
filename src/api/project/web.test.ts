@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWebClient } from "../web/index.js";
+import { date } from "../web/convert.js";
 const fixtures = JSON.parse(readFileSync(new URL("../web/fixtures/project/responses.json", import.meta.url), "utf8"));
-const client = () => createWebClient("fake-session", "https://my-org.dooray.com");
+const client = () => createWebClient("fake-session", "https://my-org.dooray.com", "https://api.dooray.com");
 function respond(key: string) {
   const bodies: unknown[] = [];
   const mock = vi.fn(async (request: Request) => {
@@ -13,6 +14,11 @@ function respond(key: string) {
 }
 afterEach(() => vi.unstubAllGlobals());
 describe("웹 프로젝트 공식 응답 변환", () => {
+  it("숫자 시각은 실행 PC 시간대의 오프셋과 초 단위로 바꾼다", () => {
+    const before = process.env.TZ;
+    try { process.env.TZ = "Asia/Seoul"; expect(date(1234)).toBe("1970-01-01T09:00:01+09:00"); }
+    finally { if (before === undefined) delete process.env.TZ; else process.env.TZ = before; }
+  });
   it("프로젝트 참조 객체와 쿼리를 변환하고 내부 필드를 제외한다", async () => {
     const mock = respond("projects");
     const response = await client().getProjects({ page: 1, size: 1, type: "private", scope: "public", state: "active" });

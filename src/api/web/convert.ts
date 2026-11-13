@@ -38,7 +38,11 @@ export function date(value: unknown): string | null {
   if (value === null) return null;
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?)?[+-]\d{2}:\d{2}$/.test(value)) return value;
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T.*Z$/.test(value) && Number.isFinite(Date.parse(value))) return value.replace(/Z$/, "+00:00");
-  if (typeof value === "number" && Number.isFinite(new Date(value).getTime())) return new Date(value).toISOString().replace(/Z$/, "+00:00");
+  if (typeof value === "number" && Number.isFinite(new Date(value).getTime())) {
+    const d = new Date(value), offset = -d.getTimezoneOffset();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${offset >= 0 ? "+" : "-"}${pad(Math.floor(Math.abs(offset) / 60))}:${pad(Math.abs(offset) % 60)}`;
+  }
   return invalidResponse();
 }
 export function project(value: unknown): Project {

@@ -107,8 +107,15 @@
       "execution_profile": "standard",
       "requirements": [
         "REQ1",
+        "REQ2",
+        "REQ3",
+        "REQ4",
         "REQ6",
         "REQ8",
+        "REQ9",
+        "REQ10",
+        "REQ11",
+        "REQ13",
         "REQ17"
       ]
     }

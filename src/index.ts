@@ -61,7 +61,7 @@ import { attachUsageHint } from "./utils/unknown-option-hint.js";
 import { setQuiet } from "./utils/spinner.js";
 import { writeLastRun } from "./cache/last-run.js";
 import { getConfig, readAuthModeFromFile } from "./config/store.js";
-import { assertWebSupported, isWebSupportExempt } from "./commands/web-support.js";
+import { guardWebCommand } from "./commands/web-support.js";
 import { CLI_VERSION } from "./version.js";
 
 const program = new Command();
@@ -83,11 +83,7 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   if (opts.json || opts.quiet) {
     setQuiet(true);
   }
-  const parts: string[] = [];
-  for (let current: Command | null = actionCommand; current?.parent; current = current.parent) parts.unshift(current.name());
-  const commandPath = parts.join(" ");
-  // 손상된 설정도 setup 으로 고칠 수 있어야 한다. 관리·메일 명령은 파일 읽기도 건너뛴다.
-  if (!isWebSupportExempt(commandPath)) assertWebSupported(commandPath, actionCommand.optsWithGlobals(), await readAuthModeFromFile());
+  await guardWebCommand(actionCommand, readAuthModeFromFile);
 });
 
 // project 커맨드 그룹

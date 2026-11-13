@@ -1,4 +1,9 @@
-/** 영역 계약을 갖춘 웹 구현을 조립한다. 아직 없는 영역은 요청 없이 실패한다. */
+/**
+ * 영역 계약을 갖춘 웹 구현을 조립한다. 아직 없는 영역은 요청 없이 실패한다.
+ * 각 영역은 createXxxWeb(context: WebContext) 함수가 자기 계약을 구현한 객체 리터럴을 반환한다.
+ * Object.assign 은 자신의 속성만 복사하므로 클래스 인스턴스·프로토타입 메서드를 반환하지 않는다.
+ * 공통 변환은 web/convert.ts, 직접 쓴 응답 파일은 web/fixtures/<영역>/ 에 둔다.
+ */
 import type { DoorayClient } from "../dooray-client.js";
 import type { ProjectClient } from "../project/types.js";
 import type { MemberClient } from "../member/types.js";
@@ -24,8 +29,8 @@ interface WebDomains {
   stream: StreamClient | typeof unsupported;
 }
 
-export function createWebClient(cookie: string, baseUrl: string): DoorayClient {
-  const context = new WebContext(cookie, baseUrl);
+export function createWebClient(cookie: string, baseUrl: string, publicApiBaseUrl: string): DoorayClient {
+  const context = new WebContext(cookie, baseUrl, publicApiBaseUrl);
   const domains: WebDomains = {
     project: createProjectWeb(context),
     member: createMemberWeb(context),
