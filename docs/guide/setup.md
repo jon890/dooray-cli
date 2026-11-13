@@ -57,6 +57,43 @@ macOS 가 아닌 OS 는 지금처럼 설정 파일에 저장한다.
 캐시는 계정과 접속 환경별로 나뉘지 않아서, 비우지 않으면 이전 계정의 프로젝트와 멤버가 남아 잘못 매칭된다.
 같은 값을 다시 설정하는 경우와 최초 설정에서는 비우지 않는다.
 
+## 웹 방식의 지원 범위
+
+웹 방식에서는 아래 명령만 사용할 수 있다. 지원하지 않는 명령·옵션은 API 요청 전에 종료 코드 3 으로 끝나며 `auth-mode` 를 `api-key` 로 바꾸라고 안내한다.
+`setup`, `config`, `doctor`, `cache`, `skill`, `feedback`, `mail` 은 이 목록과 무관하게 사용할 수 있다.
+
+### 프로젝트
+
+| 지원 명령 | 지원하지 않는 옵션 |
+| --- | --- |
+| `project list` | 없음 |
+| `project members` | 없음 |
+| `project workflows` | 없음 |
+| `project groups` | 없음 |
+| `project tags` | 없음 |
+| `project tags list` | 없음 |
+| `project tags create` | 없음 |
+| `project tags group` | 없음 |
+| `project templates` | 없음 |
+
+### 멤버
+
+| 지원 명령 | 지원하지 않는 옵션 |
+| --- | --- |
+| `member list` | 없음 |
+| `member get` | `--with-org` |
+| `member search` | 없음 |
+
+### 뒤에 지원할 영역
+
+| 영역 | 현재 지원하지 않는 명령 |
+| --- | --- |
+| 업무 | `post` 의 하위 명령 |
+| 위키 | `wiki` 의 하위 명령 |
+| 메신저 | `messenger` 의 하위 명령 |
+| 캘린더 | `calendar` 의 하위 명령 |
+| 활동 | `stream` 의 하위 명령 |
+
 ## 보안 경고와 진단
 
 macOS 에서 설정 파일에 키체인으로 옮길 수 있는 평문 비밀값이 남아 있거나, macOS·Linux 에서 비밀값을 담은 파일의 권한이 넓으면 설정을 읽는 명령이 stderr 로 경고한다.

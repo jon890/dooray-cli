@@ -60,7 +60,8 @@ import { sanitizeArgv } from "./utils/argv-sanitize.js";
 import { attachUsageHint } from "./utils/unknown-option-hint.js";
 import { setQuiet } from "./utils/spinner.js";
 import { writeLastRun } from "./cache/last-run.js";
-import { getConfig } from "./config/store.js";
+import { getConfig, readAuthModeFromFile } from "./config/store.js";
+import { assertWebSupported, isWebSupportExempt } from "./commands/web-support.js";
 import { CLI_VERSION } from "./version.js";
 
 const program = new Command();
@@ -74,7 +75,7 @@ program
   .option("--no-color", "색상 비활성화");
 
 // --no-color 처리: chalk 비활성화. --json / --quiet 모드에서 spinner 비활성화
-program.hook("preAction", () => {
+program.hook("preAction", async (_thisCommand, actionCommand) => {
   const opts = program.opts();
   if (opts.color === false || process.env.NO_COLOR) {
     chalk.level = 0;
@@ -82,6 +83,11 @@ program.hook("preAction", () => {
   if (opts.json || opts.quiet) {
     setQuiet(true);
   }
+  const parts: string[] = [];
+  for (let current: Command | null = actionCommand; current?.parent; current = current.parent) parts.unshift(current.name());
+  const commandPath = parts.join(" ");
+  // 손상된 설정도 setup 으로 고칠 수 있어야 한다. 관리·메일 명령은 파일 읽기도 건너뛴다.
+  if (!isWebSupportExempt(commandPath)) assertWebSupported(commandPath, actionCommand.optsWithGlobals(), await readAuthModeFromFile());
 });
 
 // project 커맨드 그룹
