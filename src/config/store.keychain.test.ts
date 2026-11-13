@@ -20,6 +20,7 @@ const {
   mkdirMock,
   renameMock,
   chmodMock,
+  statMock,
   unlinkMock,
   fake,
 } = vi.hoisted(() => ({
@@ -28,6 +29,7 @@ const {
   mkdirMock: vi.fn(),
   renameMock: vi.fn(),
   chmodMock: vi.fn(),
+  statMock: vi.fn().mockResolvedValue({ mode: 0o600 }),
   unlinkMock: vi.fn(),
   fake: { store: null as unknown },
 }));
@@ -39,6 +41,7 @@ vi.mock("node:fs/promises", () => ({
   rename: renameMock,
   chmod: chmodMock,
   unlink: unlinkMock,
+  stat: statMock,
 }));
 
 // 키체인 자리에 가짜 저장소를 넣는다. 검증 함수와 필드 목록은 실제 것을 쓴다.

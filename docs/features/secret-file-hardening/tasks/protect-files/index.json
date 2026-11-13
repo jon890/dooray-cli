@@ -3,7 +3,7 @@
   "description": "비밀값 노출 경고와 캐시 파일 권한 강화",
   "pr_scope": "확인한 비밀값·캐시 보호 요구사항을 PR 하나로 구현한다.",
   "deferred": [],
-  "status": "pending",
+  "status": "in_progress",
   "created_at": "2026-11-13",
   "spec": "docs/features/secret-file-hardening/spec.md",
   "design": "docs/features/secret-file-hardening/design.md",
@@ -21,7 +21,7 @@
     "REQ8"
   ],
   "total_phases": 3,
-  "current_phase": 1,
+  "current_phase": 2,
   "phases": [
     {
       "number": 1,

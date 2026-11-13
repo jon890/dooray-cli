@@ -4,6 +4,7 @@ import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 const mocks = vi.hoisted(() => ({
   getConfig: vi.fn(),
+  warnConfigFileSecurity: vi.fn(),
   updateConfigValue: vi.fn(),
 }));
 
@@ -13,6 +14,7 @@ vi.mock("../config/store.js", async (importOriginal) => ({
     await importOriginal<typeof import("../config/store.js")>()
   ).configReadErrorMessage,
   getConfig: mocks.getConfig,
+  warnConfigFileSecurity: mocks.warnConfigFileSecurity,
 }));
 vi.mock("../services/config.js", () => ({
   updateConfigValue: mocks.updateConfigValue,
