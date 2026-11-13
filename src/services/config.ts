@@ -1,6 +1,7 @@
 import { clearCache } from "../cache/store.js";
 import type { ConfigReadResult } from "../config/store.js";
-import { getConfig, saveConfig, setConfigValue } from "../config/store.js";
+import { getConfig, readSessionCookie, saveConfig, setConfigValue } from "../config/store.js";
+import { parseSessionCookie } from "../config/web-auth.js";
 import type { Config } from "../config/types.js";
 
 /**
@@ -71,6 +72,8 @@ export async function updateConfigValue(
   value: string,
 ): Promise<{ cacheCleared: boolean }> {
   const prev = await getConfig();
+  const previousCookie = key === "session-cookie" && prev.state === "ok"
+    ? prev.config.sessionCookie ?? await readSessionCookie() : undefined;
   await setConfigValue(key, value);
   const next = await getConfig();
 
@@ -91,6 +94,7 @@ export async function updateConfigValue(
     };
   }
 
+  if (key === "session-cookie" && previousCookie !== parseSessionCookie(value)) return { cacheCleared: await invalidateAllCache() };
   if (!shouldInvalidateCache(prev.config, next.config)) {
     return { cacheCleared: false };
   }

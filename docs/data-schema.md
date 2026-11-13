@@ -4,7 +4,7 @@
 
 ```
 ~/.dooray/
-  config.json                 # 인증·연결 설정 (macOS 에서는 apiKey·imapPassword 를 키체인에 둔다, [ADR-069](adr/069-macos-keychain-secret-store.md))
+  config.json                 # 인증·연결 설정 (macOS 에서는 비밀 필드를 키체인에 둔다, [ADR-069](adr/069-macos-keychain-secret-store.md))
   last-run.json               # 직전 명령 sanitized argv + 에러 ([ADR-023](adr/023-feedback-last-run-tracking.md), opt-in)
   cache/
     me.json                   # 내 정보 캐시
@@ -106,7 +106,9 @@ interface Config {
   version: 1;
   trackLastRun?: boolean; // feedback --last 에 쓸 직전 실행 기록 활성화
   tenantName?: string;     // 회사 테넌트명 (e.g. "<tenant>"), 기본값: "<tenant>"
-  apiKey: string;          // Dooray API 토큰
+  apiKey: string;          // Dooray API 토큰. 웹 방식이면 빈 문자열 가능
+  authMode?: "api-key" | "web"; // 없으면 api-key
+  sessionCookie?: string;  // SESSION 쿠키 값, 비밀 필드
   baseUrl: string;         // API Endpoint, API_ENDPOINTS 의 환경 중 택 1
   imapHost?: string;       // 기본값: "imap.dooray.com"
   imapPort?: number;       // 기본값: 993
@@ -125,7 +127,7 @@ const API_ENDPOINTS = {
 } as const;
 ```
 
-- `tenantName`은 API Key 발급 링크(`https://{tenant}.dooray.com/setting/api/token`)와 메일 설정 링크 생성에 사용
+- `tenantName`은 웹 방식의 요청 호스트와 API Key 발급 링크(`https://{tenant}.dooray.com/setting/api/token`)와 메일 설정 링크 생성에 사용
 - `baseUrl`은 `src/config/types.ts` 의 `API_ENDPOINTS` 에 있는 환경 중 하나로 고정 (자유 입력 아님)
 - 미설정 키 접근 시 에러와 `dooray setup` 안내 출력
 - env var 폴백 없음 (보안 원칙)
@@ -133,17 +135,17 @@ const API_ENDPOINTS = {
 
 ### 비밀 필드의 저장 위치 ([ADR-069](adr/069-macos-keychain-secret-store.md))
 
-`apiKey` 와 `imapPassword` 는 OS 에 따라 저장 위치가 다르다.
+비밀 필드 목록은 `src/config/secret-store.ts` 의 SECRET_FIELDS 가 소유한다. apiKey·imapPassword·sessionCookie 는 같은 OS 저장 규칙을 따른다.
 
 | OS | 저장 위치 | config.json 에 남는가 |
 | --- | --- | --- |
 | macOS | 로그인 키체인. service `dooray-cli`, account 는 아래 규칙 | 저장한 뒤에는 남지 않는다 |
 | 그 밖 | `config.json` 평문 (0600) | 남는다 |
 
-- account 는 config 경로가 계정 홈의 `~/.dooray/config.json` 이면 필드 이름(`apiKey`, `imapPassword`)이다.
+- account 는 config 경로가 계정 홈의 `~/.dooray/config.json` 이면 필드 이름(SECRET_FIELDS 의 필드 이름)이다.
   `HOME` 을 바꿔 다른 경로의 config 를 쓰면 `<field>:<정규화한 경로의 sha256 앞 16자>` 다. 경로는 `path.resolve` 로만 정규화한다.
 - macOS 에서 읽을 때는 필드마다 `config.json` 의 값이 앞선다. 비어 있지 않은 값이 있으면 그 값을 쓰고 키체인은 읽지 않는다.
-  필드가 없거나 빈 문자열일 때만 키체인을 읽고, 둘 다 없으면 미설정이다.
+  필드가 없거나 빈 문자열일 때만 키체인을 읽고, 둘 다 없으면 미설정이다. API 방식의 일반 읽기는 sessionCookie 를 생략하며 저장 시 생략한 쿠키를 지우지 않는다. config get session-cookie 는 방식과 무관하게 명시 조회한다.
   파일에 값이 남아 있는 것은 아직 옮기지 않은 구버전 값이거나 구버전 CLI 가 나중에 쓴 값이다.
 - `setup`, `config set`, `mail logout` 처럼 설정을 저장하는 순간 비밀값을 키체인에 쓰고 `config.json` 에서 그 필드를 뺀다.
   키체인 값과 같은 필드는 다시 쓰지 않는다. 값이 비었거나 없으면 키체인에 있던 항목을 지운다. 읽기만 하는 명령은 파일을 고치지 않는다.
@@ -156,7 +158,7 @@ const API_ENDPOINTS = {
   키체인 접근 앱에서 `dooray-cli` 항목을 지우고 `dooray setup` 을 다시 한다.
 - `config.json` 에는 `apiKey` 가 없을 수 있고, 검증은 OS 와 무관하게 그것을 허용한다(문자열이 아닌 값은 손상이다).
   macOS 에서 옮긴 파일을 다른 OS 로 동기화한 경우도 이에 해당한다.
-  `getConfig` 는 그때 `apiKey: ""` 를 채워 돌려주므로 키체인에도 없으면 「설정 미완료」 로 안내한다.
+  `getConfig` 는 그때 `apiKey: ""` 를 채워 돌려준다. 설정 완료는 `isConfigComplete` 가 방식별로 검사한다. 웹은 API 키 없이 쿠키와 유효한 테넌트 주소가 있으면 완료다.
 
 `getConfig` 는 설정 파일 읽기 결과를 네 상태로 돌려준다 ([ADR-049](adr/049-config-read-result-states.md)).
 
@@ -298,12 +300,12 @@ resolver 는 code 누락 그룹을 사전 필터링하고 후보 5개 안내 출
 `dooray config set` 과 `dooray setup` 은 `config.json` 의 `apiKey` 나 `baseUrl` 이
 실제로 달라졌을 때 `~/.dooray/cache/` 전체를 지운다.
 같은 값을 다시 설정하는 경우와 이전 설정이 없는 최초 설정은 지우지 않는다.
-`tenantName`, IMAP·SMTP 설정, `trackLastRun` 은 캐시 내용에 영향을 주지 않아 대상이 아니다.
+authMode·sessionCookie 변경도 전체 캐시를 비우며 웹 방식의 tenantName 변경도 같다. 생략한 authMode 는 api-key 와 같다. IMAP·SMTP 설정과 trackLastRun 은 대상이 아니다.
 설정 파일이 손상됐거나 읽히지 않으면 `dooray config set` 은 기존 파일을 덮지 않고 오류로 끝난다.
 `dooray setup` 이 전체 설정 저장에 성공하면 이전 계정을 알 수 없으므로 캐시 전체를 지운다 ([ADR-049](adr/049-config-read-result-states.md)).
 
 지운 것이 있었을 때만 사용자에게 알린다. 지울 캐시가 없었으면 알리지 않는다.
-두 값이 바뀌었을 때 남은 캐시가 전부 무효가 되는 이유는 [ADR-042](adr/042-cache-invalidation-on-mutation.md) 가 소유한다.
+인증 계정·환경이 바뀌었을 때 캐시가 전부 무효가 되는 이유는 [ADR-042](adr/042-cache-invalidation-on-mutation.md) 가 소유한다.
 
 ### Lazy Loading 전략
 

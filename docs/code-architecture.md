@@ -53,41 +53,42 @@ src/
 ## 모듈 의존 관계
 
 ```
-commands/* → resolvers/* → cache/store + api/client   (읽기: 이름 → id 번역)
+commands/* → resolvers/* → cache/store + api/dooray-client   (읽기: 이름 → id 번역)
 commands/mail/{get,attachment,reply} → resolvers/mail-input → api/imapClient   (캐시 없이 mail id → UID 조회)
-commands/* → services/*  → cache/store + api/client + config/store   (쓰기: 변경과 캐시 무효화, ADR-042)
+commands/* → services/*  → cache/store + api/dooray-client + config/store   (쓰기: 변경과 캐시 무효화, ADR-042)
 commands/* → formatters/*
 commands/* → utils/errors
 commands/setup|doctor|skill → skill/manager → skill/manifest
-editor/    → api/client (현재 데이터 fetch) + resolvers/member
+editor/    → api/types + cache/types + utils (편집 데이터 타입과 임시 파일)
 ```
 
-- `commands/setup.ts`는 services/config, api/client, @inquirer/prompts에 의존하고 스킬 파일시스템 처리는 `skill/manager.ts`에 위임. config 저장을 `services/config`로 보내 계정·환경이 바뀌면 캐시가 함께 비워지게 한다 (ADR-042)
+- `commands/setup.ts`는 services/config, api/dooray-client, @inquirer/prompts에 의존하고 스킬 파일시스템 처리는 `skill/manager.ts`에 위임. config 저장을 `services/config`로 보내 계정·환경이 바뀌면 캐시가 함께 비워지게 한다 (ADR-042)
 - `skill/context.ts`는 절대 경로 `XDG_DATA_HOME`이 있으면 `dataRoot`를 `$XDG_DATA_HOME/dooray-cli`로 주입하고, 없거나 상대 경로이면 `homeDir/.local/share/dooray-cli`를 주입한다.
 - `skill/manager.ts`는 경로·현재 버전을 주입받아 명령 출력과 분리된 순수 상태 전이를 제공한다. 테스트 전용 등으로 `SkillManagerContext.dataRoot?`가 없으면 `homeDir/.local/share/dooray-cli`를 사용한다.
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
-- `api/client`는 순수 HTTP 래퍼. 비즈니스 로직 없음
-- `api/client`의 모든 요청은 `api/rate-limiter`의 토큰 버킷을 공유한다. 호출부는 요청 간격을 신경 쓰지 않는다 (ADR-039)
-- 이름을 id 로 바꾸는 resolver 는 캐시를 우선 조회하고, 만료 시 `api/client` 를 호출한다.
+- `api/dooray-client`는 인증 방식에 맞는 구현을 고른다. 공개 HTTP 는 `api/client`, 웹 HTTP 는 `api/web-http` 가 맡는다.
+- 두 HTTP 구현은 `api/rate-limiter`의 토큰 버킷을 재사용한다. 호출부는 요청 간격을 신경 쓰지 않는다 (ADR-039)
+- 이름을 id 로 바꾸는 resolver 는 캐시를 우선 조회하고, 만료 시 `api/dooray-client` 를 호출한다.
 - `resolvers/mail-input` 은 입력 형태를 분류하고, mail id 는 캐시 없이 `api/imapClient` 에서 UID 로 조회한다.
 - `resolvers/*`는 읽기 전용이다. 쓰기 함수를 넣지 않는다
 - 캐시의 유효성을 깨는 변경은 `services/*`를 거친다. 그 함수가 성공 직후 무효해진 캐시를 지운다 (ADR-042)
-  - 엔티티를 바꾸는 API 호출은 그 엔티티의 캐시 파일 하나를, `apiKey`·`baseUrl` 변경은 전체 캐시를 지운다
+  - 엔티티를 바꾸는 API 호출은 그 엔티티의 캐시 파일 하나를, 인증 계정·환경 변경은 전체 캐시를 지운다
 - `services/*`는 `resolvers/*`를 의존하지 않는다. 둘을 조합하는 것은 `commands/*`의 몫이다
-- `commands/*`는 resolvers, api/client, formatters 조합
+- `commands/*`는 resolvers, api/dooray-client, formatters 조합
 
 ## API Client 구조
 
-`src/api/client.ts` 의 `DoorayApiClient` 하나가 모든 REST 호출을 들고 있다.
+`src/api/dooray-client.ts` 의 DoorayClient 인터페이스를 공개 API 구현(`client.ts`)과 웹 구현(`web/index.ts`)이 구현한다. 명령은 createClient(config) 로 고른다.
+웹 index 는 영역별 메서드를 조립하고 지원하지 않는 메서드는 요청 없이 실패시킨다. `web-http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
 메서드 목록은 여기 적지 않는다. 메서드가 늘 때마다 낡고, 그 파일을 열면 바로 보인다.
 
 ```bash
-grep -n "^  async " src/api/client.ts
+rg "^  async " src/api/client.ts src/api/web/
 ```
 
 메서드가 지키는 규약은 다음과 같다.
 
-- 생성자는 `apiKey` 와 `baseUrl` 만 받는다. 비즈니스 로직을 두지 않는다
+- 공개 구현의 생성자는 `apiKey` 와 `baseUrl`, 웹 구현은 쿠키와 검증한 웹 주소를 받는다. 명령은 팩토리를 사용한다
 - 요청은 `api/rate-limiter` 의 토큰 버킷을 공유한다. 호출부는 요청 간격을 신경 쓰지 않는다
 - 응답 JSON 은 `parseJson` 에 물린 `json-large-integer` 파서를 거친다.
   19자리 식별자가 정수로 파싱되면서 손실되는 것을 막는다
@@ -106,7 +107,7 @@ grep -n "^  async " src/api/client.ts
      • <project> <number>  → resolveProject + resolvePost (4·5단계 정상 실행)
      • --id / --url / URL positional → getPostStandalone(postId) 단일 호출로 4·5단계 단축
 5. (positional 모드에서만) resolvers/post.ts — 42 → postId
-6. api/client.ts — POST /project/v1/projects/{id}/posts/{id}/set-done
+6. api/client.ts (api-key 방식) — POST /project/v1/projects/{id}/posts/{id}/set-done
 7. formatters/post.ts — 성공 메시지 출력
 ```
 
@@ -121,7 +122,7 @@ grep -n "^  async " src/api/client.ts
 ## 출력 원칙
 
 - 기본: human-readable (테이블·포맷)
-- `--json`: raw JSON (stdout, 파이프 친화)
+- `--json`: 공개 API 모양의 JSON (stdout, 파이프 친화). 웹의 내부 필드는 변환한다
 - `--quiet`: ID만 출력 (스크립팅용)
 - `--no-color`: 컬러 제거 (CI 환경, `NO_COLOR` env 자동 감지)
 - 스피너·에러: stderr / 데이터: stdout (파이프 시 stderr 오염 방지)

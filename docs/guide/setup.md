@@ -10,7 +10,7 @@ Node.js 20 이상이 필요하다.
 npm install -g @bifos/dooray-cli
 ```
 
-`dooray setup` 이 API endpoint 와 API key, 메일 설정까지 대화형으로 받는다.
+`dooray setup` 이 먼저 인증 방식을 묻고 클라우드·테넌트·인증 값과 메일 설정을 대화형으로 받는다.
 API key 는 Dooray 웹의 **설정 → API → 인증 토큰** 에서 만든다.
 
 ```bash
@@ -32,10 +32,10 @@ stdin 으로 받은 값은 양끝 공백을 지운 뒤 저장하고, 비어 있�
 그 밖의 값은 저장하지 않고 종료 코드 3 으로 끝낸다.
 설정 파일 `~/.dooray/config.json` 은 소유자만 읽을 수 있는 권한(0600)으로 저장한다.
 
-macOS 에서는 API 토큰(`api-key`)과 IMAP 비밀번호(`imap-password`)를 설정 파일이 아니라 로그인 키체인에 저장한다.
+macOS 에서는 API 토큰(`api-key`), IMAP 비밀번호(`imap-password`), 세션 쿠키(`session-cookie`)를 설정 파일이 아니라 로그인 키체인에 저장한다.
 키체인 접근 앱에서 이름이 `dooray-cli` 인 항목으로 보인다.
 설정 파일과 그 백업·동기화 사본에 토큰이 남지 않게 하는 것이 목적이다. 같은 사용자로 실행한 프로그램은 `security` 명령으로 확인 창 없이 이 항목을 읽을 수 있다.
-기본 위치(`~/.dooray/config.json`)의 설정은 계정 이름이 `apiKey`·`imapPassword` 인 항목에 저장한다.
+기본 위치(`~/.dooray/config.json`)의 설정은 계정 이름이 `apiKey`·`imapPassword`·`sessionCookie` 인 항목에 저장한다.
 `HOME` 을 바꿔 다른 위치의 설정을 쓰면 계정 이름 뒤에 `:` 과 설정 파일 경로에서 만든 16자리 값이 붙어, 설정 파일마다 항목이 따로 생긴다.
 설정 파일에 값이 남아 있으면 그 값을 쓰고, 없을 때만 키체인에서 읽는다.
 예전 버전이 설정 파일에 평문으로 저장해 둔 값은 그대로 읽히고, `dooray setup` 이나 `dooray config set` 으로 설정을 한 번 저장하면 키체인으로 옮겨지면서 설정 파일에서 빠진다.
@@ -53,9 +53,39 @@ SSH 같은 원격 세션에서는 로그인 키체인이 잠겨 있을 수 있�
 macOS 가 아닌 OS 는 지금처럼 설정 파일에 저장한다.
 설정 파일 하나를 macOS 와 다른 OS 에서 동기화해 함께 쓰면, 다른 OS 에서 넣은 토큰은 macOS 에서 설정을 저장할 때마다 키체인으로 옮겨지면서 설정 파일에서 빠진다. 그러면 다른 OS 쪽은 다시 설정 미완료가 된다. 이렇게 쓰려면 설정 파일을 동기화 대상에서 빼고 OS 마다 따로 설정한다.
 
-`api-key` 나 `base-url` 을 바꾸면 캐시를 함께 비우고 그 사실을 알린다.
+`api-key`, `base-url`, `auth-mode`, `session-cookie` 를 바꾸거나 웹 방식에서 `tenant-name` 을 바꾸면 캐시를 함께 비우고 그 사실을 알린다.
 캐시는 계정과 접속 환경별로 나뉘지 않아서, 비우지 않으면 이전 계정의 프로젝트와 멤버가 남아 잘못 매칭된다.
 같은 값을 다시 설정하는 경우와 최초 설정에서는 비우지 않는다.
+
+## 웹 로그인 세션으로 연결하기
+
+`dooray setup` 에서 `web` 을 선택하면 테넌트 주소를 확인한 뒤 SESSION 쿠키를 가려진 입력으로 받는다. 기존 API 키는 지우지 않는다.
+웹 방식은 **비공식 웹 API** 를 사용한다. 경로와 응답이 예고 없이 바뀔 수 있고 SESSION 은 로그인 계정의 모든 권한을 가진다.
+클라우드 주소 규칙은 민간 클라우드에서 실측했으며 다른 클라우드에서는 실측하지 않았다.
+
+1. Dooray 웹에 로그인하고 브라우저 개발자 도구를 연다.
+2. Application → Storage → Cookies 에서 테넌트 웹 주소를 선택한다.
+3. 이름이 SESSION 인 쿠키의 값을 복사해 setup 의 가려진 입력에 넣는다.
+
+수동으로 설정할 수도 있다. 아래 `<tenant>` 는 실제 테넌트 이름으로 바꾼다. 영문 소문자·숫자·하이픈만 쓸 수 있으며 기본값 `example` 은 웹 방식에서 미설정으로 본다.
+
+```bash
+dooray config set base-url https://api.dooray.com
+dooray config set tenant-name <tenant>
+dooray config set auth-mode web
+dooray config set session-cookie -
+dooray doctor
+```
+
+마지막 쿠키 입력은 stdin 이다. 값, `SESSION=값`, `Cookie: a=1; SESSION=값; b=2` 를 받아 SESSION 값만 저장한다.
+쿠키를 위치 인자로 넘기면 셸 기록·프로세스 목록에 남을 수 있다. `config get session-cookie` 는 값 대신 설정됨·미설정만 보여 준다.
+API 방식에서도 저장한 쿠키를 확인할 수 있으며, 일반 조회에서는 쿠키 키체인을 추가로 읽지 않는다.
+`config set auth-mode web` 과 setup 에서 웹을 고를 때 비공식 API 경고가 한 번 나온다. 일반 조회에는 나오지 않으며 doctor 의 인증 방식 항목은 경고로 표시한다.
+
+브라우저 로그아웃이나 세션 만료 뒤에는 쿠키를 다시 넣는다. 401·로그인 화면 리다이렉트는 종료 코드 2 와 재입력 방법을 안내한다.
+403 은 같은 종료 코드지만 쿠키 대신 대상에 대한 권한이 없다고 안내한다. doctor 는 연결 실패를 종료 코드 1 로 보고하며 원래 안내를 보여 준다.
+웹 방식은 API 키가 없어도 완료된 설정이고 메일은 기존 IMAP·SMTP 인증을 쓴다.
+공개 API 를 다시 쓰려면 `dooray config set auth-mode api-key` 로 바꾼다. 기존 쿠키는 남겨 둔다.
 
 ## 웹 방식의 지원 범위
 
@@ -93,6 +123,21 @@ macOS 가 아닌 OS 는 지금처럼 설정 파일에 저장한다.
 | 메신저 | `messenger` 의 하위 명령 |
 | 캘린더 | `calendar` 의 하위 명령 |
 | 활동 | `stream` 의 하위 명령 |
+
+### 웹 응답에서 빠질 수 있는 필드
+
+`--json` 은 공식 API 의 필드 이름과 구조를 유지한다. 웹에 없는 값은 키를 만들지 않는다.
+명령의 캐시와 출력 선택 때문에 필요한 필드만 보이는 기존 동작도 유지한다.
+
+| 명령 | 빠질 수 있는 필드 |
+| --- | --- |
+| `member get` | 웹에 값이 없는 displayMemberId·userCode·externalEmailAddress 등 상세 필드 |
+| `member search` | 웹에 값이 없는 userCode·externalEmailAddress |
+| `member list`, `project members` | 이름·식별자 위주의 기존 출력 유지. 목록에서 상세를 재사용할 때 사용자 코드·외부 이메일·기본 조직을 보강하지 않음 |
+| `project list` | 웹에 없는 organization·drive·wiki 참조. 기존 목록 출력은 캐시의 id·code·wikiId 를 사용 |
+| `project tags`, `project tags list` | 그룹 없는 태그는 그룹 필드가 비어 있음 |
+| `project groups` | 웹에서 code 가 없는 그룹의 code. 이름 매칭에서 제외하며 id 로 지정 가능 |
+| `project templates` | 기존 목록 출력처럼 본문·가이드는 포함하지 않음 |
 
 ## 보안 경고와 진단
 

@@ -62,10 +62,12 @@ configCommand
     }
     const config = result.config;
     await warnConfigFileSecurity();
+    const cookie = key === undefined || key === "session-cookie"
+      ? (config.authMode === "web" ? config.sessionCookie : await readSessionCookie()) : undefined;
 
     const display: Record<string, string> = {
       "auth-mode": config.authMode ?? "api-key",
-      "session-cookie": (config.authMode === "web" ? config.sessionCookie : await readSessionCookie()) ? "설정됨" : "미설정",
+      "session-cookie": cookie ? "설정됨" : "미설정",
       "api-key": config.apiKey ? maskApiKey(config.apiKey) : "(미설정)",
       "base-url": config.baseUrl || "(미설정)",
     };

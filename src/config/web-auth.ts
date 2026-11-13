@@ -9,8 +9,9 @@ export const WEB_AUTH_WARNING = "웹 방식은 비공식 웹 API 를 사용합�
 export function parseSessionCookie(input: string): string {
   let value = input.trim();
   if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) value = value.slice(1, -1).trim();
+  const header = /^Cookie:\s*/i.test(value);
   value = value.replace(/^Cookie:\s*/i, "");
-  if (value.includes(";") || value.startsWith("SESSION=")) {
+  if (header || value.includes(";") || value.startsWith("SESSION=")) {
     const values = new Set(value.split(";").flatMap((part) => {
       const index = part.indexOf("=");
       return index >= 0 && part.slice(0, index).trim() === "SESSION" ? [part.slice(index + 1).trim()] : [];

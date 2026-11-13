@@ -28,6 +28,8 @@ setup 테스트는 ../services/config.js 의 replaceConfig 와 ../api/dooray-cli
 
 README·setup 가이드·번들 스킬에 웹 방식과 비공식 API 경고를 적는다. setup 가이드에 지원하지 않는 명령·옵션과 명령별 빠지는 필드를 적는다. code-architecture·data-schema·ADR-042 의 인증·캐시 설명을 맞춘다.
 
+쿠키 재입력 회귀 사례로 Cookie: 헤더에 SESSION 이 없는 단일 쿠키도 거절한다. API 방식의 명시적인 쿠키 변경은 저장 전 쿠키만 따로 조회해 캐시 무효화에 반영하며 다른 설정 조회는 쿠키 키체인을 읽지 않는다. web-auth.test.ts·services/config.test.ts·config.test.ts 로 검증한다.
+
 ### 4. PR 전 CLI 실측
 
 실측 장소는 코디네이터 지시서가 준 프로젝트이며 없으면 멈춘다. mktemp -d 로 만든 임시 HOME 에 HOME=<임시> node dist/index.js config set session-cookie - 를 실행하고 stdin 으로만 쿠키를 보낸다. 쿠키는 출력·로그·별도 파일에 저장하지 않는다. 실제 응답·이름·id·프로젝트 코드는 PR 본문·문서에 붙이지 않는다.
@@ -56,6 +58,11 @@ node scripts/check-public-refs.mjs
 | `src/commands/setup.test.ts` | 수정 |
 | `src/commands/doctor.ts` | 수정 |
 | `src/commands/doctor.test.ts` | 수정 |
+| `src/config/web-auth.ts` | 수정 |
+| `src/config/web-auth.test.ts` | 수정 |
+| `src/services/config.ts` | 수정 |
+| `src/services/config.test.ts` | 수정 |
+| `src/commands/config.ts` | 수정 |
 | `docs/adr/042-cache-invalidation-on-mutation.md` | 수정 |
 | `docs/code-architecture.md` | 수정 |
 | `docs/data-schema.md` | 수정 |

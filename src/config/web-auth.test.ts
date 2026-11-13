@@ -8,7 +8,7 @@ describe("SESSION 쿠키 입력", () => {
   it.each(["fake-value==", "SESSION=fake-value==", " Cookie: a=1; SESSION=fake-value==; b=2 ", '"SESSION=fake-value=="', "'fake-value=='", "SESSION=fake-value==; SESSION=fake-value=="])("%s 에서 SESSION 값만 남긴다", (input) => {
     expect(parseSessionCookie(input)).toBe("fake-value==");
   });
-  it.each(["", "SESSION=", "a=1; b=2", "SESSION=a; SESSION=b", "two words", "비밀", "fake\r\nvalue", "a\tb"])("잘못된 입력을 값 노출 없이 거절한다", (input) => {
+  it.each(["", "SESSION=", "Cookie: a=1", "a=1; b=2", "SESSION=a; SESSION=b", "two words", "비밀", "fake\r\nvalue", "a\tb"])("잘못된 입력을 값 노출 없이 거절한다", (input) => {
     expect(() => parseSessionCookie(input)).toThrow(expect.objectContaining({ exitCode: 3 }));
   });
 });
