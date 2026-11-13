@@ -32,6 +32,8 @@ doctor 는 기존 평면 JSON 키를 유지하며 checks 를 추가한다. getCo
 
 doctor.test.ts 에 설정 absent/invalid/unreadable/keychain, 필수 값 누락, API 연결 성공/실패, 보안 fail/warn/pass, 텍스트 표시, 중복 경고 억제, 스킬 미설치만 있는 경우와 종료 코드를 검증한다. 매 테스트 뒤 exitCode 를 복구한다.
 
+docs/guide/setup.md 에 명령 경고와 현재 track-last-run 값을 유지하는 저장 안내, skills/dooray-cli/references/common.md 에 종료 코드와 checks, docs/flow.md 의 doctor JSON 설명을 갱신한다.
+
 ## 검증
 
 ```bash
@@ -53,3 +55,4 @@ node scripts/check-public-refs.mjs
 | `docs/guide/setup.md` | 수정 |
 | `README.md` | 수정 |
 | `skills/dooray-cli/references/common.md` | 수정 |
+| `docs/flow.md` | 수정 |

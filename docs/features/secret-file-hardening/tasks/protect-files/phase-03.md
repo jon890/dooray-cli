@@ -32,6 +32,8 @@ writeJson 과 writeLastRun 은 0700 디렉터리 생성·chmod 시도 후 pid �
 
 store.test.ts 는 매번 resetModules 하고 임시 HOME 에서 신설/기존 0755·0644 캐시를 쓰고 0700·0600 을 본다. store.permissions.test.ts 는 chmod 만 실패시켜 쓰기 성공과 출력 불변을 본다. last-run.test.ts 는 신설 HOME, 동시 쓰기, 유효한 JSON 과 tmp 잔여 없음, 기존 넓은 권한 교체를 본다.
 
+새 캐시·실행 기록 테스트는 hoisted homedir mock 또는 HOME 설정 뒤 resetModules·동적 import 로 실제 홈에 쓰지 않음을 확인한다. docs/data-schema.md 에 캐시와 실행 기록 권한을 기록한다.
+
 ## 검증
 
 ```bash
