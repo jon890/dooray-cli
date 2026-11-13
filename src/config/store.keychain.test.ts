@@ -110,6 +110,16 @@ afterEach(() => {
 });
 
 describe("키체인 모드 읽기", () => {
+  it("웹에서 API 키 방식으로 갔다가 돌아와도 읽기에서 생략한 쿠키를 보존한다", async () => {
+    fileWith({ ...BASE, authMode: "web", tenantName: "my-org", apiKey: "fake-key" });
+    store.values.set("sessionCookie", "fake-session");
+    writeFileMock.mockImplementation(async (_file: string, contents: string) => { readFileMock.mockResolvedValue(contents); });
+    await setConfigValue("auth-mode", "api-key");
+    expect(store.values.get("sessionCookie")).toBe("fake-session");
+    await setConfigValue("auth-mode", "web");
+    expect(store.values.get("sessionCookie")).toBe("fake-session");
+    expect(await getConfigOrThrow({ securityWarning: false })).toMatchObject({ authMode: "web", sessionCookie: "fake-session" });
+  });
   it("API 방식 일반 읽기는 쿠키를 조회하지 않지만 명시 조회는 읽는다", async () => {
     fileWith({ ...BASE, apiKey: "fake-key" });
     store.values.set("sessionCookie", "fake-session");

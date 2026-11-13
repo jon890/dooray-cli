@@ -84,7 +84,7 @@ async function writeConfig(config: Config): Promise<void> {
 
   for (const field of SECRET_FIELDS) {
     // API 방식의 일반 읽기는 쿠키를 가져오지 않는다. 생략은 삭제 요청이 아니다.
-    if (field === "sessionCookie" && config.authMode !== "web" && !(field in config)) continue;
+    if (field === "sessionCookie" && !(field in config)) continue;
     const value = config[field] || undefined;
     delete fileConfig[field];
     const fileValue = nonEmpty(priorFile?.[field]);
