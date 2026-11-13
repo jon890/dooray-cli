@@ -127,7 +127,7 @@ Linux 의 권한 경고와 Windows 의 생략은 단위 테스트로만 본다. 
 
 | 결정 | 종류 | ADR 또는 필요 없음의 이유 | 현재 규칙의 원본 |
 | --- | --- | --- | --- |
-| 스펙 DECISION1, DECISION2, DECISION10, DECISION12 | architecture (areas: security) | 새 [ADR-079](../../adr/079-secret-file-exposure-warning.md) 를 둔다. 기각한 대안: 읽을 때 자동 수리, `doctor` 만 알림, 늘 0 | `src/config/file-security.ts`, `src/commands/doctor.ts`, `src/cache/store.ts` |
+| 스펙 DECISION1, DECISION2, DECISION10, DECISION12 | architecture (areas: security) | 새 [ADR-080](../../adr/080-secret-file-exposure-warning.md) 를 둔다. 기각한 대안: 읽을 때 자동 수리, `doctor` 만 알림, 늘 0 | `src/config/file-security.ts`, `src/commands/doctor.ts`, `src/cache/store.ts` |
 | 캐시 권한 | 같은 ADR | [ADR-004](../../adr/004-disk-cache.md)·[ADR-010](../../adr/010-cache-file-split.md) 은 캐시 구조의 결정이라 고치지 않는다. 권한은 `docs/data-schema.md` 의 캐시 절에 한 줄 더한다 | `docs/data-schema.md` |
 
 [ADR-069](../../adr/069-macos-keychain-secret-store.md) 는 고치지 않는다. 그 ADR 의 「읽을 때 옮기기」 기각을 새 ADR 이 그대로 따른다.

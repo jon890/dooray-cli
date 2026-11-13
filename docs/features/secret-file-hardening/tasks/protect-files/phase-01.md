@@ -12,7 +12,7 @@ assessConfigFileSecurity 순수 함수가 SECRET_FIELDS 와 isStorableSecret 로
 
 **요구사항**: REQ1, REQ9, REQ2, REQ3
 
-**근거 문서**: `docs/features/secret-file-hardening/spec.md`, `docs/features/secret-file-hardening/design.md`, `docs/adr/079-secret-file-exposure-warning.md`
+**근거 문서**: `docs/features/secret-file-hardening/spec.md`, `docs/features/secret-file-hardening/design.md`, `docs/adr/080-secret-file-exposure-warning.md`
 
 기존 `src/config/store.ts` 의 ensureDir 와 writeConfigFile 을 따른다. getConfig 는 키체인을 읽을 수 있으므로 테스트는 가짜 저장소를 주입한다. 실제 키체인은 별도 macOS CLI 검증에서 임시 HOME 의 경로 해시 account 만 사용한다.
 
