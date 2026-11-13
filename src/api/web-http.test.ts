@@ -11,7 +11,7 @@ describe("웹 요청의 비밀값 경계", () => {
     const requests: Request[] = [];
     vi.stubGlobal("fetch", vi.fn(async (request: Request) => { requests.push(request); return Response.json({ header, result: {} }); }));
     const http = new WebHttp(origin, cookie);
-    await http.request("v2/wapi/members/me", { headers: { Authorization: "other" } });
+    await http.request("v2/wapi/members/me", { headers: { Authorization: "other" }, redirect: "follow" });
     expect(requests[0].headers.get("cookie")).toBe(`SESSION=${cookie}`);
     expect(requests[0].headers.has("authorization")).toBe(false);
     expect(requests[0].redirect).toBe("manual");
@@ -41,6 +41,21 @@ describe("웹 요청의 비밀값 경계", () => {
     expect(error).toMatchObject({ exitCode: 1 });
     expect((error as Error).message).not.toContain(cookie);
     expect((error as Error).message).not.toContain("my-org.dooray.com");
+  });
+  it.each([400, 404, 500])("HTTP 200 이어도 resultCode %s 의 실패 본문은 API 오류다", async (resultCode) => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ header: { isSuccessful: false, resultCode, resultMessage: "요청을 처리하지 못했습니다." }, result: null })));
+    await expect(new WebHttp(origin, cookie).request("v2/wapi/missing")).rejects.toMatchObject({ exitCode: 1, message: expect.stringContaining("요청을 처리하지 못했습니다") });
+  });
+  it("header 없는 Spring 404 본문의 path 와 message 를 오류에 넣지 않는다", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ status: 404, path: `${origin}/private-path`, message: `private-path ${cookie}`, error: "Not Found" }, { status: 404 })));
+    const error = await new WebHttp(origin, cookie).request("missing").catch((e: Error) => e);
+    expect(error).toMatchObject({ exitCode: 1, message: "웹 API 호출 실패: 상태 코드 404" });
+    expect((error as Error).message).not.toMatch(/private-path|my-org|fake-session-secret/);
+  });
+  it("HTTP 오류에서도 ky 가 이미 읽은 공식 오류 안내를 안전하게 꺼낸다", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ header: { isSuccessful: false, resultCode: 400, resultMessage: `입력을 확인하세요 ${cookie}` }, result: null }, { status: 400 })));
+    const error = await new WebHttp(origin, cookie).request("bad").catch((e: Error) => e);
+    expect(error).toMatchObject({ exitCode: 1, message: "웹 API 호출 실패: 입력을 확인하세요 ***" });
   });
   it.each(["<html>signin</html>", "{invalid", "null", "{}"])("JSON 과 응답 구조를 확인한다", async (body) => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(body)));

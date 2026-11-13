@@ -54,8 +54,15 @@ export class WebHttp {
 
   async request(input: string | URL | Request, options?: Options): Promise<WebEnvelope> {
     try {
-      const response = await this.api(input, options).catch((error: unknown) => {
-        if (error instanceof HTTPError) return error.response;
+      let errorBody: unknown;
+      let bodyWasRead = false;
+      const response = await this.api(input, { ...options, redirect: "manual" }).catch((error: unknown) => {
+        if (error instanceof HTTPError) {
+          // ky 2 는 HTTPError.data 를 채우면서 원본 응답 본문을 이미 읽는다.
+          errorBody = error.data;
+          bodyWasRead = true;
+          return error.response;
+        }
         throw error;
       });
       const status = response.status;
@@ -68,7 +75,11 @@ export class WebHttp {
       if (status >= 300 && status < 400) throw new DoorayCliError("웹이 다른 주소로 보냈습니다. 리다이렉트는 따라가지 않습니다.", EXIT_API_ERROR);
       if (status === 429) throw new DoorayCliError("API 호출 한도를 넘었습니다 (429). 잠시 뒤 다시 실행하세요.", EXIT_RATE_LIMITED);
       let body: unknown;
-      try { body = parseJsonPreservingLargeIntegers(await response.text()); } catch {
+      try {
+        body = bodyWasRead
+          ? (typeof errorBody === "string" ? parseJsonPreservingLargeIntegers(errorBody) : errorBody)
+          : parseJsonPreservingLargeIntegers(await response.text());
+      } catch {
         if (!response.ok) throw new DoorayCliError(`웹 API 호출 실패 (${status}).`, EXIT_API_ERROR);
         throw new DoorayCliError("웹 응답이 JSON 이 아닙니다.", EXIT_API_ERROR);
       }

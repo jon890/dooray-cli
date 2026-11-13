@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DoorayWebClient } from "./index.js";
-const fixtures = JSON.parse(readFileSync(new URL("./fixtures/member/responses.json", import.meta.url), "utf8"));
-const client = () => new DoorayWebClient("fake-session", "https://my-org.dooray.com");
+import { createWebClient } from "../web/index.js";
+const fixtures = JSON.parse(readFileSync(new URL("../web/fixtures/member/responses.json", import.meta.url), "utf8"));
+const client = () => createWebClient("fake-session", "https://my-org.dooray.com");
 afterEach(() => vi.unstubAllGlobals());
 describe("웹 멤버 공식 응답 변환", () => {
   it("me 의 기본 조직과 공개 상세 필드를 변환한다", async () => {

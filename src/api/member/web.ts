@@ -1,12 +1,21 @@
 /** 멤버 웹 경로를 호출하고 공개 멤버 응답 모양으로 바꾼다. */
-import type { DoorayClient } from "../dooray-client.js";
+import type { MemberClient } from "./types.js";
 import { apiPath } from "../api-path.js";
-import { count, invalidResponse, member, row, rows } from "./convert.js";
-import type { WebContext } from "./context.js";
+import { count, invalidResponse, member, pick, row, rows } from "../web/convert.js";
+import type { WebContext } from "../web/context.js";
 
-export function createMemberMethods(context: WebContext): Pick<DoorayClient, "getMe" | "getMemberDetail" | "searchMembers"> {
+export function createMemberWeb(context: WebContext): MemberClient {
   const http = context.http;
   return {
+    async getProjectMembers(projectId, params) {
+      const response = await http.request(apiPath`wapi/task/v1/projects/!${projectId}/members`, { searchParams: { member: "me", ...params } });
+      const result = rows(response.result).map((source) => {
+        const m = member(source.member);
+        if (!context.members.has(m.id)) context.members.set(m.id, m);
+        return { organizationMemberId: m.id, ...pick(source, ["role"]) };
+      });
+      return { header: response.header, result, totalCount: count(response.totalCount) };
+    },
     async getMe() {
       const response = await http.request("v2/wapi/members/me");
       const result = member(row(response.result).content);

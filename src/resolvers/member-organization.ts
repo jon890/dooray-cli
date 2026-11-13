@@ -4,7 +4,7 @@
  * `member get` 응답에는 이 셋이 없어 `POST /calendar/v1/fetch-busy-hours` 를 빌려 쓴다.
  * 바쁨 시간 자체는 쓰지 않으므로 기간은 1분으로 둔다 (ADR-079).
  */
-import type { DoorayClient } from "../api/dooray-client.js";
+import type { CalendarClient } from "../api/calendar/types.js";
 import type { MemberOrganization } from "../api/types.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_API_ERROR } from "../utils/exit-codes.js";
@@ -20,7 +20,7 @@ export function buildBusyHoursWindow(now: Date): { beginDateTime: string; endDat
 }
 
 export async function fetchMemberOrganization(
-  client: DoorayClient,
+  client: CalendarClient,
   memberId: string,
   now: Date = new Date(),
 ): Promise<MemberOrganization> {

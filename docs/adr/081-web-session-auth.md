@@ -5,7 +5,7 @@
 - **areas**: `security`, `operations`
 - **현재 규칙의 원본**: [웹 로그인 세션 인증 스펙](../features/web-session-auth/spec.md)과 [기술 설계](../features/web-session-auth/design.md), 클라이언트 선택은 `src/api/dooray-client.ts`, 지원 명령은 `src/commands/web-support.ts`, 웹 경로 명세는 `docs/api/web-endpoints.md` 와 영역별 `docs/api/web-endpoints/*.md`
 - **결정**: 설정 값 `auth-mode` 로 공개 API(`api-key`, 기본)와 웹 로그인 세션(`web`)을 고른다. 웹 방식은 테넌트 웹 주소에 `SESSION` 쿠키를 붙여 웹 화면이 쓰는 `/wapi`·`/v2/wapi` 경로를 부르고, 응답을 공개 API 응답 모양으로 바꿔 돌려준다.
-  두 방식은 `DoorayClient` 인터페이스의 구현 둘이고 명령은 `createClient` 로 받는다. 자동 전환과 명령별 옵션은 두지 않는다.
+  두 방식은 영역별 인터페이스 교집합인 `DoorayClient` 의 구현 둘이고 명령은 `createClient` 로 받는다. 자동 전환과 명령별 옵션은 두지 않는다.
   웹 방식에 한해 [ADR-062](062-undocumented-endpoint-policy.md) 의 「읽기 전용」 과 조건 1~4 를 아래처럼 바꾼다. 공개 API 방식의 비공식 경로에는 [ADR-062](062-undocumented-endpoint-policy.md) 가 그대로 적용된다.
   - 쓰기도 허용한다.
   - 조건 1(공식 문서 확인)은 웹 경로 전체가 공식 문서에 없으므로 endpoint 마다 하지 않는다.
@@ -29,4 +29,6 @@
   - 감당할 것: 웹 경로와 응답이 예고 없이 바뀔 수 있고, 쓰기가 바뀌면 데이터가 의도와 다르게 남을 수 있다. 세션 쿠키는 API 키보다 권한이 넓고 브라우저 로그아웃이나 세션 만료로 무효가 된다. 웹의 호출 한도는 실측하지 않았다. `dooray.com` 이 아닌 세 클라우드의 웹 주소 규칙은 실측하지 않았다.
 - **확인 방법**: 웹 HTTP 층과 응답 변환의 단위 테스트, PR 마다 웹 방식으로 돌린 실측 기록(`docs/api/web-endpoints.md`).
 
-구현 배치 보완(사용자 결정 2026-11-14): 웹 구현은 `src/api/web/index.ts` 가 영역별 메서드를 조립하고 지원하지 않음 기본 구현을 제공한다. 지원 목록은 `src/commands/web-support/` 의 영역별 파일을 `web-support.ts` 가 모은다. 응답 fixture 와 웹 경로 명세도 영역별로 둔다. 그룹의 project.code 는 프로젝트 메모리나 실측한 웹 단건 조회로 보강한다. `member get --with-org` 는 캘린더 웹 구현 전에는 지원하지 않는다.
+구현 배치 보완(사용자 결정 2026-11-14): 웹 구현은 `src/api/web/index.ts` 가 `src/api/<영역>/web.ts` 를 조립하고 미지원 영역의 기본값을 제공한다. 영역 계약은 각 영역의 types.ts, DTO 는 api/types.ts 가 소유한다. 지원 목록은 `src/commands/web-support/` 의 영역별 파일을 `web-support.ts` 가 모은다. 응답 fixture 와 웹 경로 명세도 영역별로 둔다. 그룹의 project.code 는 프로젝트 메모리나 실측한 웹 단건 조회로 보강한다. `member get --with-org` 는 캘린더 웹 구현 전에는 지원하지 않는다.
+
+영역 계약은 PR1 에 함께 둔다(사용자 결정 2026-11-14). 영역 web.ts 는 자기 계약 전체를 구현하고 DoorayClient 는 영역 계약의 교집합이다. 메서드별 stub 은 두지 않는다. 공통 Proxy 가 미지원 호출을 거절하며 then 을 제외해 thenable 오인을 막는다.

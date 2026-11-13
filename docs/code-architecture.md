@@ -68,7 +68,7 @@ editor/    → api/types + cache/types + utils (편집 데이터 타입과 임�
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
 - `api/dooray-client`는 인증 방식에 맞는 구현을 고른다. 공개 HTTP 는 `api/client`, 웹 HTTP 는 `api/web-http` 가 맡는다.
 - 두 HTTP 구현은 `api/rate-limiter`의 토큰 버킷을 재사용한다. 호출부는 요청 간격을 신경 쓰지 않는다 (ADR-039)
-- 이름을 id 로 바꾸는 resolver 는 캐시를 우선 조회하고, 만료 시 `api/dooray-client` 를 호출한다.
+- 이름을 id 로 바꾸는 resolver 는 필요한 영역 계약을 받아 캐시를 우선 조회하고, 만료 시 `api/dooray-client` 를 호출한다.
 - `resolvers/mail-input` 은 입력 형태를 분류하고, mail id 는 캐시 없이 `api/imapClient` 에서 UID 로 조회한다.
 - `resolvers/*`는 읽기 전용이다. 쓰기 함수를 넣지 않는다
 - 캐시의 유효성을 깨는 변경은 `services/*`를 거친다. 그 함수가 성공 직후 무효해진 캐시를 지운다 (ADR-042)
@@ -78,8 +78,8 @@ editor/    → api/types + cache/types + utils (편집 데이터 타입과 임�
 
 ## API Client 구조
 
-`src/api/dooray-client.ts` 의 DoorayClient 인터페이스를 공개 API 구현(`client.ts`)과 웹 구현(`web/index.ts`)이 구현한다. 명령은 createClient(config) 로 고른다.
-웹 index 는 영역별 메서드를 조립하고 지원하지 않는 메서드는 요청 없이 실패시킨다. `web-http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
+`src/api/dooray-client.ts` 의 영역별 인터페이스 교집합인 DoorayClient 를 공개 API 구현(`client.ts`)과 웹 구현(`web/index.ts`)이 구현한다. 명령은 createClient(config) 로 고른다.
+영역 계약은 api/<영역>/types.ts, 웹 구현은 api/<영역>/web.ts 에 둔다. DTO 는 api/types.ts 를 유지한다. 웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web-http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
 메서드 목록은 여기 적지 않는다. 메서드가 늘 때마다 낡고, 그 파일을 열면 바로 보인다.
 
 ```bash

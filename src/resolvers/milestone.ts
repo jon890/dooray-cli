@@ -1,10 +1,10 @@
-import type { DoorayClient } from "../api/dooray-client.js";
+import type { ProjectClient } from "../api/project/types.js";
 import type { CachedMilestone } from "../cache/types.js";
 import { getMilestones, setMilestones, isExpired } from "../cache/store.js";
 import { MILESTONES_TTL_MS, RESOLVER_FETCH_PAGE_SIZE } from "../cache/types.js";
 import { matchByName } from "./match.js";
 
-async function fetchAllMilestones(client: DoorayClient, projectId: string): Promise<CachedMilestone[]> {
+async function fetchAllMilestones(client: ProjectClient, projectId: string): Promise<CachedMilestone[]> {
   const all: CachedMilestone[] = [];
   let page = 0;
   const size = RESOLVER_FETCH_PAGE_SIZE;
@@ -19,7 +19,7 @@ async function fetchAllMilestones(client: DoorayClient, projectId: string): Prom
 }
 
 export async function ensureMilestones(
-  client: DoorayClient,
+  client: ProjectClient,
   projectId: string,
 ): Promise<CachedMilestone[]> {
   const entry = await getMilestones(projectId);
@@ -30,7 +30,7 @@ export async function ensureMilestones(
 }
 
 export async function resolveMilestone(
-  client: DoorayClient,
+  client: ProjectClient,
   projectId: string,
   input: string,
 ): Promise<string> {

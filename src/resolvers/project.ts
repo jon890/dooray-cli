@@ -1,4 +1,4 @@
-import type { DoorayClient } from "../api/dooray-client.js";
+import type { ProjectClient } from "../api/project/types.js";
 import type { CachedProject } from "../cache/types.js";
 import { getProjects, setProjects, getPrivateProjects, setPrivateProjects, isExpired } from "../cache/store.js";
 import { PROJECTS_TTL_MS } from "../cache/types.js";
@@ -9,7 +9,7 @@ import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 export const PROJECT_ID_RE = /^\d{15,}$/;
 
 async function fetchAllProjects(
-  client: DoorayClient,
+  client: ProjectClient,
   options?: { type?: string },
 ): Promise<CachedProject[]> {
   const all: CachedProject[] = [];
@@ -32,7 +32,7 @@ async function fetchAllProjects(
   return all;
 }
 
-export async function ensureProjects(client: DoorayClient): Promise<CachedProject[]> {
+export async function ensureProjects(client: ProjectClient): Promise<CachedProject[]> {
   const entry = await getProjects();
   if (entry && !isExpired(entry.updatedAt, PROJECTS_TTL_MS)) {
     return entry.data;
@@ -42,7 +42,7 @@ export async function ensureProjects(client: DoorayClient): Promise<CachedProjec
   return items;
 }
 
-export async function ensurePrivateProjects(client: DoorayClient): Promise<CachedProject[]> {
+export async function ensurePrivateProjects(client: ProjectClient): Promise<CachedProject[]> {
   const entry = await getPrivateProjects();
   if (entry && !isExpired(entry.updatedAt, PROJECTS_TTL_MS)) {
     return entry.data;
@@ -52,7 +52,7 @@ export async function ensurePrivateProjects(client: DoorayClient): Promise<Cache
   return items;
 }
 
-export async function buildProjectCodeMap(client: DoorayClient): Promise<Map<string, string>> {
+export async function buildProjectCodeMap(client: ProjectClient): Promise<Map<string, string>> {
   const map = new Map<string, string>();
 
   const projects = await ensureProjects(client);
@@ -71,7 +71,7 @@ export async function buildProjectCodeMap(client: DoorayClient): Promise<Map<str
 }
 
 export async function resolveProject(
-  client: DoorayClient,
+  client: ProjectClient,
   input: string,
 ): Promise<string> {
   // 1. numeric 15+자리 — cache 우회 (ADR-030, Issue #78)

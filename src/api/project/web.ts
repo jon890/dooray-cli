@@ -1,12 +1,11 @@
 /** 프로젝트 웹 경로와 공식 응답 변환. 태그 쓰기는 웹의 배열·tag-prefixes 규약을 따른다. */
-import type { DoorayClient } from "../dooray-client.js";
+import type { ProjectClient } from "./types.js";
 import type { PostUser, Tag, TemplateDetail } from "../types.js";
 import { apiPath } from "../api-path.js";
-import { count, date, identifier, invalidResponse, member, pick, project, referenceMap, row, rows, text, type Row } from "./convert.js";
-import type { WebContext } from "./context.js";
+import { count, date, identifier, invalidResponse, pick, project, referenceMap, row, rows, text, type Row } from "../web/convert.js";
+import type { WebContext } from "../web/context.js";
 import type { WebEnvelope } from "../web-http.js";
 
-type ProjectMethods = Pick<DoorayClient, "getProjects" | "getProjectMembers" | "getProjectWorkflows" | "getProjectTags" | "createProjectTag" | "updateProjectTagGroup" | "getProjectMilestones" | "getProjectMemberGroups" | "getProjectTemplates" | "getProjectTemplateDetail">;
 
 function paged(response: WebEnvelope): { content: Row[]; totalCount: number; references: unknown } {
   const result = row(response.result);
@@ -72,22 +71,13 @@ async function template(source: Row, refs: unknown, context: WebContext, project
   return result;
 }
 
-export function createProjectMethods(context: WebContext): ProjectMethods {
+export function createProjectWeb(context: WebContext): ProjectClient {
   const http = context.http;
   return {
     async getProjects(params) {
       const response = await http.request("wapi/project/v1/projects", { searchParams: { member: "me", ...params } });
       const result = rows(response.result).map(project);
       for (const p of result) context.projects.set(p.id, p);
-      return { header: response.header, result, totalCount: count(response.totalCount) };
-    },
-    async getProjectMembers(projectId, params) {
-      const response = await http.request(apiPath`wapi/task/v1/projects/!${projectId}/members`, { searchParams: { member: "me", ...params } });
-      const result = rows(response.result).map((source) => {
-        const m = member(source.member);
-        if (!context.members.has(m.id)) context.members.set(m.id, m);
-        return { organizationMemberId: m.id, ...pick(source, ["role"]) };
-      });
       return { header: response.header, result, totalCount: count(response.totalCount) };
     },
     async getProjectWorkflows(projectId) {

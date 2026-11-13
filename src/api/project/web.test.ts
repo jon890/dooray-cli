@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DoorayWebClient } from "./index.js";
-const fixtures = JSON.parse(readFileSync(new URL("./fixtures/project/responses.json", import.meta.url), "utf8"));
-const client = () => new DoorayWebClient("fake-session", "https://my-org.dooray.com");
+import { createWebClient } from "../web/index.js";
+const fixtures = JSON.parse(readFileSync(new URL("../web/fixtures/project/responses.json", import.meta.url), "utf8"));
+const client = () => createWebClient("fake-session", "https://my-org.dooray.com");
 function respond(key: string) {
   const bodies: unknown[] = [];
   const mock = vi.fn(async (request: Request) => {

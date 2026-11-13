@@ -42,8 +42,8 @@
     "REQ16",
     "REQ17"
   ],
-  "total_phases": 5,
-  "current_phase": 5,
+  "total_phases": 6,
+  "current_phase": 6,
   "phases": [
     {
       "number": 1,
@@ -99,6 +99,17 @@
         "REQ11",
         "REQ12",
         "REQ16"
+      ]
+    },
+    {
+      "number": 6,
+      "file": "phase-06.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ1",
+        "REQ6",
+        "REQ8",
+        "REQ17"
       ]
     }
   ]

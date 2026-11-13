@@ -7,7 +7,6 @@
 | 메서드 | 웹 경로 | 쿼리·요청 본문 | 실측 결과 |
 | --- | --- | --- | --- |
 | getProjects | GET `/wapi/project/v1/projects` | `member=me`, `type`, `scope`, `state`, `page`, `size` | `type=public/private`, `scope=private/public`, `state=active` 성공. page=0/1, size=1 이 다른 프로젝트를 돌려준다 |
-| getProjectMembers | GET `/wapi/task/v1/projects/!{projectId}/members` | `member=me`, `page`, `size` | page=0/1, size=1 이 다른 멤버를 돌려준다. 원소의 member 에서 organizationMemberId 와 메모리용 이름을 얻는다 |
 | getProjectWorkflows | GET `/v2/wapi/projects/!{projectId}/workflows` | 없음 | `result.contents`. projectId 는 공식 스키마에 없어 뺀다 |
 | getProjectTags | GET `/v2/wapi/projects/!{projectId}/tags` | `page`, `size` | `contents`, `totalCount`, `references.tagPrefixMap`. page=0/1, size=1 이 다르다 |
 | createProjectTag | POST `/v2/wapi/projects/!{projectId}/tags` | `[{name, color}]` | 객체 하나가 아닌 배열이다. SESSION 과 Content-Type 만으로 성공, `result: [{id}]` |
@@ -23,7 +22,6 @@
 | 메서드 | 공식 result 필드 | 웹과 다른 점 |
 | --- | --- | --- |
 | getProjects | id, code, description, state, scope, type, organization.id, drive.id, wiki.id, projectCategoryId | organizationId/driveId/wikiId 를 참조 객체로 바꾼다. 웹의 추가 내부 필드는 제외한다 |
-| getProjectMembers | organizationMemberId, role | member.id 를 organizationMemberId 로 옮긴다 |
 | getProjectWorkflows | id, name, order, names, class | contents 를 꺼내고 totalCount 가 없으면 배열 길이를 쓴다 |
 | getProjectTags | id, name, color, tagGroup(id, name, mandatory, selectOne) | tagPrefixId 로 tagPrefixMap 을 찾는다. 그룹 없는 태그는 tagGroup=null |
 | createProjectTag | id | result 배열의 생성한 항목을 꺼낸다 |

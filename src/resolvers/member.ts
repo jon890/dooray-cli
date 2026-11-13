@@ -1,4 +1,4 @@
-import type { DoorayClient } from "../api/dooray-client.js";
+import type { MemberClient } from "../api/member/types.js";
 import type { CachedMember } from "../cache/types.js";
 import { getMembers, setMembers, isExpired } from "../cache/store.js";
 import { MEMBERS_TTL_MS } from "../cache/types.js";
@@ -11,7 +11,7 @@ const MEMBER_ID_RE = /^\d{15,}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function fetchAllMembers(
-  client: DoorayClient,
+  client: MemberClient,
   projectId: string,
 ): Promise<CachedMember[]> {
   // Step 1: collect all member IDs from project member API (only returns id + role)
@@ -51,7 +51,7 @@ async function fetchAllMembers(
 }
 
 export async function ensureMembers(
-  client: DoorayClient,
+  client: MemberClient,
   projectId: string,
 ): Promise<CachedMember[]> {
   const entry = await getMembers(projectId);
@@ -72,7 +72,7 @@ export async function ensureMembers(
  * `buildMemberNameMap`은 같은 projectId의 여러 id를 한 번의 ensureMembers로 lookup.
  */
 export async function lookupMemberName(
-  client: DoorayClient,
+  client: MemberClient,
   projectId: string,
   organizationMemberId: string,
 ): Promise<string> {
@@ -93,7 +93,7 @@ export async function lookupMemberName(
  * 추가 API 호출하지 않음 — 호출자가 빈 문자열을 보고 표시 처리.
  */
 export async function buildMemberNameMap(
-  client: DoorayClient,
+  client: MemberClient,
   projectId: string,
 ): Promise<Map<string, string>> {
   const members = await ensureMembers(client, projectId);
@@ -113,7 +113,7 @@ export async function buildMemberNameMap(
  * 조회에 실패한 id 는 map 에 넣지 않아 호출자가 id 를 그대로 표시하게 한다.
  */
 export async function buildOrganizationMemberNameMap(
-  client: DoorayClient,
+  client: MemberClient,
   organizationMemberIds: string[],
 ): Promise<Map<string, string>> {
   const unique = [...new Set(organizationMemberIds)];
@@ -139,7 +139,7 @@ export async function buildOrganizationMemberNameMap(
  * messenger `--to` (project 스코프 없어 matchByName 불가) 와 `resolveMember` 가 공유 (ADR-033).
  */
 export async function resolveMemberByIdOrEmail(
-  client: DoorayClient,
+  client: MemberClient,
   input: string,
 ): Promise<string | null> {
   // 1. 15자리 이상 숫자 → organizationMemberId 직접 (getMemberDetail 로 존재 검증)
@@ -202,7 +202,7 @@ export function needsMemberList(input: string): boolean {
 }
 
 export async function resolveMember(
-  client: DoorayClient,
+  client: MemberClient,
   projectId: string,
   input: string,
 ): Promise<string> {
@@ -236,7 +236,7 @@ const NAME_SEARCH_MAX_PAGES = 5;
  *    검색은 쪽 상한까지만 넘긴다. 상한에 닿으면 정확일치를 찾았어도 오류로 끝내고, 찾은 후보를 함께 보여준다.
  */
 export async function resolveOrganizationMember(
-  client: DoorayClient,
+  client: MemberClient,
   input: string,
   meId: () => Promise<string>,
 ): Promise<string> {
