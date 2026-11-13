@@ -6,6 +6,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR, EXIT_IO_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import type { Config } from "./types.js";
 import { CONFIG_SET_KEYS, DEFAULTS } from "./types.js";
+import { isConfigComplete, parseSessionCookie } from "./web-auth.js";
 import { assessConfigFileSecurity, getConfigFileSecurityFixAdvice, type ConfigFileSecurityFinding } from "./file-security.js";
 import type { SecretField, SecretStore } from "./secret-store.js";
 import {
@@ -82,6 +83,8 @@ async function writeConfig(config: Config): Promise<void> {
   const keptInFile: SecretField[] = [];
 
   for (const field of SECRET_FIELDS) {
+    // API 방식의 일반 읽기는 쿠키를 가져오지 않는다. 생략은 삭제 요청이 아니다.
+    if (field === "sessionCookie" && config.authMode !== "web" && !(field in config)) continue;
     const value = config[field] || undefined;
     delete fileConfig[field];
     const fileValue = nonEmpty(priorFile?.[field]);
@@ -244,6 +247,7 @@ function invalidConfigReason(
   }
 
   const optionalStringFields = [
+    "sessionCookie",
     "tenantName",
     "imapHost",
     "imapUsername",
@@ -254,6 +258,10 @@ function invalidConfigReason(
     if (config[field] !== undefined && typeof config[field] !== "string") {
       return `${field} 필드는 문자열이어야 합니다.`;
     }
+  }
+
+  if (config.authMode !== undefined && config.authMode !== "api-key" && config.authMode !== "web") {
+    return "authMode 필드는 api-key 또는 web 이어야 합니다.";
   }
 
   for (const field of ["imapPort", "smtpPort"]) {
@@ -345,6 +353,7 @@ async function fillSecrets(
   const merged: Config = { ...stored, apiKey: stored.apiKey ?? "" };
   try {
     for (const field of SECRET_FIELDS) {
+      if (field === "sessionCookie" && stored.authMode !== "web") continue;
       if (nonEmpty(stored[field]) !== undefined) continue;
       const value = await secrets.get(field);
       if (value !== undefined) merged[field] = value;
@@ -371,6 +380,22 @@ export async function getConfig(): Promise<ConfigReadResult> {
     };
   }
   return fillSecrets(file.stored, secrets);
+}
+
+/** 명령 지원 판정용으로 파일만 읽는다. 키체인·보안 경고를 건드리지 않는다. */
+export async function readAuthModeFromFile(): Promise<"api-key" | "web"> {
+  const file = await readConfigFile();
+  if (file.state === "invalid" || file.state === "unreadable") throw new DoorayCliError(configReadErrorMessage(file), EXIT_CONFIG_ERROR);
+  return file.state === "ok" ? file.stored.authMode ?? "api-key" : "api-key";
+}
+
+/** config get 의 명시 조회는 API 방식에서도 저장한 쿠키의 유무를 확인한다. */
+export async function readSessionCookie(): Promise<string | undefined> {
+  const file = await readConfigFile();
+  if (file.state === "invalid" || file.state === "unreadable") throw new DoorayCliError(configReadErrorMessage(file), EXIT_CONFIG_ERROR);
+  if (file.state !== "ok") return undefined;
+  if (nonEmpty(file.stored.sessionCookie)) return file.stored.sessionCookie;
+  return getSecretStore(CONFIG_PATH)?.get("sessionCookie");
 }
 
 /** 설정 파일의 평문과 권한만 읽는다. 키체인 값은 조회하지 않는다. */
@@ -407,13 +432,10 @@ export async function getConfigOrThrow(
   if (result.state === "invalid" || result.state === "unreadable") {
     throw new DoorayCliError(configReadErrorMessage(result), EXIT_CONFIG_ERROR);
   }
-  if (
-    result.state === "absent" ||
-    !result.config.apiKey ||
-    !result.config.baseUrl
-  ) {
+  const missing = result.state === "ok" ? isConfigComplete(result.config) : ["config"];
+  if (result.state === "absent" || missing.length) {
     throw new DoorayCliError(
-      "설정이 완료되지 않았습니다. 먼저 초기 설정을 진행하세요:\n" +
+      `설정이 완료되지 않았습니다 (${missing.join(", ")}). 먼저 초기 설정을 진행하세요:\n` +
         "  dooray setup",
       EXIT_CONFIG_ERROR,
     );
@@ -440,11 +462,22 @@ export async function setConfigValue(
         };
 
   switch (key) {
+    case "auth-mode":
+      if (value !== "api-key" && value !== "web") throw new DoorayCliError("auth-mode 는 api-key 또는 web 이어야 합니다.", EXIT_PARAM_ERROR);
+      config.authMode = value;
+      break;
+    case "session-cookie":
+      config.sessionCookie = parseSessionCookie(value);
+      break;
     case "api-key":
       config.apiKey = value;
       break;
     case "base-url":
-      config.baseUrl = value;
+      try {
+        const url = new URL(value);
+        if (url.protocol !== "https:" || url.username || url.password) throw new Error();
+      } catch { throw new DoorayCliError("base-url 은 https 주소여야 합니다.", EXIT_PARAM_ERROR); }
+      config.baseUrl = value.replace(/\/+$/, "");
       break;
     case "imap-host":
       config.imapHost = value;
@@ -462,6 +495,7 @@ export async function setConfigValue(
       config.smtpHost = value;
       break;
     case "tenant-name":
+      if (!/^[a-z0-9-]+$/.test(value)) throw new DoorayCliError("tenant-name 은 영문 소문자·숫자·- 만 쓸 수 있습니다.", EXIT_PARAM_ERROR);
       config.tenantName = value;
       break;
     case "smtp-port":

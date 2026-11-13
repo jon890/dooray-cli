@@ -1,6 +1,8 @@
 export interface Config {
   version: 1;
   apiKey: string;
+  authMode?: "api-key" | "web";
+  sessionCookie?: string;
   baseUrl: string;
   tenantName?: string;
   imapHost?: string;
@@ -15,6 +17,8 @@ export interface Config {
 /** `config set` 이 받는 키. 알 수 없는 키를 거절할 때 이 목록을 안내한다. */
 export const CONFIG_SET_KEYS = [
   "api-key",
+  "auth-mode",
+  "session-cookie",
   "base-url",
   "tenant-name",
   "imap-host",

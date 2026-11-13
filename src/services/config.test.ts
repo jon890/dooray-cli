@@ -72,6 +72,18 @@ beforeEach(() => {
 });
 
 describe("shouldInvalidateCache", () => {
+  it("생략한 방식과 api-key 는 같고 웹 방식의 계정·주소 변경은 캐시를 비운다", () => {
+    expect(shouldInvalidateCache(config(), config({ authMode: "api-key" }))).toBe(false);
+    expect(shouldInvalidateCache(config(), config({ authMode: "web" }))).toBe(true);
+    const prev = config({ authMode: "web", sessionCookie: "fake-a", tenantName: "test" });
+    expect(shouldInvalidateCache(prev, { ...prev, sessionCookie: "fake-b" })).toBe(true);
+    expect(shouldInvalidateCache(prev, { ...prev, tenantName: "other" })).toBe(true);
+  });
+  it("웹 쿠키를 config set 으로 바꾸면 저장 뒤 캐시를 비운다", async () => {
+    mockedGetConfig.mockResolvedValueOnce(ok({ authMode: "web", sessionCookie: "fake-a" })).mockResolvedValueOnce(ok({ authMode: "web", sessionCookie: "fake-b" }));
+    await expect(updateConfigValue("session-cookie", "fake-b")).resolves.toEqual({ cacheCleared: true });
+    expect(mockedClearCache).toHaveBeenCalled();
+  });
   it("이전 설정이 없으면 지우지 않는다", () => {
     expect(shouldInvalidateCache(null, config())).toBe(false);
   });

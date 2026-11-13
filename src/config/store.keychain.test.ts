@@ -12,6 +12,8 @@ import {
   getConfigOrThrow,
   saveConfig,
   setConfigValue,
+  readAuthModeFromFile,
+  readSessionCookie,
 } from "./store.js";
 
 const {
@@ -108,6 +110,29 @@ afterEach(() => {
 });
 
 describe("키체인 모드 읽기", () => {
+  it("API 방식 일반 읽기는 쿠키를 조회하지 않지만 명시 조회는 읽는다", async () => {
+    fileWith({ ...BASE, apiKey: "fake-key" });
+    store.values.set("sessionCookie", "fake-session");
+    expect(await getConfig()).toMatchObject({ state: "ok", config: { apiKey: "fake-key" } });
+    expect(store.get).not.toHaveBeenCalledWith("sessionCookie");
+    expect(await readAuthModeFromFile()).toBe("api-key");
+    expect(await readSessionCookie()).toBe("fake-session");
+  });
+  it("API 방식에서 다른 값을 저장해도 키체인의 쿠키를 지우지 않는다", async () => {
+    fileWith({ ...BASE, apiKey: "fake-key" });
+    store.values.set("sessionCookie", "fake-session");
+    await setConfigValue("track-last-run", "true");
+    expect(store.values.get("sessionCookie")).toBe("fake-session");
+    expect(store.delete).not.toHaveBeenCalledWith("sessionCookie");
+  });
+  it("웹 방식은 API 키 없이 완료하고 헤더에서 고른 SESSION 만 키체인에 저장한다", async () => {
+    fileWith({ ...BASE, authMode: "web", tenantName: "test" });
+    store.values.set("sessionCookie", "fake-old");
+    expect(await getConfigOrThrow({ securityWarning: false })).toMatchObject({ authMode: "web", apiKey: "", sessionCookie: "fake-old" });
+    await setConfigValue("session-cookie", "Cookie: a=1; SESSION=fake-new==; b=2");
+    expect(store.values.get("sessionCookie")).toBe("fake-new==");
+    expect(writtenConfig()).not.toHaveProperty("sessionCookie");
+  });
   it("파일에 비어 있지 않은 값이 있으면 파일 값을 쓰고 키체인은 읽지 않는다", async () => {
     store.values.set("apiKey", "dummy-keychain-key");
     store.values.set("imapPassword", "dummy-keychain-pw");
