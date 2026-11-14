@@ -129,6 +129,14 @@ describe("웹 캘린더 쓰기", () => {
     expect((calls[1].body as { recurrenceRule: Record<string, unknown> }).recurrenceRule).toMatchObject({ frequency: "daily", startedAt: "2026-11-20T10:00:00+09:00", endedAt: "2026-11-20T10:30:00+09:00" });
   });
 
+  it("직전에 읽은 같은 일정의 상세가 있으면 반복 규칙 수정에서 다시 읽지 않는다", async () => {
+    const calls = respond("detail", "updated");
+    const c = client();
+    await c.getCalendarEvent("calendar-1", "event-1");
+    await c.updateCalendarEvent("calendar-1", "event-1", { recurrenceRule: { frequency: "daily", timezoneName: "Asia/Seoul" } });
+    expect(calls.map((x) => x.method)).toEqual(["GET", "PUT"]);
+  });
+
   it.each(["this", "wholeFromThis", "whole"] as const)("삭제는 DELETE 와 deleteType=%s 쿼리로 보낸다", async (deleteType) => {
     const calls = respond("deleted");
     const res = await client().deleteCalendarEvent("calendar-1", "event-1-20261120T010000Z", deleteType);

@@ -76,13 +76,15 @@ export async function listProjects(options) {
 
 export function listPosts(projectId, { since = null, maxPages = Infinity, ...options } = {}) {
   const sinceTimestamp = since == null ? null : Date.parse(since);
+  // 날짜만 준 값은 UTC 자정으로 읽던 전환 전 동작을 지킨다. CLI 는 날짜만 받으면 그 PC 의 시간대 자정으로 읽어 늦은 시간대에서 범위가 줄어든다.
+  const createdFrom = since == null ? null : new Date(sinceTimestamp).toISOString().replace(/\.\d{3}Z$/, "Z");
   return collectPages(
     (page) =>
       runDooray(
         [
           "post", "list", projectId,
           "--page", String(page), "--size", String(PAGE_SIZE), "--order", "-createdAt",
-          ...(since == null ? [] : ["--created", `${since}~`]),
+          ...(createdFrom == null ? [] : ["--created", `${createdFrom}~`]),
         ],
         options,
       ),

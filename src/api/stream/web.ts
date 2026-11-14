@@ -8,8 +8,6 @@ import { date, identifier, invalidResponse, pick, row, rows, text, type Row } fr
 import type { WebContext } from "../web/context.js";
 
 /** 웹 화면의 스트림 패널이 보내는 서비스 목록 그대로다. 비우면 빈 목록이 온다. */
-/** 걸러져 빈 페이지를 이어 받는 상한. 서버가 커서를 끝없이 주는 이상 동작에도 끝나게 한다. */
-const MAX_EMPTY_PAGES = 50;
 const SERVICES = "project,mail,calendar,drive,wiki,contacts,ai";
 
 function map(references: Row, name: string): Row {
@@ -140,8 +138,9 @@ export function createStreamWeb(context: WebContext): StreamClient {
   return {
     async getStreams(params) {
       let before = params?.before;
+      const seen = new Set<string>();
       // 한 페이지가 전부 공식 종류 밖이라 비면, 호출자가 끝으로 오해하지 않게 다음 페이지를 이어 받는다.
-      for (let attempt = 0; ; attempt += 1) {
+      for (;;) {
         const response = await context.http.request("v2/wapi/streams", {
           searchParams: { services: SERVICES, size: params?.size, before, read: params?.read },
         });
@@ -154,7 +153,8 @@ export function createStreamWeb(context: WebContext): StreamClient {
         }
         const next = references.nextTimestamp;
         const cursor = typeof next === "string" && next !== "" ? next : typeof next === "number" ? String(next) : undefined;
-        if (items.length === 0 && cards.length > 0 && cursor !== undefined && cursor !== before && attempt < MAX_EMPTY_PAGES) { before = cursor; continue; }
+        // 원본 카드가 있었으면 걸러져 비어도 끝이 아니다. 끝은 원본이 빈 페이지다. 커서가 되풀이되면 멈춘다.
+        if (items.length === 0 && cards.length > 0 && cursor !== undefined && cursor !== before && !seen.has(cursor)) { seen.add(cursor); before = cursor; continue; }
         return { header: response.header, result: items, ...(cursor !== undefined && { cursor }) };
       }
     },

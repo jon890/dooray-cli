@@ -88,4 +88,23 @@ describe("웹 스트림", () => {
     expect(calls[1].searchParams.get("before")).toBe("cursor-2");
     expect(res.result!.length).toBeGreaterThan(0);
   });
+
+  it("걸러져 빈 페이지가 여러 번 이어져도 원본이 빈 페이지에서만 끝낸다(횟수 상한 없음)", async () => {
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const dropped = (cursor: string) => ({ header: fixtures.page.header, result: { totalCount: 1, contents: [fixtures.page.result.contents[4]], references: { nextTimestamp: cursor } } });
+    let n = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => { n += 1; return Response.json(n <= 6 ? dropped(`c-${n}`) : fixtures.empty); }));
+    const res = await client().getStreams({ size: 1 });
+    expect(n).toBe(7);
+    expect(res.result).toEqual([]);
+  });
+
+  it("서버가 같은 커서를 되풀이하면 멈춘다", async () => {
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const loop = { header: fixtures.page.header, result: { totalCount: 1, contents: [fixtures.page.result.contents[4]], references: { nextTimestamp: "same" } } };
+    const fetchMock = vi.fn(async () => Response.json(loop));
+    vi.stubGlobal("fetch", fetchMock);
+    await client().getStreams({ size: 1 });
+    expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(3);
+  });
 });

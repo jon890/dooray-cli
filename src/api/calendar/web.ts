@@ -125,6 +125,8 @@ export function createCalendarWeb(context: WebContext): CalendarClient {
       timezoneName: body.recurrenceRule!.timezoneName,
     },
   });
+  // event edit 가 수정 전에 읽은 상세를 반복 규칙의 시각에 다시 쓴다. 같은 일정을 두 번 읽지 않는다.
+  let lastDetail: { key: string; detail: CalendarEventDetail } | undefined;
   const client: CalendarClient = {
     async getCalendars() {
       const response = await http.request("v2/wapi/calendars", { searchParams: { size: 99999 }, headers: HEADERS });
@@ -159,6 +161,7 @@ export function createCalendarWeb(context: WebContext): CalendarClient {
       if (mine) detail.me = mine;
       if (typeof body.content === "string") detail.body = { mimeType: text(body.mimeType), content: body.content };
       if (source.recurrenceRule) detail.recurrenceRule = recurrenceRule(source.recurrenceRule);
+      lastDetail = { key: `${calendarId}/${eventId}`, detail: detail as unknown as CalendarEventDetail };
       return { header: response.header, result: detail as unknown as CalendarEventDetail };
     },
     async createCalendarEvent(calendarId, body) {
@@ -174,7 +177,7 @@ export function createCalendarWeb(context: WebContext): CalendarClient {
       if (body.recurrenceRule) {
         let start = body.startedAt, end = body.endedAt;
         if (start === undefined || end === undefined) {
-          const existing = (await client.getCalendarEvent(calendarId, eventId)).result;
+          const existing = lastDetail?.key === `${calendarId}/${eventId}` ? lastDetail.detail : (await client.getCalendarEvent(calendarId, eventId)).result;
           start ??= existing.startedAt; end ??= existing.endedAt;
         }
         Object.assign(payload, rule(body, start, end));

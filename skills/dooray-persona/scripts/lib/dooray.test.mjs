@@ -135,8 +135,8 @@ describe("수집 호출", () => {
     const posts = await listPosts("p1", { since: "2026-01-01", exec });
     expect(posts).toHaveLength(101);
     expect(calls.map((c) => c.args)).toEqual([
-      ["post", "list", "p1", "--page", "0", "--size", "100", "--order", "-createdAt", "--created", "2026-01-01~", "--json"],
-      ["post", "list", "p1", "--page", "1", "--size", "100", "--order", "-createdAt", "--created", "2026-01-01~", "--json"],
+      ["post", "list", "p1", "--page", "0", "--size", "100", "--order", "-createdAt", "--created", "2026-01-01T00:00:00Z~", "--json"],
+      ["post", "list", "p1", "--page", "1", "--size", "100", "--order", "-createdAt", "--created", "2026-01-01T00:00:00Z~", "--json"],
     ]);
   });
 
@@ -161,5 +161,20 @@ describe("수집 호출", () => {
 
   it("목록 출력이 배열이 아니면 구조가 바뀐 것으로 보고 멈춘다", async () => {
     await expect(listComments("post1", { exec: fakeExec({}).exec })).rejects.toThrow("배열이 아닙니다");
+  });
+
+  it("날짜만 준 since 는 실행 PC 의 시간대와 무관하게 UTC 자정으로 보낸다", async () => {
+    const before = process.env.TZ;
+    try {
+      for (const zone of ["America/Los_Angeles", "Asia/Seoul"]) {
+        process.env.TZ = zone;
+        const { exec, calls } = fakeExec([]);
+        await listPosts("p1", { since: "2026-01-01", exec });
+        expect(calls[0].args).toContain("2026-01-01T00:00:00Z~");
+      }
+    } finally {
+      if (before === undefined) delete process.env.TZ;
+      else process.env.TZ = before;
+    }
   });
 });
