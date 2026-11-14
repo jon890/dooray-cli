@@ -99,10 +99,11 @@ src/
 계층 안의 규칙:
 
 - 명령 영역(`commands/<영역>/` 과 `commands/<이름>.ts`)은 다른 명령 영역을 가져오지 않는다.
-- 공개 API 구현(`api/client.ts`, `api/public/`, `api/<영역>/public.ts`)과 웹 구현(`api/web/`, `api/<영역>/web.ts`)은 서로 가져오지 않는다. 둘을 고르는 `api/dooray-client.ts` 는 어느 쪽도 아니다.
+- 공개 API 구현(`api/client.ts`, `api/public/`, `api/<영역>/public*.ts`)과 웹 구현(`api/web/`, `api/<영역>/web*.ts`)은 서로 가져오지 않는다. 둘을 고르는 `api/dooray-client.ts` 는 어느 쪽도 아니다.
 - `api/<영역>/` 은 다른 영역의 `types.ts` 만 가져온다.
 - `api/<영역>/` 은 `api/types.ts`·`api/client.ts` 를 가져오지 않는다. DTO 와 파라미터는 자기 영역이나 다른 영역의 `types.ts`, 공통 응답 구조는 `api/common/types.ts` 에서 가져온다.
 - `api/common/` 은 다른 api 영역을 가져오지 않는다. 여러 영역이 쓰는 본문·참여자·식별자 DTO 도 이곳에 둔다.
+- `resolvers`·`services` 는 `api/dooray-client.ts` 를 가져오지 않는다. 필요한 영역 인터페이스(`api/<영역>/types.ts`)만 받는다. 전체 `DoorayClient` 를 받는 resolver 가 아직 있어 허용 목록에 있고, R4 에서 비운다.
 
 검사 방식:
 
@@ -114,7 +115,7 @@ src/
 
 ```
 commands/* → resolvers/* → cache/store + api/dooray-client   (읽기: 이름 → id 번역)
-commands/mail/{get,attachment,reply} → resolvers/mail-input → api/imapClient   (캐시 없이 mail id → UID 조회)
+commands/mail/{get,attachment,reply} → resolvers/mail-input → api/mail/imap   (캐시 없이 mail id → UID 조회)
 commands/* → services/*  → cache/store + api/dooray-client + config/store   (쓰기: 변경과 캐시 무효화, ADR-042)
 commands/* → formatters/*
 commands/* → utils/errors
@@ -126,10 +127,10 @@ editor/    → api/<영역>/types + cache/types + utils (편집 데이터 타입
 - `skill/context.ts`는 절대 경로 `XDG_DATA_HOME`이 있으면 `dataRoot`를 `$XDG_DATA_HOME/dooray-cli`로 주입하고, 없거나 상대 경로이면 `homeDir/.local/share/dooray-cli`를 주입한다.
 - `skill/manager.ts`는 경로·현재 버전을 주입받아 명령 출력과 분리된 순수 상태 전이를 제공한다. 테스트 전용 등으로 `SkillManagerContext.dataRoot?`가 없으면 `homeDir/.local/share/dooray-cli`를 사용한다.
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
-- `api/dooray-client`는 인증 방식에 맞는 구현을 고른다. 공개 HTTP 는 `api/client`, 웹 HTTP 는 `api/web/http` 가 맡는다.
+- `api/dooray-client`는 인증 방식에 맞는 구현을 고른다. 공개 HTTP 는 `api/public/http`, 웹 HTTP 는 `api/web/http` 가 맡는다.
 - 두 HTTP 구현은 `api/rate-limiter`의 토큰 버킷을 재사용한다. 호출부는 요청 간격을 신경 쓰지 않는다 ([ADR-039](adr/039-rate-limit-token-bucket.md))
 - 이름을 id 로 바꾸는 resolver 는 필요한 영역 계약을 받아 캐시를 우선 조회하고, 만료 시 `api/dooray-client` 를 호출한다.
-- `resolvers/mail-input` 은 입력 형태를 분류하고, mail id 는 캐시 없이 `api/imapClient` 에서 UID 로 조회한다.
+- `resolvers/mail-input` 은 입력 형태를 분류하고, mail id 는 캐시 없이 `api/mail/imap` 에서 UID 로 조회한다.
 - `resolvers/*`는 읽기 전용이다. 쓰기 함수를 넣지 않는다
 - 캐시의 유효성을 깨는 변경은 `services/*`를 거친다. 그 함수가 성공 직후 무효해진 캐시를 지운다 ([ADR-042](adr/042-cache-invalidation-on-mutation.md))
   - 엔티티를 바꾸는 API 호출은 그 엔티티의 캐시 파일 하나를, 인증 계정·환경 변경은 전체 캐시를 지운다
@@ -138,17 +139,22 @@ editor/    → api/<영역>/types + cache/types + utils (편집 데이터 타입
 
 ## API Client 구조
 
-`src/api/dooray-client.ts` 의 영역별 인터페이스 교집합인 DoorayClient 를 공개 API 구현(`client.ts`)과 웹 구현(`web/index.ts`)이 구현한다. 명령은 createClient(config) 로 고른다.
-영역 계약과 DTO·파라미터는 api/<영역>/types.ts, 공통 응답 구조는 api/common/types.ts, 웹 구현은 api/<영역>/web.ts 에 둔다. api/types.ts 는 기존 경로를 위한 타입 재내보내기만 남긴다. 공개 구현은 아직 client.ts 한 파일에 있다. R2 에서 api/<영역>/public.ts 로 옮기고 client.ts 도 재내보내기만 남긴다 ([ADR-082](adr/082-code-structure.md)). 웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web/http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
+`src/api/dooray-client.ts` 의 영역별 인터페이스 교집합인 DoorayClient 를 공개 API 구현(`public/index.ts`)과 웹 구현(`web/index.ts`)이 구현한다. 명령은 createClient(config) 로 고른다.
+영역 계약과 DTO·파라미터는 api/<영역>/types.ts, 공통 응답 구조는 api/common/types.ts, 공개 구현은 api/<영역>/public.ts, 웹 구현은 api/<영역>/web.ts 에 둔다. api/types.ts 는 기존 경로를 위한 타입 재내보내기만 남긴다.
+공개 구현은 영역마다 `create<영역>Public(http: PublicHttp)` 가 자기 계약을 반환형으로 선언한 객체 리터럴을 돌려주고, `public/index.ts` 의 `createPublicClient` 가 `DoorayClient` 타입을 붙여 조립한다. 영역 하나가 빠지면 컴파일러가 잡는다. 기존 `DoorayApiClient(apiKey, baseUrl)` 는 그 결과를 복사하는 얇은 클래스이고, `api/client.ts` 는 그것을 재내보내기만 한다.
+`public/http.ts` 의 `PublicHttp` 는 ky 인스턴스와 토큰 버킷, 오류 변환, 파일 서버 요청·다운로드 리다이렉트를 맡는다. 테스트는 생성자의 선택 인자로 ky 를 바꿔 끼운다.
+위키 트리처럼 영역 인터페이스의 메서드를 엮는 조합은 인터페이스에 넣지 않고 `api/wiki/pages.ts` 의 `collectWikiPages(client, …)` 로 둔다. 두 구현이 같은 순회를 따로 갖지 않게 하려는 것이다.
+웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web/http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
+IMAP·SMTP 는 `DoorayClient` 밖이다. `api/mail/` 이 가진다.
 메서드 목록은 여기 적지 않는다. 메서드가 늘 때마다 낡고, 그 파일을 열면 바로 보인다.
 
 ```bash
-rg "^\s+(async )?\w+\(" src/api/client.ts src/api/*/web.ts
+rg "^\s+(async )?\w+\(" src/api/*/public.ts src/api/*/web.ts
 ```
 
 메서드가 지키는 규약은 다음과 같다.
 
-- 공개 구현의 생성자는 `apiKey` 와 `baseUrl`, 웹 구현은 쿠키와 검증한 웹 주소를 받는다. 명령은 팩토리를 사용한다
+- 공개 구현의 생성자(`PublicHttp`, `DoorayApiClient`)는 `apiKey` 와 `baseUrl`, 웹 구현은 쿠키와 검증한 웹 주소를 받는다. 명령은 팩토리를 사용한다
 - 요청은 `api/rate-limiter` 의 토큰 버킷을 공유한다. 호출부는 요청 간격을 신경 쓰지 않는다
 - 응답 JSON 은 `parseJson` 에 물린 `json-large-integer` 파서를 거친다.
   19자리 식별자가 정수로 파싱되면서 손실되는 것을 막는다
@@ -167,7 +173,7 @@ rg "^\s+(async )?\w+\(" src/api/client.ts src/api/*/web.ts
      • <project> <number>  → resolveProject + resolvePost (4·5단계 정상 실행)
      • --id / --url / URL positional → getPostStandalone(postId) 단일 호출로 4·5단계 단축
 5. (positional 모드에서만) resolvers/post.ts — 42 → postId
-6. api/client.ts (api-key 방식) — POST /project/v1/projects/{id}/posts/{id}/set-done
+6. api/post/public.ts (api-key 방식) — POST /project/v1/projects/{id}/posts/{id}/set-done
 7. formatters/post.ts — 성공 메시지 출력
 ```
 

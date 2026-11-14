@@ -41,6 +41,16 @@ export const ALLOWED_VIOLATIONS: readonly string[] = [
   "utils/feedback-meta.ts -> cache/last-run.ts",
   "utils/mention.ts -> cache/types.ts",
   "utils/task-link.ts -> cache/types.ts",
+  // resolvers 는 필요한 영역 인터페이스만 받아야 한다. 아직 전체 DoorayClient 를 받는 곳이다. R4 에서 비운다.
+  "resolvers/comment-file-input.ts -> api/dooray-client.ts",
+  "resolvers/messenger-channel.ts -> api/dooray-client.ts",
+  "resolvers/post-input.ts -> api/dooray-client.ts",
+  "resolvers/post-users.ts -> api/dooray-client.ts",
+  "resolvers/post.ts -> api/dooray-client.ts",
+  "resolvers/postRef.ts -> api/dooray-client.ts",
+  "resolvers/task-link.ts -> api/dooray-client.ts",
+  "resolvers/wiki-page-input.ts -> api/dooray-client.ts",
+  "resolvers/wiki.ts -> api/dooray-client.ts",
 ];
 
 export interface ImportEdge {
@@ -84,6 +94,9 @@ function apiAreaOf(file: string): string | undefined {
 export function violationOf(edge: ImportEdge): string | undefined {
   const fromLayer = layerOf(edge.from);
   const toLayer = layerOf(edge.to);
+  if ((fromLayer === "resolvers" || fromLayer === "services") && edge.to === "api/dooray-client.ts") {
+    return `${fromLayer} 는 api/dooray-client.ts 를 가져오지 않는다. 필요한 영역 인터페이스(api/<영역>/types.ts)만 받는다`;
+  }
   if (fromLayer !== toLayer) {
     const allowed = LAYER_DEPENDENCIES[fromLayer];
     if (allowed === undefined) return `규칙 표에 없는 계층 ${fromLayer}`;
@@ -244,12 +257,28 @@ describe("규칙 판정", () => {
     expect(violationOf({ from: "api/client.ts", to: "api/post/types.ts" })).toBeUndefined();
   });
 
+  it("resolvers 와 services 는 api/dooray-client.ts 를 가져오지 않고 영역 인터페이스는 가져온다", () => {
+    for (const from of ["resolvers/post.ts", "services/post.ts"]) {
+      expect(violationOf({ from, to: "api/dooray-client.ts" })).toBeDefined();
+      expect(violationOf({ from, to: "api/post/types.ts" })).toBeUndefined();
+    }
+    expect(violationOf({ from: "commands/post/get.ts", to: "api/dooray-client.ts" })).toBeUndefined();
+    expect(violationOf({ from: "editor/post.ts", to: "api/dooray-client.ts" })).toBeUndefined();
+  });
+
   it("api 공통 타입은 다른 api 영역을 가져오지 않는다", () => {
     for (const to of ["api/post/types.ts", "api/member/types.ts", "api/project/types.ts"]) {
       expect(violationOf({ from: "api/common/types.ts", to })).toBeDefined();
     }
     expect(violationOf({ from: "api/common/types.ts", to: "api/common/other.ts" })).toBeUndefined();
     expect(violationOf({ from: "api/post/types.ts", to: "api/common/types.ts" })).toBeUndefined();
+  });
+
+  it("공개 구현의 기존 진입점 client.ts 는 재내보내기만 남긴다", () => {
+    const source = readFileSync(join(SRC, "api/client.ts"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    const lines = source.split("\n").filter((line) => line.trim());
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.every((line) => /^export (type )?\{[^}]+\} from "[^"]+";$/.test(line))).toBe(true);
   });
 
   it("통합 타입 파일은 타입 재내보내기만 남긴다", () => {
