@@ -277,12 +277,40 @@ export function createPostWeb(context: WebContext): PostClient {
       const response = await mutation(projectId, postId, apiPath`/events/${logId}`, undefined, "DELETE");
       return { header: response.header, result: null };
     },
-    getPostFiles: async () => unsupported(),
-    getPostFileMeta: async () => unsupported(),
-    downloadPostFile: async () => unsupported(),
-    uploadPostFile: async () => unsupported(),
-    deletePostFile: async () => unsupported(),
-
+    async getPostFiles(projectId, postId) {
+      const response = await http.request(`${await numbered(projectId, postId)}/files`);
+      const result = rows(row(response.result).content).map(file);
+      return { header: response.header, result, totalCount: result.length };
+    },
+    async getPostFileMeta(projectId, postId, fileId) {
+      const response = await methods.getPostFiles(projectId, postId);
+      const result = response.result.find((f) => f.id === fileId);
+      const task = row((await load(postId, projectId)).result);
+      if (!result || !ids(task.fileIdList ?? []).includes(fileId)) throw new DoorayCliError("업무의 첨부 파일을 찾지 못했습니다.", EXIT_API_ERROR);
+      return { header: response.header, result };
+    },
+    async downloadPostFile(projectId, postId, fileId, knownName) {
+      const meta = await methods.getPostFileMeta(projectId, postId, fileId);
+      const response = await http.requestBytes(apiPath`files/${fileId}`, { searchParams: { disposition: "attachment" } });
+      const disposition = response.headers.get("content-disposition");
+      const fileName = parseContentDispositionFileName(disposition) ?? fallbackFileName(fileId, knownName ?? meta.result.name, disposition);
+      return { buffer: await response.arrayBuffer(), fileName };
+    },
+    async uploadPostFile(projectId, postId, filePath) {
+      await load(postId, projectId);
+      const form = new FormData();
+      form.append("file", new Blob([await readFile(filePath)]), basename(filePath));
+      const response = await http.upload(apiPath`wapi/task/v1/tasks/${postId}/files`, form, { searchParams: { type: "general" } });
+      const uploaded = rows(response.result);
+      if (uploaded.length !== 1) return invalidResponse();
+      details.delete(postId);
+      return { header: response.header, result: { id: identifier(uploaded[0].id) } };
+    },
+    async deletePostFile(projectId, postId, fileId) {
+      await methods.getPostFileMeta(projectId, postId, fileId);
+      const response = await mutation(projectId, postId, apiPath`/files/${fileId}`, undefined, "DELETE");
+      return { header: response.header, result: null };
+    },
   };
   return methods;
 }
