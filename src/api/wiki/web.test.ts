@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWebClient } from "../web/index.js";
+import { collectWikiPages } from "./pages.js";
 import { fetchAllWikis } from "../../resolvers/wiki.js";
 
 const fixtures = JSON.parse(readFileSync(new URL("../web/fixtures/wiki/responses.json", import.meta.url), "utf8"));
@@ -116,13 +117,13 @@ describe("웹 위키 읽기 변환", () => {
     expect(result.body?.content).toBe("본문");
   });
 
-  it("getAllWikiPages 는 깊이 상한을 지키고 레벨 안 순서를 보존한다", async () => {
+  it("collectWikiPages 는 웹 구현에서도 깊이 상한을 지키고 레벨 안 순서를 보존한다", async () => {
     route({ [`GET ${W}/pages`]: ({ url }) => {
       const parent = url.searchParams.get("parentPageId");
       return parent === null ? fixtures.pagesRoot : parent === "page-home" ? fixtures.pagesChildren : parent === "page-a" ? fixtures.pagesGrandchildren : fixtures.pagesNone;
     } });
-    expect((await client().getAllWikiPages("wiki-1")).map((p) => p.id)).toEqual(["page-home", "page-a", "page-b", "page-c"]);
-    expect((await client().getAllWikiPages("wiki-1", 2)).map((p) => p.id)).toEqual(["page-home", "page-a", "page-b"]);
+    expect((await collectWikiPages(client(), "wiki-1")).map((p) => p.id)).toEqual(["page-home", "page-a", "page-b", "page-c"]);
+    expect((await collectWikiPages(client(), "wiki-1", 2)).map((p) => p.id)).toEqual(["page-home", "page-a", "page-b"]);
   });
 });
 

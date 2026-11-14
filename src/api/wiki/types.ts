@@ -191,7 +191,6 @@ export type CreateWikiPageResponse = DoorayApiResponse<CreateWikiPageResult>;
 export interface WikiClient {
   getWikis(params?: GetWikisParams): Promise<WikiListResponse>;
   getWikiPages(wikiId: string, parentPageId?: string): Promise<WikiPagesResponse>;
-  getAllWikiPages(wikiId: string, maxDepth?: number): Promise<WikiPage[]>;
   getWikiPage(wikiId: string, pageId: string): Promise<WikiPageResponse>;
   getWikiPageStandalone(pageId: string): Promise<WikiPageResponse>;
   createWikiPage(wikiId: string, body: CreateWikiPageRequest): Promise<CreateWikiPageResponse>;

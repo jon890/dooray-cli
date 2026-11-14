@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DoorayApiClient } from "./client.js";
+import type { KyInstance } from "ky";
+import { PublicHttp } from "./public/http.js";
+import { createPublicClient } from "./public/index.js";
 
 // fetch 가 Latin-1 로 읽은 헤더와 307 redirect 를 흉내 내 클라이언트 전체 경로를 확인한다.
 function stubDownload(disposition: string | null, list: unknown) {
@@ -13,14 +15,13 @@ function stubDownload(disposition: string | null, list: unknown) {
 }
 
 function client() {
-  const c = new DoorayApiClient("key", "https://example.dooray.com");
   const api = {
     get: vi.fn((url: string) => {
       if (url.endsWith("/files")) return { json: async () => ({ result: [{ id: "f1", name: "목록 이름.pdf".normalize("NFD") }] }) };
       return Promise.resolve(new Response(null, { status: 307, headers: { location: "https://example.dooray.com/redirected" } }));
     }),
   };
-  (c as unknown as { api: unknown }).api = api;
+  const c = createPublicClient(new PublicHttp("key", "https://example.dooray.com", api as unknown as KyInstance));
   return { c, api };
 }
 
@@ -50,7 +51,6 @@ describe("downloadPostFile 파일명", () => {
 
 describe("downloadWikiPageFile 파일명", () => {
   function wikiClient() {
-    const c = new DoorayApiClient("key", "https://example.dooray.com");
     const api = {
       get: vi.fn((url: string) => {
         if (url.endsWith("/pages/q")) {
@@ -66,7 +66,7 @@ describe("downloadWikiPageFile 파일명", () => {
         return Promise.resolve(new Response(null, { status: 307, headers: { location: "https://example.dooray.com/redirected" } }));
       }),
     };
-    (c as unknown as { api: unknown }).api = api;
+    const c = createPublicClient(new PublicHttp("key", "https://example.dooray.com", api as unknown as KyInstance));
     return { c, api };
   }
 
@@ -95,13 +95,12 @@ describe("downloadMessengerFile", () => {
   const LOCATION = "https://example.dooray.com/downloads/messenger/v1/channels/c/files/f1";
 
   function messengerClient(status = 307) {
-    const c = new DoorayApiClient("key", "https://example.dooray.com");
     const api = {
       get: vi.fn(() =>
         Promise.resolve(new Response(null, { status, headers: status === 307 ? { location: LOCATION } : {} })),
       ),
     };
-    (c as unknown as { api: unknown }).api = api;
+    const c = createPublicClient(new PublicHttp("key", "https://example.dooray.com", api as unknown as KyInstance));
     return { c, api };
   }
 

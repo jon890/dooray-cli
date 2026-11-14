@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assignAttachmentFileNames } from "./mail-attachment-name.js";
+import { assignAttachmentFileNames } from "./attachment-name.js";
 
 function names(filenames: Array<string | undefined>): string[] {
   const map = assignAttachmentFileNames(filenames.map((filename, i) => ({ index: i + 1, filename })));

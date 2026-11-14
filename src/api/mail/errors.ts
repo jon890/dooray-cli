@@ -1,5 +1,5 @@
-import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "../utils/exit-codes.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "@/utils/exit-codes.js";
 
 type MailProtocol = "IMAP" | "SMTP";
 

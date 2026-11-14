@@ -1,13 +1,13 @@
 import { ImapFlow, type FetchMessageObject } from "imapflow";
 import { simpleParser, type Attachment, type ParsedMail } from "mailparser";
-import type { Config } from "../config/types.js";
-import { DEFAULTS } from "../config/types.js";
-import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_API_ERROR, EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
-import { decodeDoorayIdTimeMs } from "../utils/dooray-id.js";
-import { sanitizeFileName } from "../utils/attachment-check.js";
-import { assignAttachmentFileNames } from "../utils/mail-attachment-name.js";
-import { toMailConnectionError } from "./mailErrors.js";
+import type { Config } from "@/config/types.js";
+import { DEFAULTS } from "@/config/types.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_API_ERROR, EXIT_CONFIG_ERROR } from "@/utils/exit-codes.js";
+import { decodeDoorayIdTimeMs } from "@/utils/dooray-id.js";
+import { sanitizeFileName } from "@/utils/attachment-check.js";
+import { assignAttachmentFileNames } from "./attachment-name.js";
+import { toMailConnectionError } from "./errors.js";
 
 // SEARCH SINCE/BEFORE 는 일자 단위라 질의에 앞뒤 하루씩을 준다 (ADR-040 의 보강 절).
 // imapflow 가 정각이 아닌 BEFORE 를 하루 밀므로 실제로 받는 것은 UTC 사흘치다.

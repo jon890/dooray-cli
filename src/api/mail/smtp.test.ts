@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Config } from "../config/types.js";
+import type { Config } from "@/config/types.js";
 
 const mocks = vi.hoisted(() => ({
   sendMail: vi.fn(),
@@ -27,7 +27,7 @@ beforeEach(() => {
 
 describe("sendMail 원문", () => {
   it("SMTP 로 보낸 raw 와 반환한 raw 가 같은 바이트다", async () => {
-    const { sendMail } = await import("./smtpClient.js");
+    const { sendMail } = await import("./smtp.js");
     const sent = await sendMail(config, {
       to: ["a@example.com"],
       cc: ["c@example.com"],
@@ -42,7 +42,7 @@ describe("sendMail 원문", () => {
   });
 
   it("Message-ID 가 원문 헤더와 반환값에서 일치하고 Bcc 헤더는 원문에 없다", async () => {
-    const { sendMail } = await import("./smtpClient.js");
+    const { sendMail } = await import("./smtp.js");
     const sent = await sendMail(config, {
       to: ["a@example.com"],
       bcc: ["b@example.com"],
@@ -56,7 +56,7 @@ describe("sendMail 원문", () => {
   });
 
   it("envelope 수신자에 to, cc, bcc 를 모두 담는다", async () => {
-    const { sendMail } = await import("./smtpClient.js");
+    const { sendMail } = await import("./smtp.js");
     await sendMail(config, {
       to: ["a@example.com"],
       cc: ["c@example.com"],
@@ -74,7 +74,7 @@ describe("sendMail 원문", () => {
 
 describe("sendMail attachments", () => {
   it("첨부 파일 이름이 원문에 들어간다", async () => {
-    const { sendMail } = await import("./smtpClient.js");
+    const { sendMail } = await import("./smtp.js");
     const sent = await sendMail(config, {
       to: ["a@example.com"],
       subject: "s",

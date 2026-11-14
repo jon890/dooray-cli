@@ -15,7 +15,7 @@
 | --------- | -------------------------------------------------------------------------------------------- |
 | 3 호출 시나리오 | `CLAUDE.md` "명령 공통 규약" — 입력 형식, 출력 모드, 에러와 빈 상태                                              |
 | 4 인터페이스   | `CLAUDE.md` 출력 규약. 표·JSON·quiet 세 포맷터 중 무엇을 고치는지 명시한다                                        |
-| 5 API     | `src/api/client.ts` 에 재사용할 메서드가 있는지. 새 endpoint 면 `docs/adr/INDEX.md` 에서 해당 API 함정 ADR 을 찾는다 |
+| 5 API     | `src/api/<영역>/public.ts` 에 재사용할 메서드가 있는지. 새 endpoint 면 `docs/adr/INDEX.md` 에서 해당 API 함정 ADR 을 찾는다 |
 | 6 코드 구조   | `docs/code-architecture.md` 의 레이어와 의존 방향. 새 resolver 는 기존 매칭 정책을 따른다                         |
 
 

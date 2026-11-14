@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -111,11 +111,10 @@ function readFirstStringArgument(source, start) {
 }
 
 /**
- * `src/api/client.ts` 소스에서 호출하는 endpoint 를 뽑는다.
- * 두 자리를 본다.
+ * 공개 API 구현 소스에서 호출하는 endpoint 를 뽑는다. 두 꼴을 본다 (ADR-082).
  *
- * - `this.api` 뒤에 줄바꿈을 건너 나오는 첫 메서드 호출의 첫 인자
- * - `${this.baseUrl}` 로 시작하는 템플릿 리터럴 경로와 그 뒤 raw `fetch` 의 `method`
+ * - `http.api` 뒤에 줄바꿈을 건너 나오는 첫 메서드 호출의 첫 인자
+ * - `http.url(` 의 첫 인자인 템플릿 리터럴 경로와 그 뒤 raw `fetch` 의 `method`
  *
  * 경로를 변수나 함수 호출로 만든 호출은 읽을 수 없다. 그 수를 함께 낸다.
  * 감사에 구멍이 있다는 것을 부르는 쪽이 알아야 한다.
@@ -126,7 +125,7 @@ export function extractImplEndpoints(source) {
   const found = new Set();
   let nonLiteral = 0;
 
-  const kyCall = new RegExp(String.raw`this\.api\s*\.\s*(${METHOD_NAMES.join("|")})\s*\(`, "g");
+  const kyCall = new RegExp(String.raw`\bhttp\.api\s*\.\s*(${METHOD_NAMES.join("|")})\s*\(`, "g");
   for (const match of source.matchAll(kyCall)) {
     const path = readFirstStringArgument(source, match.index + match[0].length);
     // 변수나 함수 호출로 경로를 만든 호출은 읽을 수 없다. 조용히 빠지지 않게 센다.
@@ -137,7 +136,7 @@ export function extractImplEndpoints(source) {
     found.add(`${match[1].toUpperCase()} ${normalizePath(path)}`);
   }
 
-  const rawFetchUrl = /(?:`\$\{this\.baseUrl\}|this\.baseUrl\s*\+\s*apiPath`)([^`]*)`/g;
+  const rawFetchUrl = /\bhttp\.url\(\s*(?:apiPath)?`([^`]*)`\s*\)/g;
   for (const match of source.matchAll(rawFetchUrl)) {
     const after = match.index + match[0].length;
 
@@ -157,6 +156,36 @@ export function extractImplEndpoints(source) {
   }
 
   return { endpoints: [...found].sort(), nonLiteral };
+}
+
+/**
+ * 공개 API 구현 파일을 찾는다. `src/api/public/` 아래 모든 `.ts` 와 `src/api/<영역>/public*.ts` 다.
+ * 테스트(`*.test.ts`)는 뺀다. 경로는 정렬해 낸다.
+ *
+ * @returns {string[]} repoRoot 기준 상대 경로
+ */
+export function listPublicSources(repoRoot) {
+  const apiDir = join(repoRoot, "src/api");
+  const found = [];
+  const isSource = (name) => name.endsWith(".ts") && !name.endsWith(".test.ts");
+
+  const walk = (dir, rel) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) walk(join(dir, entry.name), `${rel}/${entry.name}`);
+      else if (isSource(entry.name)) found.push(`${rel}/${entry.name}`);
+    }
+  };
+  if (existsSync(join(apiDir, "public"))) walk(join(apiDir, "public"), "src/api/public");
+
+  for (const area of readdirSync(apiDir, { withFileTypes: true })) {
+    if (!area.isDirectory() || area.name === "public") continue;
+    for (const entry of readdirSync(join(apiDir, area.name), { withFileTypes: true })) {
+      if (entry.isFile() && isSource(entry.name) && /^public(-[^/]+)?\.ts$/.test(entry.name)) {
+        found.push(`src/api/${area.name}/${entry.name}`);
+      }
+    }
+  }
+  return found.sort();
 }
 
 /**
@@ -236,7 +265,9 @@ function printHuman(result, implCount, officialCount) {
 
 function main(argv) {
   const repoRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..");
-  const implSource = readFileSync(join(repoRoot, "src/api/client.ts"), "utf8");
+  const implSource = listPublicSources(repoRoot)
+    .map((file) => readFileSync(join(repoRoot, file), "utf8"))
+    .join("\n");
   const officialContent = readFileSync(join(repoRoot, "docs/api/official-endpoints.txt"), "utf8");
 
   const { endpoints: implEndpoints, nonLiteral } = extractImplEndpoints(implSource);

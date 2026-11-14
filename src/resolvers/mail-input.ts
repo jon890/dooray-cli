@@ -2,7 +2,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import { parseDoorayMailUrl } from "../utils/dooray-url.js";
 import type { Config } from "../config/types.js";
-import { resolveUidByMailId } from "../api/imapClient.js";
+import { resolveUidByMailId } from "@/api/mail/imap.js";
 
 export type MailInputTokenType = "url" | "mailId" | "uid" | "invalid";
 

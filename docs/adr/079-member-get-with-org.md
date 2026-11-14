@@ -53,4 +53,4 @@
   요구가 생기면 따로 정한다.
 
 **적용 범위**: `src/commands/member/get.ts`, `src/resolvers/member-organization.ts`, `src/formatters/member.ts`,
-`src/api/client.ts` 의 `fetchBusyHours`, `src/api/types.ts` 의 Busy Hours 타입.
+`src/api/calendar/public.ts` 의 `fetchBusyHours`, `src/api/types.ts` 의 Busy Hours 타입.
