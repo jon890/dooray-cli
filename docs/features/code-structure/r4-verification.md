@@ -6,14 +6,14 @@
 - 기술 설계: [design.md](design.md)
 - 계획과 인수 검증 계획: [tasks/r4/index.json](tasks/r4/index.json), [verification-plan.md](tasks/r4/verification-plan.md)
 - 기준: R3 가 머지된 main, `db068cb`
-- 코드 검증 커밋: `3dd06dab6da4d2e35b5a17615b3f558266ef7853`. 이후 계획·증거 문서만 추가한다. PR HEAD 는 PR 본문에 기록한다.
+- 코드 검증 커밋: `7a7db6dbf448ef60c9dcc8dfa26362e5b9ffbebd`. 이후 계획·증거 문서만 추가한다. PR HEAD 는 PR 본문에 기록한다.
 - 환경: macOS, Node.js v24.22.1, pnpm 12.18.0. mock 과 임시 디렉터리만 사용했다.
 
 ## 요구사항별 증거
 
 | 요구사항 | 사례와 명령 | 기대 결과 | 실제 결과 |
 | --- | --- | --- | --- |
-| REQ1 | 기준(`db068cb`)과 작업 브랜치의 `pnpm test` | 기존 테스트 유지, 모두 통과 | 148개 파일 2,322개에서 152개 파일 2,338개로 증가. 모두 통과 |
+| REQ1 | 기준(`db068cb`)과 작업 브랜치의 `pnpm test` | 기존 테스트 유지, 모두 통과 | 148개 파일 2,322개에서 152개 파일 2,339개로 증가. 모두 통과 |
 | REQ1 | 기준 빌드로 `node scripts/help-snapshot.mjs --out`, 작업 브랜치 빌드로 `--check` | 전체 명령 도움말과 순서 유지 | 104개 명령 경로 일치 |
 | REQ1 | `src/commands/command-trees.test.ts` | project·post·wiki·mail 나무의 하위 명령 이름과 순서가 기존과 같다 | 통과 |
 | REQ4 | `pnpm tsc --noEmit`, `src/architecture.test.ts` | resolver 가 영역 인터페이스만 받고 `api/dooray-client.ts` 를 가져오지 않는다 | 통과. 9곳이 `PostClient`·`ProjectClient`·`WikiClient`·`MemberClient`·`MessengerClient` 나 그 교집합을 받는다 |
@@ -28,7 +28,7 @@
 | --- | --- |
 | `pnpm install --frozen-lockfile` | 통과 |
 | `pnpm tsc --noEmit` | 통과 |
-| `pnpm test` | 152개 파일, 2,338개 테스트 통과 |
+| `pnpm test` | 152개 파일, 2,339개 테스트 통과 |
 | `pnpm run build` | 통과 |
 | `pnpm verify:package` | 통과 |
 | `pnpm api:inventory` | 통과. 구현에 있고 공식에 없는 endpoint 0건 |
@@ -71,6 +71,7 @@
 
 ## 독립 검토와 남은 검증
 
+자동 코드 리뷰(claude-review): 차단 0건, 낮음 2건(테스트 단언 좁히기)을 반영했다.
 독립 코드·문서 리뷰: 대기. 코디네이터가 Codex 리뷰 worker 로 띄운다. 결과를 받으면 PR 본문의 완료 근거 블록에서 갱신한다.
 머지 뒤 추가 실행 검증은 없다. 런타임 상태와 외부 계약을 바꾸지 않는다.
 R5(선택, `config/store.ts`·`skill/manager.ts` 분할)는 이번 PR 밖이다.
