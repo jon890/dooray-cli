@@ -302,6 +302,35 @@ describe("규칙 판정", () => {
     expect(lines.every((line) => /^export (type )?\{[^}]+\} from "@\/skill\/[^"/]+\.js";$/.test(line))).toBe(true);
   });
 
+  it("설정 진입 파일의 기존 런타임 이름을 유지한다", async () => {
+    const store = await import("@/config/store.js");
+    expect(Object.keys(store).sort()).toEqual([
+      "clearMailCredentials",
+      "configReadErrorMessage",
+      "getConfig",
+      "getConfigOrThrow",
+      "isConfig",
+      "jsonParseReason",
+      "readAuthModeFromFile",
+      "readConfigFileSecurity",
+      "readSessionCookie",
+      "removeMailCredentials",
+      "saveConfig",
+      "setConfigValue",
+      "warnConfigFileSecurity",
+    ].sort());
+  });
+
+  it("스킬 관리 진입 파일의 기존 런타임 이름을 유지한다", async () => {
+    const manager = await import("@/skill/manager.js");
+    expect(Object.keys(manager).sort()).toEqual([
+      "SKILL_AGENTS",
+      "SKILL_AGENT_NAMES",
+      "inspectSkill",
+      "installSkill",
+    ].sort());
+  });
+
   it("import 지정자를 읽고 별칭과 상대 경로를 같은 파일로 푼다", () => {
     const source = ['import { a } from "./a.js";', 'export { b } from "../b.js";', 'import type { C } from "@/c.js";', 'const d = await import("./d.js");'].join("\n");
     expect(importSpecifiers(source)).toEqual(["./a.js", "../b.js", "@/c.js", "./d.js"]);

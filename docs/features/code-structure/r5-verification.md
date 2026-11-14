@@ -6,16 +6,17 @@
 - 기술 설계: [design.md](design.md) 의 R5 절
 - 계획과 인수 검증 계획: [tasks/r5/index.json](tasks/r5/index.json), [verification-plan.md](tasks/r5/verification-plan.md)
 - 기준 main: `6f7a8c1` (R4 머지 뒤)
-- 코드 검증 커밋: `8194a27`. 이후 검증 기록과 문서 참조만 고쳤다. PR HEAD 는 PR 본문에 적는다.
+- 구현 검증 커밋: `8194a27`. 이후 문서 참조·검증 기록과 내보내는 이름 검사만 고쳤다. PR HEAD 는 PR 본문에 적는다.
 - 환경: macOS, Node.js v24.22.1, pnpm 12.18.0. mock 과 임시 디렉터리만 사용했다.
 
 ## 요구사항별 증거
 
 | 요구사항 | 사례와 명령 | 기대 결과 | 실제 결과 |
 | --- | --- | --- | --- |
-| REQ1 | 기준·작업 브랜치의 `pnpm test` | 기존 테스트 유지, 모두 통과 | 152개 파일 2,339개에서 152개 파일 2,341개로 증가. 재내보내기 구조 검사만 추가했고 기존 테스트는 수정하지 않았다 |
+| REQ1 | 기준·작업 브랜치의 `pnpm test` | 기존 테스트 유지, 모두 통과 | 152개 파일 2,339개에서 152개 파일 2,343개로 증가. 재내보내기 구조와 내보내는 이름 검사만 추가했고 기존 동작의 회귀 테스트는 수정하지 않았다 |
 | REQ1 | 각각 빌드한 뒤 `node scripts/help-snapshot.mjs --out`·`--check` | 도움말·등록 순서 유지 | 104개 명령 경로 일치 |
 | REQ1 | 기준 main 선언과 분할한 선언을 임시 TypeScript 스크립트로 비교 | 내보내는 이름과 기존 구현 유지 | 설정의 값·타입 이름 15개와 스킬의 값·타입 이름 10개가 같다. export 수정자를 제외한 원래 선언 37개·35개와 주석이 모두 동일하다 |
+| REQ1 | `src/architecture.test.ts` 의 `Object.keys(await import(...))` 검사 | 기존 진입 파일의 런타임 이름 유지 | 설정과 스킬의 기존 런타임 export 이름 목록과 정확히 일치 |
 | REQ1 | `pnpm test src/config src/architecture.test.ts` | [ADR-069](../../adr/069-macos-keychain-secret-store.md)·[ADR-080](../../adr/080-secret-file-exposure-warning.md)·[ADR-081](../../adr/081-web-session-auth.md) 동작 유지 | 8개 파일 203개 통과. 파일 권한, 키체인 쓰기 실패 복원, 평문 경고, 쿠키 생략 보존을 기존 테스트로 확인했다 |
 | REQ1 | `pnpm test src/skill src/architecture.test.ts` | 설치 상태·보호·복원 동작 유지 | 4개 파일 81개 통과. 변경·손상·미관리 항목 보호와 설치 실패 복원을 기존 테스트로 확인했다 |
 | REQ3 | `src/architecture.test.ts`, `pnpm tsc --noEmit`, API diff 대조 | R1·R2 API 구조 유지 | API 소스 변경 없음. 기존 재내보내기 검사가 통과하고 config·skill 의 기존 진입 파일도 재내보내기만 남는다 |
@@ -31,7 +32,7 @@ REQ3 의 스펙 원문은 R1·R2 의 API 영역 구조다. R5 에서는 그 구�
 | --- | --- |
 | `pnpm install --frozen-lockfile` | 통과 |
 | `pnpm tsc --noEmit` | 통과 |
-| `pnpm test` | 152개 파일, 2,341개 테스트 통과 |
+| `pnpm test` | 리뷰 반영 뒤 152개 파일, 2,343개 테스트 통과 |
 | `pnpm run build` | 통과 |
 | `pnpm verify:package` | 통과 |
 | `pnpm api:inventory` | 통과. 구현에 있고 공식에 없는 endpoint 0건 |
@@ -41,6 +42,7 @@ REQ3 의 스펙 원문은 R1·R2 의 API 영역 구조다. R5 에서는 그 구�
 | `verify_task.ts r5 --require-verification` | 구현 전 위반 0건. 검사 범위 직접 확인과 크기 추정 경고만 있음 |
 | `verify_task.ts --staged phase-01.md`·`phase-02.md` | 각각 위반 0건, 경고 0건 |
 | `git diff --check` | 통과 |
+| `adr-docs.ts check --changed-since origin/main` | 변경 파일 위반 없음, 종료 코드 0. PR 밖 기존 위반은 수정하지 않았다 |
 
 테스트가 오류 문자열을 출력하는 성공 사례와 기존 Vite 설정 경고는 실패가 아니다.
 실제 Dooray API·웹·SMTP·IMAP 과 사용자 설정·키체인에 접근하지 않았다.
@@ -67,9 +69,9 @@ REQ3 의 스펙 원문은 R1·R2 의 API 영역 구조다. R5 에서는 그 구�
 
 자동 리뷰는 동작 변경을 찾지 못했고 P3 문서 참조 1건을 지적했다. 코디네이터가 수정 범위를 허용한 `docs/pitfalls/code-review/sensitive-file-mode-missing.md` 의 `ensureDir`·`writeConfigFile` 예시 경로만 `src/config/store-file.ts` 로 고쳤다.
 Claude 독립 리뷰는 P1·P2·P3 0건, P4 1건, P5 2건이었다. 기존 선언·export·보안 동작과 의존 방향을 대조했고, 같은 코드 커밋에서 관련 테스트 303개와 타입·PII 검사를 통과했다.
-P4 구현 위치 설명을 고쳤다. P5 과거 문서의 줄 번호는 문서 worker 가 함수 이름으로 바꾸므로 이 PR 에서는 손대지 않는다. P5 export 이름 고정 테스트는 코디네이터 지시에 따라 이 PR 에서 추가한다.
+P4 구현 위치 설명을 고쳤다. P5 과거 문서의 줄 번호는 문서 worker 가 함수 이름으로 바꾸므로 이 PR 에서는 손대지 않는다. P5 export 이름 고정 테스트는 코디네이터 지시에 따라 추가했다. `Object.keys(await import(...))` 로 두 진입 파일의 런타임 이름을 검사하며 실제 설정·키체인 조회 함수는 호출하지 않는다.
 
-남은 작업은 문서 수정 뒤 PR CI 와 코디네이터의 머지다. 머지 뒤 별도 실행 검증은 없다.
+남은 작업은 리뷰 반영 뒤 PR CI 와 코디네이터의 머지다. 머지 뒤 별도 실행 검증은 없다.
 
 ## docs-consolidate 후보 (R0~R5)
 
