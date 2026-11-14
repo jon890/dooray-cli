@@ -240,8 +240,13 @@ dueDateFlag를 false로 새로 바꾸는 일정 없음 요청은 서버가 무�
 | --- | --- |
 | `messenger channels` | 없음 |
 | `messenger logs` | 없음 |
+| `messenger send` | 없음 |
+| `messenger channel-send` | 없음 |
+| `messenger thread-send` | 없음 |
+| `messenger file download` | 없음 |
 
-`messenger send`, `messenger channel-send`, `messenger thread-send`, `messenger file download` 는 웹 경로를 실측하지 못해 지원하지 않는다.
+웹에는 상대 id 로 1:1 방에 바로 보내는 경로가 없다. `messenger send --to` 는 나 자신이면 나와의 대화방으로, 그 밖에는 이미 있는 1:1 방으로 보내고, 방이 없으면 요청 전에 종료 코드 3 으로 끝난다.
+메시지 보내기는 나에게 보내는 대화방에서만 실측했다. 다른 사람의 대화방과 스레드도 같은 요청이다.
 
 #### 웹 응답에서 빠질 수 있는 필드
 
@@ -250,7 +255,8 @@ dueDateFlag를 false로 새로 바꾸는 일정 없음 요청은 서버가 무�
 | 명령 | 빠질 수 있는 필드 |
 | --- | --- |
 | `messenger channels` | 웹에 없는 `archivedAt`. 대화방 `role` 은 웹 값(`creator`, `member`)이다 |
-| `messenger logs` | 메시지 `type` 은 파일(`FILE`)과 답장(`REPLY`)만 채운다. 스레드 필드는 웹에서 확인하지 못해 비어 있다 |
+| `messenger logs` | 메시지 `type` 은 파일(`FILE`)과 답장(`REPLY`)만 채운다 |
+| `messenger send`, `messenger channel-send`, `messenger thread-send` | 결과는 `id`(와 `channelId`)만 낸다 |
 
 ### 캘린더
 

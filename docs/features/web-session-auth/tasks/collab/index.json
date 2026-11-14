@@ -4,19 +4,9 @@
   "pr_scope": "PR4: calendar·stream·messenger 웹 구현과 지원 목록, persona 스크립트의 CLI 호출 전환",
   "deferred": [
     {
-      "what": "messenger 보내기·스레드·파일 받기의 웹 경로 실측",
-      "why": "1단계에서 브라우저 권한 창으로 제어권이 넘어가 실측하지 못했다",
-      "after": "phase 03 의 첫 작업"
-    },
-    {
       "what": "member get --with-org 소속 조회(phase 05)",
       "why": "freebusy 요청 형식을 알아내지 못했다",
       "after": "phase 05 실측"
-    },
-    {
-      "what": "persona 의 웹 방식 실행 확인",
-      "why": "post 명령의 웹 지원은 PR2 소관이다",
-      "after": "PR2 머지"
     }
   ],
   "status": "pending",

@@ -91,5 +91,6 @@ dooray messenger file download "배포알림" <fileId> --output-file ./보고서
 
 ## 웹 방식
 
-`auth-mode` 가 `web` 이면 `channels` 와 `logs` 만 웹 경로로 돈다. `send`, `channel-send`, `thread-send`, `file download` 는 웹 경로를 확인하지 못해 지원하지 않고, 쓰면 요청 전에 종료 코드 3 으로 끝난다.
-웹의 메시지는 파일(`FILE`)과 답장(`REPLY`)만 `type` 을 채우고 스레드 정보는 비어 있다. 자세한 표는 [설정 가이드](setup.md)의 「웹 방식의 지원 범위」 가 소유한다.
+`auth-mode` 가 `web` 이면 메신저 명령도 웹 화면이 쓰는 경로로 돈다. `--json` 은 공식 API 의 필드 이름과 구조를 유지한다.
+웹에는 상대 id 로 1:1 방에 바로 보내는 경로가 없어, `send --to` 는 나 자신이거나 이미 1:1 방이 있는 상대에게만 보낸다. 방이 없는 상대에게는 요청 전에 종료 코드 3 으로 끝난다.
+지원 표와 빠질 수 있는 필드는 [설정 가이드](setup.md)의 「웹 방식의 지원 범위」 가 소유한다.

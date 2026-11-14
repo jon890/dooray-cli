@@ -18,17 +18,9 @@
 
 ## 작업 항목
 
-### 1. 보내기·스레드·파일 받기의 웹 경로를 실측한다(구현 전에 먼저)
+### 1. 보내기·스레드·파일 받기의 웹 경로를 실측한다(완료 2026-11-14)
 
-1단계에서는 브라우저 권한 창 때문에 하지 못했다. 로그인된 ego 브라우저에서 나와의 대화방을 열고 아래를 확인해 `docs/api/web-endpoints/messenger.md` 의 「미실측」 을 채운다.
-
-- 메시지 보내기 요청의 경로·본문(REST 인지 실시간 연결인지). `sendDirectMessage`(나에게)와 `sendChannelMessage`(나와의 대화방 id)에 해당하는 것.
-- 스레드 만들기(`createChannelThread`, `createLogThread`), 스레드가 달린 메시지의 로그 필드(`thread` 변환).
-- 파일 받기 경로. 나와의 대화방에 작은 가짜 파일을 올려 확인하고, 지울 수 있으면 지운다.
-- 메시지 삭제 경로(실측 메시지를 지우기 위해).
-- 로그 `type` 숫자 코드의 대응(`0`, `2` 등), 존재하지 않는 방 id 의 응답.
-
-REST 경로가 없으면 해당 명령은 구현하지 않고 5번의 지원 목록에서 막는다(REQ8).
+나와의 대화방에서 실측해 `docs/api/web-endpoints/messenger.md` 에 적었다. 보내기(`channelLogs`), 스레드 만들기(`thread-channels`), 파일 받기(`channel/{id}/file/{id}`), 삭제 경로가 모두 REST 였다. 다른 사람의 대화방에 보내는 것만 미실측이다.
 
 ### 2. 응답 고정 파일
 
@@ -47,7 +39,7 @@ REST 경로가 없으면 해당 명령은 구현하지 않고 5번의 지원 목
 
 ### 5. 지원 목록과 배선
 
-`src/commands/web-support/messenger.ts` 에 지원하는 명령(`messenger channels`, `messenger logs` 와 1번에서 붙인 것)을 둔다. 붙이지 못한 명령은 목록에 넣지 않아 요청 전에 종료 코드 3 으로 막힌다. `src/api/web/index.ts` 의 `messenger` 한 줄과 `web-support.ts` 영역 파일 한 줄만 고친다. `src/resolvers/messenger-channel.ts`, `src/commands/messenger/**` 는 `createClient` 와 `MessengerClient` 를 쓴다.
+`src/commands/web-support/messenger.ts` 에 여섯 명령(`channels`, `logs`, `send`, `channel-send`, `thread-send`, `file download`)을 둔다. `src/api/web/index.ts` 의 `messenger` 한 줄과 `web-support.ts` 영역 파일 한 줄만 고친다. `src/resolvers/messenger-channel.ts`, `src/commands/messenger/**` 는 `createClient` 와 `MessengerClient` 를 쓴다.
 
 ### 6. 문서
 
