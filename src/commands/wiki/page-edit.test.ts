@@ -397,3 +397,15 @@ describe("wiki page edit --mime-type", () => {
     expect(mocks.client.updateWikiPageContent).not.toHaveBeenCalled();
   });
 });
+
+describe("wiki page edit 웹 방식의 본문 형식", () => {
+  it("대화형 편집은 기존 형식이 text/x-markdown 이 아니면 편집기를 열기 전에 종료 코드 3 으로 끝난다", async () => {
+    mocks.getConfigOrThrow.mockResolvedValue({ apiKey: "", baseUrl: "https://api.dooray.com", authMode: "web", tenantName: "my-org", sessionCookie: "fake-session" });
+    const body = { header: { isSuccessful: true, resultCode: 0, resultMessage: "" }, result: { content: { wikiId: "wiki-1", pageId: "page-1", version: 1, root: false, subject: "제목", body: { mimeType: "text/html", content: "<p>x</p>" }, files: [], images: [] } } };
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json(body)));
+    const program = await createCommandTree();
+    await expect(program.parseAsync(["node", "dooray", "wiki", "edit", "my-wiki", "page-1"])).rejects.toMatchObject({ exitCode: 3 });
+    expect(mocks.openInEditor).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+});

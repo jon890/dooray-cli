@@ -297,8 +297,13 @@ export function createWikiWeb(context: WebContext): WikiClient {
 
   /** 확인과 쓰기 사이의 경쟁이나 권한 때문에 서버가 제목을 바꿔 저장했을 수 있다. 저장된 제목을 보인다. */
   async function warnIfTitleChanged(wikiId: string, pageId: string, requested: string): Promise<void> {
-    const stored = (await client.getWikiPage(wikiId, pageId)).result.subject;
-    if (stored !== requested) warnTitleChanged(stored);
+    // 쓰기는 이미 끝났다. 확인 읽기가 실패해도 명령을 실패시키면 다시 실행한 사용자가 같은 제목 확인에 걸린다.
+    try {
+      const stored = (await client.getWikiPage(wikiId, pageId)).result.subject;
+      if (stored !== requested) warnTitleChanged(stored);
+    } catch {
+      process.stderr.write("⚠  저장은 끝났지만 저장된 제목을 확인하지 못했습니다.\n");
+    }
   }
 
   return client;

@@ -53,6 +53,15 @@ export const wikiPageEditCommand = new Command("edit")
       const page = res.result;
       stopSpinner(true, "위키 페이지 조회 완료");
 
+      // 웹은 text/x-markdown 본문만 받는다. 편집을 마친 뒤에 거절하면 편집한 내용이 사라지므로 편집기를 열기 전에 막는다.
+      const existingMimeType = page.body?.mimeType;
+      if (config.authMode === "web" && existingMimeType && existingMimeType !== "text/x-markdown") {
+        throw new DoorayCliError(
+          "웹은 본문 형식으로 text/x-markdown 만 받습니다. 웹 방식에서는 지원하지 않습니다. auth-mode 를 api-key 로 바꾸세요.",
+          EXIT_PARAM_ERROR,
+        );
+      }
+
       const original = serializeWikiFrontmatter(page);
       const edited = await openInEditor(original);
 

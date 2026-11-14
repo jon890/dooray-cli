@@ -155,6 +155,14 @@ describe("웹 위키 페이지 쓰기", () => {
     expect(write).toHaveBeenCalledWith(expect.stringContaining("저장된 제목: 새 글 (1)"));
   });
 
+  it("쓴 뒤 저장된 제목을 읽지 못해도 쓰기는 성공으로 끝나고 경고만 낸다", async () => {
+    const write = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    route({ [`GET ${W}/pages`]: () => fixtures.pagesNone, [`POST ${W}/pages`]: () => fixtures.created, [`GET ${W}/pages/page-new`]: () => fixtures.notFound });
+    const res = await client().createWikiPage("wiki-1", { subject: "새 글", body: { mimeType: "text/x-markdown", content: "" }, parentPageId: "page-home" });
+    expect(res.result.id).toBe("page-new");
+    expect(write).toHaveBeenCalledWith(expect.stringContaining("저장된 제목을 확인하지 못했습니다"));
+  });
+
   it("본문 형식이 text/x-markdown 이 아니면 호출 없이 종료 코드 3 으로 끝난다", async () => {
     const calls = route({});
     await expect(client().createWikiPage("wiki-1", { subject: "a", body: { mimeType: "text/html", content: "x" }, parentPageId: "page-home" })).rejects.toMatchObject({ exitCode: 3 });
