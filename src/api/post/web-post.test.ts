@@ -9,6 +9,7 @@ function mockServer(detail = structuredClone(fixtures.detail), workflows = struc
     const path = new URL(request.url).pathname;
     if (request.method !== "GET") {
       writes.push({ path, body: await request.clone().json() });
+      if (path.endsWith("/move")) detail.result.parent = { id: detail.result.id, number: detail.result.number, subject: detail.result.subject };
       return Response.json(path.endsWith("/move") ? fixtures.moved : path.endsWith("/posts") ? fixtures.created : fixtures.updated);
     }
     return Response.json(path.endsWith("/workflows") ? workflows : path.endsWith("/tasks") ? fixtures.list : detail);
@@ -102,6 +103,32 @@ describe("웹 업무 요청과 공식 응답", () => {
     expect(writes[0]).toEqual({ path: "/v2/wapi/projects/!project-1/posts/42/change-workflow", body: { workflowId: "closed-1" } });
     expect(writes[1]).toEqual({ path: "/v2/wapi/projects/!project-1/posts/42/move", body: { targetProjectId: "project-1", parentPostNumber: 42 } });
     expect(moved.result).toEqual({ post: { id: "post-1" }, project: { id: "project-1" } });
+  });
+  it("상위 변경 뒤 상세를 다시 읽고 다른 필드가 유지된 결과를 반환한다", async () => {
+    const before = structuredClone(fixtures.detail), current = structuredClone(before);
+    const parent = structuredClone(before); parent.result.id = "parent-1"; parent.result.number = 7;
+    const writes: any[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (request: Request) => {
+      const url = new URL(request.url);
+      if (request.method === "POST") {
+        writes.push(await request.clone().json());
+        current.result.parent = { id: "parent-1", number: 7, subject: "상위" };
+        return Response.json(fixtures.moved);
+      }
+      return Response.json(url.pathname.endsWith("/parent-1") ? parent : current);
+    }));
+    const api = client();
+    await api.getPost("project-1", "post-1");
+    const response = await api.setPostParent("project-1", "post-1", "parent-1");
+    const after = (await api.getPost("project-1", "post-1")).result;
+    expect(writes).toEqual([{ targetProjectId: "project-1", parentPostNumber: 7 }]);
+    expect(response.result).toEqual({ post: { id: "post-1" }, project: { id: "project-1" } });
+    expect(after.parent?.id).toBe("parent-1");
+    for (const key of ["tagIdList", "milestoneId", "workflowId", "workflowClass", "users"]) expect(current.result[key]).toEqual(before.result[key]);
+  });
+  it("성공 헤더만 돌아와도 상세의 상위가 다르면 성공을 만들지 않는다", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (request: Request) => Response.json(request.method === "POST" ? fixtures.moved : fixtures.detail)));
+    await expect(client().setPostParent("project-1", "post-1", "post-1")).rejects.toMatchObject({ exitCode: 1 });
   });
   it("완료 상태가 여러 개면 대표를 추측하지 않고 쓰기 전에 거절한다", async () => {
     const workflows = structuredClone(fixtures.workflows);

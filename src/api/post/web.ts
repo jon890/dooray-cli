@@ -233,7 +233,9 @@ export function createPostWeb(context: WebContext): PostClient {
     async setPostParent(projectId, postId, parentPostId) {
       const parent = row((await load(parentPostId, projectId)).result);
       const response = await mutation(projectId, postId, "/move", { targetProjectId: projectId, parentPostNumber: count(parent.number) });
-      return { header: response.header, result: { post: { id: postId }, project: { id: projectId } } };
+      const moved = row((await load(postId, projectId, true)).result);
+      if (identifier(row(moved.parent).id) !== parentPostId) return invalidResponse();
+      return { header: response.header, result: { post: { id: identifier(moved.id) }, project: { id: identifier(moved.projectId) } } };
     },
     async getPostComments(projectId, postId, params = {}) {
       const page = count(params.page ?? 0), size = count(params.size ?? 20);
