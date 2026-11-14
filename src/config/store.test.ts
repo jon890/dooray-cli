@@ -385,6 +385,11 @@ describe("config.json 저장 권한", () => {
 });
 
 describe("setConfigValue 값 검증", () => {
+  it.each([{ baseUrl: "https://api.dooray.com" }, { baseUrl: "https://example.com", tenantName: "my-org" }])("웹 전환 전에 주소 설정을 안내한다: %j", async (config) => {
+    readFileMock.mockResolvedValueOnce(JSON.stringify({ version: 1, apiKey: "", ...config }));
+    await expect(setConfigValue("auth-mode", "web")).rejects.toMatchObject({ exitCode: EXIT_PARAM_ERROR, message: expect.stringContaining("tenant-name·base-url 을 먼저 설정") });
+    expect(writeFileMock).not.toHaveBeenCalled();
+  });
   it.each([["auth-mode", "other"], ["tenant-name", "test.example"], ["base-url", "http://api.dooray.com"], ["session-cookie", "a=1; b=2"]])("%s 의 잘못된 입력을 저장 전에 거절한다", async (key, value) => {
     readFileMock.mockResolvedValueOnce(JSON.stringify({ version: 1, apiKey: "", baseUrl: "https://api.dooray.com", authMode: "web", tenantName: "my-org" }));
     await expect(setConfigValue(key, value)).rejects.toMatchObject({ exitCode: EXIT_PARAM_ERROR });

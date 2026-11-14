@@ -17,15 +17,16 @@ describe("웹 첨부 공통 전송", () => {
     expect(init.redirect).toBe("manual"); expect(new Headers(init.headers).get("cookie")).toBe("SESSION=" + cookie);
     expect(new Headers(init.headers).has("Authorization")).toBe(false);
   });
-  it("같은 클라우드의 https 파일 서버로 307 을 한 번 따라간다", async () => {
-    const fetch = vi.fn().mockResolvedValueOnce(redirect("https://file-api.dooray.com/download")).mockResolvedValueOnce(new Response("bytes")); vi.stubGlobal("fetch", fetch);
-    expect(await (await http().requestBytes("wapi/files")).text()).toBe("bytes");
+  it.each([origin + "/download", "https://file-api.dooray.com/download"])("허용한 %s 로 307 을 한 번 따라간다", async (location) => {
+    const fetch = vi.fn().mockResolvedValueOnce(redirect(location)).mockResolvedValueOnce(new Response("bytes")); vi.stubGlobal("fetch", fetch);
+    expect(await (await http().requestBytes("wapi/files", { headers: { "X-Private": "secret", Accept: "application/octet-stream" } })).text()).toBe("bytes");
     expect(fetch).toHaveBeenCalledTimes(2);
-    expect(fetch.mock.calls[1][0]).toBe("https://file-api.dooray.com/download");
+    expect(fetch.mock.calls[1][0]).toBe(location);
+    expect([...new Headers(fetch.mock.calls[1][1].headers).keys()]).toEqual(["cookie"]);
     expect(fetch.mock.calls[1][1].redirect).toBe("manual");
     expect(new Headers(fetch.mock.calls[1][1].headers).get("cookie")).toBe("SESSION=" + cookie);
   });
-  it.each(["https://example.com/download", "http://file-api.dooray.com/download", "https://file-api.gov-dooray.com/download"])("허용하지 않는 %s 에는 쿠키·요청을 보내지 않는다", async (location) => {
+  it.each(["https://example.com/download", "https://x.dooray.com/download", "https://file-api.dooray.com:8443/download", "https://user:pass@file-api.dooray.com/download", "http://file-api.dooray.com/download", "https://file-api.gov-dooray.com/download"])("허용하지 않는 %s 에는 쿠키·요청을 보내지 않는다", async (location) => {
     const fetch = vi.fn(async () => redirect(location)); vi.stubGlobal("fetch", fetch);
     await expect(http().requestBytes("wapi/files")).rejects.toMatchObject({ exitCode: 1 });
     expect(fetch).toHaveBeenCalledTimes(1);
@@ -52,9 +53,9 @@ describe("웹 첨부 공통 전송", () => {
     await expect(http().requestBytes("wapi/files")).rejects.toMatchObject({ exitCode: 2 });
     await expect(http().upload("wapi/files", form())).rejects.toMatchObject({ exitCode: 2 });
   });
-  it("첨부로 지정된 일반 HTML 파일은 보존한다", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("<html>sample</html>", { headers: { "Content-Type": "text/html", "Content-Disposition": "attachment; filename=sample.html" } })));
-    expect(await (await http().requestBytes("wapi/files")).text()).toBe("<html>sample</html>");
+  it.each(["<html>sample</html>", '<html><form action="/auth/signin">login 로그인</form></html>'])("첨부로 지정된 HTML 파일은 내용과 무관하게 보존한다: %s", async (html) => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(html, { headers: { "Content-Type": "text/html", "Content-Disposition": "attachment; filename=sample.html" } })));
+    expect(await (await http().requestBytes("wapi/files")).text()).toBe(html);
   });
   it("multipart 업로드의 직접 200 과 307 뒤 JSON 응답을 같은 형식으로 돌려준다", async () => {
     const body = form();

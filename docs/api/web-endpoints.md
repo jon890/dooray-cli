@@ -31,6 +31,7 @@
 영역별로 필요한 요청 헤더는 해당 영역의 web.ts 에서 붙인다.
 
 공용 전송은 src/api/web/http.ts 의 requestBytes(input, options) 와 upload(input, formData, options) 를 쓴다. 요청 옵션의 searchParams 는 쿼리로 붙는다.
+requestBytes 호출자는 파일명을 [ADR-067](../adr/067-attachment-file-name-decoding.md) 의 parseContentDispositionFileName·fallbackFileName helper 로 정한다.
 requestBytes 는 로그인 응답·오류와 307 호스트를 확인한 Response 를 반환하므로 그 뒤에 바이트를 읽고 저장한다. upload 는 같은 경계의 JSON 응답을 반환한다.
-공개 API 주소는 createWebClient·WebContext 가 전달한다. 첨부 307 은 그 주소를 기준으로 같은 클라우드 https 호스트만 한 번 허용하고, 연쇄 리다이렉트는 막는다.
+공개 API 주소는 createWebClient·WebContext 가 전달한다. 첨부 307 은 테넌트 웹 origin 또는 공개 API 와 같은 클라우드의 정확한 https file-api 호스트만 한 번 허용하고, 연쇄 리다이렉트는 막는다.
 다운로드는 응답 헤더에 시간 제한을 걸고 업로드에는 그 제한을 걸지 않는다. 로그인 HTML 200·로그인 리다이렉트는 세션 만료로 구분하며 첨부로 반환하지 않는다.

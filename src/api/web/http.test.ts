@@ -36,11 +36,11 @@ describe("웹 요청의 비밀값 경계", () => {
     expect(mock).toHaveBeenCalledTimes(1);
   });
   it("서버가 주소와 쿠키를 되돌려줘도 오류·실행 기록에 들어갈 메시지에서 가린다", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ header: { ...header, isSuccessful: false, resultMessage: `bad ${cookie} ${origin}/path my-org.dooray.com` }, result: null })));
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ header: { ...header, isSuccessful: false, resultMessage: `bad ${cookie} ${origin}/path my-org.dooray.com api.dooray.com file-api.dooray.com another.gov-dooray.com` }, result: null })));
     const error = await new WebHttp(origin, cookie, "https://api.dooray.com").request("bad").catch((e: Error) => e);
     expect(error).toMatchObject({ exitCode: 1 });
     expect((error as Error).message).not.toContain(cookie);
-    expect((error as Error).message).not.toContain("my-org.dooray.com");
+    expect((error as Error).message).not.toMatch(/(?:[a-z0-9-]+\.)+(?:dooray\.com|gov-dooray\.com)/);
   });
   it.each([400, 404, 500])("HTTP 200 이어도 resultCode %s 의 실패 본문은 API 오류다", async (resultCode) => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ header: { isSuccessful: false, resultCode, resultMessage: "요청을 처리하지 못했습니다." }, result: null })));

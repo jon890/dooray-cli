@@ -464,7 +464,10 @@ export async function setConfigValue(
   switch (key) {
     case "auth-mode":
       if (value !== "api-key" && value !== "web") throw new DoorayCliError("auth-mode 는 api-key 또는 web 이어야 합니다.", EXIT_PARAM_ERROR);
-      if (value === "web") resolveWebBaseUrl(config);
+      if (value === "web") {
+        try { resolveWebBaseUrl(config); }
+        catch { throw new DoorayCliError("웹 방식으로 바꾸려면 tenant-name·base-url 을 먼저 설정하세요.", EXIT_PARAM_ERROR); }
+      }
       config.authMode = value;
       break;
     case "session-cookie":

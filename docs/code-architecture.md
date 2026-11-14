@@ -83,7 +83,7 @@ editor/    → api/types + cache/types + utils (편집 데이터 타입과 임�
 메서드 목록은 여기 적지 않는다. 메서드가 늘 때마다 낡고, 그 파일을 열면 바로 보인다.
 
 ```bash
-rg "async \w+\(" src/api/client.ts src/api/*/web.ts
+rg "^\s+(async )?\w+\(" src/api/client.ts src/api/*/web.ts
 ```
 
 메서드가 지키는 규약은 다음과 같다.

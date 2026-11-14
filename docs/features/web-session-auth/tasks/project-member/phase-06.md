@@ -6,7 +6,7 @@
 
 사용자 결정(2026-11-14)의 API 영역별 구조로 바꿔 뒤 PR 이 다른 영역을 동시에 구현할 수 있게 한다.
 
-**범위 외**: DTO 이동과 뒤 PR 웹 메서드 구현.
+**범위 외**: 뒤 PR 웹 메서드 구현.
 
 ## 컨텍스트
 
@@ -33,7 +33,7 @@ WebHttp 를 web/http.ts 로 옮기고 requestBytes·multipart upload·허용한 
 
 ### 4. 문서
 
-design.md·ADR-081·code-architecture.md 를 실제 경로와 공통 경계에 맞춘다. DTO 이동은 하지 않는다.
+design.md·ADR-081·code-architecture.md 를 실제 경로와 공통 경계에 맞춘다. 매개변수 DTO 의 api/types.ts 이동을 반영한다.
 
 ## 검증
 
@@ -49,56 +49,33 @@ node scripts/check-public-refs.mjs
 
 ## 변경 파일
 
+이 표는 추가 독립 검토 지적을 반영하는 현재 커밋 범위다. 앞선 영역 분리·공용 기반 파일 목록은 이 계획의 이전 커밋에 남아 있다.
+
 | 파일 | 변경 |
 | --- | --- |
 | `docs/adr/081-web-session-auth.md` | 수정 |
-| `README.md` | 수정 |
 | `docs/api/web-endpoints.md` | 수정 |
-| `docs/api/web-endpoints/member.md` | 수정 |
 | `docs/code-architecture.md` | 수정 |
-| `docs/data-schema.md` | 수정 |
 | `docs/features/web-session-auth/design.md` | 수정 |
-| `docs/guide/setup.md` | 수정 |
-| `skills/dooray-cli/SKILL.md` | 수정 |
-| `skills/dooray-cli/references/common.md` | 수정 |
-| `src/api/client.ts` | 수정 |
 | `src/api/dooray-client.test.ts` | 수정 |
-| `src/api/dooray-client.ts` | 수정 |
-| `src/api/member/types.ts` | 수정 |
-| `src/api/member/web.test.ts` | 수정 |
-| `src/api/member/web.ts` | 수정 |
-| `src/api/post/types.ts` | 수정 |
-| `src/api/project/types.ts` | 수정 |
-| `src/api/project/web.test.ts` | 수정 |
-| `src/api/project/web.ts` | 수정 |
-| `src/api/types.ts` | 수정 |
-| `src/api/web-http.test.ts` | 삭제 |
-| `src/api/web-http.ts` | 삭제 |
-| `src/api/web/context.ts` | 수정 |
-| `src/api/web/convert.ts` | 수정 |
+| `src/api/web/file-transfer.test.ts` | 수정 |
+| `src/api/web/http.test.ts` | 수정 |
+| `src/api/web/http.ts` | 수정 |
 | `src/api/web/index.ts` | 수정 |
-| `src/api/wiki/types.ts` | 수정 |
-| `src/commands/setup.test.ts` | 수정 |
-| `src/commands/setup.ts` | 수정 |
 | `src/commands/web-support.test.ts` | 수정 |
 | `src/commands/web-support.ts` | 수정 |
+| `src/commands/web-support/calendar.ts` | 수정 |
+| `src/commands/web-support/member.ts` | 수정 |
+| `src/commands/web-support/messenger.ts` | 수정 |
+| `src/commands/web-support/post.ts` | 수정 |
+| `src/commands/web-support/project.ts` | 수정 |
+| `src/commands/web-support/stream.ts` | 수정 |
+| `src/commands/web-support/wiki.ts` | 수정 |
 | `src/config/store.test.ts` | 수정 |
 | `src/config/store.ts` | 수정 |
-| `src/config/web-auth.test.ts` | 수정 |
-| `src/config/web-auth.ts` | 수정 |
-| `src/index.ts` | 수정 |
-| `src/resolvers/member.test.ts` | 수정 |
-| `src/resolvers/member.ts` | 수정 |
-| `docs/api/web-endpoints/calendar.md` | 신규 |
-| `docs/api/web-endpoints/messenger.md` | 신규 |
-| `docs/api/web-endpoints/post.md` | 신규 |
-| `docs/api/web-endpoints/stream.md` | 신규 |
-| `docs/api/web-endpoints/wiki.md` | 신규 |
-| `src/api/web/file-transfer.test.ts` | 신규 |
-| `src/api/web/http.test.ts` | 신규 |
-| `src/api/web/http.ts` | 신규 |
-| `src/commands/web-support/calendar.ts` | 신규 |
-| `src/commands/web-support/messenger.ts` | 신규 |
-| `src/commands/web-support/post.ts` | 신규 |
-| `src/commands/web-support/stream.ts` | 신규 |
-| `src/commands/web-support/wiki.ts` | 신규 |
+
+
+### 추가 독립 검토 권장 반영
+
+228aa44 기준 Claude 추가 검토는 차단 0건·권장 9건으로 머지 가능이었다. HTML 첨부는 본문 로그인 단어와 무관하게 보존한다. 첨부 307 은 웹 origin 또는 같은 클라우드의 정확한 https file-api origin 만 허용하고 새 Cookie 헤더만 보낸다. 공개 클라이언트의 호스트 규칙은 유지한다.
+선택 메서드가 없는 Proxy 는 undefined 를 반환한다. 오류의 bare 클라우드 호스트를 가리고, 웹 전환의 주소 설정 오류는 안내와 종료 코드 3 을 반환한다. 객체 리터럴·메서드 충돌 검사를 추가했다. 가이드 검사에서 영역별 한국어 이름을 가져오며 파일명 helper·메서드 검색 명령·import 배치를 맞췄다.

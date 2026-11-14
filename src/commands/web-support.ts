@@ -2,14 +2,15 @@
 import { DoorayCliError } from "../utils/errors.js";
 import type { Command } from "commander";
 import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
-import { projectWebSupport } from "./web-support/project.js";
-import { memberWebSupport } from "./web-support/member.js";
+import { projectWebSupport, projectWebAreaName } from "./web-support/project.js";
+import { memberWebSupport, memberWebAreaName } from "./web-support/member.js";
+import { postWebSupport, postWebAreaName } from "./web-support/post.js";
+import { wikiWebSupport, wikiWebAreaName } from "./web-support/wiki.js";
+import { messengerWebSupport, messengerWebAreaName } from "./web-support/messenger.js";
+import { calendarWebSupport, calendarWebAreaName } from "./web-support/calendar.js";
+import { streamWebSupport, streamWebAreaName } from "./web-support/stream.js";
+export const WEB_AREA_NAMES = { project: projectWebAreaName, member: memberWebAreaName, post: postWebAreaName, wiki: wikiWebAreaName, messenger: messengerWebAreaName, calendar: calendarWebAreaName, stream: streamWebAreaName };
 
-import { postWebSupport } from "./web-support/post.js";
-import { wikiWebSupport } from "./web-support/wiki.js";
-import { messengerWebSupport } from "./web-support/messenger.js";
-import { calendarWebSupport } from "./web-support/calendar.js";
-import { streamWebSupport } from "./web-support/stream.js";
 export const WEB_SUPPORT_BY_DOMAIN = {
   project: projectWebSupport, member: memberWebSupport,
   post: postWebSupport, wiki: wikiWebSupport, messenger: messengerWebSupport,

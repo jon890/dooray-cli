@@ -4,7 +4,8 @@ import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_API_ERROR, EXIT_AUTH_ERROR, EXIT_RATE_LIMITED } from "../../utils/exit-codes.js";
 import { createTokenBucket, parseRateLimitHeaders } from "../rate-limiter.js";
 import { parseJsonPreservingLargeIntegers } from "../json-large-integer.js";
-import { fetchWithResponseTimeout, isTrustedFileHost } from "../file-redirect.js";
+import { fetchWithResponseTimeout } from "../file-redirect.js";
+import { API_ENDPOINTS } from "../../config/types.js";
 import type { DoorayApiHeader } from "../types.js";
 
 export interface WebEnvelope { header: DoorayApiHeader; result: unknown; totalCount?: number; references?: unknown; }
@@ -43,7 +44,18 @@ export class WebHttp {
   }
   private safeMessage(message: string): string {
     return message.split(this.cookie).join("***").split(new URL(this.origin).hostname).join("<host>")
+      .replace(/(?:[a-z0-9-]+\.)+(?:(?:gov-)?dooray\.(?:com|co\.kr))\b/gi, "<host>")
       .replace(/https?:\/\/[^\s<>"']+/gi, "<url>").replace(/SESSION\s*=\s*[^\s;,]+/gi, "SESSION=***");
+  }
+  private isTrustedFileRedirect(location: string): boolean {
+    try {
+      const target = new URL(location);
+      const publicApi = new URL(this.publicApiBaseUrl);
+      const fileOrigin = Object.values(API_ENDPOINTS).some((endpoint) => endpoint === publicApi.origin)
+        ? `https://file-api.${publicApi.hostname.slice(4)}` : undefined;
+      return target.protocol === "https:" && !target.username && !target.password
+        && (target.origin === this.origin || target.origin === fileOrigin);
+    } catch { return false; }
   }
   private safeError(error: unknown): DoorayCliError {
     if (error instanceof DoorayCliError) return error;
@@ -63,7 +75,8 @@ export class WebHttp {
   private isLoginHtml(response: Response, prefix: string): boolean {
     const attachment = /^attachment(?:;|$)/i.test(response.headers.get("content-disposition") ?? "");
     const html = /^\s*(?:<!doctype\s+html|<html|<head|<body|<form)/i.test(prefix);
-    return (!attachment && (/text\/html/i.test(response.headers.get("content-type") ?? "") || html)) || (html && /auth\/signin|\blogin\b|로그인/i.test(prefix));
+    if (attachment) return false;
+    return /text\/html/i.test(response.headers.get("content-type") ?? "") || html;
   }
   private throwBodyFailure(body: unknown, response: Response): void {
     const obj = body as Partial<WebEnvelope> | null;
@@ -139,8 +152,9 @@ export class WebHttp {
       this.assertStatus(response, true);
       if (response.status === 307) {
         const location = response.headers.get("location");
-        if (!location || !isTrustedFileHost(location, this.publicApiBaseUrl)) throw new DoorayCliError("파일 리다이렉트 주소가 허용 범위를 벗어났습니다. 쿠키를 보내지 않았습니다.", EXIT_API_ERROR);
-        response = body ? await fetch(location, request) : await fetchWithResponseTimeout(location, request, "웹 파일 요청");
+        if (!location || !this.isTrustedFileRedirect(location)) throw new DoorayCliError("파일 리다이렉트 주소가 허용 범위를 벗어났습니다. 쿠키를 보내지 않았습니다.", EXIT_API_ERROR);
+        const redirectedRequest = { ...request, headers: new Headers({ Cookie: `SESSION=${this.cookie}` }) };
+        response = body ? await fetch(location, redirectedRequest) : await fetchWithResponseTimeout(location, redirectedRequest, "웹 파일 요청");
         // 두 번째 307 을 포함한 모든 추가 리다이렉트는 거절한다.
         this.assertStatus(response);
       }

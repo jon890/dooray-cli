@@ -13,7 +13,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | REQ1 | `Config.authMode` 를 더하고 `config set auth-mode` 가 값을 검사한다. 명령은 `createClient(config)` 로 클라이언트를 받는다 |
 | REQ2 | `config set session-cookie` 가 입력을 `parseSessionCookie` 로 정규화해 `SESSION` 값만 저장한다 |
 | REQ3 | `sessionCookie` 를 `SECRET_FIELDS` 에 더한다. 웹 HTTP 층의 오류 메시지는 URL·호스트·쿠키를 담지 않는다 |
-| REQ4 | 웹 HTTP 층이 요청마다 origin 을 확인하고, 리다이렉트를 따라가지 않는다. 첨부 307 은 기존 `isTrustedFileHost` 에 공개 API 주소를 기준으로 넘겨 판정한다 |
+| REQ4 | 웹 HTTP 층이 요청마다 origin 을 확인하고, 리다이렉트를 따라가지 않는다. 첨부 307 은 테넌트 웹 origin 또는 같은 클라우드의 정확한 https file-api 호스트로만 한 번 허용한다 |
 | REQ5 | `resolveWebBaseUrl(config)` 가 `base-url` 을 알려진 클라우드 표로 바꾼다 |
 | REQ6 | 영역별 웹 클라이언트 메서드가 웹 응답을 공식 문서의 그 endpoint 응답 스키마 모양으로 바꿔 돌려준다. 포매터는 바꾸지 않는다 |
 | REQ7 | 쓰기 메서드도 같은 방법으로 웹 경로에 붙인다. PR 마다 지정된 테스트 장소에서 실측한다 |
@@ -115,7 +115,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 
 - 어느 메시지에도 요청 URL, 호스트, 쿠키 값을 넣지 않는다. ky 의 `HTTPError`·`TimeoutError` 메시지는 URL 을 담으므로 그대로 쓰지 않는다. 메시지는 `last-run.json` 을 거쳐 `feedback --last` 로 공개 이슈에 들어갈 수 있다(`src/index.ts`).
 - 토큰 버킷과 큰 정수 파서는 공개 클라이언트와 같이 쓴다.
-- 첨부 다운로드·업로드의 307 은 `isTrustedFileHost(location, <공개 API 주소>)` 로 판정한다. 함수는 바꾸지 않는다. 공개 API 주소를 넘기면 `api.` 를 뗀 도메인(`*.dooray.com`)이 허용되고, 그 밖은 막힌다. 파일 서버 요청에는 쿠키를 붙이되 `redirect: "manual"` 과 연쇄 리다이렉트 거부는 [ADR-074](../../adr/074-file-redirect-hardening.md) 와 같다.
+- 첨부 다운로드·업로드의 307 은 테넌트 웹 origin 또는 공개 API 와 같은 클라우드의 정확한 `https://file-api.<클라우드 도메인>` 만 한 번 허용한다. 다른 하위 호스트·포트·사용자 정보는 거절한다. 새 Cookie 헤더만 붙여 요청하며 연쇄 리다이렉트는 막는다. 공개 클라이언트의 `isTrustedFileHost` 는 바꾸지 않는다. 다운로드의 응답 시간 제한은 [ADR-074](../../adr/074-file-redirect-hardening.md) 를 따른다.
 
 ### 응답 변환
 
@@ -211,7 +211,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | REQ1, REQ15, REQ16 | `web-auth.ts`, `createClient` | 단위 테스트. 방식별 `isConfigComplete`, 표 밖 `base-url`, `http`, 빠진 `tenant-name`, `example` |
 | REQ2 | `parseSessionCookie` | 단위 테스트. 값만, `=` 로 끝나는 값, `SESSION=`, 헤더 전체, 따옴표·공백, `SESSION` 없는 헤더, 서로 다른 `SESSION` 둘, 비ASCII |
 | REQ3 | `web/http`, `config get`, 실행 기록 | 웹 HTTP 층의 모든 오류 경로에서 메시지에 호스트·쿠키 값이 없다. 기존 비밀 필드 테스트에 `sessionCookie` 를 더한다 |
-| REQ4, REQ9 | `web/http` | ky 에 가짜 `fetch` 를 넣는 단위 테스트. 401, 403, `/auth/signin` 302, 다른 호스트 302, HTML 200, `isSuccessful: false`, 타임아웃, `URL` 객체로 다른 origin 을 넘긴 요청(쿠키 없이 멈춤), 첨부 307 의 `*.dooray.com` 허용과 그 밖 거부 |
+| REQ4, REQ9 | `web/http` | ky 에 가짜 `fetch` 를 넣는 단위 테스트. 401, 403, `/auth/signin` 302, 다른 호스트 302, HTML 200, `isSuccessful: false`, 타임아웃, `URL` 객체로 다른 origin 을 넘긴 요청(쿠키 없이 멈춤), 첨부 307 의 웹 origin·정확한 file-api 호스트 허용과 그 밖 거부 |
 | REQ5 | `resolveWebBaseUrl` | 단위 테스트. 네 클라우드와 표 밖 |
 | REQ6 | 변환 함수 | 메서드마다 실측 응답의 꼴을 본뜬 고정 파일(값은 가짜, `node scripts/check-pii.mjs` 통과)로, 결과의 키·구조·날짜 형식이 공식 문서 스키마와 같은지 본다. 공식 스키마의 필드 목록은 `docs/api/web-endpoints.md` 에 메서드마다 적는다 |
 | REQ6, REQ7 | 실제 웹 | PR 마다 그 PR 명령을 웹 방식으로 돌려 `--json` 을 공식 스키마와 대조한다. 쓰기는 사용자가 지정한 사내 테스트 프로젝트, 나에게 보내는 메신저, 개인 캘린더에서 하고 만든 것은 지운다. API 복구 뒤 두 방식 비교는 후속 확인이다 |
@@ -234,7 +234,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | DECISION6 | 리다이렉트 판정 | `/auth/signin` 은 세션 만료, 그 밖은 따라가지 않는 API 오류 | 작성자 | 2026-11-13 실측 |
 | DECISION7 | 공개 클라이언트 | 동작을 바꾸지 않는다 | 작성자 | API 가 복구되면 지금 동작 그대로 돌아가야 한다 |
 | DECISION8 | 쿠키를 붙이는 자리 | `beforeRequest` 에서 origin 을 확인한 뒤 | 작성자 | 인스턴스 헤더는 `URL` 객체 입력 한 번에 다른 호스트로 나간다 |
-| DECISION9 | 첨부 307 판정 | `isTrustedFileHost` 를 바꾸지 않고 공개 API 주소를 기준으로 넘긴다 | 작성자 | 함수를 바꾸면 공개 클라이언트의 판정이 바뀐다 |
+| DECISION9 | 첨부 307 판정 | 웹 origin·같은 클라우드의 정확한 file-api 호스트만 허용한다 | 작성자 | 함수를 바꾸면 공개 클라이언트의 판정이 바뀐다 |
 | DECISION10 | 오류 메시지 | URL·호스트·쿠키를 담지 않는다 | 작성자 | 메시지가 실행 기록을 거쳐 공개 이슈로 나갈 수 있다. 테넌트 주소는 사내 식별자다(CLAUDE.md) |
 | DECISION11 | 웹 멤버 상세 | 멤버 목록 응답의 `member` 를 프로세스 메모리에 담아 재사용한다 | 작성자 | 멤버 수만큼 병렬 호출을 줄인다. 웹 호출 한도를 실측하지 않았다 |
 | DECISION12 | `preAction` 의 설정 읽기 | 파일만 읽는 `readAuthModeFromFile` | 작성자 | 키체인 읽기를 늘리지 않고 `config`·`setup` 에서 보안 경고를 내지 않는다 |
@@ -258,4 +258,4 @@ PR 마다 함께 고칠 문서(그 PR 이 닿는 것만):
 
 영역 계약은 PR1 에 모두 둔다(사용자 결정 2026-11-14). project·member 의 web.ts 는 자기 영역 인터페이스 전체를 구현해 누락을 컴파일러가 검사한다. web/index.ts 는 영역별 구현이나 미지원 기본값을 등록하고 공통 Proxy 로 지원하지 않는 메서드를 막는다. then 은 반환하지 않아 Promise 로 오인되지 않는다. 뒤 PR 은 자기 영역 web.ts 와 등록 줄을 더한다. 단일 영역 resolver·service 는 그 영역 계약만 받으며 여러 영역을 함께 쓰는 경로는 DoorayClient 를 유지한다.
 
-공용 첨부 기반(코디네이터 결정 2026-11-14): WebHttp.requestBytes 는 검증한 Response 를, upload 는 FormData 요청의 WebEnvelope 를 돌려준다. WebContext·createWebClient 는 공개 API 주소를 받아 isTrustedFileHost 로 첨부 307 을 한 번만 따라간다. 다운로드의 헤더 응답 제한은 [ADR-074](../../adr/074-file-redirect-hardening.md) 의 helper 를 재사용하고 업로드에는 걸지 않는다. 로그인 HTML·로그인 리다이렉트는 2 로 끝내 파일로 반환하지 않는다. 다음 영역의 지원 목록·가이드 절·웹 경로 색인은 PR1 에 빈 등록 자리로 둔다.
+공용 첨부 기반(코디네이터 결정 2026-11-14): WebHttp.requestBytes 는 검증한 Response 를, upload 는 FormData 요청의 WebEnvelope 를 돌려준다. WebContext·createWebClient 는 공개 API 주소를 받아 웹 origin 또는 같은 클라우드의 정확한 https file-api 호스트로 첨부 307 을 한 번만 따라간다. 다운로드의 헤더 응답 제한은 [ADR-074](../../adr/074-file-redirect-hardening.md) 의 helper 를 재사용하고 업로드에는 걸지 않는다. 로그인 HTML·로그인 리다이렉트는 2 로 끝내 파일로 반환하지 않는다. 다음 영역의 지원 목록·가이드 절·웹 경로 색인은 PR1 에 빈 등록 자리로 둔다.

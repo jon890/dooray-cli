@@ -2,9 +2,23 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createClient } from "./dooray-client.js";
 import { DoorayApiClient } from "./client.js";
+import { createProjectWeb } from "./project/web.js";
+import { createMemberWeb } from "./member/web.js";
+import { WebContext } from "./web/context.js";
 const base = { version: 1 as const, apiKey: "fake-key", baseUrl: "https://api.dooray.com" };
 afterEach(() => vi.unstubAllGlobals());
 describe("인증 방식 선택", () => {
+  it("영역 구현은 객체 리터럴이며 메서드 이름이 겹치지 않는다", () => {
+    const context = new WebContext("fake-session", "https://my-org.dooray.com", base.baseUrl);
+    const areas = [createProjectWeb(context), createMemberWeb(context)];
+    const keys = areas.flatMap((area) => { expect(Object.getPrototypeOf(area)).toBe(Object.prototype); return Object.keys(area); });
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+  it("선택 메서드가 없으면 optional 호출이 동기 undefined 를 반환한다", () => {
+    const client = createClient({ ...base, authMode: "web", tenantName: "my-org", sessionCookie: "fake-session" });
+    Reflect.deleteProperty(client, "getMemberNameFromList");
+    expect(client.getMemberNameFromList?.("missing")).toBeUndefined();
+  });
   it("방식이 없거나 api-key 면 기존 공개 클라이언트다", () => {
     expect(createClient(base)).toBeInstanceOf(DoorayApiClient);
     expect(createClient({ ...base, authMode: "api-key" })).toBeInstanceOf(DoorayApiClient);
