@@ -121,7 +121,7 @@ config 경로가 계정 홈의 기본 경로가 아니면 account 에 경로 해
 **테스트**: 실행 OS 에 따라 실제 키체인을 건드리지 않게 한다.
 기존 `store.test.ts`·`store.fs.test.ts` 는 `secret-store.js` 를 mock 해 `getSecretStore` 를 `null`(파일 모드)로 고정한다.
 키체인 모드는 `store.keychain.test.ts` 가 가짜 `SecretStore` 를 넣어 보고, 키체인 구현은 `secret-store.test.ts` 가
-`node:child_process` 를 mock 해 본다. RETRO-0017 처럼 store 가 직접 부르는 모듈을 이름으로 mock 한다.
+`node:child_process` 를 mock 해 본다. store 가 직접 부르는 모듈은 이름으로 mock 한다([코드 구조](../code-architecture.md)의 「테스트」).
 
 **대안 기각**:
 

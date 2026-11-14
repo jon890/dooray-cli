@@ -208,6 +208,7 @@ rg "^\s+(async )?\w+\(" src/api/*/public.ts src/api/*/web.ts
   - `skills/dooray-persona/scripts/lib/` 의 `*.test.mjs`.
 - `vitest.config.ts` 가 `worktrees/**` 를 대상에서 뺀다. 그 아래는 git worktree 라 같은 테스트가 중복 수집된다.
 - `src/architecture.test.ts` 가 「의존 규칙」 을 검사한다.
+- 설정·캐시 저장소(`src/config/store.ts`, `src/cache/store.ts`)를 주입 없이 직접 부르는 모듈의 테스트는 그 저장소 모듈을 `vi.mock` 으로 덮는다. 덮지 않으면 `pnpm test` 가 사용자의 실제 `~/.dooray/` 를 바꾼다. 같은 계열의 테스트를 선례로 삼을 때는 대상 모듈이 의존을 인자로 받는지 직접 부르는지부터 확인한다.
 - 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 ([ADR-020](adr/020-post-input-unification-vitest.md) 도입 근거)
 
 ## import 경로
