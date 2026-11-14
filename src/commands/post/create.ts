@@ -38,7 +38,7 @@ async function resolveUsers(
 }
 
 // 템플릿 fetch 결과 (PostUser) → createPost payload (CreatePostUser) 변환.
-// workflow 필드는 CreatePostRequest 에 없어 제외 (api/types.ts:127/223 차이).
+// workflow 필드는 api/post/types.ts 의 CreatePostRequest 에 없어 제외한다.
 function postUserToCreate(u: PostUser): CreatePostUser {
   return {
     type: u.type,
