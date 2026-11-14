@@ -5,7 +5,7 @@
  * 표는 src 기준 [{ "from": "utils/old.ts", "to": "body/new.ts" }] 이다.
  * move 는 짝 *.test.ts 도 git mv 하며 내용을 고치지 않는다.
  * rewrite 는 move 직후, 내용 수정 전에 같은 표로 실행한다.
- * 타입 선언 분할은 파일 이동이 아니므로 빈 표([])로 실행할 수 있다.
+ * 타입 선언 분할은 이 스크립트의 대상이 아니다.
  * new URL("…", import.meta.url) 같은 파일 상대 경로는 고치지 않는다.
  */
 import { execFileSync } from "node:child_process";
