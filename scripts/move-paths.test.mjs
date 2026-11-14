@@ -93,6 +93,9 @@ describe("rewrite", () => {
       'vi.mock("../../utils/old.js", () => ({}));',
       'vi.doMock("@/utils/old.js", () => ({}));',
       'vi.importActual<typeof import("../../utils/old.js")>("../../utils/old.js");',
+      'vi.unmock("../../utils/old.js");',
+      'vi.doUnmock("@/utils/old.js");',
+      'vi.importMock("../../utils/old.js");',
       'import { helper } from "../../utils/helper.js";',
       '// import { untouched } from "../../utils/old.js";',
       'const example = \'import "../../utils/old.js"\';',
@@ -101,7 +104,7 @@ describe("rewrite", () => {
     const before = read(root, "src/commands/deep/use.ts");
     runMoves(root, table, "move");
     runMoves(root, table, "rewrite");
-    const expected = before.split("\n").map((line, i) => i < 8 ? line.replaceAll("../../utils/old.js", "@/body/new.js").replaceAll("@/utils/old.js", "@/body/new.js") : line).join("\n");
+    const expected = before.split("\n").map((line, i) => i < 11 ? line.replaceAll("../../utils/old.js", "@/body/new.js").replaceAll("@/utils/old.js", "@/body/new.js") : line).join("\n");
     expect(read(root, "src/commands/deep/use.ts")).toBe(expected);
     expect(read(root, "src/body/new.ts")).toContain('from "@/utils/helper.js"');
     expect(read(root, "src/body/new.test.ts")).toContain('from "./new.js"');

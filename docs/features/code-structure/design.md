@@ -195,9 +195,10 @@ export class DoorayApiClient {
 | 단계 | 하는 일 | 커밋 |
 | --- | --- | --- |
 | `move` | 표의 파일과 짝 테스트(`*.test.ts`)를 `git mv` 한다. 내용을 고치지 않는다 | 이동 커밋. 빌드가 깨진 상태일 수 있다 |
-| `rewrite` | 모든 `src/**/*.ts` 의 `import`·`export from`·`import()`·`vi.mock`·`vi.importActual`·`vi.doMock` 지정자 가운데 옮긴 파일을 가리키는 것을 `@/<새 경로>.js` 로 바꾼다. 옮긴 파일 안의 상대 import 는 위치가 바뀌었으므로 같은 폴더가 아니면 `@/…` 로 바꾼다. 문서(`check-doc-paths.mjs` 가 읽는 범위)의 `src/<옛 경로>` 를 `src/<새 경로>` 로 바꾼다 | 내용 수정 커밋 |
+| `rewrite` | 모든 `src/**/*.ts` 의 `import`·`export from`·`import()`·`vi.mock`·`vi.importActual`·`vi.doMock`·`vi.unmock`·`vi.doUnmock`·`vi.importMock` 지정자 가운데 옮긴 파일을 가리키는 것을 `@/<새 경로>.js` 로 바꾼다. 옮긴 파일 안의 상대 import 는 위치가 바뀌었으므로 같은 폴더가 아니면 `@/…` 로 바꾼다. 문서(`check-doc-paths.mjs` 가 읽는 범위)의 `src/<옛 경로>` 를 `src/<새 경로>` 로 바꾼다 | 내용 수정 커밋 |
 
 - 지정자는 옛 위치 기준으로 풀어 표와 비교한다. 문자열만 바꾸지 않고 경로를 풀어 비교하므로 `../../api/types.js` 와 `../types.js` 를 같은 파일로 알아본다.
+- `new URL("…", import.meta.url)` 같은 파일 상대 경로는 지원하지 않는다. 파일을 옮긴 뒤 해당 경로를 직접 확인하고 고친다.
 - 표에 없는 파일은 손대지 않는다. 실행 뒤 `git diff --stat` 을 PR 본문에 붙인다.
 - 이동 커밋은 내용을 바꾸지 않으므로 git 의 이름 바꾸기 탐지가 100% 유사도로 잡는다(REQ8). 이 저장소는 PR 을 merge commit 으로 합치므로 두 커밋이 main 이력에 남는다.
 - 파일을 나누는 일(`types.ts` → 영역별)은 이동이 아니라 내용 수정이다. 새 파일은 새 이력으로 시작하고, 원래 파일은 재내보내기로 남아 그 이력을 지킨다. 그래서 R1·R2 는 「나누기」 커밋과 「import 를 새 자리로 바꾸기」 커밋을 따로 둔다.
