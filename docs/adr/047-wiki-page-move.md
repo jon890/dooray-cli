@@ -70,7 +70,7 @@
     맨 앞 이동은 공식 문서의 특수값 `0` 에 의존하며 서버 동작을 실측하지 않았다.
     위키 간 이동은 대상 위키에 권한이 없으면 4xx 로 드러난다. 사전 검증을 두지 않는다.
 
-- **적용 범위**: `src/api/client.ts` 에 `moveWikiPage(wikiId, pageId, body)` 를 둔다.
+- **적용 범위**: `src/api/wiki/public.ts` 에 `moveWikiPage(wikiId, pageId, body)` 를 둔다.
   응답 `result` 가 `null` 이므로 `DoorayApiUnitResponse` 를 쓴다. `deleteWikiPage` 와 같다.
 
   `wiki page edit` 은 바뀌지 않는다. `parentPageId` 를 무시한다는 사실도 그대로다.

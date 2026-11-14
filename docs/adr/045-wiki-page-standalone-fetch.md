@@ -47,7 +47,7 @@
     `--project` 를 함께 주면 그 호출이 없으므로, 반복 실행하는 자동화는 `--project` 를 주는 편이 빠르다.
     권한이 없는 페이지 ID 는 그 호출의 4xx 로 드러난다. 사전 검증을 따로 두지 않는다.
 
-- **적용 범위**: `src/api/client.ts` 에 `getWikiPageStandalone(pageId)` 를 둔다.
+- **적용 범위**: `src/api/wiki/public.ts` 에 `getWikiPageStandalone(pageId)` 를 둔다.
   `getPostStandalone` 과 같은 형태로 `wiki/v1/pages/${pageId}` 를 부르고 `WikiPageResponse` 를 돌려준다.
 
   `--url` 모드는 바뀌지 않는다. `https://<tenant>.dooray.com/wiki/<wikiId>/<pageId>` 에 wikiId 가 이미 있어 추가 호출이 필요 없다.

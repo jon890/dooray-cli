@@ -27,7 +27,7 @@ Dooray 공식 API 문서에 없는 **비공식 endpoint** 이며, 이 점을 명
 - confirm 없이 즉시 (`wiki page file delete` mirror) — 파일 1개 삭제보다 페이지(+하위 트리 재구성) 영향이 커 confirm 기본이 안전.
 
 **적용 범위**:
-- `src/api/client.ts` `deleteWikiPage(wikiId, pageId)` — plain `.delete()` (파일 API 의 307 처리 불요, post log delete 와 동일 패턴).
+- `src/api/wiki/public.ts` `deleteWikiPage(wikiId, pageId)` — plain `.delete()` (파일 API 의 307 처리 불요, post log delete 와 동일 패턴).
 - 입력 해석은 `resolveWikiPageInput` 재사용 (`<project> <page-id>` / `--id`와 `--project` / `--url` / positional URL).
 - confirm: 기본 y/N, non-TTY abort, `--yes`/`-y` 로 생략.
 - 출력: `--json {pageId, status:"deleted"}` / `--quiet pageId` / 기본 prose.

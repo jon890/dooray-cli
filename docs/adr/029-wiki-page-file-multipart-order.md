@@ -16,7 +16,7 @@ RFC 7578 (multipart/form-data) 는 필드 순서 무관을 기본으로 하지�
 - 307 redirect 후 본 요청에서만 순서 보장 — 307 의 location 도 동일 endpoint, 그러나 fetch 의 재시도 시 FormData 순서가 보장되는지 환경 의존. 307과 본 요청 모두에서 명시적으로 append 순서를 보장
 
 **적용 범위**:
-- `src/api/client.ts` `uploadWikiPageFile(wikiId, pageId, filePath, type)` — `formData.append("type", type)` 를 `formData.append("file", ...)` 보다 **반드시 먼저** 호출
+- `src/api/wiki/public.ts` `uploadWikiPageFile(wikiId, pageId, filePath, type)` — `formData.append("type", type)` 를 `formData.append("file", ...)` 보다 **반드시 먼저** 호출
 - 307 redirect 처리 (ADR-015 패턴 재사용) 시 동일한 FormData 객체 재사용으로 순서 보존
 - `type` 값은 `"general" | "inline_image"` 만 허용 (TypeScript literal type)
 

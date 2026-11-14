@@ -2,11 +2,11 @@
 
 - **status**: `accepted`
 
-- **결정**: `src/api/client.ts` 가 만드는 경로는 `src/api/api-path.ts` 의 `apiPath` 로 조립한다 (Issue #240).
+- **결정**: 공개 구현(`src/api/<영역>/public.ts`)이 만드는 경로는 `src/api/api-path.ts` 의 `apiPath` 로 조립한다 (Issue #240).
   - **끼워 넣는 값은 모두 `encodeURIComponent` 를 거친다.** `` apiPath`project/v1/projects/${projectId}/posts/${postId}` `` 처럼 쓰면
     값마다 인코딩을 따로 적지 않아도 빠지지 않는다.
   - **ADR-074 의 `enc` 상수는 없앴다.** 첨부 다운로드·업로드 경로도 같은 helper 를 쓴다.
-  - **메신저 스레드 생성 경로(`messenger-thread-request.ts`)도 helper 로 만든다.** `client.ts` 밖이지만 같은 `channelId`·`logId` 를 경로에 넣는다.
+  - **메신저 스레드 생성 경로(`messenger-thread-request.ts`)도 helper 로 만든다.** 공개 구현 밖이지만 같은 `channelId`·`logId` 를 경로에 넣는다.
   - **값이 `""`, `.`, `..` 이면 `DoorayCliError`(`EXIT_PARAM_ERROR`)로 거부한다.** `encodeURIComponent` 는 `.` 를 그대로 두고,
     WHATWG URL 파서는 `%2e%2e` 도 dot segment 로 보고 정규화한다. `getPost("..", "1")` 이 `project/v1/posts/1` 을 부르는 것을
     escape 로는 막을 수 없어서 거부한다. `a..b` 처럼 `..` 가 섞였을 뿐인 값은 segment 가 아니라 통과한다.

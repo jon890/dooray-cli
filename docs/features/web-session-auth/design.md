@@ -51,7 +51,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 - 웹 클라이언트를 공개 클라이언트의 하위 클래스로 만들지 않는다. 덮지 않은 메서드가 공개 API 를 부르는 사고가 난다.
 - `web-support.ts` 는 명령 경로를 다루므로 `commands/` 에 둔다. api 층은 CLI 명령을 모른다.
 - `web-auth.ts` 를 `store.ts` 와 나누는 이유는 `createClient` 가 키체인·파일 시스템 없이 주소를 정하고, `store.ts` 를 통째로 mock 하는 기존 테스트(`doctor.test.ts`)를 깨지 않기 위해서다.
-- `scripts/api-endpoint-inventory.mjs` 는 `src/api/client.ts` 만 읽으므로 웹 경로가 「구현에 있고 공식에 없는 것」 에 섞이지 않는다(스펙 DECISION25).
+- `scripts/api-endpoint-inventory.mjs` 는 공개 구현(`src/api/public/`·`src/api/<영역>/public*.ts`)만 읽으므로 웹 경로가 「구현에 있고 공식에 없는 것」 에 섞이지 않는다(스펙 DECISION25).
 
 ## 인터페이스와 데이터
 

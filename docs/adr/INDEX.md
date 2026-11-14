@@ -79,7 +79,7 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-072](072-messenger-file-download.md) — 메신저 첨부 파일을 `messenger file download` 로 받고 `logs` 표 `참조` 칸에 파일 id 와 스레드 channelId 를 자르지 않고 보여준다 (공식 문서에 없는 경로, api 서버는 조합 검증 없이 항상 307·틀린 조합은 file-api 본문 없는 404 실측, 로그의 `file`·`thread` 필드와 `totalCount` 문자열 실측)
 - [ADR-076](076-mail-send-attach.md) — `mail send`·`mail reply` 의 `--attach` 는 발송 전에 모든 경로를 확인해 하나라도 일반 파일이 아니면 아무것도 보내지 않고, 크기 상한은 CLI 가 두지 않는다
 - [ADR-074](074-file-redirect-hardening.md) — 첨부 다운로드·업로드의 307 은 API 주소와 같은 도메인의 https 주소에만 인증 헤더를 싣고 파일 서버의 연쇄 redirect 는 막으며, 다운로드는 첫 응답까지 30초로 끊고 307 이 아니면 따라가지 않으며, 첨부 경로의 id 를 인코딩한다 (Issue #232, `file-api.dooray.com` 실측)
-- [ADR-075](075-api-path-encoding.md) — `client.ts` 의 API 경로는 `apiPath` tagged template 으로 만들어 끼운 값을 모두 `encodeURIComponent` 로 인코딩한다. `baseUrl`·쿼리·리터럴은 helper 밖에 두고, 인벤토리 스크립트가 `apiPath` 태그를 읽는다 (Issue #240)
+- [ADR-075](075-api-path-encoding.md) — 공개 구현의 API 경로는 `apiPath` tagged template 으로 만들어 끼운 값을 모두 `encodeURIComponent` 로 인코딩한다. `baseUrl`·쿼리·리터럴은 helper 밖에 두고, 인벤토리 스크립트가 `apiPath` 태그를 읽는다 (Issue #240)
 - [ADR-077](077-mail-save-sent.md) — `mail send`·`mail reply` 는 한 번 만든 원문을 SMTP 로 보내고 IMAP `\Sent` 메일함에 같은 바이트로 `APPEND` 하며, 발송 뒤 저장이 실패해도 재발송하지 않고 경고와 종료 코드 0 으로 끝낸다
 - [ADR-078](078-stream-list.md) — 활동 피드를 `stream list` 로 두고 `--all` 은 빈 배열까지, `--since` 는 응답 커서로 멈추며, 429 는 모든 명령에서 종료 코드 6 으로 끝낸다 (2주 5113건·한 페이지 189/200·나노초 커서·원소 시각 최대 29초 어긋남·`event.createdAt` 실측)
 - [ADR-079](079-member-get-with-org.md) — `member get --with-org` 으로 소속 회사·부서·직책을 바쁨 시간 조회 응답에서 채운다 (부서 이름이 있어도 `id` 가 null 실측)
