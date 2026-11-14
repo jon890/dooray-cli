@@ -15,18 +15,6 @@
 
 ## 체이닝
 
-### 프로젝트를 찾아 업무 생성
-
-```bash
-dooray project list --search "AI서비스" --json
-# → [{ "code": "<project>", ... }]
-
-dooray post create <project> \
-  --title "주간보고 2026-W14" \
-  --body "## 이번 주 성과\n- 항목1\n- 항목2" \
-  --to "김철수"
-```
-
 ### 댓글에 스크린샷 첨부
 
 댓글 첨부는 두 단계로 나뉜다. 댓글을 먼저 만들고 그 ID 로 파일을 올린다.
@@ -40,7 +28,7 @@ dooray post comment file upload <project> <post-num> "$COMMENT_ID" ./screenshot.
 
 ### 배포 알림 메신저 전송
 
-전송은 API 토큰 소유자 명의로 나가고 본문은 plain text 만 된다.
+전송은 인증한 계정 명의로 나가고 본문은 plain text 만 된다.
 
 ```bash
 # DM — --to 는 ID 나 이메일만 받는다 (이름 불가)

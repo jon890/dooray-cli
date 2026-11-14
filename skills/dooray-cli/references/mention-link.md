@@ -6,12 +6,8 @@
 `post edit` 과 `post comment edit` 은 본문 형식이 `text/html` 이면 이 옵션들을 거절한다.
 아래 「Dooray 마크다운 링크 형식」 절이 그 이유를 적는다.
 
-| 옵션 | 동작 |
-| --- | --- |
-| `--mention <name>` | 이름으로 멤버를 찾아 본문 앞에 멘션을 붙인다 (반복 가능) |
-| `--mention-group <code>` | 그룹 코드로 찾아 멘션을 붙인다 (반복 가능) |
-| `--link-task <ref>` | 다른 업무 링크를 본문 끝에 붙인다. `<project>/<number>` 또는 postId (반복 가능) |
-| `--dry-run` | API 를 호출하지 않고 합성된 본문만 stdout 에 출력한다 |
+`--mention`(멤버 이름), `--mention-group`(그룹 코드), `--link-task`(`<project>/<number>` 또는 postId)는 반복할 수 있다.
+멘션은 본문 앞에, 업무 링크는 본문 끝에 붙는다. `--dry-run` 은 API 를 호출하지 않고 합성한 본문만 stdout 에 낸다.
 
 ```bash
 dooray post comment add <project> 1 --mention 홍길동 --mention-group 개발 --body "..."
@@ -19,7 +15,7 @@ dooray post comment add <project> 1 --mention 홍길동 --mention-group 개발 -
 ```
 
 멘션 순서는 멤버가 먼저, 그룹이 다음으로 고정이다.
-`$EDITOR` 로 여는 interactive 모드의 `post edit` 는 이 옵션들을 무시하고 경고만 낸다.
+`post edit` 은 이 옵션만 줘도 편집기를 열지 않는다.
 
 쓰기 전에 `--dry-run` 으로 합성 결과를 확인하면 잘못된 멤버를 멘션하는 일을 막을 수 있다.
 

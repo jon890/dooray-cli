@@ -1,11 +1,5 @@
 # common
 
-## 설치
-
-```bash
-npm install -g @bifos/dooray-cli
-```
-
 ## 초기 설정
 
 대화형 마법사로 한 번에 설정:
@@ -55,7 +49,7 @@ dooray doctor
 ```
 
 web 은 비공식 웹 API 로 경로가 예고 없이 바뀔 수 있다. SESSION 은 계정의 모든 권한을 가진다.
-쿠키 만료·브라우저 로그아웃 뒤에는 SESSION 을 다시 넣는다. 401·로그인 리다이렉트는 재입력, 403 은 권한 확인 안내다.
+쿠키 만료·브라우저 로그아웃 뒤에는 SESSION 을 다시 넣는다. 401·로그인 리다이렉트는 종료 코드 2 로 끝나며 쿠키 재입력, 403 은 권한 확인 안내다.
 doctor 는 API 키가 없어도 웹 설정을 검사하며 캐시 없이 getMe 로 쿠키 유효성을 확인한다. authMode 키가 현재 방식을 나타내고 auth-mode 항목의 warn 은 종료 코드를 실패로 만들지 않는다.
 `config get session-cookie` 는 유무만 보여 준다. auth-mode 를 api-key 로 바꿔도 저장한 쿠키는 지우지 않는다.
 인증 방식·쿠키를 바꾸면 캐시를 비우고, 웹 방식은 테넌트 이름 변경도 같다.
@@ -73,11 +67,9 @@ dooray skill status --json   # 전체 상태와 agents.claude / agents.codex 상
 dooray skill status --quiet  # 양쪽 상태를 합친 토큰 하나만 출력
 ```
 
-Claude Code는 `~/.claude/skills/dooray-cli`, Codex는 `~/.agents/skills/dooray-cli`에 설치한다.
-두 경로는 같은 관리형 저장소를 가리킨다. 기존 Claude Code 설치가 최신이어도 Codex 경로가 없으면 다시 설치할 때 추가한다.
-Codex 설치 여부와 관계없이 양쪽 스킬을 관리하며, `install`과 `update`는 필요한 `~/.agents/skills` 디렉터리도 생성한다.
-Codex에서는 `$dooray-cli`로 호출한다. 새 스킬이 보이지 않으면 Codex를 다시 시작한다.
-JSON의 `agents`에 에이전트별 상세 정보가 있고, `status`는 전체 상태다. 기존 최상위 상세 필드는 Claude Code 기준으로 유지한다.
+Claude Code 와 Codex 양쪽에 같은 스킬을 설치하며, Codex 가 없어도 양쪽을 함께 관리한다.
+Codex 에서는 `$dooray-cli` 로 호출한다. 새 스킬이 보이지 않으면 Codex 를 다시 시작한다.
+JSON 의 `agents` 에 에이전트별 상세 정보가 있고, `status` 는 전체 상태다.
 
 상태 토큰:
 
@@ -99,11 +91,7 @@ CLI 를 새 버전으로 설치했으면 `dooray skill update` 를 직접 실행
 
 ## 출력 모드
 
-| 플래그 | 설명 | 용도 |
-|--------|------|------|
-| (없음) | 사람이 읽기 좋은 테이블 | 기본 |
-| `--json` | JSON 출력 (stdout) | 파싱, 체이닝 |
-| `--quiet` | ID만 출력 | 스크립팅 |
+기본은 사람이 읽는 표다. 파싱과 체이닝에는 `--json`, 식별자만 필요한 스크립트에는 `--quiet` 을 쓴다.
 
 ---
 
@@ -111,13 +99,7 @@ CLI 를 새 버전으로 설치했으면 `dooray skill update` 를 직접 실행
 
 organization 전체를 검색한다. 프로젝트 멤버 목록(`project members`)과 달리 프로젝트 범위에 묶이지 않는다.
 
-| 옵션 | 동작 |
-| --- | --- |
-| (기본) | 이름으로 검색 |
-| `--email <email>` | 외부 이메일 exact 매칭. 콤마로 여러 개 |
-| `--user-code <code>` | 사번 like 검색 |
-| `--user-code-exact <code>` | 사번 exact 매칭 |
-| `--page <n>` / `--size <n>` | 페이지 번호와 크기. 기본 0 과 20, 최대 100 |
+기본은 이름 검색이다. 이메일(`--email`, 콤마로 여러 개)과 사번(`--user-code`, `--user-code-exact`)으로도 찾는다. 나머지 옵션은 `dooray member search --help` 를 본다.
 
 `--to` 와 `--cc` 에 넣을 organizationMemberId 를 찾을 때 쓴다.
 
@@ -134,9 +116,9 @@ dooray member get <memberId> --json --with-org   # organization 키가 더해진
 
 ```json
 "organization": {
-  "defaultOrganization": { "id": "<orgId>", "name": "두레이" },
-  "primaryDepartment": { "id": null, "name": "플랫폼개발팀" },
-  "positionName": "선임"
+  "defaultOrganization": { "id": "<orgId>", "name": "예시회사" },
+  "primaryDepartment": { "id": null, "name": "개발1팀" },
+  "positionName": "매니저"
 }
 ```
 
@@ -153,9 +135,6 @@ CLI로 처리 **불가능한** 작업. 아래 항목을 요청받으면 웹 UI �
 | 작업 | 대체 경로 | 근거 |
 |---|---|---|
 | 프로젝트 삭제 | 웹 UI (admin 페이지) | API 미지원 |
-
-위키 페이지 이동은 `wiki page move` 로 처리한다.
-자세한 내용은 [위키 페이지 이동 사용법](wiki.md#위키-페이지-이동-사용법)을 참고한다.
 
 
 ---
@@ -191,7 +170,9 @@ CLI 에러 발생 시 복구 방법:
 | `복수의 멤버가 매칭됩니다: "김"` | 이름이 모호함 | 에러 메시지의 후보 목록에서 정확한 이름으로 재시도 |
 | `멤버를 찾을 수 없습니다: xxx` | 해당 프로젝트에 멤버 없음 | `dooray project members <project>` 로 멤버 목록 확인 |
 | `워크플로우를 찾을 수 없습니다: xxx` | 워크플로우 이름 오류 | `dooray project workflows <project>` 로 확인 |
-| `API 호출 실패 (401)` | API 키 만료/오류 | `dooray doctor` 로 설정 검증 |
+| `API 호출 실패 (401)` (종료 코드 2) | API 키 만료/오류 | `dooray doctor` 로 설정 검증 |
+| 웹 방식에서 401 이나 로그인 화면으로 보내는 리다이렉트 (종료 코드 2) | SESSION 쿠키 만료·로그아웃 | 쿠키를 다시 넣는다 (`config set session-cookie -`). |
+| `웹 방식에서는 지원하지 않습니다. auth-mode 를 api-key 로 바꾸세요.` (종료 코드 3) | 웹 방식이 지원하지 않는 명령이나 옵션 | 사용자에게 API 키 방식으로 바꿀지 묻는다. 묻지 않고 `auth-mode` 를 바꾸지 않는다 |
 | `mise ERROR No version is set for shim: dooray` | 저장소가 mise 설정(`mise.toml`, `.tool-versions` 등)으로 Node.js 를 고정해, 전역 Node.js 에만 깔린 shim 이 CLI 가 뜨기 전에 실패함. `dooray doctor` 로도 잡을 수 없음 | `mise use -g npm:@bifos/dooray-cli` 로 mise 에 전역 등록 (버전을 생략하면 최신 버전으로 고정됨) |
 | `API 호출 한도를 넘었습니다 (429)`, 종료 코드 6 | 재시도 3회 뒤에도 호출 한도 초과 | 잠시 기다렸다 다시 실행. 종료 코드 6 은 다른 API 오류(1)와 구분된다 |
 | non-TTY 삭제 실행이 종료 코드 3으로 중단됨 | 삭제 확인용 yes 플래그가 없음 | `-y` 또는 `--yes`를 붙여 다시 실행 |
@@ -234,6 +215,6 @@ dooray cache refresh   # 같은 삭제를 하고 자동 갱신 예정임을 알�
 지울 캐시가 없어도 종료 코드 0 으로 끝난다. 삭제에 실패하면 종료 코드 5 로 끝나므로
 성공 메시지를 확인하지 말고 종료 코드로 판단한다.
 
-`api-key` 나 `base-url` 을 바꾸면 캐시가 함께 비워진다.
+`api-key`, `base-url`, `auth-mode`, `session-cookie` 를 바꾸면 캐시가 함께 비워진다. 웹 방식은 `tenant-name` 을 바꿔도 같다.
 캐시는 계정과 접속 환경별로 나뉘지 않아서, 비우지 않으면 이전 계정의 프로젝트와 멤버가 남아 잘못 매칭된다.
 같은 값을 다시 설정하는 경우와 지울 캐시가 없는 경우에는 비우지 않고 안내도 나오지 않는다.

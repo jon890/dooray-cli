@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
+import { preserveConfirmed } from "./lib/classified.mjs";
 import { loadPersonaConfig, parseArgs } from "./lib/config.mjs";
 import {
   buildSubjectShapeIndex,
@@ -43,6 +44,18 @@ function parseJsonLines(contents, sourcePath) {
     });
 }
 
+async function readPreviousClassified(path) {
+  let contents;
+  try {
+    contents = await readFile(path, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  }
+  // 읽을 수 없는 파일을 빈 것으로 보고 덮어쓰면 확정 결과가 사라진다. 그래서 파싱 오류는 그대로 멈춘다.
+  return parseJsonLines(contents, path);
+}
+
 async function writePrivateFile(path, contents) {
   const temporaryPath = join(
     dirname(path),
@@ -80,27 +93,41 @@ async function main() {
       decision: labelEntry(entry, signals, subjectShapeIndex),
     };
   });
-  const classified = decisions.map(({ entry, signals, decision }) => ({
-    ...entry,
-    label: decision.label,
-    signals,
-    confirmed: false,
-  }));
+  const classifiedPath = join(outDir, "classified.jsonl");
+  const previous = await readPreviousClassified(classifiedPath);
+  const { entries: classified, preserved } = preserveConfirmed(
+    decisions.map(({ entry, signals, decision }) => ({
+      ...entry,
+      label: decision.label,
+      signals,
+      confirmed: false,
+    })),
+    previous,
+  );
+  if (preserved > 0) {
+    process.stderr.write(`확정된 ${preserved}건의 라벨을 그대로 유지했습니다.\n`);
+  }
   const serialized =
     classified.map((entry) => JSON.stringify(entry)).join("\n") +
     (classified.length > 0 ? "\n" : "");
 
   await mkdir(outDir, { recursive: true, mode: 0o700 });
-  await writePrivateFile(join(outDir, "classified.jsonl"), serialized);
+  await writePrivateFile(classifiedPath, serialized);
 
   if (report) {
     const counts = { human: 0, "ai-suspect": 0, "formal-template": 0 };
-    for (const entry of classified) counts[entry.label] += 1;
+    for (const entry of classified) counts[entry.label] = (counts[entry.label] ?? 0) + 1;
+    const confirmedIds = new Set(
+      classified.filter((entry) => entry.confirmed).map((entry) => entry.id),
+    );
     process.stdout.write(
       `${JSON.stringify({
         counts,
         needsReview: decisions
-          .filter(({ decision }) => decision.needsReview)
+          .filter(
+            ({ decision, entry }) =>
+              decision.needsReview && !confirmedIds.has(entry.id),
+          )
           .map(({ entry, signals }) => ({
             id: entry.id,
             subject: entry.subject,

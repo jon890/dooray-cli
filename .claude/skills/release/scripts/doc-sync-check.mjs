@@ -6,7 +6,8 @@
 //   node doc-sync-check.mjs "wiki page move" --search    준 문자열만 검사한다
 //
 // 인자를 주지 않으면 직전 태그와 HEAD 사이의 `src/` diff 에서 추가된
-// `new Command("...")` 와 `.option("--...")` 를 뽑아 검사 대상으로 삼는다.
+// `new Command(...)`, `.command(...)`, `.option(...)`, `.requiredOption(...)`, `new Option(...)` 를
+// 여러 줄에 걸친 선언까지 포함해 뽑아 검사 대상으로 삼는다. 뽑는 규칙은 doc-sync-extract.mjs 가 소유한다.
 // 사람이 목록을 뽑아 넘기면 빠뜨린 것은 검사도 통과한다. 무엇을 검사할지를 검사기가 정한다.
 //
 // 종료 코드
@@ -21,11 +22,8 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-
-function repoRoot() {
-  const r = spawnSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" });
-  return r.status === 0 ? r.stdout.trim() || null : null;
-}
+import { extractTargets } from "./doc-sync-extract.mjs";
+import { repoRoot } from "./lib.mjs";
 
 const root = repoRoot();
 if (!root) {
@@ -49,19 +47,7 @@ function extractFromDiff() {
     process.exit(2);
   }
 
-  const commands = new Set();
-  const options = new Set();
-  for (const line of diff.stdout.split("\n")) {
-    if (!line.startsWith("+") || line.startsWith("+++")) continue;
-    for (const m of line.matchAll(/new Command\(\s*["'`]([^"'`]+)["'`]/g)) commands.add(m[1]);
-    // 옵션 선언은 `--json` 처럼 긴 이름만 있기도 하고 `-y, --yes` 처럼 짧은 플래그가
-    // 앞서기도 한다. 따옴표 안 전체를 잡아 그 안에서 긴 이름을 다시 훑는다.
-    // 여는 따옴표 바로 뒤에 `--` 를 요구하면 short-first 선언이 통째로 빠진다 (실측).
-    for (const m of line.matchAll(/\.option\(\s*["'`]([^"'`]+)["'`]/g)) {
-      for (const o of m[1].matchAll(/--[a-z0-9-]+/gi)) options.add(o[0]);
-    }
-  }
-  return { range, targets: [...commands, ...options] };
+  return { range, targets: extractTargets(diff.stdout) };
 }
 
 // process.argv 로 받으므로 앞의 `--` 없이도 `--search` 가 그대로 들어온다.

@@ -37,9 +37,11 @@ npm publish --access public --dry-run
 파일 목록과 버전과 크기를 보고, 의도하지 않은 파일이 섞였으면 멈춘다.
 확인했으면 명령을 사용자에게 넘긴다.
 
+```bash
+npm publish --access public
 ```
-cd <repo root> && npm publish --access public
-```
+
+저장소 root 에서 실행하도록 안내한다.
 
 **`--otp=<code>` 를 안내하지 않는다.** 계정의 2단계 인증이 `auth-and-writes` 이면
 npm 이 브라우저 인증 URL 을 띄우고 ENTER 를 기다린다. 코드를 직접 입력하는 흐름이 아니다.
@@ -55,7 +57,7 @@ registry 는 인증 없는 scoped 패키지의 PUT 에 401 대신 404 를 낸다
 
 ## Trusted Publishing 등록
 
-2026-11-13 에 등록했고 변수를 켰다. 등록이 사라졌거나 저장소·워크플로 이름이 바뀌어 다시 등록할 때만 이 절을 따른다.
+등록이 사라졌거나 저장소·워크플로 이름이 바뀌어 다시 등록할 때만 이 절을 따른다.
 
 ```bash
 npm trust github @bifos/dooray-cli --file release.yml --repo jon890/dooray-cli --allow-publish --yes
@@ -66,7 +68,6 @@ gh variable set NPM_TRUSTED_PUBLISHING --body true
 - **등록과 `npm trust list` 는 사용자가 별도 터미널에서 실행한다.** 둘 다 2단계 인증이 필요하고,
   npm 이 브라우저 인증 URL 을 띄운 뒤 ENTER 를 기다린다. 에이전트 세션의 `!` 로 실행하면 기다리지 못하고 `EOTP` 로 끝난다.
 - `401 ... You must be logged in` 이면 로그인이 만료된 것이다. `npm login` 뒤 같은 명령을 다시 실행한다.
-- 2026-09-07 에는 같은 등록이 본문 없는 400 으로 실패했다. 그때 명령에는 `--allow-publish` 가 없었다.
 
 CI 의 게시 단계가 인증 오류(`ENEEDAUTH`, `E401`, `E404`)로 실패하면 등록이 사라졌을 수 있다.
 태그와 Release 는 그대로 두고 「로컬 게시」 로 이번 버전을 내보낸 뒤, 사용자에게 재등록을 요청한다.
