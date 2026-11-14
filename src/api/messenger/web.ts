@@ -49,6 +49,9 @@ function log(source: Row): MessengerLog {
 }
 
 const ALREADY_EXISTS = /CHANNEL_ALREADY_EXISTS/;
+/** 글타래 목록을 한 번에 받는 개수와 훑는 최대 페이지 수. 1000 개를 받아도 한 번에 끝나는 것을 실측했다(내 글타래 289개). */
+const THREAD_PAGE_SIZE = 1000;
+const THREAD_MAX_PAGES = 20;
 
 export function createMessengerWeb(context: WebContext): MessengerClient {
   const http = context.http;
@@ -62,6 +65,21 @@ export function createMessengerWeb(context: WebContext): MessengerClient {
     return { header: response.header, id: identifier(content.id), channelId: identifier(content.channelId) };
   }
 
+  /**
+   * 내 글타래 목록에서 부모 로그의 스레드 채널을 찾는다. 목록은 최신순이 아니라 페이지마다 훑어야 한다.
+   * 한 번에 THREAD_PAGE_SIZE 개를 받고, 그보다 적게 오면 끝이다. 상한은 THREAD_MAX_PAGES 번이다.
+   */
+  async function findThread(channelId: string, logId: string): Promise<string | undefined> {
+    for (let page = 0; page < THREAD_MAX_PAGES; page += 1) {
+      const response = await http.request("messenger/v2/api/thread-channels", { searchParams: { size: THREAD_PAGE_SIZE, page } });
+      const contents = rows(row(response.result).contents);
+      const hit = contents.find((item) => item.parentChannelLogId !== undefined && identifier(item.parentChannelLogId) === logId && identifier(item.parentChannelId) === channelId);
+      if (hit) return identifier(hit.channelId);
+      if (contents.length < THREAD_PAGE_SIZE) return undefined;
+    }
+    return undefined;
+  }
+
   /** 로그에서 스레드를 연다. 이미 있으면 그 스레드 채널을 돌려준다. */
   async function openThread(channelId: string, logId: string): Promise<string> {
     try {
@@ -72,10 +90,9 @@ export function createMessengerWeb(context: WebContext): MessengerClient {
       return identifier(row(row(response.result).content).channelId);
     } catch (error) {
       if (!(error instanceof DoorayCliError) || !ALREADY_EXISTS.test(error.message)) throw error;
-      // 이미 스레드가 있는 로그다. 대화방 로그의 thread 필드에서 그 채널을 찾는다.
-      const logs = await client.getChannelLogs(channelId, 1000);
-      const found = logs.result.find((l) => l.id === logId)?.thread?.channelId;
-      if (!found) throw new DoorayCliError("스레드가 이미 있지만 그 채널을 찾지 못했습니다.", EXIT_API_ERROR);
+      // 이미 스레드가 있는 로그다. 내 글타래 목록에서 부모 로그 id 로 그 채널을 찾는다.
+      const found = await findThread(channelId, logId);
+      if (!found) throw new DoorayCliError("스레드가 이미 있지만 내 글타래 목록에서 그 채널을 찾지 못했습니다. 부모 메시지의 thread.channelId 를 channel-send --channel 에 직접 주세요.", EXIT_API_ERROR);
       return found;
     }
   }

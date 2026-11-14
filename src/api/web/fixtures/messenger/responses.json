@@ -211,5 +211,32 @@
       "isSuccessful": false
     },
     "result": null
+  },
+  "threadList": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "totalCount": 2,
+      "references": {
+        "channelMap": {}
+      },
+      "contents": [
+        {
+          "channelId": "thread-9",
+          "parentChannelId": "channel-1",
+          "parentChannelLogId": "log-7",
+          "totalCount": 1
+        },
+        {
+          "channelId": "thread-1",
+          "parentChannelId": "channel-1",
+          "parentChannelLogId": "log-3",
+          "totalCount": 2
+        }
+      ]
+    }
   }
 }

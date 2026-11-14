@@ -106,12 +106,28 @@ describe("웹 메신저 보내기", () => {
     expect(res.result).toEqual({ id: "log-9", channelId: "thread-1" });
   });
 
-  it("이미 스레드가 있는 메시지는 로그의 thread 필드에서 그 채널을 찾아 쓴다", async () => {
-    const calls = sequence(fixtures.myMessenger, fixtures.threadExists, fixtures.logs, fixtures.sentThread);
+  it("이미 스레드가 있는 메시지는 글타래 목록에서 부모 로그 id 로 그 채널을 찾아 쓴다", async () => {
+    const calls = sequence(fixtures.myMessenger, fixtures.threadExists, fixtures.threadList, fixtures.sentThread);
     const res = await client().createLogThread("channel-1", "log-3", "또 하나");
-    expect(calls[2].url.pathname).toBe("/messenger/v1/api/channel/channel-1/logs");
+    expect(calls[2].url.pathname).toBe("/messenger/v2/api/thread-channels");
+    expect(Object.fromEntries(calls[2].url.searchParams)).toEqual({ size: "1000", page: "0" });
     expect(calls[3].url.pathname).toBe("/messenger/v1/api/channelLogs/thread-1");
     expect(res.result.channelId).toBe("thread-1");
+  });
+
+  it("글타래 목록이 한 페이지를 넘어도 다음 페이지에서 찾는다. 최근 로그 범위와 무관하다", async () => {
+    const filler = Array.from({ length: 1000 }, (_, i) => ({ channelId: `t-${i}`, parentChannelId: "channel-1", parentChannelLogId: `old-${i}` }));
+    const page0 = { header: fixtures.threadList.header, result: { contents: filler } };
+    const calls = sequence(fixtures.myMessenger, fixtures.threadExists, page0, fixtures.threadList, fixtures.sentThread);
+    const res = await client().createLogThread("channel-1", "log-3", "아주 오래된 부모");
+    expect(calls.map((c) => c.url.searchParams.get("page"))).toEqual([null, null, "0", "1", null]);
+    expect(res.result.channelId).toBe("thread-1");
+  });
+
+  it("목록 끝까지 찾지 못하면 안내와 함께 API 오류로 끝내고 메시지는 보내지 않는다", async () => {
+    const calls = sequence(fixtures.myMessenger, fixtures.threadExists, fixtures.threadList);
+    await expect(client().createLogThread("channel-1", "log-404", "글")).rejects.toMatchObject({ exitCode: 1, message: expect.stringContaining("thread.channelId") });
+    expect(calls.some((c) => c.url.pathname.includes("channelLogs"))).toBe(false);
   });
 });
 
