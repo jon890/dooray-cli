@@ -4,9 +4,9 @@ import { createWebClient } from "../web/index.js";
 const fixtures = JSON.parse(readFileSync(new URL("../web/fixtures/post/responses.json", import.meta.url), "utf8"));
 const api = () => createWebClient("fake-session", "https://example.dooray.com", "https://api.dooray.com");
 afterEach(() => vi.unstubAllGlobals());
-function server() {
+function server(commentResponse = fixtures.comment) {
   const writes: any[] = [], queries: URL[] = [];
-  const newer = fixtures.comment.result;
+  const newer = commentResponse.result;
   const older = { ...newer, id: "comment-0", createdAt: "2026-01-02T04:05:06+09:00" };
   vi.stubGlobal("fetch", vi.fn(async (request: Request) => {
     const url = new URL(request.url);
@@ -18,7 +18,7 @@ function server() {
       queries.push(url);
       return Response.json({ ...fixtures.comments, totalCount: 2, result: [url.searchParams.has("baseEventId") ? older : newer] });
     }
-    return Response.json(url.pathname.includes("/events/") ? fixtures.comment : fixtures.detail);
+    return Response.json(url.pathname.endsWith("/files") ? fixtures.files : url.pathname.includes("/events/") ? commentResponse : fixtures.detail);
   }));
   return { writes, queries };
 }
@@ -57,6 +57,20 @@ describe("웹 댓글 페이지와 수정", () => {
     expect(writes[1].fileIdList).toEqual(["file-1"]);
     await client.updatePostComment("project-1", "post-1", "comment-1", { body: { mimeType: "text/x-markdown", content: "파일 참조 삭제" } }, { removeFileId: "file-1" });
     expect(writes[2].fileIdList).toEqual([]);
+  });
+  it("카드 없이 본문 링크만 있는 CLI 업로드 파일도 삭제한다", async () => {
+    const response = structuredClone(fixtures.comment);
+    response.result.fileIdList = [];
+    response.result.body.content = "본문\n[파일](/files/file-1)";
+    const { writes } = server(response), client = api();
+    await client.updatePostComment("project-1", "post-1", "comment-1", { body: { mimeType: "text/x-markdown", content: "본문" } }, { removeFileId: "file-1" });
+    await client.deletePostFile("project-1", "post-1", "file-1");
+    expect(writes).toEqual([{ body: { mimeType: "text/x-markdown", content: "본문" }, fileIdList: [] }, null]);
+  });
+  it("카드와 본문 어디에도 없는 파일은 PUT 전에 코드 3으로 거절한다", async () => {
+    const { writes } = server();
+    await expect(api().updatePostComment("project-1", "post-1", "comment-1", { body: { mimeType: "text/x-markdown", content: "본문" } }, { removeFileId: "missing-file" })).rejects.toMatchObject({ exitCode: 3 });
+    expect(writes).toEqual([]);
   });
   it("작성·단건·삭제는 공식 구조를 유지하고 이메일을 발송하지 않는다", async () => {
     const { writes } = server(), client = api();

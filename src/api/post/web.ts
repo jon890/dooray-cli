@@ -9,6 +9,7 @@ import { apiPath } from "../api-path.js";
 import { count, date, identifier, invalidResponse, pick, referenceMap, row, rows, text, type Row } from "../web/convert.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_API_ERROR, EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
+import { removeFileReference } from "../../utils/comment-files.js";
 import { parseContentDispositionFileName, fallbackFileName } from "../../utils/content-disposition.js";
 
 function unsupported(): never {
@@ -283,6 +284,10 @@ export function createPostWeb(context: WebContext): PostClient {
     async updatePostComment(projectId, postId, logId, input, options) {
       const original = await methods.getPostComment(projectId, postId, logId);
       const retained = (original.result.files ?? []).map((f) => f.id);
+      if (options?.removeFileId !== undefined && !retained.includes(options.removeFileId)
+        && !removeFileReference(original.result.body.content, options.removeFileId, original.result.body.mimeType).removed) {
+        throw new DoorayCliError("지정한 파일의 카드나 본문 링크를 댓글에서 찾지 못했습니다.", EXIT_PARAM_ERROR);
+      }
       // 일반 본문 수정은 카드 연결을 보존한다. 파일 삭제 명령이 지정한 ID만 제외한다.
       const fileIdList = retained.filter((id) => id !== options?.removeFileId);
       const response = await mutation(projectId, postId, apiPath`/events/${logId}`, { body: input.body, fileIdList }, "PUT");
