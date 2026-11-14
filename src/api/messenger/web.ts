@@ -4,7 +4,7 @@
  * 경로와 변환 근거는 docs/api/web-endpoints/messenger.md 가 소유한다.
  */
 import type { MessengerClient } from "./types.js";
-import type { MessengerChannel, MessengerLog } from "../types.js";
+import type { MessengerChannel, MessengerLog } from "./types.js";
 import { apiPath } from "../api-path.js";
 import { date, identifier, invalidResponse, pick, row, rows, text, type Row } from "../web/convert.js";
 import { randomUUID } from "node:crypto";

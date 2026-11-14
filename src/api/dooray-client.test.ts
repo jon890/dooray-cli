@@ -38,7 +38,7 @@ describe("인증 방식 선택", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
   it("아직 web.ts 가 없는 영역의 메서드는 공개 API 로 빠지지 않는다", async () => {
-    const areas = readdirSync(new URL("./", import.meta.url), { withFileTypes: true }).filter((entry) => entry.isDirectory() && existsSync(new URL(`./${entry.name}/types.ts`, import.meta.url)) && !existsSync(new URL(`./${entry.name}/web.ts`, import.meta.url)));
+    const areas = readdirSync(new URL("./", import.meta.url), { withFileTypes: true }).filter((entry) => entry.isDirectory() && entry.name !== "common" && existsSync(new URL(`./${entry.name}/types.ts`, import.meta.url)) && !existsSync(new URL(`./${entry.name}/web.ts`, import.meta.url)));
     const methods = areas.flatMap((entry) => [...readFileSync(new URL(`./${entry.name}/types.ts`, import.meta.url), "utf8").matchAll(/^\s+(\w+)\??\(/gm)].map((match) => match[1]));
     const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
     const client = createClient({ ...base, authMode: "web", tenantName: "my-org", sessionCookie: "fake-session" });

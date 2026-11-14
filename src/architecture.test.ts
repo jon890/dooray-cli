@@ -104,6 +104,9 @@ export function violationOf(edge: ImportEdge): string | undefined {
   }
   const fromApiArea = apiAreaOf(edge.from);
   const toApiArea = apiAreaOf(edge.to);
+  if (fromApiArea !== undefined && ["api/types.ts", "api/client.ts"].includes(edge.to)) {
+    return `api 영역 ${fromApiArea} 는 api/types.ts·api/client.ts 를 가져오지 않는다`;
+  }
   if (fromApiArea !== undefined && toApiArea !== undefined && fromApiArea !== toApiArea && !edge.to.endsWith("/types.ts")) {
     return `api 영역 ${fromApiArea} 는 다른 영역 ${toApiArea} 의 types.ts 만 가져온다`;
   }
@@ -225,6 +228,23 @@ describe("규칙 판정", () => {
   it("api 영역은 다른 영역의 types.ts 만 가져온다", () => {
     expect(violationOf({ from: "api/post/web.ts", to: "api/member/types.ts" })).toBeUndefined();
     expect(violationOf({ from: "api/post/web.ts", to: "api/member/web.ts" })).toBeDefined();
+  });
+
+  it("api 영역은 통합 타입과 공개 클라이언트 진입점으로 돌아가지 않는다", () => {
+    for (const from of ["api/post/types.ts", "api/post/web.ts", "api/wiki/public.ts"]) {
+      for (const to of ["api/types.ts", "api/client.ts"]) {
+        expect(violationOf({ from, to })).toBeDefined();
+      }
+    }
+    expect(violationOf({ from: "api/post/types.ts", to: "api/common/types.ts" })).toBeUndefined();
+    expect(violationOf({ from: "api/types.ts", to: "api/post/types.ts" })).toBeUndefined();
+    expect(violationOf({ from: "api/client.ts", to: "api/post/types.ts" })).toBeUndefined();
+  });
+
+  it("통합 타입 파일은 타입 재내보내기만 남긴다", () => {
+    const source = readFileSync(join(SRC, "api/types.ts"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(source.trim()).not.toBe("");
+    expect(source.split("\n").filter((line) => line.trim()).every((line) => /^export type \{[^}]+\} from "\.\/[^/]+\/types\.js";$/.test(line))).toBe(true);
   });
 
   it("import 지정자를 읽고 별칭과 상대 경로를 같은 파일로 푼다", () => {

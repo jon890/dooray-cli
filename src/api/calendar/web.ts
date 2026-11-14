@@ -3,13 +3,7 @@
  * 웹 `/v2/wapi` 는 Dooray-Api-Version 헤더에 따라 모양이 달라져 호출마다 화면과 같은 1.2 를 붙인다.
  */
 import type { CalendarClient } from "./types.js";
-import type {
-  Calendar,
-  CalendarEvent,
-  CalendarEventDetail,
-  CalendarEventUser,
-  CalendarEventWriteRequest,
-} from "../types.js";
+import type { Calendar, CalendarEvent, CalendarEventDetail, CalendarEventUser, CalendarEventWriteRequest } from "./types.js";
 import { apiPath } from "../api-path.js";
 import { date, identifier, invalidResponse, pick, referenceMap, row, rows, text, type Row } from "../web/convert.js";
 import type { WebContext } from "../web/context.js";

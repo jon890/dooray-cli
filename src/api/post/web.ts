@@ -2,7 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { PostClient } from "./types.js";
-import type { Post, PostDetail, PostUser, CreatePostUser, PostComment, PostFileDetail, CreatePostRequest, UpdatePostRequest } from "../types.js";
+import type { Post, PostDetail, PostUser, CreatePostUser, PostComment, PostFileDetail, CreatePostRequest, UpdatePostRequest } from "./types.js";
 import type { WebContext } from "../web/context.js";
 import type { WebEnvelope } from "../web/http.js";
 import { apiPath } from "../api-path.js";

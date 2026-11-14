@@ -6,7 +6,8 @@
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { WikiClient } from "./types.js";
-import type { WikiPage, WikiPageDetail, WikiPageFile, WikiPageFileType, WikiComment, Wiki, DoorayApiUnitResponse } from "../types.js";
+import type { WikiPage, WikiPageDetail, WikiPageFile, WikiPageFileType, WikiComment, Wiki } from "./types.js";
+import type { DoorayApiUnitResponse } from "@/api/common/types.js";
 import { apiPath } from "../api-path.js";
 import { count, date, identifier, invalidResponse, row, rows, text, type Row } from "../web/convert.js";
 import type { WebContext } from "../web/context.js";

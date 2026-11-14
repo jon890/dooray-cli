@@ -1,6 +1,7 @@
 /** 프로젝트 웹 경로와 공식 응답 변환. 태그 쓰기는 웹의 배열·tag-prefixes 규약을 따른다. */
 import type { ProjectClient } from "./types.js";
-import type { PostUser, Tag, TemplateDetail } from "../types.js";
+import type { PostUser } from "@/api/post/types.js";
+import type { Tag, TemplateDetail } from "./types.js";
 import { apiPath } from "../api-path.js";
 import { count, date, identifier, invalidResponse, pick, project, referenceMap, row, rows, text, type Row } from "../web/convert.js";
 import type { WebContext } from "../web/context.js";
