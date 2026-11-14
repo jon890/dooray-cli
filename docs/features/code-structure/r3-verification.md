@@ -63,8 +63,8 @@
 | spec.md | 동작과 사용자 결정 유지. 이번 PR 의 요구사항 범위와 일치 |
 | design.md | 재분류 표와 UID 조회 분리를 구현. R3 에서 지울 예외의 범위만 명확히 함 |
 | docs/code-architecture.md | 현재 구조에 body/ 를 추가하고 utils 책임을 갱신. 의존 규칙 표는 변경 없음 |
-| ADR-022, ADR-043, ADR-055 와 관련 pitfalls | 이동한 코드 경로만 갱신. 기존 결정과 근거 유지 |
-| ADR-082 | 기존 계층 구조와 별칭 결정을 따름. 새 ADR 불필요 |
+| [ADR-022](../../adr/022-feedback-gh-cli.md), [ADR-043](../../adr/043-wiki-name-search-and-project-column.md), [ADR-055](../../adr/055-body-mimetype-aware-markup.md) 와 관련 pitfalls | 이동한 코드 경로만 갱신. 기존 결정과 근거 유지 |
+| [ADR-082](../../adr/082-code-structure.md) | 기존 계층 구조와 별칭 결정을 따름. 새 ADR 불필요 |
 | PRD, flow, data-schema | 명령·외부 효과·저장 형식 변경 없음. 영향 없음 |
 
 공통화 후보 없음: 코드 구조 설계와 기존 계층 규칙을 구현한 변경이며, 여러 기능에 반복된 새 도메인 규칙이 없다.
@@ -72,6 +72,7 @@
 
 ## 독립 검토와 남은 검증
 
-독립 코드·문서 리뷰: 대기 | 코디네이터가 Claude 리뷰 worker 에게 맡긴다.
+독립 코드·문서 리뷰: [Claude claude-sonnet-5-5 리뷰](https://github.com/jon890/dooray-cli/pull/264#pullrequestreview-5904460068). 차단 0건, 권장 2건을 별도 커밋으로 반영했다.
+재검증: 타입 검사, 전체 테스트 2,322개, 빌드, 도움말 104개 경로 비교, 패키지 검사 통과.
 머지 뒤 추가 실행 검증은 없다. 런타임 상태와 외부 계약을 바꾸지 않는다.
 R4 의 resolver 예외 제거와 명령 나무 정리, 선택 R5 는 이번 PR 밖이다.
