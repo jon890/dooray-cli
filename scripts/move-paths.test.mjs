@@ -118,13 +118,13 @@ describe("rewrite", () => {
 
   it("문서 검사 범위의 정확한 경로만 고치고 무관한 경로와 문서는 지킨다", () => {
     const root = fixture();
-    const before = '`src/utils/old.ts`, src/utils/old.js. src/utils/old\nsrc/utils/old.tsx src/utils/old.test.ts\nother/src/utils/old.ts\n';
+    const before = '`src/utils/old.ts`, src/utils/old.js. src/utils/old\nsrc/utils/old.tsx src/utils/old.test.ts\nother/src/utils/old.ts src/utils/old.ts*\n';
     for (const file of ["docs/adr/x.md", "CLAUDE.md", "README.md", "CONTRIBUTING.md", ".claude/example.md", "skills/example/SKILL.md"]) write(root, file, before);
     write(root, "other.md", before);
     runMoves(root, table, "move");
     runMoves(root, table, "rewrite");
     for (const file of ["docs/adr/x.md", "CLAUDE.md", "README.md", "CONTRIBUTING.md", ".claude/example.md", "skills/example/SKILL.md"]) {
-      expect(read(root, file)).toBe('`src/body/new.ts`, src/body/new.js. src/body/new\nsrc/utils/old.tsx src/body/new.test.ts\nother/src/utils/old.ts\n');
+      expect(read(root, file)).toBe('`src/body/new.ts`, src/body/new.js. src/body/new\nsrc/utils/old.tsx src/body/new.test.ts\nother/src/utils/old.ts src/utils/old.ts*\n');
     }
     expect(read(root, "other.md")).toBe(before);
   });
@@ -134,6 +134,20 @@ describe("rewrite", () => {
     const source = read(root, "src/utils/old.ts");
     expect(() => runMoves(root, table, "rewrite")).toThrow("먼저 move");
     expect(read(root, "src/utils/old.ts")).toBe(source);
+  });
+
+  it("정규식·import.meta 는 지키고 템플릿 표현식 안의 실제 import 는 고친다", () => {
+    const root = fixture();
+    write(root, "src/use.ts", [
+      'const pattern = /import(".\\/utils\\/old.js")/;',
+      'const directory = import.meta.dirname;',
+      'const example = { from: "./utils/old.js" };',
+      'const text = `prefix ${import("./utils/old.js")} suffix`;',
+    ].join("\n"));
+    const before = read(root, "src/use.ts");
+    runMoves(root, table, "move");
+    runMoves(root, table, "rewrite");
+    expect(read(root, "src/use.ts")).toBe(before.replace('${import("./utils/old.js")}', '${import("@/body/new.js")}'));
   });
 
   it("빈 표와 재실행은 변경을 만들지 않는다", () => {

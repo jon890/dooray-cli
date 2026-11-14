@@ -64,12 +64,65 @@ export function expandMoves(root, table) {
 /** 주석과 문자열 안의 import 예시를 실제 코드와 구분하기 위한 토큰이다. */
 function tokensOf(source) {
   const tokens = [];
-  const pattern = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|`(?:\\[\s\S]|[^`\\])*`|[A-Za-z_$][\w$]*|[^\s]/g;
-  for (const match of source.matchAll(pattern)) {
-    const value = match[0];
-    if (value.startsWith("//") || value.startsWith("/*") || value.startsWith("`")) continue;
-    tokens.push({ value, start: match.index, end: match.index + value.length, string: value[0] === '"' || value[0] === "'" });
+  const add = (start, end, string = false) => tokens.push({ value: source.slice(start, end), start, end, string });
+  const quotedEnd = (start, quote) => {
+    let i = start + 1;
+    while (i < source.length) {
+      if (source[i] === "\\") i += 2;
+      else if (source[i++] === quote) break;
+    }
+    return i;
+  };
+  function code(start, interpolation = false) {
+    let braces = 0;
+    let i = start;
+    while (i < source.length) {
+      const char = source[i];
+      if (/\s/.test(char)) { i++; continue; }
+      if (source.startsWith("//", i)) {
+        const end = source.indexOf("\n", i + 2);
+        i = end < 0 ? source.length : end; continue;
+      }
+      if (source.startsWith("/*", i)) {
+        const end = source.indexOf("*/", i + 2);
+        i = end < 0 ? source.length : end + 2; continue;
+      }
+      if (char === '"' || char === "'") {
+        const end = quotedEnd(i, char); add(i, end, true); i = end; continue;
+      }
+      if (char === "`") {
+        const begin = i++;
+        while (i < source.length) {
+          if (source[i] === "\\") i += 2;
+          else if (source[i] === "`") { i++; break; }
+          else if (source.startsWith("${", i)) i = code(i + 2, true);
+          else i++;
+        }
+        // 템플릿 문자열의 텍스트는 제외하고 표현식 안의 코드만 읽는다.
+        add(begin, begin + 1); continue;
+      }
+      if (char === "/" && (!tokens.length || /^(?:[=(:,;!&|?{}\[>]|return|throw|case)$/.test(tokens.at(-1).value))) {
+        let end = i + 1;
+        let characterClass = false;
+        while (end < source.length && source[end] !== "\n") {
+          if (source[end] === "\\") { end += 2; continue; }
+          if (source[end] === "[") characterClass = true;
+          if (source[end] === "]") characterClass = false;
+          if (source[end++] === "/" && !characterClass) break;
+        }
+        while (/[a-z]/i.test(source[end] ?? "") && end < source.length) end++;
+        add(i, end); i = end; continue;
+      }
+      if (interpolation && char === "}" && braces === 0) return i + 1;
+      if (char === "{") braces++;
+      if (char === "}") braces--;
+      const identifier = source.slice(i).match(/^[A-Za-z_$][\w$]*/)?.[0];
+      const end = i + (identifier?.length ?? 1);
+      add(i, end); i = end;
+    }
+    return i;
   }
+  code(0);
   return tokens;
 }
 
@@ -83,7 +136,7 @@ function moduleStrings(source) {
       const next = tokens[i + 1];
       if (value === "import" && next?.string) add(next);
       else if (value === "import" && next?.value === "(") add(tokens[i + 2]);
-      else if (value === "import" || next?.value === "{" || next?.value === "*" || (next?.value === "type" && ["{", "*"].includes(tokens[i + 2]?.value))) {
+      else if ((value === "import" && next?.value !== ".") || next?.value === "{" || next?.value === "*" || (next?.value === "type" && ["{", "*"].includes(tokens[i + 2]?.value))) {
         for (let j = i + 1; j < tokens.length && tokens[j].value !== ";"; j++) {
           if (tokens[j].value === "from" && tokens[j + 1]?.string) { add(tokens[j + 1]); break; }
         }
@@ -130,7 +183,8 @@ export function rewriteSource(root, source, currentFile, moves) {
 }
 
 function rewriteDoc(source, moves) {
-  return source.replace(/(?<![\w./-])src\/[\w./-]*/g, (match) => {
+  return source.replace(/(?<![\w./-])src\/[\w./-]*/g, (match, offset) => {
+    if (source[offset + match.length] === "*") return match;
     const suffix = match.match(/[.,]+$/)?.[0] ?? "";
     const file = match.slice(4, suffix ? -suffix.length : undefined);
     for (const { from, to } of moves) {
