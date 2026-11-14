@@ -19,6 +19,11 @@
 
 ## 디렉터리 구조
 
+계층 폴더를 두고 api 안만 영역별로 나눈다 ([ADR-082](adr/082-code-structure.md)). 정리는 PR 여럿(R0~R5)으로 진행 중이라 지금 상태와 목표를 나눠 적는다.
+PR 마다 무엇이 옮겨지는지는 [코드 구조 정리 기술 설계](features/code-structure/design.md)가 갖는다. 정리가 끝나면 「지금」 을 지우고 목표만 남긴다.
+
+### 지금
+
 ```
 src/
   index.ts        # CLI entrypoint. Commander 루트와 명령 나무 조립
@@ -37,6 +42,28 @@ src/
     messenger/  project/  member/  post/  wiki/  mail/  calendar/  stream/
 ```
 
+### 목표
+
+```
+src/
+  index.ts        # 영역마다 내보낸 명령 나무를 붙이기만 한다
+  version.ts
+  api/
+    dooray-client.ts   # 영역 인터페이스의 교집합 DoorayClient 와 createClient
+    client.ts types.ts # 재내보내기만
+    common/            # 영역이 함께 쓰는 DTO
+    public/            # 공개 API 구현의 공용 부분(HTTP, 영역 구현 조립)
+    web/               # 웹 구현의 공용 부분(HTTP, 영역 구현 조립, 변환 도구)
+    <영역>/            # types.ts(인터페이스와 DTO) public.ts(공개 구현) web.ts(웹 구현)
+    mail/              # IMAP·SMTP
+  body/           # 업무·위키 본문 규칙. 영역 타입을 모르는 텍스트 처리
+  utils/          # 영역을 모르는 공통 부품만
+  resolvers/  services/  cache/  config/  skill/  editor/  formatters/   # 책임은 지금과 같다
+  commands/
+    <영역>/index.ts   # 그 영역의 명령 나무
+    <영역>/*.ts       # 명령 파일과, 명령 파일에서 뺀 그 영역의 로직
+```
+
 파일 하나하나가 무엇을 하는지는 여기 적지 않는다.
 같은 사실을 코드 주석과 ADR 과 이 문서에 함께 두면 갱신 지점이 여러 곳이 되고, 그중 하나가 낡는다.
 
@@ -44,13 +71,44 @@ src/
 | --- | --- |
 | 이 파일이 무엇을 하는가 | 그 파일의 머리말 주석 |
 | 왜 이렇게 만들었는가 | `docs/adr/INDEX.md` 에서 찾은 ADR |
-| 어느 계층에 두어야 하는가 | 아래 「모듈 의존 관계」 |
+| 어느 계층에 두어야 하는가 | 아래 「의존 규칙」 |
 | 어떤 명령과 옵션이 있는가 | `docs/guide/` 와 `dooray <명령> --help` |
 
 새 파일을 더할 때 이 절에 줄을 더하지 않는다. 디렉터리가 새로 생길 때만 고친다.
 
+## 의존 규칙
 
-## 모듈 의존 관계
+`src/architecture.test.ts` 가 아래 규칙으로 `src/` 의 import 를 검사하고, 어기면 `pnpm test` 가 실패한다. 이 표가 규칙의 원본이고 테스트의 `LAYER_DEPENDENCIES` 가 같은 내용이다. 규칙을 바꾸면 둘을 함께 고친다.
+계층은 `src/` 바로 아래 폴더다. `index.ts` 는 entry, `version.ts` 는 version 이다. 같은 계층 안은 언제나 가져와도 된다.
+
+| 가져오는 계층 | 가져와도 되는 계층 |
+| --- | --- |
+| `version`, `utils` | 없음 |
+| `body` | utils |
+| `config` | utils |
+| `cache` | utils, config |
+| `api` | utils, body, config, version |
+| `skill` | utils, version |
+| `editor` | utils, body, api, cache |
+| `formatters` | utils, body, api |
+| `resolvers` | utils, body, config, cache, api |
+| `services` | utils, body, config, cache, api |
+| `commands` | entry 를 뺀 모든 계층 |
+| `entry` | 모든 계층 |
+
+계층 안의 규칙:
+
+- 명령 영역(`commands/<영역>/` 과 `commands/<이름>.ts`)은 다른 명령 영역을 가져오지 않는다.
+- 공개 API 구현(`api/client.ts`, `api/public/`, `api/<영역>/public.ts`)과 웹 구현(`api/web/`, `api/<영역>/web.ts`)은 서로 가져오지 않는다. 둘을 고르는 `api/dooray-client.ts` 는 어느 쪽도 아니다.
+- `api/<영역>/` 은 다른 영역의 `types.ts` 만 가져온다.
+
+검사 방식:
+
+- 테스트 파일(`*.test.ts`)은 검사하지 않는다. mock 을 위해 계층을 넘나든다.
+- `import type` 도 센다. 타입만의 의존도 계층을 묶는다.
+- 지금 남은 위반은 테스트의 `ALLOWED_VIOLATIONS` 에 있다. 고치면 목록에서 지운다. 고친 위반이 목록에 남아도 테스트가 실패한다. 새 위반을 목록에 더하지 않는다.
+
+### 계층별 책임
 
 ```
 commands/* → resolvers/* → cache/store + api/dooray-client   (읽기: 이름 → id 번역)
@@ -79,7 +137,7 @@ editor/    → api/types + cache/types + utils (편집 데이터 타입과 임�
 ## API Client 구조
 
 `src/api/dooray-client.ts` 의 영역별 인터페이스 교집합인 DoorayClient 를 공개 API 구현(`client.ts`)과 웹 구현(`web/index.ts`)이 구현한다. 명령은 createClient(config) 로 고른다.
-영역 계약은 api/<영역>/types.ts, 웹 구현은 api/<영역>/web.ts 에 둔다. DTO 는 api/types.ts 를 유지한다. 웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web/http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
+영역 계약은 api/<영역>/types.ts, 웹 구현은 api/<영역>/web.ts 에 둔다. 지금 DTO 는 api/types.ts 에, 공개 구현은 client.ts 한 파일에 있다. 목표는 DTO 를 영역의 types.ts 로, 공개 구현을 api/<영역>/public.ts 로 옮기고 두 파일은 재내보내기만 남기는 것이다 ([ADR-082](adr/082-code-structure.md)). 웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web/http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
 메서드 목록은 여기 적지 않는다. 메서드가 늘 때마다 낡고, 그 파일을 열면 바로 보인다.
 
 ```bash
@@ -138,7 +196,21 @@ rg "^\s+(async )?\w+\(" src/api/client.ts src/api/*/web.ts
   - `scripts/` 의 `*.test.mjs`. 문서 검사 스크립트와 endpoint 목록 스크립트를 본다 ([ADR-048](adr/048-checks-to-mjs.md)).
   - `skills/dooray-persona/scripts/lib/` 의 `*.test.mjs`.
 - `vitest.config.ts` 가 `worktrees/**` 를 대상에서 뺀다. 그 아래는 git worktree 라 같은 테스트가 중복 수집된다.
+- `src/architecture.test.ts` 가 「의존 규칙」 을 검사한다.
 - 신규 도메인 헬퍼·복잡 분기는 vitest 단위 테스트 동반 권장 ([ADR-020](adr/020-post-input-unification-vitest.md) 도입 근거)
+
+## import 경로
+
+`src/` 아래 파일은 경로 별칭 `@/…` 으로 가져올 수 있다(`@/utils/errors.js` 는 `src/utils/errors.ts`). 별칭 표의 원본은 `tsconfig.json` 의 `paths` 다.
+`vitest.config.ts` 의 `resolve.tsconfigPaths` 가 같은 표를 읽고, tsup(esbuild)은 설정 없이 푼다. `vi.mock("@/…")` 는 상대 경로로 가져온 같은 모듈에도 적용된다.
+새 파일과 옮긴 파일은 별칭을 쓴다. 같은 폴더의 파일은 `./x.js` 로 둔다. 손대지 않는 기존 import 를 한꺼번에 바꾸지 않는다 ([ADR-082](adr/082-code-structure.md)).
+
+## 구조 정리 도구
+
+| 도구 | 하는 일 |
+| --- | --- |
+| `scripts/help-snapshot.mjs` | 빌드한 CLI 의 모든 명령 경로 `--help` 를 모은다. `--check <기준>` 은 다르면 종료 코드 1. 정리 PR 이 기준 브랜치 빌드와 비교해 사용자에게 보이는 명령이 그대로인지 보인다 |
+| `scripts/check-doc-paths.mjs` | 문서의 `src/…` 경로가 있는 파일을 가리키는지 본다. 기본은 보고만, `--strict` 는 낡은 경로가 있으면 종료 코드 1 |
 
 ## 빌드·배포
 

@@ -26,7 +26,7 @@ Dooray 공식 API 문서: [https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO
 스냅샷이 낡았으면 `docs/api/official-endpoints.txt` 를 갱신하고, 비공식 경로인데 쓰기로 정했으면
 그 스크립트의 `KNOWN_UNDOCUMENTED` 로 옮긴다.
 
-웹 인증 방식의 비공식 웹 경로는 ADR-081 의 예외를 따른다. 공개 API 방식에는 아래 정책이 적용된다.
+웹 인증 방식의 비공식 웹 경로는 [ADR-081](docs/adr/081-web-session-auth.md) 의 예외를 따른다. 공개 API 방식에는 아래 정책이 적용된다.
 
 **공식 문서에 없는 endpoint 는 기본으로 쓰지 않는다.** 쓰려면 읽기 전용이어야 하고
 확인·실측·등록·경고를 모두 채워야 한다. 조건과 그 이유는
@@ -60,6 +60,7 @@ dooray                # 글로벌 링크 시
 - config: `~/.dooray/config.json` (env var 폴백 없음)
 - 에러: `DoorayCliError(message, exitCode)` 로 통일
 - 출력: 데이터는 stdout, 스피너/에러는 stderr
+- import: 새 파일과 옮긴 파일은 경로 별칭 `@/…` 을 쓴다. 계층 사이 의존 방향은 `docs/code-architecture.md` 「의존 규칙」 이 정하고, 어기면 `src/architecture.test.ts` 가 실패한다
 
 ## 명령 공통 규약
 
@@ -73,13 +74,13 @@ dooray                # 글로벌 링크 시
   - 본문은 `--body` / `--body-file` (둘 다 `-` 로 stdin 을 받는다)
   - `config set <key> <value>` 의 값도 `-` 로 stdin 을 받는다 — 토큰이 셸 기록과 프로세스 목록에 남지 않게 하는 경로다
   - `post edit`, `wiki page edit`, `post`·`wiki page` 의 `comment add`/`edit`, `messenger send`·`channel-send`·`thread-send` 는 둘 다 없으면 `$EDITOR` 가 열린다. 단 `post edit` 의 태그·참조자·담당자 변경 옵션과 `post edit`·`wiki page edit`·`post comment edit` 의 `--mime-type` 은 제목·본문 없이도 비대화형 수정으로 실행한다. `post edit` 은 `--mention`·`--mention-group`·`--link-task`·`--parent`·`--dry-run` 도 편집기를 열지 않는다. `--dry-run` 은 합성한 본문만 출력한다. `create` 계열은 `$EDITOR` 폴백이 없고, 둘 다 없으면 에러 대신 빈 본문으로 생성한다. `post create` 는 `--template` 을 주면 그 템플릿 본문을 채운다
-- **mail 계열 입력**: `mail get`·`mail reply` 는 IMAP UID 외에 메일 웹 주소와 그 주소의 mail id 도 받는다. mail id 는 도착 시각으로 풀어 UID 를 찾는다 (ADR-040)
-  - 세 입력 형식 모두 답장 발송 전에 원본을 보여주고 확인을 거친다. 확인 절차와 종료 코드 규약은 ADR-060 이 소유한다
+- **mail 계열 입력**: `mail get`·`mail reply` 는 IMAP UID 외에 메일 웹 주소와 그 주소의 mail id 도 받는다. mail id 는 도착 시각으로 풀어 UID 를 찾는다 ([ADR-040](docs/adr/040-mail-url-to-uid-lookup.md))
+  - 세 입력 형식 모두 답장 발송 전에 원본을 보여주고 확인을 거친다. 확인 절차와 종료 코드 규약은 [ADR-060](docs/adr/060-mail-reply-confirmation-policy.md) 이 소유한다
 - **resolver 매칭**: 정확일치 → 이름 부분일치 → 모호하면 에러와 후보 목록 출력
 - **출력**: `--json` 은 공개 API 응답 모양 유지(웹 방식은 공식 필드로 변환), `--quiet` 은 식별자만
   - 보강한 값이 필요하면 그것을 명시하는 옵션을 둔다. `post get --with-tag-names` 가 그 형태다.
-    옵션을 주지 않은 호출의 출력은 달라지지 않는다 (ADR-056)
-- **파괴적 삭제 명령**: 확인을 기본으로 하고 `-y`/`--yes` 로 생략한다 (ADR-036)
+    옵션을 주지 않은 호출의 출력은 달라지지 않는다 ([ADR-056](docs/adr/056-json-enrichment-behind-option.md))
+- **파괴적 삭제 명령**: 확인을 기본으로 하고 `-y`/`--yes` 로 생략한다 ([ADR-036](docs/adr/036-delete-confirmation-policy.md))
   - TTY 확인의 기본값은 아니오다. 사용자가 거절하면 API를 호출하지 않고 정상 취소한다
   - non-TTY에서 `-y`/`--yes`가 없으면 설정 조회·resolver·API 호출 전에 `EXIT_PARAM_ERROR`(3)로 중단한다
 - **post 목록 정렬**: 기본은 최신순 (`-createdAt`). `post list` 만 `--order` 로 바꿀 수 있다
