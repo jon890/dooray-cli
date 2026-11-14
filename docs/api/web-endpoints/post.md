@@ -1,7 +1,8 @@
 # 웹 세션으로 업무·댓글·첨부를 다루는 경로
 
 2026-11-14 로그인된 ego 브라우저의 `SESSION` 하나를 읽어 Node 요청으로 확인했다.
-요청은 직렬로 보내고 시작 간격을 1초보다 길게 뒀다.
+최초 실측은 요청 간격을 1초보다 길게 뒀다.
+추가 실측에서는 명령을 하나씩 직렬로 실행하고 저장소의 토큰 버킷과 응답 헤더에 요청 간격을 맡겼다.
 공식 응답 필드는 [공식 서비스 API 문서](https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419)의 Project > Projects > Posts, Files, Logs 절을 브라우저로 열어 대조했다.
 인증·보안 규칙은 [기술 설계](../../features/web-session-auth/design.md), 공통 프로젝트·멤버·템플릿 응답은 [PR1 실측 기록](../web-endpoints.md)이 소유한다.
 
@@ -20,7 +21,7 @@
 | `updatePost` | PUT `/v2/wapi/projects/!{projectId}/posts/{number}` | 요청은 객체. `result: {id, number, version}`를 공식 `null`로 바꾼다 |
 | `setPostWorkflow` | POST `/v2/wapi/projects/!{projectId}/posts/{number}/change-workflow` | `{workflowId}`. `result: null`. 변경 뒤 상세의 전체 상태와 담당자 상태가 바뀐 것을 확인했다 |
 | `setPostDone` | 위 전체 상태 변경 경로와 프로젝트 워크플로 조회 | 완료 클래스의 대표 워크플로 ID를 구해 보낸다. 완료 상태와 `endedAt` 생성 확인. 대표 선택은 프로젝트 워크플로 순서를 따른다 |
-| `setPostParent` | 대응 경로 미확인 | 아래 미지원 항목을 따른다. 새 업무를 상위 업무 아래에 만드는 경로는 별도로 확인했다 |
+| `setPostParent` | POST `/v2/wapi/projects/!{projectId}/posts/{number}/move` | 웹 화면에서 CDP로 확인. `{targetProjectId: 현재 프로젝트 ID, parentPostNumber: 상위 업무 번호}`. SESSION만 보낸 재호출 후 상위 연결도 확인. 웹 결과는 `result.content` |
 | `getPostComments` | GET `/wapi/task/v1/projects/!{projectId}/tasks/{number}/events` | `result` 배열, 최상위 `totalCount`, `references`. 댓글만 요청한다. 페이지 번호를 그대로 보내면 안 된다 |
 | `getPostComment` | GET `/wapi/task/v1/tasks/{postId}/events/{eventId}` | `result` 객체, 최상위 `references`. 업무 소속을 검사한다 |
 | `createPostComment` | POST `/v2/wapi/projects/!{projectId}/posts/{number}/events` | 요청은 배열. `{body, sendMailFlag:false, fileIdList:[]}`. `result: [{id}]`에서 한 항목을 꺼낸다 |
@@ -65,18 +66,19 @@
 최신 구간의 가장 오래된 댓글을 `baseEventId`로 보내고 `direction=<`로 요청하면 그보다 오래된 다른 댓글을 받았다.
 `direction=>`로 최신 댓글 이후를 요청하면 빈 목록이었다.
 
-공개 메서드의 오름차순·내림차순 페이지를 유지하려면 커서로 댓글을 모은 뒤 정렬하고 `page * size`에서 자른다.
-큰 댓글 목록에서는 첫 조회 비용이 커진다.
+공개 메서드의 오름차순 페이지를 유지하려면 커서로 댓글을 모은 뒤 정렬하고 `page * size`에서 자른다.
+큰 댓글 목록에서는 오름차순의 첫 조회 비용이 커진다.
+내림차순의 첫 페이지와 `latest`는 최신 구간만 읽고, 뒤 페이지를 요청할 때만 오래된 구간을 추가로 읽는다.
 반복 커서·중복 ID를 감지하고, 같은 페이지를 무한히 요청하지 않는다.
 프로세스 안에서 완전히 읽은 결과를 재사용하고, 댓글을 쓰면 해당 결과를 지운다.
 
-## 요청 변환과 미지원 항목
+## 요청 변환과 지원 범위
 
 - 생성 요청의 `parentPostId`는 상위 업무 상세를 읽어 `parent: {number}`로 바꾼다. 이 형태로 하위 업무를 만들고 상위 ID가 연결된 것을 확인했다.
 - 수정 요청의 `parent: {id}`와 `parent: {number}`는 HTTP 200·성공 헤더를 반환해도 상위를 바꾸지 않았다. 이를 성공으로 취급하지 않는다.
-- 기존 업무의 상위 변경은 현재 실측에서 대응 경로를 확인하지 못했다. `post edit --parent`는 지원 목록에서 막고 `setPostParent`도 같은 미지원 오류를 낸다. 경로를 추가로 확인하면 이 기록·지원 목록·가이드를 함께 갱신한다.
+- 기존 업무의 상위 변경은 추가 실측에서 `/move`로 확인했다. 업무 상세의 더보기 메뉴에서 「상위 업무 추가」를 선택한 뒤 임시 상위 업무를 고르면 이 요청이 나간다. 프로젝트를 바꾸지 않도록 targetProjectId를 현재 프로젝트 ID로 고정한다.
 - 공개 경로를 그대로 옮긴 `/posts/{id}/set-workflow`, `/set-parent-post`, `/change-parent-post`, `/parent`는 404였다. `/v2/wapi/projects/!{projectId}/posts/{postId}`도 업무 번호 대신 ID를 넣으면 실패했다.
-- 댓글의 공개 첨부 필드를 추가로 받게 된다면 웹 요청에서는 `fileIdList`로 바꾼다. 첨부 연결 후 상세의 `fileIdList`와 `references.fileMap`에서 연결을 확인했다. 현재 공개 요청 타입에 없는 옵션을 이번 PR에서 새로 만들지 않는다.
+- 댓글 수정은 단건 조회의 기존 `fileIdList`를 보존해 웹 요청에 보낸다. 첨부 연결 후 상세의 `fileIdList`와 `references.fileMap`에서 연결을 확인했다. 현재 공개 요청 타입에 없는 옵션을 이번 PR에서 새로 만들지 않는다.
 - 파일 다운로드·업로드의 실측은 직접 200이었다. 307을 받는 환경은 설계의 신뢰 호스트 검사와 한 번만 따라가는 규칙을 그대로 적용하고 가짜 HTTP 응답으로 검사한다.
 
 ## 공식 응답 필드와 변환
@@ -85,7 +87,7 @@
 아래 목록은 공식 문서에서 확인한 필드다.
 웹 내부 필드를 통째로 펼치지 않고 필요한 필드를 선택한다.
 웹에서 얻지 못한 값은 키를 생략하고, 실제로 받은 `null`과 누락을 구분한다.
-ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열을 유지한다.
+ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열로 유지하거나 아래 날짜 표에 따라 변환한다.
 업무 목록의 `createdAt`, `updatedAt`가 이 형식임을 확인했다.
 
 | 메서드 | 공식 result 필드 | 웹 변환 |
@@ -94,6 +96,7 @@ ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열을 유�
 | `getPost`, `getPostStandalone` | 목록 필드와 body(mimeType, content), files(id, name, size) | `fields=body`가 없으면 본문이 빠진다. `fileIdList`와 fileMap에서 files를 만든다. body의 version·emptyContent는 제외한다 |
 | `createPost`, `createPostComment`, `uploadPostFile` | id | 생성 결과 배열의 해당 항목만 꺼낸다 |
 | `updatePost`, `setPostDone`, `setPostWorkflow`, `updatePostComment`, `deletePostComment`, `deletePostFile` | null | 웹 수정 결과의 추가 필드는 제외한다 |
+| `setPostParent` | post(id), project(id) | 웹 move의 content와 요청 프로젝트를 공식 참조 객체로 바꾼다. 현재 공개 클라이언트의 단위 응답 반환 타입과 공식 스키마가 다른 점은 PR1 인터페이스 통합 때 함께 검토한다 |
 | `getPostComments` | id, post(id), type, subtype, createdAt, modifiedAt, creator(type, member 또는 emailUser), mailUsers(from, to, cc), body(mimeType, content) | `postId`를 post.id로 바꾼다. creator의 내부 표시 필드는 제외한다. 웹에 없는 mailUsers는 생략한다 |
 | `getPostComment` | 댓글 목록 필드와 files(id, name, size) | fileIdList와 fileMap을 연결한다. 웹에 없는 파일 이름·크기를 만들어 넣지 않는다 |
 | `getPostFiles`, `getPostFileMeta` | id, name, size, mimeType, createdAt, creator(type, member.organizationMemberId 또는 emailUser(emailAddress, name)) | 웹의 downloadUrl·type·version·extension 등은 제외한다. 목록에는 totalCount를 배열 길이로 계산한다 |
@@ -103,13 +106,85 @@ ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열을 유�
 업무 참여자의 `member.workflowId`는 공식 참여자 항목의 `workflow`로 옮긴다.
 그룹의 `memberList`는 공식 `group.members`로 바꾼다.
 
-현재 `post file download-all`은 본문 파일의 소속을 검사할 때 `fileIdList`를 사용한다.
-웹 JSON에 이 내부 필드를 추가하지 않도록, 기존 필드가 없으면 공식 `files`의 ID를 쓰는 호환 처리를 명령에 넣는다.
-공개 API에 기존 필드가 있으면 현재 동작을 유지한다.
+`fileIdList`는 현재 공개 클라이언트 타입과 웹 상세 모두에서 제공하는 필드다.
+이를 유지해 `post file download-all`의 기존 파일 소속 확인을 바꾸지 않는다.
+
+## 옵션별 웹 요청과 확인 결과
+
+| 명령·옵션 | 웹에 보내는 필드 | 확인 결과 |
+| --- | --- | --- |
+| create `--milestone` | `milestoneId` | 임시 단계 ID가 생성한 업무 상세에 남음 |
+| create `--due-date` | `dueDate`, `dueDateFlag` | 지정한 만기일과 일정 여부가 상세에 남음 |
+| create `--priority` | `priority` | high로 생성한 결과가 high |
+| create `--to`, `--cc` | `users.to`, `users.cc`의 member.organizationMemberId | 자기 담당자 생성과 자기 참조자만 있는 생성 각각 확인 |
+| create `--to-group`, `--cc-group` | 해당 users 배열의 `{type:group, group:{projectMemberGroupId}}` | 자기만 포함된 임시 그룹으로 담당·참조 그룹 생성 각각 확인 |
+| create `--tag` | `tagIdList` | 기존 태그 ID가 임시 업무 상세에 남음 |
+| create `--workflow` | 생성 뒤 change-workflow의 `workflowId` | 진행·완료 전체 상태로 변경 확인 |
+| create `--parent` | 상위 상세 조회 뒤 `parent.number` | 생성한 하위 업무의 parent.id가 지정한 상위 ID와 같음 |
+| edit `--to`, `--to-clear`, `--cc`, `--cc-clear` | 기존 참여자와 명령이 합성한 최종 `users.to`, `users.cc` | 자기 담당자·자기 참조자 추가와 빈 배열로 제거 확인 |
+| edit `--to-group`, `--cc-group` | 최종 users 배열의 group 참조 | 담당·참조 그룹으로 변경 확인, users를 생략한 후속 수정에서도 유지 |
+| edit `--tag`, `--tag-remove`, `--tag-clear` | 기존 태그와 명령이 합성한 최종 `tagIdList` | 기존 태그 추가, 빈 배열로 제거, 다시 추가한 결과 확인 |
+| edit `--parent` | move의 `targetProjectId`, `parentPostNumber` | 웹 화면 CDP와 SESSION 단독 요청 모두에서 상위 연결 확인 |
+
+담당자에 있는 자기 자신을 참조자에 다시 넣으면 서버가 중복 참조를 제외한다.
+자기 담당자와 자기만 포함된 참조 그룹을 동시에 넣어도 같은 중복 제외가 발생했다.
+참조 그룹 옵션 자체는 담당자를 비운 별도 업무로 확인했다.
+이는 옵션이 무시되는 것과 구분한다.
+
+위 표의 옵션은 대응 경로와 결과를 확인했으므로 지원 계획에 포함한다.
+구현 뒤 CLI 검증에서 확인하지 못한 옵션은 성공으로 간주하지 않고 지원 목록에서 막는다.
+
+## 추가 실측: 수정 시 필드 보존
+
+추가 실측 장소도 코디네이터 지시서가 지정한 프로젝트다.
+지시서에 장소가 없으면 쓰기 전에 멈춘다.
+사용자가 임시 단계와 자기 전용 그룹의 생성·삭제를 추가로 허용했다.
+기존 단계·그룹은 수정하지 않는다.
+
+태그·임시 단계·만기일·우선순위·자기 담당자·첨부를 넣어 업무를 만들었다.
+제목·본문만 넣고 PUT한 뒤 선택 필드가 유지되는지 읽기 요청으로 확인했다.
+자기 참조자만 있는 상태에서도 같은 검사를 했다.
+
+| 필드 | 필드를 빼고 PUT | 기존 값을 넣고 PUT |
+| --- | --- | --- |
+| `tagIdList` | 기존 태그 유지 | 기존 태그 유지 |
+| `milestoneId` | 임시 단계 유지 | 임시 단계 유지 |
+| `dueDate`, `dueDateFlag` | 기존 만기일 유지 | 기존 만기일 유지 |
+| `priority` | high 유지 | high 유지 |
+| `users.to`, `users.cc` | 기존 참여자 유지 | 명시한 자기 참여자 유지 |
+| `fileIdList` | 첨부 ID 유지 | 명시한 첨부 ID 유지 |
+
+누락 유지가 이번 환경에서 성공해도 변환기는 기존 상세의 필드를 채워 보낸다.
+공개 요청에서 필드가 아예 없으면 기존 값을 유지하고, 빈 배열·null 등 명시적인 제거는 그대로 보낸다.
+`post replace`처럼 태그·단계를 주지 않는 호출과 본문만 바꾸는 `post edit`을 회귀 사례로 둔다.
+
+댓글에 파일을 연결한 뒤 `{body}`만 넣고 수정해도 이번 환경에서는 연결이 유지됐다.
+`{body, fileIdList: 기존 단건 조회의 목록}`으로 수정한 뒤에도 첨부 연결과 fileMap 참조가 유지됐다.
+변환기는 후자의 명시적인 보존 방식을 사용한다.
+업무 첨부 목록 전체를 댓글의 fileIdList로 보내지 않는다.
+
+## 추가 실측: 파일 목록과 날짜
+
+일반 첨부, 본문에 삽입한 작은 이미지, 댓글에 연결한 첨부를 서로 다른 파일로 만들었다.
+`GET /posts/{number}/files`의 result.content와 업무 상세의 fileIdList에 이 파일들이 모두 포함됐다.
+댓글 단건의 fileIdList와 references.fileMap에도 댓글 첨부가 포함됐다.
+업무 파일 목록과 댓글 단건의 files를 모두 파일 소속 확인의 근거로 사용할 수 있다.
+인라인 이미지와 댓글 첨부의 `/files/{fileId}` 다운로드도 성공했다.
+
+| 응답·필드 | 실측한 형식 | 공개 응답 처리 |
+| --- | --- | --- |
+| 업무 `createdAt`, `updatedAt`, `dueDate` | ISO 8601, `+HH:mm` 오프셋 | 보존 |
+| 업무 `startedAt`, `endedAt` | ISO 8601, `+HH:mm` 오프셋 | 보존. 상태 변경으로 값이 생긴 경우도 확인 |
+| 댓글 `createdAt`, 수정 뒤 `modifiedAt` | ISO 8601, `+HH:mm` 오프셋 | 보존. 수정 전 modifiedAt는 null |
+| 업무 파일 목록 `createdAt` | `YYYY-MM-DDTHH:mm:ss+HHmm` | 시간대의 콜론을 보충해 `+HH:mm`으로 변환 |
+
+파일 날짜를 UTC Z 형식으로 관측했다고 가정한 고정 응답은 만들지 않는다.
+응답마다 다른 날짜 형식을 그대로 본떠 테스트하고 공개 응답의 시간대 형식을 검사한다.
 
 ## 실측 데이터 정리
 
-쓰기 장소는 `<project>`, 담당자는 자기 자신, 참조자는 없음으로 제한했다.
+쓰기 장소는 코디네이터 지시서가 준 `<project>`이며, 지정이 없으면 멈춘다.
+담당자·참조자는 자기 자신 또는 자기만 포함된 실측 그룹으로 제한했다.
 다음 이름은 공개 기록용 가명이다.
 
 | 만든 것 | 확인한 동작 | 정리 결과 |
@@ -119,6 +194,19 @@ ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열을 유�
 | `[cli-web-probe] temporary child` | 생성 시 상위 지정과 상세의 상위 연결 | 삭제 성공 |
 | 임시 댓글 | 생성, 내용 수정, 첨부 연결, 개별 삭제 | 개별 삭제와 업무 삭제로 정리 |
 | `cli-web-probe.txt` | 업로드, 목록, 내려받은 바이트 비교, 삭제 | 삭제 후 빈 목록 확인 |
+| `[cli-web-probe] preservation`, `[cli-web-probe] cc only` | 태그·단계·만기일·참여자·첨부의 누락·포함 수정, 웹 화면의 상위 변경 | 삭제 성공 |
+| `[cli-web-probe] preservation milestone` | 임시 업무의 단계 지정과 보존 | DELETE `/v2/wapi/projects/!{projectId}/milestones/{milestoneId}` 성공, 목록에서 사라짐 |
+| `[cli-web-probe] to group option`, `[cli-web-probe] cc group option`, `[cli-web-probe] cc group only` | 담당·참조 그룹과 중복 제외 동작 | 삭제 성공 |
+| `cli-web-probe-self` | 자기만 포함된 그룹, 담당·참조 그룹 옵션 | DELETE `/v2/wapi/projects/!{projectId}/project-member-groups/{groupId}` 성공, 목록에서 사라짐 |
+| 본문 이미지·댓글 첨부 | 파일 목록 포함 여부, 댓글 수정 시 연결 유지와 내려받기 | 개별 파일 삭제 성공 |
+
+그룹 code는 영문 소문자·숫자·하이픈·밑줄·마침표만 허용한다.
+서버가 `[cli-web-probe]`를 거부해 코디네이터의 승인을 받아 해당 그룹만 `cli-web-probe-self`로 정규화했다.
+임시 그룹의 구성원 목록이 자기 ID 하나뿐인지 확인하고 기존 그룹은 바꾸지 않았다.
+
+임시 업무는 DELETE `/v2/wapi/projects/!{projectId}/posts/{number}`로 삭제했다.
+하위 업무를 먼저 지우고 상위를 지웠다.
+삭제하지 못한 항목은 없다.
 
 제목 접두사로 다시 조회한 업무 목록이 비었다.
 브라우저 작업 공간은 finish했고, 사용자의 기존 탭은 닫지 않았다.

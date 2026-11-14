@@ -44,6 +44,10 @@ PR1이 머지되었다는 코디네이터의 메시지를 받기 전에는 구�
 
 ### 1. `src/api/post/web.ts`에서 업무 메서드를 구현한다
 
+영역 팩토리는 PostClient를 만족하는 객체 리터럴을 반환한다.
+이 phase에서는 파일 메서드를 명시적인 미지원 오류 함수로 두어 PostClient의 필수 메서드를 빠뜨리지 않고 tsc가 통과하게 한다.
+파일 메서드는 다음 phase에서 교체한다.
+
 `getPosts`, `getPost`, `getPostStandalone`, `createPost`, `updatePost`, `setPostWorkflow`, `setPostDone`, `setPostParent`를 구현한다.
 실측 기록의 경로와 응답 필드 표를 그대로 적용한다.
 상세는 `fields=me,body`로 읽고 업무 ID·번호·프로젝트 ID의 관계를 메모리에 둔다.
@@ -57,22 +61,36 @@ PR1이 머지되었다는 코디네이터의 메시지를 받기 전에는 구�
 생성은 요청 객체를 배열로 감싸고 결과 배열에서 `{id}`를 반환한다.
 상위 지정은 상위 상세의 번호를 `parent.number`로 보낸다.
 태그 ID는 웹의 `tagIdList`로 바꾸고, 템플릿 합성 결과도 같은 생성 요청을 거친다.
+수정 전 웹 상세를 읽고 요청에 없는 tagIdList·milestoneId·dueDate·dueDateFlag·priority·fileIdList·참여자를 기존 값으로 채워 보낸다.
+누락 여부는 속성 존재 여부로 확인하고 명시한 빈 배열·null·false를 기존 값으로 덮지 않는다.
+post replace의 태그·단계 생략과 post edit의 본문만 수정하는 호출을 회귀 사례로 둔다.
 수정 결과의 `{id, number, version}`는 공식 단위 응답으로 바꾼다.
 완료 처리는 프로젝트 워크플로 목록에서 순서상 대표 완료 상태를 선택해 전체 상태 변경 경로로 보낸다.
 완료 상태가 없거나 워크플로 응답이 깨지면 쓰기 전에 오류로 끝낸다.
-기존 업무의 상위 변경은 실측 기록에 따라 미지원 오류로 끝낸다.
+기존 업무의 상위 변경은 대상 상위 상세에서 번호를 얻어 move 경로에 보낸다.
+targetProjectId는 현재 프로젝트 ID로 고정하고, 상위 업무의 소속 프로젝트가 다르면 보내지 않는다.
+생성 시 상위 지정도 같은 프로젝트인지 먼저 확인한다.
+웹 move의 content를 공식 post.id·project.id 참조로 변환한다.
+현재 공개 반환 타입은 단위 응답이지만 공식 문서는 이 참조 객체를 정의한다.
+PostClient 반환 타입을 이 공식 응답과 기존 단위 응답의 합집합으로 넓히는 범위는 코디네이터에게 승인받고 반영한다.
+공개 API 클라이언트의 런타임 동작은 바꾸지 않는다.
 
 ### 2. 댓글 메서드를 구현한다
 
 `getPostComments`, `getPostComment`, `createPostComment`, `updatePostComment`, `deletePostComment`를 구현한다.
 작성은 `sendMailFlag:false`와 본문을 배열로 감싸고 이메일을 발송하지 않는다.
 단건 조회는 응답의 postId가 대상 업무와 같은지 확인한다.
+수정 직전 단건을 읽어 해당 댓글의 fileIdList를 그대로 보낸다.
+본문 링크 변경·댓글 파일 upload/delete의 본문 수정에서도 기존 첨부 카드 연결을 잃지 않게 한다.
+업무 전체의 첨부 목록을 댓글 연결 목록으로 사용하지 않는다.
 본문·creator·post·첨부 참조를 공식 필드로 바꾼다.
 mailUsers가 없으면 키를 생략한다.
 
 목록은 `eventType=comment`와 커서를 사용한다.
 최신 묶음에서 가장 오래된 ID를 다음 요청의 `baseEventId`, `direction=<`로 보낸다.
-완전히 읽은 뒤 공개 메서드의 order로 정렬하고 요청 페이지를 자른다.
+오름차순은 완전히 읽은 뒤 공개 메서드의 order로 정렬하고 요청 페이지를 자른다.
+내림차순은 필요한 페이지까지만 읽고, 최신 첫 페이지와 latest는 최신 묶음만 읽는다.
+날짜가 같은 댓글은 문자열 ID로 정렬 순서를 고정한다.
 반복 커서·중복 페이지·잘못된 totalCount·빈 페이지의 종료 조건을 테스트한다.
 쓰기 성공 뒤 해당 업무의 메모리 목록을 지워 같은 프로세스의 다음 조회에 변경이 보이게 한다.
 
@@ -81,7 +99,10 @@ mailUsers가 없으면 키를 생략한다.
 `src/api/post/web-post.test.ts`, `src/api/post/web-comment.test.ts`에 가짜 HTTP 응답을 넣는다.
 테스트 데이터에는 실제 쿠키·호스트·개인 이름·실제 ID를 쓰지 않는다.
 공식 필드 목록을 기준으로 키·중첩 구조·ID 문자열·날짜 형식을 비교한다.
-웹 전용 필드가 JSON에 남지 않는지 검사한다.
+웹 전용 필드가 JSON에 남지 않는지 검사하되 공개 타입에도 있는 fileIdList는 유지한다.
+실측 날짜 형식 표의 각 필드를 가짜 값으로 본떠 검사한다.
+댓글 첨부를 가진 상태에서 본문만 수정한 뒤 연결이 남는지 검사한다.
+수정에서 빠진 업무 필드 보존·명시적인 제거·그룹·상위 지정의 프로젝트 검사를 포함한다.
 각 메서드의 정상 경로와 필수 필드 누락·실패 헤더를 함께 검사한다.
 401·403은 PR1 HTTP 층의 종료 코드와 안내를 보존한다.
 상태 필터 이름을 그대로 보내거나 댓글 page를 그대로 보내는 회귀를 잡는다.
@@ -103,5 +124,6 @@ node scripts/check-pii.mjs
 | 파일 | 변경 |
 | --- | --- |
 | `src/api/post/web.ts` | 신규 (PostClient의 업무·댓글 구현) |
+| `src/api/post/types.ts` | 수정 (코디네이터 승인 후 상위 변경의 공식 응답 반환 타입) |
 | `src/api/post/web-post.test.ts` | 신규 (업무 요청·응답·필터 검사) |
 | `src/api/post/web-comment.test.ts` | 신규 (댓글 커서·변환 검사) |
