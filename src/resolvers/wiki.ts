@@ -65,6 +65,16 @@ export async function resolveWiki(
   return project.wikiId;
 }
 
+/**
+ * 위키 이동의 대상 위키. 프로젝트 id 꼴이면 그대로 wikiId 로 쓰고, 아니면 프로젝트 코드로 풀어 wikiId 를 얻는다.
+ */
+export async function resolveTargetWikiId(
+  client: ProjectClient & WikiClient,
+  input: string,
+): Promise<string> {
+  return PROJECT_ID_RE.test(input) ? input : resolveWiki(client, input);
+}
+
 export async function resolveWikiHomePageId(
   client: ProjectClient & WikiClient,
   wikiId: string,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fetchAllWikis, filterWikisByName, resolveWiki } from "./wiki.js";
+import { fetchAllWikis, filterWikisByName, resolveTargetWikiId, resolveWiki } from "./wiki.js";
 import { getProjects, getPrivateProjects, isExpired } from "../cache/store.js";
 import type { DoorayApiClient } from "../api/client.js";
 import type { Wiki } from "@/api/wiki/types.js";
@@ -158,5 +158,13 @@ describe("filterWikisByName", () => {
   it("빈 키워드는 입력을 그대로 돌려준다", () => {
     const filtered = filterWikisByName(wikis, "");
     expect(filtered.map((w) => w.id)).toEqual(["w-1", "w-2"]);
+  });
+});
+
+describe("resolveTargetWikiId", () => {
+  it("프로젝트 id 꼴이면 조회 없이 그대로 wikiId 로 쓴다", async () => {
+    const client = mockClient(async () => ({ result: [], totalCount: 0 }));
+    await expect(resolveTargetWikiId(client, "1234567890123456789")).resolves.toBe("1234567890123456789");
+    expect(client.getWikis).not.toHaveBeenCalled();
   });
 });

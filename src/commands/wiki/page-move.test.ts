@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildMoveBody, validateMoveOptions, describeOrderChange } from "./page-move.js";
+import { buildMoveBody } from "./page-move-request.js";
+import { validateMoveOptions, describeOrderChange } from "./page-move.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 

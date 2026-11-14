@@ -2,18 +2,18 @@ import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { createClient } from "../../api/dooray-client.js";
 import type { MoveWikiPageRequest } from "@/api/wiki/types.js";
-import { resolveWiki } from "../../resolvers/wiki.js";
+import { resolveTargetWikiId } from "../../resolvers/wiki.js";
 import {
   resolveWikiPageInput,
   WIKI_PAGE_ID_OPTION_DESC,
   WIKI_PAGE_PROJECT_OPTION_DESC,
 } from "../../resolvers/wiki-page-input.js";
-import { PROJECT_ID_RE } from "../../resolvers/project.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
+import { buildMoveBody } from "./page-move-request.js";
 
 export interface MoveWikiPageOptions {
   id?: string;
@@ -43,29 +43,6 @@ export function validateMoveOptions(
       EXIT_PARAM_ERROR,
     );
   }
-}
-
-export function buildMoveBody(
-  opts: ValidMoveWikiPageOptions,
-  resolvedTargetWikiId?: string,
-): MoveWikiPageRequest {
-  const body: MoveWikiPageRequest = {
-    targetParentPageId: opts.parent,
-  };
-
-  if (resolvedTargetWikiId) {
-    body.targetWikiId = resolvedTargetWikiId;
-  }
-  if (opts.children === false) {
-    body.withChildren = false;
-  }
-  if (opts.first) {
-    body.beforePageId = "0";
-  } else if (opts.before) {
-    body.beforePageId = opts.before;
-  }
-
-  return body;
 }
 
 function emitMoveResult(
@@ -126,11 +103,7 @@ export const wikiPageMoveCommand = new Command("move")
       project: opts.project,
     });
 
-    const targetWikiId = opts.toWiki
-      ? PROJECT_ID_RE.test(opts.toWiki)
-        ? opts.toWiki
-        : await resolveWiki(client, opts.toWiki)
-      : undefined;
+    const targetWikiId = opts.toWiki ? await resolveTargetWikiId(client, opts.toWiki) : undefined;
     const body = buildMoveBody(opts, targetWikiId);
 
     startSpinner("위키 페이지 이동 중...");
