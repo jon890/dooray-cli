@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
 import type { MessengerChannel } from "@/api/messenger/types.js";
-import { buildUntitledLabel, resolveSince } from "./channels.js";
+import { buildUntitledLabel } from "./channel-list.js";
+import { resolveSince } from "./channels.js";
 
 const mocks = vi.hoisted(() => ({
   // 이름 조회 구간이 예외를 던지는 경로를 만들 때만 채운다. 비어 있으면 실제 구현을 쓴다.
