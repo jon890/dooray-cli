@@ -16,6 +16,7 @@ import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { WebContext } from "./context.js";
 import { createProjectWeb } from "../project/web.js";
+import { createPostWeb } from "../post/web.js";
 import { createMemberWeb } from "../member/web.js";
 import { createWikiWeb } from "../wiki/web.js";
 
@@ -35,7 +36,7 @@ export function createWebClient(cookie: string, baseUrl: string, publicApiBaseUr
   const domains: WebDomains = {
     project: createProjectWeb(context),
     member: createMemberWeb(context),
-    post: unsupported,
+    post: createPostWeb(context),
     wiki: createWikiWeb(context),
     messenger: unsupported,
     calendar: unsupported,

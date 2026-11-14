@@ -139,11 +139,53 @@ API 방식에서도 저장한 쿠키를 확인할 수 있으며, 일반 조회�
 
 ### 업무
 
-아직 지원하지 않음.
+| 명령 | 지원하지 않는 옵션 |
+| --- | --- |
+| `post list` | 없음 |
+| `post search` | 없음 |
+| `post get` | 없음 |
+| `post create` | 없음 |
+| `post edit` | 없음 |
+| `post replace` | 없음 |
+| `post done` | 없음 |
+| `post workflow` | 없음 |
+| `post comment list` | 없음 |
+| `post comment latest` | 없음 |
+| `post comment get` | 없음 |
+| `post comment add` | 없음 |
+| `post comment edit` | 없음 |
+| `post comment delete` | 없음 |
+| `post comment file list` | 없음 |
+| `post comment file upload` | 없음 |
+| `post comment file download` | 없음 |
+| `post comment file delete` | 없음 |
+| `post file list` | 없음 |
+| `post file upload` | 없음 |
+| `post file download` | 없음 |
+| `post file download-all` | 없음 |
+| `post file delete` | 없음 |
+
+완료 클래스의 상태가 여러 개인 프로젝트에서는 웹 post done의 대표 상태를 확인하지 못해 종료 코드 3으로 멈춘다.
+post workflow <상태>로 원하는 완료 상태를 명시한다. 완료 상태가 하나이면 post done을 지원한다.
+담당자별 진행 상태가 서로 다른 업무는 수정 요청 전에 종료 코드 3으로 멈춘다.
+같은 상태의 기존 참여자는 workflowId를 수정 요청에 보존한다.
+다른 프로젝트의 업무를 상위로 지정하는 것은 지원하지 않는다.
+웹 방식의 edit은 본문을 바꾸기 전에 상위 업무의 프로젝트를 검사한다.
+기존 emailUser 참여자가 남아 있는 업무·템플릿의 쓰기는 웹 요청 형식을 확인하지 못해 종료 코드 3으로 멈춘다.
+참여자를 조용히 제외하지 않으며 API 키 방식으로 전환하도록 안내한다.
+dueDateFlag를 false로 새로 바꾸는 일정 없음 요청은 서버가 무시하므로 종료 코드 3으로 멈춘다.
+이미 false인 상태의 본문 수정은 해당 필드를 생략해 보존한다.
+멤버·그룹 참여자와 HTML·Markdown 본문은 지원한다.
+본문 합성·미리보기 옵션은 기존 규칙대로 적용한다.
+
+댓글 목록의 오름차순 조회는 페이지 번호를 맞추기 위해 이전 댓글을 모으므로 큰 업무에서 첫 조회가 오래 걸릴 수 있다.
+최신 댓글과 내림차순 첫 페이지는 최신 구간만 읽는다.
 
 #### 웹 응답에서 빠질 수 있는 필드
 
-이 영역을 지원할 때 기록한다.
+웹 댓글에 mailUsers가 없으면 이 키를 생략한다.
+업무 fileIdList와 댓글 단건의 files는 보존한다.
+웹 내부의 버전·권한·다운로드 URL 등은 공식 응답에 노출하지 않는다.
 
 ### 위키
 

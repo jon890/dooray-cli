@@ -80,9 +80,9 @@ export const deleteCommentFileCommand = new Command("delete")
       );
     }
     try {
-      await client.updatePostComment(projectId, postId, commentId, {
-        body: { mimeType: bodyMimeType, content: newBody },
-      });
+      const update = { body: { mimeType: bodyMimeType, content: newBody } };
+      if (config.authMode === "web") await client.updatePostComment(projectId, postId, commentId, update, { removeFileId: fileId });
+      else await client.updatePostComment(projectId, postId, commentId, update);
       stopSpinner(true, "reference 제거 완료");
     } catch {
       stopSpinner(false, "");
