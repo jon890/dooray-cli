@@ -49,9 +49,10 @@ Dooray 를 다루는 다른 도구(MCP 서버)에는 `old_string` 을 찾아 `ne
   웹 편집기 밖에서 들어온 본문에는 있을 수 있다고 보고 0건 안내만 둔다 (설계 결정 참고)
 - **위키 인라인 이미지의 본문 참조는 `images[].id` 가 아니라 `images[].attachFileId` 를 쓴다.**
   본문 `![...](/wikis/<n>/files/<x>)` 의 `<x>` 가 `images[]` 의 `attachFileId` 와 같았고 `id` 와는 달랐다.
-  `attachFileId` 는 **공식 문서 응답에 없는 필드다.** 문서의 `GET /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 응답에서
-  `files[]`·`images[]` 는 `id`·`name`·`size` 만 가진다. 실측으로만 확인한 값이라 첨부 참조 누락 확인에만 쓰고,
-  응답에 없으면 `id` 만으로 확인한다.
+  `attachFileId` 는 공식 문서 안에서 서술이 갈린다. 페이지 조회 응답 예시 가운데 `GET /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 의
+  `files[]`·`images[]` 는 `id`·`name`·`size` 만 보이고, `GET /wiki/v1/pages/{page-id}` 예시와 「Attach Files」·「Files」 절은
+  `$.result.files[].attachFileId`·`$.result.images[].attachFileId` 를 말한다(2026-11-14 확인, ADR-046). 이 결정은 실측으로 확인한 값을
+  첨부 참조 누락 확인에만 쓰고, 응답에 없으면 `id` 만으로 확인한다.
   앞 숫자 `<n>` 은 그 위키의 wikiId 와 달랐다. 검출에는 앞 숫자를 쓰지 않는다.
   일반 첨부(`files[]`)가 본문에 어떤 형태로 들어가는지는 표본에 없어 확인하지 못했다
 - **확인하지 못한 것**
@@ -130,7 +131,7 @@ Dooray 를 다루는 다른 도구(MCP 서버)에는 `old_string` 을 찾아 `ne
 - **위키에도 같은 첨부 경고를 넣었다.** 위키 본문의 참조는 `/wikis/<n>/files/<id>` 형태라 `/files/<id>` 만 찾던 검출식을
   앞 segment 를 선택으로 받게 넓혔다. 업무 본문에는 이 형태가 나오지 않아 `post edit`·`post replace` 의 동작은 같다.
   비교할 첨부 목록은 `files[]` 와 `images[]` 의 `id` 에 `attachFileId` 를 더한 것이다 (실측 항목).
-  `attachFileId` 는 공식 문서 응답에 없는 필드라 없으면 `id` 만으로 비교한다. 업무 쪽과 같게 `--dry-run` 에서는 확인하지 않는다.
+  `attachFileId` 는 공식 문서 안에서 서술이 갈려(앞 항목 참고) 없으면 `id` 만으로 비교한다. 업무 쪽과 같게 `--dry-run` 에서는 확인하지 않는다.
   `wiki page edit` 에는 아직 넣지 않았다. `replace` 는 일부만 고친다고 여겨 확인 없이 쓰기 쉬워 먼저 넣었고, `edit` 은 후속으로 다룬다
 - **왕복의 한계를 그대로 둔다.** 부분 치환도 내부적으로는 현재 본문을 읽고 바꿔 전체를 다시 보낸다.
   읽고 보내는 사이에 누군가 본문을 고치면 그 수정을 덮어쓴다. 업무 PUT 의 `version` 은 싣지 않으면 문서상 최신 버전에 적용되므로
