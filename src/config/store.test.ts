@@ -7,9 +7,11 @@ import {
 } from "../utils/exit-codes.js";
 import {
   clearMailCredentials,
+  configReadErrorMessage,
   getConfig,
   getConfigOrThrow,
   isConfig,
+  jsonParseReason,
   removeMailCredentials,
   saveConfig,
   setConfigValue,
@@ -148,6 +150,55 @@ describe("getConfig", () => {
     readFileMock.mockResolvedValueOnce("{");
 
     await expect(getConfig()).resolves.toMatchObject({ state: "invalid" });
+  });
+
+  it("줄·글자 꼬리가 없는 Node 20 형식 메시지도 위치만 남긴다", () => {
+    const err = new SyntaxError("Expected property name or '}' in JSON at position 4");
+    expect(jsonParseReason("{\n\n\nx", err)).toBe("JSON 형식이 아닙니다(4번째 줄 1번째 글자 근처)");
+  });
+
+  describe("손상된 파일의 오류에는 원문 글자가 나오지 않는다", () => {
+    it.each([
+      {
+        name: "따옴표 없는 비밀값",
+        raw: '{"apiKey":SECRETTOKENVALUE123}',
+        leaks: ["SECRET", "TOKEN", "apiKey"],
+        where: "1번째 줄 11번째 글자 근처",
+      },
+      {
+        name: "여러 줄 파일의 따옴표 없는 비밀값",
+        raw: '{\n  "version": 1,\n  "imapPassword": HUNTER2PASSWORD,\n  "x": 1\n}',
+        leaks: ["HUNTER", "PASSWORD", "imapPassword"],
+        where: "3번째 줄 19번째 글자 근처",
+      },
+      {
+        name: "잘린 파일",
+        raw: '{"apiKey":"SECRETTOKENVALUE123',
+        leaks: ["SECRET", "TOKEN", "apiKey"],
+        where: "근처",
+      },
+      {
+        name: "앞 글자와 같은 글자가 먼저 나오는 파일",
+        raw: '{"S":S0123456789ABCDEFGHIJ}',
+        leaks: ["0123456789", "ABCDEF"],
+        where: "1번째 줄 6번째 글자 근처",
+      },
+      { name: "빈 파일", raw: "", leaks: [], where: null },
+      { name: "중괄호만 있는 파일", raw: "{", leaks: [], where: "1번째 줄 2번째 글자 근처" },
+    ])("$name", async ({ raw, leaks, where }) => {
+      readFileMock.mockResolvedValueOnce(raw);
+
+      const result = await getConfig();
+
+      expect(result).toMatchObject({ state: "invalid" });
+      if (result.state !== "invalid") return;
+      const message = configReadErrorMessage(result);
+      for (const text of [result.reason, message]) {
+        for (const leak of leaks) expect(text).not.toContain(leak);
+        expect(text).toContain("JSON 형식이 아닙니다");
+        if (where) expect(text).toContain(where);
+      }
+    });
   });
 
   it("apiKey 가 없으면 OS 와 무관하게 손상이 아니라 빈 값으로 채운다 (키체인으로 옮긴 파일을 동기화한 경우)", async () => {
