@@ -1,6 +1,7 @@
 import { clearCache } from "../cache/store.js";
 import type { ConfigReadResult } from "../config/store.js";
-import { getConfig, saveConfig, setConfigValue } from "../config/store.js";
+import { getConfig, readSessionCookie, saveConfig, setConfigValue } from "../config/store.js";
+import { parseSessionCookie } from "../config/web-auth.js";
 import type { Config } from "../config/types.js";
 
 /**
@@ -10,7 +11,7 @@ import type { Config } from "../config/types.js";
  * `apiKey` 가 바뀌면 계정이 바뀐 것이고 `baseUrl` 이 바뀌면 접속 환경이 바뀐 것이라,
  * 남아 있는 모든 파일이 다른 곳의 데이터가 된다.
  *
- * `tenantName`, IMAP·SMTP 설정, `trackLastRun` 은 캐시가 무엇을 담는지에 영향을 주지 않아 대상이 아니다.
+ * 웹 방식은 쿠키와 테넌트 이름도 계정·환경을 바꾼다. IMAP·SMTP 설정과 `trackLastRun` 은 대상이 아니다.
  * 이전 설정이 없으면 판정 자체가 무의미하므로 `false` 다.
  *
  * config 스키마에 키를 추가할 때 이 함수를 다시 본다.
@@ -21,7 +22,10 @@ export function shouldInvalidateCache(
   next: Config,
 ): boolean {
   if (prev === null) return false;
-  return prev.apiKey !== next.apiKey || prev.baseUrl !== next.baseUrl;
+  return prev.apiKey !== next.apiKey || prev.baseUrl !== next.baseUrl ||
+    (prev.authMode ?? "api-key") !== (next.authMode ?? "api-key") ||
+    prev.sessionCookie !== next.sessionCookie ||
+    (next.authMode === "web" && prev.tenantName !== next.tenantName);
 }
 
 /**
@@ -68,6 +72,8 @@ export async function updateConfigValue(
   value: string,
 ): Promise<{ cacheCleared: boolean }> {
   const prev = await getConfig();
+  const previousCookie = key === "session-cookie" && prev.state === "ok"
+    ? prev.config.sessionCookie ?? await readSessionCookie() : undefined;
   await setConfigValue(key, value);
   const next = await getConfig();
 
@@ -88,6 +94,7 @@ export async function updateConfigValue(
     };
   }
 
+  if (key === "session-cookie" && previousCookie !== parseSessionCookie(value)) return { cacheCleared: await invalidateAllCache() };
   if (!shouldInvalidateCache(prev.config, next.config)) {
     return { cacheCleared: false };
   }

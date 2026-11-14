@@ -6,9 +6,11 @@ import { createSkillManagerContext } from "../skill/context.js";
 import { installSkill } from "../skill/manager.js";
 import { configReadErrorMessage, getConfig } from "../config/store.js";
 import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
+import { EXIT_CONFIG_ERROR, EXIT_AUTH_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import { replaceConfig } from "../services/config.js";
-import { DoorayApiClient } from "../api/client.js";
+import { createClient } from "../api/dooray-client.js";
+import { SESSION_EXPIRED_MESSAGE } from "../api/web/http.js";
+import { parseSessionCookie, resolveWebBaseUrl, WEB_AUTH_WARNING } from "../config/web-auth.js";
 import { ensureMe } from "../resolvers/me.js";
 import { API_ENDPOINTS, DEFAULTS } from "../config/types.js";
 import type { Config } from "../config/types.js";
@@ -43,64 +45,67 @@ export const setupCommand = new Command("setup")
     }
 
     try {
-      // 1. 테넌트명
-      const tenantName = await input({
+      const authMode = await select<"api-key" | "web">({
+        message: "인증 방식을 선택하세요",
+        choices: [{ name: "API 키 (공개 API)", value: "api-key" }, { name: "웹 로그인 세션 (비공식 웹 API)", value: "web" }],
+        default: existing?.authMode ?? "api-key",
+      });
+      if (authMode === "web") process.stderr.write(`⚠ ${WEB_AUTH_WARNING}\n`);
+      let tenantName = await input({
         message: "테넌트명을 입력하세요",
-        default: existing?.tenantName ?? DEFAULTS.tenantName,
+        ...(authMode === "api-key" && { default: existing?.tenantName ?? DEFAULTS.tenantName }),
         theme: { prefix: "🏢" },
       });
-      console.log(
-        chalk.gray(
-          `  접속 URL: https://${tenantName}.dooray.com`,
-        ),
-      );
-
-      // 2. API Endpoint
-      const endpointChoices = Object.entries(API_ENDPOINTS).map(
-        ([name, url]) => ({
-          name: `${name} (${url})`,
-          value: url,
-        }),
-      );
-      const defaultEndpoint =
-        existing?.baseUrl ?? API_ENDPOINTS["민간 클라우드"];
-
       const baseUrl = await select<string>({
         message: "API Endpoint를 선택하세요",
-        choices: endpointChoices,
-        default: defaultEndpoint,
+        choices: Object.entries(API_ENDPOINTS).map(([name, url]) => ({ name: `${name} (${url})`, value: url })),
+        default: existing?.baseUrl ?? API_ENDPOINTS["민간 클라우드"],
         theme: { prefix: "🌐" },
       });
-
-      // 3. API Key (with retry loop)
-      let apiKey = "";
-      let meName = "";
-      let verified = false;
-
-      while (!verified) {
-        apiKey = await password({
-          message: `API Key를 입력하세요 (발급: https://${tenantName}.dooray.com/setting/api/token)`,
-          mask: "*",
-          theme: { prefix: "🔑" },
-        });
-
-        if (!apiKey) {
-          console.log(chalk.red("  ✗ API Key는 필수입니다."));
-          continue;
+      let apiKey = existing?.apiKey ?? "";
+      let sessionCookie = existing?.sessionCookie;
+      if (authMode === "web") {
+        let verified = false;
+        while (!verified) {
+          try {
+            const webUrl = resolveWebBaseUrl({ baseUrl, tenantName });
+            console.log(`  접속 URL: ${webUrl}`);
+          } catch (error) {
+            console.log(chalk.red(error instanceof Error ? error.message : "접속 주소를 확인하세요."));
+            tenantName = await input({ message: "테넌트명을 다시 입력하세요" });
+            continue;
+          }
+          console.log("  브라우저 개발자 도구 → Application → Cookies 에서 SESSION 값을 복사하세요. 브라우저 로그아웃·세션 만료 뒤에는 다시 넣어야 합니다.");
+          try {
+            sessionCookie = parseSessionCookie(await password({ message: "SESSION 쿠키를 입력하세요", mask: "*" }));
+            const response = await createClient({ version: 1, apiKey, authMode, baseUrl, tenantName, sessionCookie }).getMe();
+            console.log(chalk.green(`  ✓ 웹 연결 성공 (${response.result.name})`));
+            verified = true;
+          } catch (error) {
+            if (error instanceof DoorayCliError && (error.exitCode === EXIT_PARAM_ERROR || (error.exitCode === EXIT_AUTH_ERROR && error.message === SESSION_EXPIRED_MESSAGE))) {
+              console.log(chalk.red(error.message));
+              continue;
+            }
+            if (error instanceof DoorayCliError && error.exitCode === EXIT_CONFIG_ERROR) {
+              console.log(chalk.red(error.message));
+              tenantName = await input({ message: "테넌트명을 다시 입력하세요" });
+              continue;
+            }
+            throw error;
+          }
         }
-
-        // 4. API 연결 테스트
-        try {
-          const client = new DoorayApiClient(apiKey, baseUrl);
-          await client.getProjects({ page: 0, size: 1 });
-          const me = await ensureMe(client);
-          meName = me.name;
-          console.log(chalk.green(`  ✓ API 연결 성공 (${meName})`));
-          verified = true;
-        } catch {
-          console.log(
-            chalk.red("  ✗ 연결 실패 — API Key를 확인해주세요"),
-          );
+      } else {
+        let verified = false;
+        while (!verified) {
+          apiKey = await password({ message: `API Key를 입력하세요 (발급: https://${tenantName}.dooray.com/setting/api/token)`, mask: "*", theme: { prefix: "🔑" } });
+          if (!apiKey) { console.log(chalk.red("  ✗ API Key는 필수입니다.")); continue; }
+          try {
+            const client = createClient({ version: 1, apiKey, authMode, baseUrl, tenantName });
+            await client.getProjects({ page: 0, size: 1 });
+            const me = await ensureMe(client);
+            console.log(chalk.green(`  ✓ API 연결 성공 (${me.name})`));
+            verified = true;
+          } catch { console.log(chalk.red("  ✗ 연결 실패 — API Key를 확인해주세요")); }
         }
       }
 
@@ -183,7 +188,10 @@ export const setupCommand = new Command("setup")
 
       // 9. 저장 (all-or-nothing)
       const config: Config = {
+        ...existing,
         version: 1,
+        authMode,
+        ...(sessionCookie !== undefined && { sessionCookie }),
         apiKey,
         baseUrl,
         tenantName,

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolvePostInput } from "../../resolvers/post-input.js";
 import { resolveWorkflow } from "../../resolvers/workflow.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
@@ -18,7 +18,7 @@ export const postWorkflowCommand = new Command("workflow")
   .option("--workflow <name>", "워크플로우 이름 (positional 대체)")
   .action(async (project, postNumber, workflowArg, opts) => {
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     // workflow 인자 결정
     let workflowInput: string | undefined = opts.workflow;

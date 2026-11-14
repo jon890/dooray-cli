@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { formatPostList } from "../../formatters/post.js";
 import type { OutputOptions } from "../../formatters/table.js";
@@ -13,7 +13,7 @@ export const postSearchCommand = new Command("search")
   .action(async (project, keyword) => {
     const globalOpts = postSearchCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("업무 검색 중...");
     const projectId = await resolveProject(client, project);

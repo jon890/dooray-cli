@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   getConfigOrThrow: vi.fn(),
   readConfigFileSecurity: vi.fn(),
   getProjects: vi.fn(),
+  getMe: vi.fn(),
   ensureMe: vi.fn(),
 }));
 
@@ -38,7 +39,7 @@ vi.mock("../cache/store.js", () => ({
     memberGroupProjectCount: 0,
   }),
 }));
-vi.mock("../api/client.js", () => ({ DoorayApiClient: class { getProjects = mocks.getProjects; } }));
+vi.mock("../api/dooray-client.js", () => ({ createClient: () => ({ getMe: mocks.getMe }) }));
 vi.mock("../resolvers/me.js", () => ({ ensureMe: mocks.ensureMe }));
 
 let output: string[];
@@ -51,6 +52,7 @@ beforeEach(() => {
   mocks.readConfigFileSecurity.mockResolvedValue([]);
   mocks.getConfigOrThrow.mockResolvedValue(validConfig);
   mocks.getProjects.mockResolvedValue([]);
+  mocks.getMe.mockResolvedValue({ result: { name: "홍길동" } });
   mocks.ensureMe.mockResolvedValue({ name: "홍길동" });
   output = [];
   vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
@@ -137,6 +139,27 @@ describe("doctor 설정 읽기 실패 표시", () => {
 });
 
 describe("doctor 항목별 결과와 종료 코드", () => {
+  it("웹 방식은 API 키 없이 완료하고 캐시 대신 getMe 를 직접 부른다", async () => {
+    mocks.getConfig.mockResolvedValue({ state: "ok", config: { ...validConfig, apiKey: "", authMode: "web", tenantName: "my-org", sessionCookie: "fake-session" } });
+    const payload = JSON.parse(await runDoctor(["--json"]));
+    expect(payload).toMatchObject({ authMode: "web", apiKeyOk: false, apiConnection: "ok" });
+    expect(payload.checks).toContainEqual(expect.objectContaining({ id: "auth-mode", status: "warn" }));
+    expect(payload.checks).toContainEqual(expect.objectContaining({ id: "session-cookie", status: "pass" }));
+    expect(payload.checks).not.toContainEqual(expect.objectContaining({ id: "api-key" }));
+    expect(mocks.getMe).toHaveBeenCalledTimes(1);
+    expect(mocks.ensureMe).not.toHaveBeenCalled();
+    expect(JSON.stringify(payload)).not.toContain("fake-session");
+    expect(process.exitCode).toBe(0);
+  });
+  it("웹 만료 안내를 JSON 과 텍스트에 보이고 진단은 실패로 끝낸다", async () => {
+    mocks.getConfig.mockResolvedValue({ state: "ok", config: { ...validConfig, apiKey: "", authMode: "web", tenantName: "my-org", sessionCookie: "fake-session" } });
+    mocks.getMe.mockRejectedValue(new Error("SESSION 쿠키를 config set session-cookie - 로 다시 넣으세요"));
+    const payload = JSON.parse(await runDoctor(["--json"]));
+    expect(payload.apiConnection).toBe("failed");
+    expect(payload.checks).toContainEqual(expect.objectContaining({ id: "api-connection", message: expect.stringContaining("config set session-cookie -") }));
+    expect(await runDoctor()).toContain("config set session-cookie -");
+    expect(process.exitCode).toBe(1);
+  });
   it.each([
     { state: "absent" },
     { state: "invalid", reason: "invalid JSON" },
@@ -176,7 +199,7 @@ describe("doctor 항목별 결과와 종료 코드", () => {
 
   it("연결 실패를 JSON 과 텍스트 모두 실패로 센다", async () => {
     mocks.getConfig.mockResolvedValue({ state: "ok", config: validConfig });
-    mocks.getProjects.mockRejectedValue(new Error("connection failed"));
+    mocks.getMe.mockRejectedValue(new Error("connection failed"));
     const payload = JSON.parse(await runDoctor(["--json"]));
     expect(payload.apiConnection).toBe("failed");
     expect(payload.checks).toContainEqual(expect.objectContaining({ id: "api-connection", status: "fail" }));
@@ -239,14 +262,14 @@ describe("doctor 항목별 결과와 종료 코드", () => {
 
 it("텍스트 진단은 연결 응답을 기다리기 전에 설정과 보안을 보여 준다", async () => {
   mocks.getConfig.mockResolvedValue({ state: "ok", config: validConfig });
-  mocks.getProjects.mockImplementationOnce(async () => {
+  mocks.getMe.mockImplementationOnce(async () => {
     const shown = output.join("\n");
     expect(shown).toContain("Dooray CLI 진단");
     expect(shown).toContain("API Key:");
     expect(shown).toContain("🔐 보안");
     expect(shown).toContain("API 연결 테스트");
     expect(shown).not.toContain("✅ 성공");
-    return [];
+    return { result: { name: "홍길동" } };
   });
   expect(await runDoctor()).toContain("✅ 성공");
   expect(process.exitCode).toBe(0);

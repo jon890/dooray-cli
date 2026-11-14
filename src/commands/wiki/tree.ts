@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveWiki } from "../../resolvers/wiki.js";
 import { formatWikiTree } from "../../formatters/wiki.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
@@ -15,7 +15,7 @@ export const wikiTreeCommand = new Command("tree")
   .action(async (project, opts) => {
     const globalOpts = wikiTreeCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     let maxDepth: number | undefined;
     if (opts.depth !== undefined) {

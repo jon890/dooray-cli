@@ -1,6 +1,6 @@
 import { Command, Option } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient, type DoorayClient } from "../../api/dooray-client.js";
 import { resolvePostInput } from "../../resolvers/post-input.js";
 import { resolveMember, ensureMembers, buildMemberNameMap } from "../../resolvers/member.js";
 import { resolveMemberGroup } from "../../resolvers/member-group.js";
@@ -27,7 +27,7 @@ import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import type { CreatePostUser } from "../../api/types.js";
 
 async function resolveUsers(
-  client: DoorayApiClient,
+  client: DoorayClient,
   projectId: string,
   names: string[],
 ): Promise<CreatePostUser[]> {
@@ -69,7 +69,7 @@ export const postEditCommand = new Command("edit")
   .option("--no-confirm", "누락 attachment 경고 시 confirm 없이 진행 (자동화용)")
   .action(async (project, postNumberStr, opts) => {
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
     const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);

@@ -7,7 +7,8 @@
 
 import { Command, Option } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient, type GetPostsParams } from "../../api/client.js";
+import { createClient, type DoorayClient } from "../../api/dooray-client.js";
+import { type GetPostsParams } from "../../api/client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { lookupTagIds } from "../../resolvers/tag.js";
 import { ensureMembers, needsMemberList, resolveMember } from "../../resolvers/member.js";
@@ -54,7 +55,7 @@ function isMe(input: string): boolean {
  * 호출자는 이름 입력이 있으면 멤버 목록 캐시를 먼저 데워 둔다. 그래야 병렬 해석이 목록을 한 번만 받는다.
  */
 async function resolveFilterMember(
-  client: DoorayApiClient,
+  client: DoorayClient,
   projectId: string,
   option: string,
   input: string,
@@ -96,7 +97,7 @@ function normalizeMemberInput(option: string, raw: string[]): string | undefined
 }
 
 async function resolveParent(
-  client: DoorayApiClient,
+  client: DoorayClient,
   projectId: string,
   parent: ParentRef,
 ): Promise<string> {
@@ -148,7 +149,7 @@ export const postListCommand = new Command("list")
     });
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("업무 목록 조회 중...");
     // 멤버·상위 업무·태그 해석도 실패할 수 있다. 어느 단계에서 끝나든 스피너를 내린다.

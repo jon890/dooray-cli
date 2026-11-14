@@ -86,3 +86,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-078](078-stream-list.md) — 활동 피드를 `stream list` 로 두고 `--all` 은 빈 배열까지, `--since` 는 응답 커서로 멈추며, 429 는 모든 명령에서 종료 코드 6 으로 끝낸다 (2주 5113건·한 페이지 189/200·나노초 커서·원소 시각 최대 29초 어긋남·`event.createdAt` 실측)
 - [ADR-079](079-member-get-with-org.md) — `member get --with-org` 으로 소속 회사·부서·직책을 바쁨 시간 조회 응답에서 채운다 (부서 이름이 있어도 `id` 가 null 실측)
 - [ADR-080](080-secret-file-exposure-warning.md) — `config.json` 의 평문 비밀값(macOS)과 비밀값을 담은 파일의 넓은 권한(macOS·Linux)은 고치지 않고 설정을 읽는 명령마다 경고하고, `doctor` 는 실패가 있으면 종료 코드 1 로 끝내며, 캐시는 폴더 0700·파일 0600 으로 쓴다 (2026-11-13 0644 평문 실측)
+- [ADR-081](081-web-session-auth.md) — 인증 방식을 `auth-mode`(`api-key` 기본, `web`)로 고르고, 웹 방식은 `SESSION` 쿠키로 웹 화면의 `/wapi`·`/v2/wapi` 경로를 불러 공개 API 응답 모양으로 바꿔 내며, 웹 방식에 한해 [ADR-062](062-undocumented-endpoint-policy.md) 의 읽기 전용·조건 1~4 를 대체한다 (2026-11-13 API 키 전량 폐기, `SESSION` 쿠키 단독 호출 실측)

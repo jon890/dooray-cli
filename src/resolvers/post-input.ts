@@ -1,4 +1,4 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { DoorayClient } from "../api/dooray-client.js";
 import { resolveProject } from "./project.js";
 import { resolvePost } from "./post.js";
 import { parseDoorayTaskUrl, isLikelyDoorayUrl } from "../utils/dooray-url.js";
@@ -55,7 +55,7 @@ const INPUT_HELP =
   `  - <Dooray URL>\n  ${URL_FORMAT_HINT}`;
 
 async function resolveByPostId(
-  client: DoorayApiClient,
+  client: DoorayClient,
   postId: string,
 ): Promise<ResolvedPostInput> {
   const res = await client.getPostStandalone(postId);
@@ -69,7 +69,7 @@ async function resolveByPostId(
 }
 
 export async function resolvePostInput(
-  client: DoorayApiClient,
+  client: DoorayClient,
   args: PostInputArgs,
 ): Promise<ResolvedPostInput> {
   const { projectArg, postNumberArg, idOpt, urlOpt, argv } = args;

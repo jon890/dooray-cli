@@ -10,7 +10,7 @@
 
 import { Command, Option } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient, type DoorayClient } from "../../api/dooray-client.js";
 import { buildOrganizationMemberNameMap } from "../../resolvers/member.js";
 import { ensureMe } from "../../resolvers/me.js";
 import type { MessengerChannel } from "../../api/types.js";
@@ -209,7 +209,7 @@ function channelKind(type: string | undefined): string {
  * 조회에 실패해도 목록은 살린다 — 그 방들은 나를 빼지 않은 채로 보인다.
  */
 async function fallbackMyId(
-  client: DoorayApiClient,
+  client: DoorayClient,
   untitled: MessengerChannel[],
 ): Promise<string | undefined> {
   if (!untitled.some((ch) => !ch.me?.member?.organizationMemberId)) return undefined;
@@ -252,7 +252,7 @@ export const messengerChannelsCommand = new Command("channels")
     const keyword = resolveSearch(opts.search);
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("대화방 조회 중...");
     let channels: MessengerChannel[];

@@ -1,3 +1,56 @@
+export interface GetPostsParams {
+  page?: number;
+  size?: number;
+  fromMemberIds?: string[];
+  toMemberIds?: string[];
+  ccMemberIds?: string[];
+  tagIds?: string[];
+  parentPostId?: string;
+  postNumber?: string;
+  postWorkflowClasses?: string[];
+  postWorkflowIds?: string[];
+  milestoneIds?: string[];
+  subjects?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  dueAt?: string;
+  order?: string;
+}
+
+export interface GetProjectsParams {
+  page?: number;
+  size?: number;
+  type?: string;
+  scope?: string;
+  state?: string;
+}
+
+export interface GetPostCommentsParams {
+  page?: number;
+  size?: number;
+  order?: "createdAt" | "-createdAt";
+}
+
+export interface GetMembersParams {
+  page?: number;
+  size?: number;
+}
+
+export interface SearchMembersParams {
+  name?: string;
+  externalEmailAddresses?: string;
+  userCode?: string;
+  userCodeExact?: string;
+  idProviderUserId?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface GetWikisParams {
+  page?: number;
+  size?: number;
+}
+
 // ─── Common ─────────────────────────────────────────────
 
 export interface DoorayApiHeader {

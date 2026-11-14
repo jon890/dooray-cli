@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../../config/store.js";
-import { DoorayApiClient } from "../../../../api/client.js";
+import { createClient } from "../../../../api/dooray-client.js";
 import { resolveCommentFileInput } from "../../../../resolvers/comment-file-input.js";
 import { basename } from "node:path";
 import { printJson, type OutputOptions } from "../../../../formatters/table.js";
@@ -24,7 +24,7 @@ export const uploadCommentFileCommand = new Command("upload")
   .action(async (arg1, arg2, arg3, arg4, opts) => {
     const globalOpts = uploadCommentFileCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const { projectId, postId, commentId, secondary: filePath } = await resolveCommentFileInput(client, {
       arg1, arg2, arg3, arg4,

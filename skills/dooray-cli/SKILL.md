@@ -5,7 +5,11 @@ description: Dooray 업무 관리 CLI. 프로젝트/업무/댓글/위키 조회�
 
 # dooray-cli
 
-NHN Dooray REST API 를 래핑한 CLI 다. 이 파일은 라우터이므로, 작업 영역에 맞는 reference 를 먼저 읽는다.
+NHN Dooray API 를 호출하는 CLI 다. 인증 방식은 api-key(기본) 또는 web 이다.
+web 은 비공식 웹 API 를 쓰므로 예고 없이 바뀔 수 있고 SESSION 쿠키는 로그인 계정의 모든 권한을 가진다.
+지원 명령·옵션은 [설정 가이드의 웹 방식 지원 범위](https://github.com/jon890/dooray-cli/blob/main/docs/guide/setup.md#웹-방식의-지원-범위)를 따른다.
+쿠키를 명령 인자·로그에 넣지 말고 가려진 setup 입력이나 config set session-cookie - 의 stdin 으로 받는다. 자세한 설정은 [common.md](references/common.md)를 읽는다.
+이 파일은 라우터이므로, 작업 영역에 맞는 reference 를 먼저 읽는다.
 
 ## 어느 reference 를 읽을지
 

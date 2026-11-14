@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../../config/store.js";
-import { DoorayApiClient } from "../../../../api/client.js";
+import { createClient } from "../../../../api/dooray-client.js";
 import {
   resolveCommentFileInput,
   FILE_ID_SECONDARY_LABEL,
@@ -41,7 +41,7 @@ export const deleteCommentFileCommand = new Command("delete")
     }
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const { projectId, postId, commentId, secondary: fileId } = await resolveCommentFileInput(client, {
       arg1, arg2, arg3, arg4,

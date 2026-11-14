@@ -7,7 +7,7 @@
 
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import type { CalendarEvent } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { output, truncate } from "../../formatters/table.js";
@@ -30,7 +30,7 @@ export const calendarEventListCommand = new Command("list")
     const { timeMin, timeMax } = resolveTimeRange(opts.from, opts.to);
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("일정 조회 중...");
     let events: CalendarEvent[];

@@ -1,4 +1,4 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { ProjectClient } from "../api/project/types.js";
 import type { CachedTag } from "../cache/types.js";
 import { getTags, setTags, isExpired } from "../cache/store.js";
 import { TAGS_TTL_MS, RESOLVER_FETCH_PAGE_SIZE } from "../cache/types.js";
@@ -6,7 +6,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import { matchByName } from "./match.js";
 
-async function fetchAllTags(client: DoorayApiClient, projectId: string): Promise<CachedTag[]> {
+async function fetchAllTags(client: ProjectClient, projectId: string): Promise<CachedTag[]> {
   const all: CachedTag[] = [];
   let page = 0;
   const size = RESOLVER_FETCH_PAGE_SIZE;
@@ -30,7 +30,7 @@ async function fetchAllTags(client: DoorayApiClient, projectId: string): Promise
   return all;
 }
 
-export async function ensureTags(client: DoorayApiClient, projectId: string): Promise<CachedTag[]> {
+export async function ensureTags(client: ProjectClient, projectId: string): Promise<CachedTag[]> {
   const entry = await getTags(projectId);
   if (entry && !isExpired(entry.updatedAt, TAGS_TTL_MS)) return entry.data;
   const items = await fetchAllTags(client, projectId);
@@ -50,7 +50,7 @@ export interface TagNameResult {
  * 일반 출력은 `(이름 없음)` 으로 내고 끝내지만 `--with-tag-names` 는 실패로 끝낸다 (ADR-056).
  */
 export async function attachTagNames(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
   tags: ReadonlyArray<{ id: string; name?: string }>,
 ): Promise<TagNameResult> {
@@ -93,7 +93,7 @@ function buildMandatoryHint(allTags: CachedTag[], missingGroupIds: string[]): st
  * mandatory 그룹이 있으면 후보 태그를 포함한 에러를 throw.
  */
 export async function validateMandatoryTags(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
 ): Promise<void> {
   const allTags = await ensureTags(client, projectId);
@@ -119,7 +119,7 @@ export async function validateMandatoryTags(
  * 반환값은 tagIds (post create body용).
  */
 export async function resolveTags(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
   inputs: string[],
 ): Promise<string[]> {
@@ -184,7 +184,7 @@ export async function resolveTags(
  * `resolveTags` 와 달리 mandatory 그룹 충족 검사 안 함.
  */
 export async function lookupTagIds(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
   names: string[],
 ): Promise<string[]> {
@@ -209,7 +209,7 @@ export async function lookupTagIds(
  * 이 함수는 selectedTagIds 가 모든 mandatory 그룹의 ID 중 하나씩을 포함하는지 검사.
  */
 export async function validateMandatoryCoverage(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
   selectedTagIds: string[],
 ): Promise<void> {
@@ -272,7 +272,7 @@ export interface ResolvedTagGroup {
  * 태그가 하나도 없는 그룹은 찾을 수 없다 (ADR-041).
  */
 export async function resolveTagGroup(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
   input: string,
 ): Promise<ResolvedTagGroup> {
