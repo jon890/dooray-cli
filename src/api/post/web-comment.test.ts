@@ -39,6 +39,12 @@ describe("웹 댓글 페이지와 수정", () => {
     expect(result.totalCount).toBe(2);
     expect(result.result[0]).not.toHaveProperty("internalKey");
   });
+  it("알 수 없는 작성자 종류는 파라미터 오류 대신 응답 형식 오류로 알린다", async () => {
+    const response = structuredClone(fixtures.comments);
+    response.result[0].creator = fixtures.unknownCreator;
+    vi.stubGlobal("fetch", vi.fn(async (request: Request) => Response.json(new URL(request.url).pathname.endsWith("/events") ? response : fixtures.detail)));
+    await expect(api().getPostComments("project-1", "post-1", { order: "-createdAt" })).rejects.toMatchObject({ exitCode: 1 });
+  });
   it("같은 페이지가 반복되면 무한 조회 대신 실패한다", async () => {
     vi.stubGlobal("fetch", vi.fn(async (request: Request) => Response.json(new URL(request.url).pathname.endsWith("/events") ? { ...fixtures.comments, totalCount: 5 } : fixtures.detail)));
     await expect(api().getPostComments("project-1", "post-1")).rejects.toMatchObject({ exitCode: 1 });

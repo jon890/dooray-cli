@@ -570,5 +570,11 @@
         "name": "외부 사용자"
       }
     }
+  },
+  "unknownCreator": {
+    "type": "system",
+    "system": {
+      "id": "system-1"
+    }
   }
 }

@@ -36,7 +36,7 @@ function user(value: unknown, refs: unknown): PostUser {
       projectMemberGroupId: identifier(g.projectMemberGroupId ?? g.id),
       members: rows(g.memberList ?? g.members ?? []).map((m) => ({ organizationMemberId: identifier(m.organizationMemberId ?? m.id), ...pick(m, ["name"]) })),
     } };
-  } else return unsupported();
+  } else return invalidResponse();
   const nested = type === "member" ? row(u.member) : type === "group" ? row(u.group) : {};
   if (nested.workflowId != null) {
     const w = referenceMap(refs, "workflowMap")[identifier(nested.workflowId)];
