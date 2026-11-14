@@ -9,8 +9,6 @@ import { assignAttachmentFileNames } from "./attachment-name.js";
 import { toMailConnectionError } from "./errors.js";
 import { lookupUidByMailId } from "./uid-lookup.js";
 
-export type { MailIdCandidate } from "./uid-lookup.js";
-
 export interface MailMessage {
   uid: number;
   subject: string;
