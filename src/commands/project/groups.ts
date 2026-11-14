@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { ensureMemberGroups } from "../../resolvers/member-group.js";
 import { output, type OutputOptions } from "../../formatters/table.js";
@@ -12,7 +12,7 @@ export const projectGroupsCommand = new Command("groups")
   .action(async (project: string) => {
     const globalOpts = projectGroupsCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("멤버 그룹 목록 조회 중...");
     const projectId = await resolveProject(client, project);

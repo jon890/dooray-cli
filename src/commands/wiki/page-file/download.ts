@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { basename } from "node:path";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import {
   resolveWikiPageInput,
   WIKI_PAGE_ID_OPTION_DESC,
@@ -29,7 +29,7 @@ export const wikiPageFileDownloadCommand = new Command("download")
     const globalOpts = wikiPageFileDownloadCommand.optsWithGlobals() as OutputOptions;
     await checkOutputFile({ command: wikiPageFileDownloadCommand, dirKey: "output", dirFlag: "--output", outputFile: opts.outputFile });
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     let projectArg: string | undefined;
     let pageIdArg: string | undefined;

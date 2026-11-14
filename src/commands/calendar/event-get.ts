@@ -7,7 +7,7 @@
 
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import type { CalendarEventDetail, CalendarEventUser } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson, printTable } from "../../formatters/table.js";
@@ -33,7 +33,7 @@ export const calendarEventGetCommand = new Command("get")
     const globalOpts = calendarEventGetCommand.optsWithGlobals() as OutputOptions;
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("일정 조회 중...");
     let event: CalendarEventDetail;

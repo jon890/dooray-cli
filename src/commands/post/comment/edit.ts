@@ -1,6 +1,6 @@
 import { Command, Option } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { openInEditor } from "../../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
@@ -49,7 +49,7 @@ export const commentEditCommand = new Command("edit")
   .option("--dry-run", "API 호출 없이 합성된 본문만 stdout 출력 (mention/link-task 적용 결과 미리보기)")
   .action(async (arg1, arg2, arg3, opts) => {
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     let projectArg: string | undefined;
     let postNumberArg: string | undefined;

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { basename } from "node:path";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import { resolveMessengerChannel } from "../../../resolvers/messenger-channel.js";
 import { checkOutputFile, saveDownload } from "../../../utils/download-target.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
@@ -26,7 +26,7 @@ export const messengerFileDownloadCommand = new Command("download")
       outputFile: opts.outputFile,
     });
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const channelId = await resolveMessengerChannel(client, channel);
 

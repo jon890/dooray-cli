@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { output, type OutputOptions } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
@@ -15,7 +15,7 @@ export const fileListCommand = new Command("list")
   .action(async (project, postNumberStr, opts) => {
     const globalOpts = fileListCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("첨부파일 목록 조회 중...");
     const { projectId, postId } = await resolvePostInput(client, {

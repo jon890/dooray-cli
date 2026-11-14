@@ -38,7 +38,8 @@ mise 로 Node.js 를 고정한 저장소에서는 `mise use -g npm:@bifos/dooray
 
 ### 2. Dooray 계정을 연결해요
 
-먼저 Dooray 웹의 **설정 → API → 인증 토큰** 에서 토큰을 만들어요.
+API 키 방식은 Dooray 웹의 **설정 → API → 인증 토큰** 에서 토큰을 만들어요.
+API 키를 쓸 수 없다면 setup 에서 `web` 을 골라 웹 로그인 세션의 SESSION 쿠키로 연결할 수 있어요.
 그다음 아래 명령을 실행하면 필요한 값을 차례로 물어봐요.
 
 ```bash
@@ -50,6 +51,9 @@ dooray setup
 ```bash
 dooray doctor
 ```
+
+웹 방식은 **비공식 웹 API** 라 예고 없이 바뀔 수 있어요. SESSION 쿠키는 로그인 계정의 모든 권한을 가지므로 비밀값으로 다뤄요.
+쿠키 입력과 지원 범위는 [설정 가이드](docs/guide/setup.md#웹-로그인-세션으로-연결하기)에서 확인해요.
 
 ### 3. 첫 명령을 실행해요
 

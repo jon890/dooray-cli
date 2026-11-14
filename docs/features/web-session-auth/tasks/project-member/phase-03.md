@@ -1,4 +1,4 @@
-# Phase 03. Project·member 와 setup·doctor 를 웹 방식에 연결한다
+# Phase 03. Project·member 를 웹 클라이언트에 연결한다
 
 **Execution profile**: standard
 
@@ -10,22 +10,30 @@
 
 ## 컨텍스트
 
-**요구사항**: REQ6, REQ7, REQ8, REQ10, REQ11, REQ12, REQ17
+**요구사항**: REQ6, REQ7
 
 **근거 문서**: `docs/features/web-session-auth/spec.md`, `docs/features/web-session-auth/design.md`
 
 ## 작업 항목
 
-### 1. 공개 메서드와 같은 DoorayClient 인터페이스·createClient 를 더하고 웹 구현을 별도로 둔다. 공개 구현 동작은 바꾸지 않는다.
-### 2. PR1 메서드의 공식 필드를 채우고 응답 구조를 검증한다. 프로젝트 멤버를 메모리에 재사용한다. 없는 메서드는 API 를 부르지 않고 실패시킨다.
-### 3. commands 의 생성자와 resolver·services·editor 매개변수 타입을 교체한다. mock 생성자는 API 방식 기존 테스트가 계속 쓸 수 있게 둔다.
-### 4. web-support 와 preAction 을 추가한다. `member get --with-org` 는 다른 영역 웹 호출을 필요로 하므로 미지원 옵션으로 막는다. 문서 목록과 코드 목록을 테스트로 대조한다.
-### 5. setup 은 첫 질문으로 방식을 받고 기존 다른 방식 비밀값을 보존한다. 401 은 쿠키 재입력, 설정 오류는 테넌트 재입력, 나머지는 종료한다. doctor 는 캐시 없이 getMe 로 연결을 검사한다.
-### 6. 설정 명령과 setup 의 경고, doctor 경고, 문서·스킬 사용법을 갱신한다. 임시 HOME 에 stdin 으로 쿠키를 저장해 CLI 실측 후 키체인 경로별 항목과 임시 HOME 을 지운다.
+### 1. 인터페이스·웹 클라이언트
 
-### 7. `src/api/web-client.test.ts`, `src/commands/web-support.test.ts`, `src/commands/setup.test.ts`, `src/commands/doctor.test.ts`
+사용자 결정(2026-11-14)대로 src/api/web/index.ts 에 지원하지 않음 기본 구현과 영역별 메서드 조립을 둔다. project.ts·member.ts 가 PR1 의 메서드를 소유하고 변환·메모리는 convert.ts·context.ts 를 공유한다. 뒤 PR 은 영역 파일과 index 의 등록 줄을 더한다. 문서도 web-endpoints.md 색인과 web-endpoints/project.md·member.md 로 나누며 fixture 는 영역별 폴더에 직접 쓴다.
 
-변환 필드·페이지 넘기기·미지원 명령과 옵션·setup 재입력·doctor 만료 오류를 검증한다.
+DoorayClient 인터페이스와 createClient 를 만들고 공개 클라이언트는 implements 선언만 더한다. web-http·web-client 는 client.js 의 런타임 값에 의존하지 않는다. client.js 를 생성자만 가진 mock 으로 쓰는 기존 테스트를 지킨다.
+공식 필드를 변환하고 기본 구조·필수 필드를 검사한다. getProjectMembers 의 member 를 프로세스 메모리에 재사용한다. getProjectMemberGroups 의 project.code 는 먼저 getProjects 메모리를 보고 없으면 승인된 GET /v2/wapi/projects/!{projectId} 로 조회해 재사용한다.
+
+### 2. 생성자와 타입 교체
+
+명령 생성자는 createClient, resolver·services 의 매개변수는 DoorayClient 로 바꾼다. 명령 안 helper 매개변수도 바꾼다: post/edit.ts, post/get.ts, post/create.ts, post/list.ts, post/comment/list.ts, calendar/event-delete.ts, calendar/event-write.ts, stream/list.ts, messenger/channels.ts. 클라이언트를 참조하지 않는 src/editor/index.ts 는 바꾸지 않는다.
+
+### 3. `src/api/dooray-client.test.ts`, `src/api/web/project.test.ts`, `src/api/web/member.test.ts`
+
+방식 없음은 공개 클라이언트, web 은 웹 클라이언트, 잘못된 주소는 요청 전 4 를 확인한다. 실제 응답을 저장하지 않고 직접 쓴 가짜 fixture 로 변환·누락·페이지·쓰기·멤버 재사용을 확인한다. 실명·실제 ID·프로젝트 코드가 고정 파일에 없는지 직접 읽는다(PII 검사기로 한국어 이름을 모두 찾을 수 없다).
+
+### 4. 승인된 설계 보완 문서
+
+design.md·ADR-081·web-endpoints.md 를 이 구현 커밋에서 고친다. 프로젝트 참조 보강, --with-org 미지원, web-support 경로 오기를 함께 반영한다. REQ6 의 빠지는 필드는 setup 가이드의 명령별 표에 기록하는 다음 문서 작업으로 연결한다.
 
 ## 검증
 
@@ -34,10 +42,7 @@
 pnpm test
 pnpm tsc --noEmit
 pnpm run build
-pnpm api:inventory
-pnpm verify:package
 node scripts/check-pii.mjs
-node scripts/check-public-refs.mjs
 ```
 
 ## 변경 파일
@@ -45,22 +50,22 @@ node scripts/check-public-refs.mjs
 | 파일 | 변경 |
 | --- | --- |
 | `src/api/dooray-client.ts` | 신규 |
-| `src/api/web-client.ts` | 신규 |
-| `src/api/web-client.test.ts` | 신규 |
-| `src/commands/web-support.ts` | 신규 |
-| `src/commands/web-support.test.ts` | 신규 |
+| `src/api/dooray-client.test.ts` | 신규 |
+| `src/api/web/index.ts` | 신규 |
+| `src/api/web/project.test.ts` | 신규 |
+| `src/api/web/member.test.ts` | 신규 |
+| `src/api/web/project.ts` | 신규 |
+| `src/api/web/member.ts` | 신규 |
+| `src/api/web/convert.ts` | 신규 |
+| `src/api/web/context.ts` | 신규 |
+| `src/api/web/fixtures/project/responses.json` | 신규 |
+| `src/api/web/fixtures/member/responses.json` | 신규 |
+| `docs/api/web-endpoints/project.md` | 신규 |
+| `docs/api/web-endpoints/member.md` | 신규 |
 | `src/api/client.ts` | 수정 |
 | `src/commands/**/*.ts` | 수정 |
 | `src/resolvers/*.ts` | 수정 |
 | `src/services/tag.ts` | 수정 |
-| `src/editor/index.ts` | 수정 |
-| `src/index.ts` | 수정 |
-| `docs/api/web-endpoints.md` | 수정 |
+| `docs/features/web-session-auth/design.md` | 수정 |
 | `docs/adr/081-web-session-auth.md` | 수정 |
-| `docs/adr/042-cache-invalidation-on-mutation.md` | 수정 |
-| `docs/code-architecture.md` | 수정 |
-| `docs/data-schema.md` | 수정 |
-| `docs/guide/setup.md` | 수정 |
-| `README.md` | 수정 |
-| `skills/dooray-cli/**` | 수정 |
-| `CLAUDE.md` | 수정 |
+| `docs/api/web-endpoints.md` | 수정 |

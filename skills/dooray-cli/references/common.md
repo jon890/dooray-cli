@@ -11,7 +11,7 @@ npm install -g @bifos/dooray-cli
 대화형 마법사로 한 번에 설정:
 
 ```bash
-dooray setup   # API endpoint 선택, API key 입력, 메일 설정까지 대화형으로 진행
+dooray setup   # 인증 방식, 클라우드·테넌트, 인증 값, 메일 설정을 대화형으로 진행
 ```
 
 또는 개별 수동 설정:
@@ -39,6 +39,29 @@ printf '%s' "$TOKEN" | dooray config set api-key -
 
 인자로 넘긴 값은 셸 기록과 프로세스 목록에 남는다.
 stdin 값은 양끝 공백을 지운 뒤 저장하고, 비어 있으면 저장하지 않고 종료 코드 3 으로 끝낸다.
+
+## 웹 인증
+
+API 키를 쓸 수 없으면 setup 의 첫 질문에서 web 을 선택한다. 클라우드·테넌트를 확인한 뒤 브라우저 개발자 도구의 Application → Cookies 에서 SESSION 값을 복사해 가려진 입력에 넣는다.
+쿠키는 비밀값이며 macOS 로그인 키체인, 다른 OS 는 0600 설정 파일에 저장한다. 값·SESSION=값·Cookie: 헤더 전체에서 SESSION 하나만 저장한다.
+수동 설정은 다음 순서다. 쿠키를 인자로 넣거나 출력하지 않는다.
+
+```bash
+dooray config set base-url https://api.dooray.com
+dooray config set tenant-name <tenant>
+dooray config set auth-mode web
+dooray config set session-cookie -
+dooray doctor
+```
+
+web 은 비공식 웹 API 로 경로가 예고 없이 바뀔 수 있다. SESSION 은 계정의 모든 권한을 가진다.
+쿠키 만료·브라우저 로그아웃 뒤에는 SESSION 을 다시 넣는다. 401·로그인 리다이렉트는 재입력, 403 은 권한 확인 안내다.
+doctor 는 API 키가 없어도 웹 설정을 검사하며 캐시 없이 getMe 로 쿠키 유효성을 확인한다. authMode 키가 현재 방식을 나타내고 auth-mode 항목의 warn 은 종료 코드를 실패로 만들지 않는다.
+`config get session-cookie` 는 유무만 보여 준다. auth-mode 를 api-key 로 바꿔도 저장한 쿠키는 지우지 않는다.
+인증 방식·쿠키를 바꾸면 캐시를 비우고, 웹 방식은 테넌트 이름 변경도 같다.
+
+지원 명령·옵션과 빠질 수 있는 필드는 [설정 가이드의 웹 방식 지원 범위](https://github.com/jon890/dooray-cli/blob/main/docs/guide/setup.md#웹-방식의-지원-범위)를 따른다.
+API 방식의 사용법과 출력은 유지한다.
 
 ## Claude Code·Codex 스킬 관리
 

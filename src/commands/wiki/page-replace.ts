@@ -6,7 +6,7 @@
  */
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import {
   resolveWikiPageInput,
   WIKI_PAGE_ID_OPTION_DESC,
@@ -53,7 +53,7 @@ export const wikiPageReplaceCommand = new Command("replace")
     const { oldText, newText } = await readReplaceInputs(opts);
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
     const globalOpts = wikiPageReplaceCommand.optsWithGlobals() as OutputOptions;
 
     const { wikiId, pageId } = await resolveWikiPageInput(client, {

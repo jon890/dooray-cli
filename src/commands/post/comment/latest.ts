@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { buildMemberNameMap } from "../../../resolvers/member.js";
 import { enrichCommentCreators } from "../../../utils/comment-enrich.js";
@@ -20,7 +20,7 @@ export const commentLatestCommand = new Command("latest")
   .action(async (project, postNumberStr, opts) => {
     const globalOpts = commentLatestCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     // MEDIUM-3: --count 검증 (spinner 시작 전)
     const n = Number(opts.count);

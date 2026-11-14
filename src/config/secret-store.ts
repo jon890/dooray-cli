@@ -1,5 +1,5 @@
 /**
- * config 의 비밀 필드(`apiKey`, `imapPassword`)를 OS 비밀 저장소에 두는 경계다 (ADR-069).
+ * config 의 비밀 필드를 OS 비밀 저장소에 두는 경계다 (ADR-069). 필드 목록은 SECRET_FIELDS 다.
  *
  * 지금은 macOS 로그인 키체인 하나만 있다. 다른 OS 는 `getSecretStore` 가 `null` 을 돌려주고,
  * `store.ts` 는 그때 예전처럼 config.json 에 평문으로 저장한다.
@@ -15,7 +15,7 @@ import { join, resolve } from "node:path";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
-export const SECRET_FIELDS = ["apiKey", "imapPassword"] as const;
+export const SECRET_FIELDS = ["apiKey", "imapPassword", "sessionCookie"] as const;
 export type SecretField = (typeof SECRET_FIELDS)[number];
 
 export interface SecretStore {

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../../config/store.js";
-import { DoorayApiClient } from "../../../../api/client.js";
+import { createClient } from "../../../../api/dooray-client.js";
 import type { PostFileDetail } from "../../../../api/types.js";
 import { resolveCommentFileInput } from "../../../../resolvers/comment-file-input.js";
 import { output, type OutputOptions } from "../../../../formatters/table.js";
@@ -32,7 +32,7 @@ export const listCommentFileCommand = new Command("list")
   .action(async (arg1, arg2, arg3, opts) => {
     const globalOpts = listCommentFileCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const { projectId, postId, commentId } = await resolveCommentFileInput(client, {
       arg1, arg2, arg3,

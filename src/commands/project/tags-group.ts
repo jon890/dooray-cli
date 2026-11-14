@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { resolveTagGroup } from "../../resolvers/tag.js";
 import { updateTagGroup } from "../../services/tag.js";
@@ -30,7 +30,7 @@ export const projectTagsGroupCommand = new Command("group")
     }
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("태그 그룹 변경 중...");
     let resolved;

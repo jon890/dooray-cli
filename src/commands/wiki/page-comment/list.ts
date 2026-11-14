@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import {
   resolveWikiPageInput,
   WIKI_PAGE_ID_OPTION_DESC,
@@ -23,7 +23,7 @@ export const wikiPageCommentListCommand = new Command("list")
   .action(async (project, pageIdArg, opts) => {
     const globalOpts = wikiPageCommentListCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const { wikiId, pageId } = await resolveWikiPageInput(client, {
       projectArg: project,

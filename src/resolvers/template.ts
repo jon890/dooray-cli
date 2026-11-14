@@ -1,4 +1,4 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { ProjectClient } from "../api/project/types.js";
 import type { CachedTemplate } from "../cache/types.js";
 import { getTemplates, setTemplates, isExpired } from "../cache/store.js";
 import { TEMPLATES_TTL_MS, RESOLVER_FETCH_PAGE_SIZE } from "../cache/types.js";
@@ -6,7 +6,7 @@ import { matchByName } from "./match.js";
 
 const TEMPLATE_ID_RE = /^\d{15,}$/;
 
-async function fetchAllTemplates(client: DoorayApiClient, projectId: string): Promise<CachedTemplate[]> {
+async function fetchAllTemplates(client: ProjectClient, projectId: string): Promise<CachedTemplate[]> {
   const all: CachedTemplate[] = [];
   let page = 0;
   const size = RESOLVER_FETCH_PAGE_SIZE;
@@ -22,7 +22,7 @@ async function fetchAllTemplates(client: DoorayApiClient, projectId: string): Pr
   return all;
 }
 
-export async function ensureTemplates(client: DoorayApiClient, projectId: string): Promise<CachedTemplate[]> {
+export async function ensureTemplates(client: ProjectClient, projectId: string): Promise<CachedTemplate[]> {
   const entry = await getTemplates(projectId);
   if (entry && !isExpired(entry.updatedAt, TEMPLATES_TTL_MS)) return entry.data;
   const items = await fetchAllTemplates(client, projectId);
@@ -32,7 +32,7 @@ export async function ensureTemplates(client: DoorayApiClient, projectId: string
 
 // 15자리 이상 숫자 → 그대로 id 반환 (단건 GET 검증은 caller에서). 그 외 → matchByName 부분일치.
 export async function resolveTemplate(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
   input: string,
 ): Promise<string> {
