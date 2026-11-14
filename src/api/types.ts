@@ -581,7 +581,8 @@ export interface WikiPageFile {
   name: string;
   size: number;
   /**
-   * 공식 문서의 페이지 조회 응답에 없는 필드다(문서의 `files[]`·`images[]` 는 `id`·`name`·`size` 만). 실측으로만 확인했다.
+   * 공식 문서 안에서 서술이 갈린다. `GET /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 응답 예시의 `files[]`·`images[]` 는 `id`·`name`·`size` 만 보이고,
+   * `GET /wiki/v1/pages/{page-id}` 예시와 「Attach Files」·「Files」 절은 `$.result.files[].attachFileId` 를 말한다(2026-11-14 확인, ADR-046).
    * 인라인 이미지(`images`)에 붙어 왔고, 본문 참조 `/wikis/<n>/files/<id>` 의 id 는 `id` 가 아니라 이 값이었다 (ADR-065).
    * 첨부 참조 누락 확인에만 쓰며, 없으면 `id` 만으로 확인한다.
    */
@@ -601,6 +602,7 @@ export interface WikiPageDetail {
   parentPageId?: string;
   files?: WikiPageFile[];
   images?: WikiPageFile[];
+  referrers?: WikiReferrer[];
 }
 
 export type WikiPageResponse = DoorayApiResponse<WikiPageDetail>;

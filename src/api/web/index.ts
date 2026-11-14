@@ -17,6 +17,7 @@ import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { WebContext } from "./context.js";
 import { createProjectWeb } from "../project/web.js";
 import { createMemberWeb } from "../member/web.js";
+import { createWikiWeb } from "../wiki/web.js";
 
 const unsupported = Symbol("unsupported web domain");
 interface WebDomains {
@@ -35,7 +36,7 @@ export function createWebClient(cookie: string, baseUrl: string, publicApiBaseUr
     project: createProjectWeb(context),
     member: createMemberWeb(context),
     post: unsupported,
-    wiki: unsupported,
+    wiki: createWikiWeb(context),
     messenger: unsupported,
     calendar: unsupported,
     stream: unsupported,
