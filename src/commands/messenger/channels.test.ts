@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
-import type { MessengerChannel } from "../../api/types.js";
+import type { MessengerChannel } from "@/api/messenger/types.js";
 import { buildUntitledLabel, resolveSince } from "./channels.js";
 
 const mocks = vi.hoisted(() => ({

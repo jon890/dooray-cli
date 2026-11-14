@@ -3,7 +3,7 @@
  * 웹 카드는 종류와 id 만 담고 내용은 references 의 맵에 있다. 경로와 변환 근거는 docs/api/web-endpoints/stream.md 가 소유한다.
  */
 import type { StreamClient } from "./types.js";
-import type { StreamItem } from "../types.js";
+import type { StreamItem } from "./types.js";
 import { date, identifier, invalidResponse, pick, row, rows, text, type Row } from "../web/convert.js";
 import type { WebContext } from "../web/context.js";
 

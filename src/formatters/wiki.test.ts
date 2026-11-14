@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { Wiki, WikiPage } from "../api/types.js";
+import type { Wiki, WikiPage } from "@/api/wiki/types.js";
 import { buildWikiTree, formatWikiList, renderWikiTree } from "./wiki.js";
 
 function page(overrides: Partial<WikiPage> & Pick<WikiPage, "id" | "subject">): WikiPage {

@@ -8,7 +8,7 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { createClient } from "../../api/dooray-client.js";
-import type { CalendarEvent } from "../../api/types.js";
+import type { CalendarEvent } from "@/api/calendar/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { output, truncate } from "../../formatters/table.js";
 import { sanitizeForTerminal } from "../../utils/sanitize.js";

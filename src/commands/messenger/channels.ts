@@ -13,7 +13,7 @@ import { getConfigOrThrow } from "../../config/store.js";
 import { createClient, type DoorayClient } from "../../api/dooray-client.js";
 import { buildOrganizationMemberNameMap } from "../../resolvers/member.js";
 import { ensureMe } from "../../resolvers/me.js";
-import type { MessengerChannel } from "../../api/types.js";
+import type { MessengerChannel } from "@/api/messenger/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { output, printJson } from "../../formatters/table.js";
 import { formatSentAt } from "../../formatters/datetime.js";

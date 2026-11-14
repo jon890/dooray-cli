@@ -1,5 +1,5 @@
 import { apiPath } from "./api-path.js";
-import type { ChannelThreadRequest, LogThreadRequest } from "./types.js";
+import type { ChannelThreadRequest, LogThreadRequest } from "@/api/messenger/types.js";
 
 export interface ThreadRequest {
   path: string;

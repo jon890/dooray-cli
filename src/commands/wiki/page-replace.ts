@@ -19,7 +19,7 @@ import { resolveBodyMimeType } from "../../utils/body-input.js";
 import { applyReplace, readReplaceInputs } from "../../utils/body-replace.js";
 import { checkAndGuardDropped } from "../../utils/attachment-check.js";
 import { printReplacePreview } from "../../formatters/body-replace.js";
-import type { WikiPageDetail } from "../../api/types.js";
+import type { WikiPageDetail } from "@/api/wiki/types.js";
 
 /**
  * 첨부 누락 검사에 넘길 목록. 인라인 이미지는 본문 참조의 id 가 `attachFileId` 였어서 그 값도 함께 넣는다.

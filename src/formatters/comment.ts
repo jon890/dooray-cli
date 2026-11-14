@@ -1,4 +1,4 @@
-import type { PostComment } from "../api/types.js";
+import type { PostComment } from "@/api/post/types.js";
 import type { OutputOptions } from "./table.js";
 import { printJson, printTable } from "./table.js";
 import { formatSize } from "../utils/format-size.js";

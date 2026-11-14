@@ -1,5 +1,5 @@
 import type { DoorayClient } from "../api/dooray-client.js";
-import type { Wiki } from "../api/types.js";
+import type { Wiki } from "@/api/wiki/types.js";
 import { getProjects, getPrivateProjects, getWikis, setWikis, isExpired } from "../cache/store.js";
 import { WIKIS_TTL_MS, type CachedProject, type CachedWiki } from "../cache/types.js";
 import { DoorayCliError } from "../utils/errors.js";

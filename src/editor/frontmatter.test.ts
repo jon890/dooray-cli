@@ -5,7 +5,7 @@ import {
   serializeWikiFrontmatter,
   parseWikiFrontmatter,
 } from "./index.js";
-import type { PostDetail } from "../api/types.js";
+import type { PostDetail } from "@/api/post/types.js";
 
 // js-yaml 5 는 default export 를 제거해 `import yaml from "js-yaml"` 가 런타임에
 // undefined 가 된다 (esbuild interop). named import 로 마이그레이션한 것을 가드한다.

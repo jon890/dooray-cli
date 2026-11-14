@@ -24,7 +24,7 @@ import { checkAndGuardDropped } from "../../utils/attachment-check.js";
 import { checkMarkupSupport, type BodyMarkupKind } from "../../utils/body-markup.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
-import type { CreatePostUser } from "../../api/types.js";
+import type { CreatePostUser } from "@/api/post/types.js";
 
 async function resolveUsers(
   client: DoorayClient,

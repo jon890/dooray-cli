@@ -1,0 +1,62 @@
+{
+  "name": "r1",
+  "description": "API 타입을 영역별로 나누고 경로 이동 도구를 만든다",
+  "pr_scope": "동작과 공개 타입 이름을 지키면서 DTO 소유 영역과 직접 import 경로를 정한다.",
+  "deferred": [
+    {
+      "what": "공개 클라이언트 분할과 후속 구조 정리",
+      "why": "이번 PR 은 타입 배치만 바꾼다",
+      "after": "R1 머지 뒤 R2 지시서"
+    }
+  ],
+  "status": "completed",
+  "created_at": "2026-11-14",
+  "spec": "docs/features/code-structure/spec.md",
+  "design": "docs/features/code-structure/design.md",
+  "verification_plan": "verification-plan.md",
+  "requirements": [
+    "REQ1",
+    "REQ3",
+    "REQ5",
+    "REQ6",
+    "REQ7",
+    "REQ8"
+  ],
+  "total_phases": 3,
+  "current_phase": 3,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ6",
+        "REQ7",
+        "REQ8"
+      ]
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ3",
+        "REQ5",
+        "REQ6"
+      ]
+    },
+    {
+      "number": 3,
+      "file": "phase-03.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ1",
+        "REQ3",
+        "REQ5",
+        "REQ6",
+        "REQ7",
+        "REQ8"
+      ]
+    }
+  ]
+}

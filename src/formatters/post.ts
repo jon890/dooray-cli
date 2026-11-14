@@ -1,4 +1,4 @@
-import type { Post, PostDetail, PostComment } from "../api/types.js";
+import type { Post, PostDetail, PostComment } from "@/api/post/types.js";
 import type { OutputOptions } from "./table.js";
 import { output, printJson } from "./table.js";
 

@@ -1,7 +1,8 @@
 /** 웹 내부 응답을 공식 필드로 바꾸기 전에 구조·식별자·날짜를 검사한다. */
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_API_ERROR } from "../../utils/exit-codes.js";
-import type { Project, MemberDetail, MeDetail } from "../types.js";
+import type { Project } from "@/api/project/types.js";
+import type { MemberDetail, MeDetail } from "@/api/member/types.js";
 
 export type Row = Record<string, unknown>;
 export function invalidResponse(): never { throw new DoorayCliError("웹 응답의 필수 필드나 구조가 바뀌었습니다.", EXIT_API_ERROR); }

@@ -1,5 +1,5 @@
 import type { ProjectClient } from "../api/project/types.js";
-import type { MemberGroup } from "../api/types.js";
+import type { MemberGroup } from "@/api/project/types.js";
 import type { CachedMemberGroup } from "../cache/types.js";
 import { getMemberGroups, setMemberGroups, isExpired } from "../cache/store.js";
 import { MEMBER_GROUPS_TTL_MS, RESOLVER_FETCH_PAGE_SIZE } from "../cache/types.js";

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../../config/store.js";
 import { createClient } from "../../../../api/dooray-client.js";
-import type { PostFileDetail } from "../../../../api/types.js";
+import type { PostFileDetail } from "@/api/post/types.js";
 import { resolveCommentFileInput } from "../../../../resolvers/comment-file-input.js";
 import { output, type OutputOptions } from "../../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../../utils/spinner.js";

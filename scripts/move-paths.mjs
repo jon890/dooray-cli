@@ -1,0 +1,256 @@
+#!/usr/bin/env node
+/**
+ * 파일 이동과 import·문서 경로 수정을 분리한다 (ADR-082).
+ * node scripts/move-paths.mjs <표.json> --step move|rewrite
+ * 표는 src 기준 [{ "from": "utils/old.ts", "to": "body/new.ts" }] 이다.
+ * move 는 짝 *.test.ts 도 git mv 하며 내용을 고치지 않는다.
+ * rewrite 는 move 직후, 내용 수정 전에 같은 표로 실행한다.
+ * 타입 선언 분할은 이 스크립트의 대상이 아니다.
+ * new URL("…", import.meta.url) 같은 파일 상대 경로는 고치지 않는다.
+ * move 가 Git 메타데이터에 원본을 보관해 rewrite 재실행도 같은 경로를 계산한다.
+ * 문서는 check-doc-paths.mjs 와 같은 범위의 src/ 접두 경로만 고친다.
+ */
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { dirname, join, posix, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const DOC_TARGETS = ["docs", "CLAUDE.md", "README.md", "CONTRIBUTING.md", ".claude", "skills"];
+const SKIP_DIRS = new Set([".git", "node_modules", "dist", "worktrees"]);
+
+function filesUnder(file, extension) {
+  if (!existsSync(file) || lstatSync(file).isSymbolicLink()) return [];
+  if (lstatSync(file).isFile()) return file.endsWith(extension) ? [file] : [];
+  return readdirSync(file).sort().flatMap((name) => SKIP_DIRS.has(name) ? [] : filesUnder(join(file, name), extension));
+}
+
+function sourcePath(value) {
+  if (typeof value !== "string" || !/^[\w./-]+\.ts$/.test(value) || value.startsWith("/") || value.startsWith("src/") || value.split("/").some((part) => part === ".." || part === "." || part === "")) {
+    throw new Error(`src 기준 .ts 파일 경로가 아니다: ${value}`);
+  }
+  return value;
+}
+
+/** 짝 테스트는 move 전·후 어느 자리에서든 찾아 같은 표를 복원한다. */
+export function expandMoves(root, table) {
+  if (!Array.isArray(table)) throw new Error("이동 표는 { from, to } 배열이어야 한다");
+  const moves = table.map((entry) => {
+    if (!entry || typeof entry !== "object") throw new Error("이동 표 원소는 { from, to } 여야 한다");
+    return { from: sourcePath(entry.from), to: sourcePath(entry.to) };
+  });
+  for (const { from, to } of [...moves]) {
+    if (from.endsWith(".test.ts")) continue;
+    const testFrom = from.replace(/\.ts$/, ".test.ts");
+    const testTo = to.replace(/\.ts$/, ".test.ts");
+    if (existsSync(join(root, "src", testFrom)) || existsSync(join(root, "src", testTo))) {
+      if (!moves.some((entry) => entry.from === testFrom && entry.to === testTo)) moves.push({ from: testFrom, to: testTo });
+    }
+  }
+  const froms = new Set();
+  const tos = new Set();
+  for (const { from, to } of moves) {
+    if (froms.has(from) || tos.has(to) || from === to) throw new Error(`중복되거나 같은 이동 경로: ${from} -> ${to}`);
+    froms.add(from); tos.add(to);
+    for (const file of [from, to]) {
+      // src 와 하위 폴더의 symlink 를 따라 저장소 밖으로 쓰지 않는다.
+      let candidate = join(root, "src");
+      for (const part of ["", ...file.split("/")]) {
+        candidate = join(candidate, part);
+        if (existsSync(candidate) && lstatSync(candidate).isSymbolicLink()) throw new Error(`심볼릭 링크 경로는 이동할 수 없다: ${file}`);
+      }
+    }
+  }
+  if ([...tos].some((to) => froms.has(to))) throw new Error("서로 겹치는 출발·도착 경로는 나눠 실행한다");
+  return moves;
+}
+
+/** 주석과 문자열 안의 import 예시를 실제 코드와 구분하기 위한 토큰이다. */
+function tokensOf(source) {
+  const tokens = [];
+  const add = (start, end, string = false) => tokens.push({ value: source.slice(start, end), start, end, string });
+  const quotedEnd = (start, quote) => {
+    let i = start + 1;
+    while (i < source.length) {
+      if (source[i] === "\\") i += 2;
+      else if (source[i++] === quote) break;
+    }
+    return i;
+  };
+  function code(start, interpolation = false) {
+    let braces = 0;
+    let i = start;
+    while (i < source.length) {
+      const char = source[i];
+      if (/\s/.test(char)) { i++; continue; }
+      if (source.startsWith("//", i)) {
+        const end = source.indexOf("\n", i + 2);
+        i = end < 0 ? source.length : end; continue;
+      }
+      if (source.startsWith("/*", i)) {
+        const end = source.indexOf("*/", i + 2);
+        i = end < 0 ? source.length : end + 2; continue;
+      }
+      if (char === '"' || char === "'") {
+        const end = quotedEnd(i, char); add(i, end, true); i = end; continue;
+      }
+      if (char === "`") {
+        const begin = i++;
+        while (i < source.length) {
+          if (source[i] === "\\") i += 2;
+          else if (source[i] === "`") { i++; break; }
+          else if (source.startsWith("${", i)) i = code(i + 2, true);
+          else i++;
+        }
+        // 템플릿 문자열의 텍스트는 제외하고 표현식 안의 코드만 읽는다.
+        add(begin, begin + 1); continue;
+      }
+      if (char === "/" && (!tokens.length || /^(?:[=(:,;!&|?{}\[>]|return|throw|case)$/.test(tokens.at(-1).value))) {
+        let end = i + 1;
+        let characterClass = false;
+        while (end < source.length && source[end] !== "\n") {
+          if (source[end] === "\\") { end += 2; continue; }
+          if (source[end] === "[") characterClass = true;
+          if (source[end] === "]") characterClass = false;
+          if (source[end++] === "/" && !characterClass) break;
+        }
+        while (/[a-z]/i.test(source[end] ?? "") && end < source.length) end++;
+        add(i, end); i = end; continue;
+      }
+      if (interpolation && char === "}" && braces === 0) return i + 1;
+      if (char === "{") braces++;
+      if (char === "}") braces--;
+      const identifier = source.slice(i).match(/^[A-Za-z_$][\w$]*/)?.[0];
+      const end = i + (identifier?.length ?? 1);
+      add(i, end); i = end;
+    }
+    return i;
+  }
+  code(0);
+  return tokens;
+}
+
+function moduleStrings(source) {
+  const tokens = tokensOf(source);
+  const found = new Set();
+  const add = (token) => { if (token?.string) found.add(token); };
+  for (let i = 0; i < tokens.length; i++) {
+    const value = tokens[i].value;
+    if ((value === "import" || value === "export") && tokens[i - 1]?.value !== ".") {
+      const next = tokens[i + 1];
+      if (value === "import" && next?.string) add(next);
+      else if (value === "import" && next?.value === "(") add(tokens[i + 2]);
+      else if ((value === "import" && next?.value !== ".") || next?.value === "{" || next?.value === "*" || (next?.value === "type" && ["{", "*"].includes(tokens[i + 2]?.value))) {
+        for (let j = i + 1; j < tokens.length && tokens[j].value !== ";"; j++) {
+          if (tokens[j].value === "from" && tokens[j + 1]?.string) { add(tokens[j + 1]); break; }
+        }
+      }
+    }
+    if (value === "vi" && tokens[i + 1]?.value === "." && ["mock", "doMock", "importActual", "unmock", "doUnmock", "importMock"].includes(tokens[i + 2]?.value)) {
+      let j = i + 3;
+      if (tokens[j]?.value === "<") {
+        let depth = 0;
+        do {
+          if (tokens[j].value === "<") depth++;
+          if (tokens[j].value === ">") depth--;
+          j++;
+        } while (j < tokens.length && depth > 0);
+      }
+      if (tokens[j]?.value === "(") add(tokens[j + 1]);
+    }
+  }
+  return [...found].sort((a, b) => b.start - a.start);
+}
+
+function resolveImport(root, from, spec, forward) {
+  if (!spec.startsWith(".") && !spec.startsWith("@/")) return undefined;
+  const candidate = spec.startsWith("@/") ? spec.slice(2) : posix.normalize(posix.join(posix.dirname(from), spec));
+  const choices = [candidate.replace(/\.js$/, ".ts"), candidate, `${candidate}.ts`, `${candidate}/index.ts`];
+  return choices.find((file) => forward.has(file) || existsSync(join(root, "src", file)));
+}
+
+export function rewriteSource(root, source, currentFile, moves) {
+  const forward = new Map(moves.map(({ from, to }) => [from, to]));
+  const originalFile = moves.find(({ to }) => to === currentFile)?.from ?? currentFile;
+  for (const token of moduleStrings(source)) {
+    const spec = token.value.slice(1, -1);
+    const target = resolveImport(root, originalFile, spec, forward);
+    if (!target) continue;
+    if (!forward.has(target) && !(originalFile !== currentFile && spec.startsWith("."))) continue;
+    const destination = forward.get(target) ?? target;
+    const next = posix.dirname(currentFile) === posix.dirname(destination)
+      ? `./${posix.basename(destination).replace(/\.ts$/, ".js")}`
+      : `@/${destination.replace(/\.ts$/, ".js")}`;
+    source = source.slice(0, token.start + 1) + next + source.slice(token.end - 1);
+  }
+  return source;
+}
+
+function rewriteDoc(source, moves) {
+  return source.replace(/(?<![\w./-])src\/[\w./-]*/g, (match, offset) => {
+    if (source[offset + match.length] === "*") return match;
+    const suffix = match.match(/[.,]+$/)?.[0] ?? "";
+    const file = match.slice(4, suffix ? -suffix.length : undefined);
+    for (const { from, to } of moves) {
+      if (file === from) return `src/${to}${suffix}`;
+      if (file === from.replace(/\.ts$/, ".js")) return `src/${to.replace(/\.ts$/, ".js")}${suffix}`;
+      if (file === from.replace(/\.ts$/, "")) return `src/${to.replace(/\.ts$/, "")}${suffix}`;
+    }
+    return match;
+  });
+}
+
+export function runMoves(root, table, step) {
+  if (!["move", "rewrite"].includes(step)) throw new Error("--step move|rewrite 를 지정한다");
+  const moves = expandMoves(root, table);
+  const key = createHash("sha256").update(JSON.stringify([...moves].sort((a, b) => a.from.localeCompare(b.from)))).digest("hex");
+  const snapshotFile = moves.length ? resolve(root, execFileSync("git", ["-C", root, "rev-parse", "--git-path", `dooray-move-paths/${key}.json`], { encoding: "utf8" }).trim()) : undefined;
+  if (step === "move") {
+    const tracked = new Set(execFileSync("git", ["-C", root, "ls-files", "-z"], { encoding: "utf8" }).split("\0"));
+    for (const { from, to } of moves) {
+      if (!tracked.has(`src/${from}`) || !existsSync(join(root, "src", from))) throw new Error(`git 추적 파일이 없다: ${from}`);
+      if (existsSync(join(root, "src", to))) throw new Error(`도착 파일이 이미 있다: ${to}`);
+    }
+    const originals = Object.fromEntries(moves.map(({ from, to }) => [to, readFileSync(join(root, "src", from), "utf8")]));
+    if (snapshotFile) {
+      mkdirSync(dirname(snapshotFile), { recursive: true });
+      writeFileSync(snapshotFile, JSON.stringify(originals), { mode: 0o600 });
+    }
+    for (const { from, to } of moves) {
+      mkdirSync(dirname(join(root, "src", to)), { recursive: true });
+      execFileSync("git", ["-C", root, "mv", "--", `src/${from}`, `src/${to}`]);
+    }
+    return;
+  }
+  for (const { from, to } of moves) {
+    if (existsSync(join(root, "src", from)) || !existsSync(join(root, "src", to))) throw new Error(`먼저 move 단계를 실행한다: ${from} -> ${to}`);
+  }
+  const originals = snapshotFile ? JSON.parse(readFileSync(snapshotFile, "utf8")) : {};
+  const updates = [];
+  for (const file of filesUnder(join(root, "src"), ".ts")) {
+    const source = readFileSync(file, "utf8");
+    const current = file.slice(join(root, "src").length + 1).split("\\").join("/");
+    const moved = moves.some(({ to }) => to === current);
+    const original = moved ? originals[current] : source;
+    if (typeof original !== "string") throw new Error(`이동 원본이 없다. 같은 작업 공간에서 move 를 먼저 실행한다: ${current}`);
+    const next = rewriteSource(root, original, current, moves);
+    if (moved && source !== original && source !== next) throw new Error(`옮긴 파일 내용이 바뀌었다. rewrite 는 내용 수정 전에 실행한다: ${current}`);
+    if (next !== source) updates.push([file, next]);
+  }
+  for (const file of [...new Set(DOC_TARGETS.flatMap((target) => filesUnder(join(root, target), ".md")))]) {
+    const source = readFileSync(file, "utf8");
+    const next = rewriteDoc(source, moves);
+    if (next !== source) updates.push([file, next]);
+  }
+  for (const [file, content] of updates) writeFileSync(file, content);
+}
+
+function main() {
+  const [table, flag, step, ...extra] = process.argv.slice(2);
+  if (!table || flag !== "--step" || extra.length || !["move", "rewrite"].includes(step)) throw new Error("사용법: node scripts/move-paths.mjs <표.json> --step move|rewrite");
+  runMoves(process.cwd(), JSON.parse(readFileSync(table, "utf8")), step);
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try { main(); } catch (error) { console.error(error.message); process.exitCode = 1; }
+}

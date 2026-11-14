@@ -1,5 +1,5 @@
 import type { ProjectClient } from "../api/project/types.js";
-import type { CreateTagRequest, UpdateTagGroupRequest } from "../api/types.js";
+import type { CreateTagRequest, UpdateTagGroupRequest } from "@/api/project/types.js";
 import { clearTags } from "../cache/store.js";
 
 /**

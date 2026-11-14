@@ -7,7 +7,7 @@ import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { readBodyInputOrNull, BODY_MIME_TYPES, resolveBodyMimeType, warnUnconvertedBody } from "../../../utils/body-input.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_API_ERROR, EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
-import type { PostComment } from "../../../api/types.js";
+import type { PostComment } from "@/api/post/types.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js";
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";

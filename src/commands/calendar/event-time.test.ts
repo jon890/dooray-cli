@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CalendarEvent } from "../../api/types.js";
+import type { CalendarEvent } from "@/api/calendar/types.js";
 import { formatEventTime } from "./event-time.js";
 
 // ANSI escape 시작 바이트. 리터럴로 두면 편집기에서 보이지 않아 escape 표기로 쓴다.

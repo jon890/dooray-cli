@@ -1,4 +1,4 @@
-import type { PostComment } from "../api/types.js";
+import type { PostComment } from "@/api/post/types.js";
 
 /**
  * PostComment[]의 creator.member.name 비어있는 항목을 nameMap으로 채워서 반환.

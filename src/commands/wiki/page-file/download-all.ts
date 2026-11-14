@@ -9,7 +9,7 @@ import {
   WIKI_PAGE_PROJECT_OPTION_DESC,
 } from "../../../resolvers/wiki-page-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
-import type { WikiPageFile } from "../../../api/types.js";
+import type { WikiPageFile } from "@/api/wiki/types.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { printJson } from "../../../formatters/table.js";
 import { emitDownloadAllResult } from "../../../formatters/file-output.js";

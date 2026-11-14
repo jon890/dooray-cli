@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fetchAllWikis, filterWikisByName, resolveWiki } from "./wiki.js";
 import { getProjects, getPrivateProjects, isExpired } from "../cache/store.js";
 import type { DoorayApiClient } from "../api/client.js";
-import type { Wiki } from "../api/types.js";
+import type { Wiki } from "@/api/wiki/types.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 vi.mock("../cache/store.js", () => ({

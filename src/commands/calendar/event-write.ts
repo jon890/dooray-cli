@@ -9,7 +9,7 @@
 import { Command, Option } from "commander";
 import type { OutputOptions } from "../../formatters/table.js";
 import type { DoorayClient } from "../../api/dooray-client.js";
-import type { CalendarEventWriteRequest } from "../../api/types.js";
+import type { CalendarEventWriteRequest } from "@/api/calendar/types.js";
 import { ensureMe } from "../../resolvers/me.js";
 import { resolveOrganizationMember } from "../../resolvers/member.js";
 import { BODY_MIME_TYPES, readBodyInput } from "../../utils/body-input.js";

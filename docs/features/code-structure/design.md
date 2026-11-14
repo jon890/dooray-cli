@@ -69,6 +69,8 @@ src/
 
 - `api/<영역>/types.ts` 가 인터페이스와 DTO 를 함께 갖는 것은 스펙 REQ3 의 세 파일 꼴을 따른다. 한 영역의 types.ts 가 800줄을 넘으면 `types-<주제>.ts` 로 나누고 `types.ts` 가 재내보낸다.
 - 영역 사이 DTO 참조(예: post 의 담당자가 member 의 타입을 쓰는 것)는 상대 영역의 `types.ts` 만 가져온다.
+- project 템플릿과 post 가 함께 쓰는 PostBody·PostUsers 는 common/types.ts 에 둔다. PostUsers 가 쓰는 PostUser·Member·EmailUser·Group·Workflow 도 함께 두어 common 이 다른 api 영역을 가져오지 않게 하고 project 와 post 의 타입 순환을 없앤다. 원래 영역 경로는 타입을 재내보낸다.
+- BusyHoursDepartment·BusyHoursOrganization 은 member/types.ts 에 둔다. calendar 가 이 조직 정보 타입을 가져오며, member 는 calendar 를 가져오지 않는다. 기존 calendar 경로는 타입을 재내보낸다.
 - `api/public/` 은 웹의 `api/web/` 와 짝이다. 공개 구현의 공용 부분을 영역 폴더 밖에 두어, 영역 폴더에는 그 영역 것만 남긴다.
 
 ### R1·R2 에서 정할 것
@@ -195,9 +197,12 @@ export class DoorayApiClient {
 | 단계 | 하는 일 | 커밋 |
 | --- | --- | --- |
 | `move` | 표의 파일과 짝 테스트(`*.test.ts`)를 `git mv` 한다. 내용을 고치지 않는다 | 이동 커밋. 빌드가 깨진 상태일 수 있다 |
-| `rewrite` | 모든 `src/**/*.ts` 의 `import`·`export from`·`import()`·`vi.mock`·`vi.importActual`·`vi.doMock` 지정자 가운데 옮긴 파일을 가리키는 것을 `@/<새 경로>.js` 로 바꾼다. 옮긴 파일 안의 상대 import 는 위치가 바뀌었으므로 같은 폴더가 아니면 `@/…` 로 바꾼다. 문서(`check-doc-paths.mjs` 가 읽는 범위)의 `src/<옛 경로>` 를 `src/<새 경로>` 로 바꾼다 | 내용 수정 커밋 |
+| `rewrite` | 모든 `src/**/*.ts` 의 `import`·`export from`·`import()`·`vi.mock`·`vi.importActual`·`vi.doMock`·`vi.unmock`·`vi.doUnmock`·`vi.importMock` 지정자 가운데 옮긴 파일을 가리키는 것을 `@/<새 경로>.js` 로 바꾼다. 옮긴 파일 안의 상대 import 는 위치가 바뀌었으므로 같은 폴더가 아니면 `@/…` 로 바꾼다. 문서(`check-doc-paths.mjs` 가 읽는 범위)의 `src/<옛 경로>` 를 `src/<새 경로>` 로 바꾼다 | 내용 수정 커밋 |
 
 - 지정자는 옛 위치 기준으로 풀어 표와 비교한다. 문자열만 바꾸지 않고 경로를 풀어 비교하므로 `../../api/types.js` 와 `../types.js` 를 같은 파일로 알아본다.
+- move 는 작업 공간의 Git 메타데이터(이동 표 해시별 dooray-move-paths 파일)에 원본을 보관한다. rewrite 는 이 원본으로 계산하므로 옛 폴더와 새 폴더에 동명 파일이 있어도 재실행이 대상을 바꾸지 않는다. rewrite 전에 옮긴 파일의 내용을 따로 수정했으면 덮어쓰지 않고 실패한다. move 와 rewrite 는 같은 작업 공간에서 실행한다.
+- `new URL("…", import.meta.url)` 같은 파일 상대 경로는 지원하지 않는다. 파일을 옮긴 뒤 해당 경로를 직접 확인하고 고친다.
+- 문서에서는 `src/` 접두 경로만 고친다. `api/client.ts` 처럼 src 기준으로 줄여 쓴 경로는 자동으로 고치거나 검사하지 않으므로 파일을 옮기는 PR 에서 함께 확인한다.
 - 표에 없는 파일은 손대지 않는다. 실행 뒤 `git diff --stat` 을 PR 본문에 붙인다.
 - 이동 커밋은 내용을 바꾸지 않으므로 git 의 이름 바꾸기 탐지가 100% 유사도로 잡는다(REQ8). 이 저장소는 PR 을 merge commit 으로 합치므로 두 커밋이 main 이력에 남는다.
 - 파일을 나누는 일(`types.ts` → 영역별)은 이동이 아니라 내용 수정이다. 새 파일은 새 이력으로 시작하고, 원래 파일은 재내보내기로 남아 그 이력을 지킨다. 그래서 R1·R2 는 「나누기」 커밋과 「import 를 새 자리로 바꾸기」 커밋을 따로 둔다.
@@ -206,7 +211,7 @@ export class DoorayApiClient {
 
 - 런타임 상태·데이터 형식·외부 계약을 바꾸지 않는다. 캐시와 설정 파일 형식이 그대로라 되돌릴 때 데이터 이전이 없다.
 - 동작 불변의 확인은 PR 마다 세 가지다: 도움말 스냅숏 같음, 테스트 수가 줄지 않고 모두 통과, R2 의 인벤토리 출력 같음.
-- 다른 기능 PR 과의 충돌: R1·R2 는 `api/types.ts`·`client.ts` 를 크게 바꾼다. 같은 때 api 를 고치는 PR 이 있으면 코디네이터가 순서를 정한다. 충돌이 나면 이동 스크립트를 기준 브랜치 위에서 다시 돌린다(표가 원본이라 다시 돌릴 수 있다).
+- 다른 기능 PR 과의 충돌: R1·R2 는 `api/types.ts`·`client.ts` 를 크게 바꾼다. 같은 때 api 를 고치는 PR 이 있으면 코디네이터가 순서를 정한다. 파일 이동은 이동 스크립트를 기준 브랜치 위에서 다시 돌릴 수 있다. R1·R2 의 선언 나누기는 스크립트 대상이 아니므로 충돌하면 선언과 import 를 직접 다시 맞춘다.
 - 이동 커밋 하나만 체리픽하면 빌드가 깨진다. PR 단위로만 되돌린다.
 
 ## 검증 전략

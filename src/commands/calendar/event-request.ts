@@ -7,15 +7,7 @@
  * 이름을 id 로 바꾸는 일은 여기서 하지 않는다. 부르는 쪽이 해석을 끝낸 id 를 넘긴다.
  */
 
-import type {
-  CalendarEventAlarm,
-  CalendarEventUser,
-  CalendarEventPersonalSettings,
-  CalendarEventRecurrenceRule,
-  CalendarEventRecurrenceRuleDetail,
-  CalendarEventWriteRequest,
-  CalendarEventWriteUser,
-} from "../../api/types.js";
+import type { CalendarEventAlarm, CalendarEventUser, CalendarEventPersonalSettings, CalendarEventRecurrenceRule, CalendarEventRecurrenceRuleDetail, CalendarEventWriteRequest, CalendarEventWriteUser } from "@/api/calendar/types.js";
 import { MARKDOWN_MIME } from "../../utils/body-input.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";

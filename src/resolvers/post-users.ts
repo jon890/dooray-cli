@@ -1,5 +1,5 @@
 import type { DoorayClient } from "../api/dooray-client.js";
-import type { CreatePostUser } from "../api/types.js";
+import type { CreatePostUser } from "@/api/post/types.js";
 import { resolveMember } from "./member.js";
 import { resolveMemberGroup } from "./member-group.js";
 import { DoorayCliError } from "../utils/errors.js";

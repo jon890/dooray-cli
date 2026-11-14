@@ -19,7 +19,9 @@ import { appendTaskLinks } from "../../utils/task-link.js";
 import { resolveTaskLinks } from "../../resolvers/task-link.js";
 import { resolveUserAdditions } from "../../resolvers/post-users.js";
 import { resolveTemplate } from "../../resolvers/template.js";
-import type { CreatePostUser, PostUser, TemplateDetail } from "../../api/types.js";
+import type { CreatePostUser } from "@/api/post/types.js";
+import type { PostUser } from "@/api/common/types.js";
+import type { TemplateDetail } from "@/api/project/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
 
@@ -37,7 +39,7 @@ async function resolveUsers(
 }
 
 // 템플릿 fetch 결과 (PostUser) → createPost payload (CreatePostUser) 변환.
-// workflow 필드는 CreatePostRequest 에 없어 제외 (api/types.ts:127/223 차이).
+// workflow 필드는 api/post/types.ts 의 CreatePostRequest 에 없어 제외한다.
 function postUserToCreate(u: PostUser): CreatePostUser {
   return {
     type: u.type,

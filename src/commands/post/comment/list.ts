@@ -9,7 +9,7 @@ import type { OutputOptions } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
-import type { PostComment } from "../../../api/types.js";
+import type { PostComment } from "@/api/post/types.js";
 
 // LOW-2: Commander .option() default와 동기화 보장
 const PAGE_DEFAULT = "0";

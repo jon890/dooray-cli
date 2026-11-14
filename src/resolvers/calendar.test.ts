@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { DoorayApiClient } from "../api/client.js";
-import type { Calendar } from "../api/types.js";
+import type { Calendar } from "@/api/calendar/types.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import { formatCalendarLabel, resolveWritableCalendar } from "./calendar.js";
 

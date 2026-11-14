@@ -5,7 +5,7 @@
  * 알 수 없는 값은 원형을 그대로 보여주되 외부 문자열이라 control char 를 없앤다.
  */
 
-import type { CalendarEventMe } from "../../api/types.js";
+import type { CalendarEventMe } from "@/api/calendar/types.js";
 import { sanitizeForTerminal } from "../../utils/sanitize.js";
 
 const USER_TYPE_LABELS: Record<string, string> = {

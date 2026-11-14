@@ -3,7 +3,7 @@ import { getConfigOrThrow } from "../../config/store.js";
 import { createClient } from "../../api/dooray-client.js";
 import { resolveMessengerChannel } from "../../resolvers/messenger-channel.js";
 import { buildOrganizationMemberNameMap } from "../../resolvers/member.js";
-import type { MessengerLog } from "../../api/types.js";
+import type { MessengerLog } from "@/api/messenger/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { output, printJson, truncate } from "../../formatters/table.js";
 import { formatSentAt } from "../../formatters/datetime.js";

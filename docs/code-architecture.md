@@ -101,6 +101,8 @@ src/
 - 명령 영역(`commands/<영역>/` 과 `commands/<이름>.ts`)은 다른 명령 영역을 가져오지 않는다.
 - 공개 API 구현(`api/client.ts`, `api/public/`, `api/<영역>/public.ts`)과 웹 구현(`api/web/`, `api/<영역>/web.ts`)은 서로 가져오지 않는다. 둘을 고르는 `api/dooray-client.ts` 는 어느 쪽도 아니다.
 - `api/<영역>/` 은 다른 영역의 `types.ts` 만 가져온다.
+- `api/<영역>/` 은 `api/types.ts`·`api/client.ts` 를 가져오지 않는다. DTO 와 파라미터는 자기 영역이나 다른 영역의 `types.ts`, 공통 응답 구조는 `api/common/types.ts` 에서 가져온다.
+- `api/common/` 은 다른 api 영역을 가져오지 않는다. 여러 영역이 쓰는 본문·참여자·식별자 DTO 도 이곳에 둔다.
 
 검사 방식:
 
@@ -117,7 +119,7 @@ commands/* → services/*  → cache/store + api/dooray-client + config/store   
 commands/* → formatters/*
 commands/* → utils/errors
 commands/setup|doctor|skill → skill/manager → skill/manifest
-editor/    → api/types + cache/types + utils (편집 데이터 타입과 임시 파일)
+editor/    → api/<영역>/types + cache/types + utils (편집 데이터 타입과 임시 파일)
 ```
 
 - `commands/setup.ts`는 services/config, api/dooray-client, @inquirer/prompts에 의존하고 스킬 파일시스템 처리는 `skill/manager.ts`에 위임. config 저장을 `services/config`로 보내 계정·환경이 바뀌면 캐시가 함께 비워지게 한다 ([ADR-042](adr/042-cache-invalidation-on-mutation.md))
@@ -137,7 +139,7 @@ editor/    → api/types + cache/types + utils (편집 데이터 타입과 임�
 ## API Client 구조
 
 `src/api/dooray-client.ts` 의 영역별 인터페이스 교집합인 DoorayClient 를 공개 API 구현(`client.ts`)과 웹 구현(`web/index.ts`)이 구현한다. 명령은 createClient(config) 로 고른다.
-영역 계약은 api/<영역>/types.ts, 웹 구현은 api/<영역>/web.ts 에 둔다. 지금 DTO 는 api/types.ts 에, 공개 구현은 client.ts 한 파일에 있다. 목표는 DTO 를 영역의 types.ts 로, 공개 구현을 api/<영역>/public.ts 로 옮기고 두 파일은 재내보내기만 남기는 것이다 ([ADR-082](adr/082-code-structure.md)). 웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web/http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
+영역 계약과 DTO·파라미터는 api/<영역>/types.ts, 공통 응답 구조는 api/common/types.ts, 웹 구현은 api/<영역>/web.ts 에 둔다. api/types.ts 는 기존 경로를 위한 타입 재내보내기만 남긴다. 공개 구현은 아직 client.ts 한 파일에 있다. R2 에서 api/<영역>/public.ts 로 옮기고 client.ts 도 재내보내기만 남긴다 ([ADR-082](adr/082-code-structure.md)). 웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web/http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
 메서드 목록은 여기 적지 않는다. 메서드가 늘 때마다 낡고, 그 파일을 열면 바로 보인다.
 
 ```bash
