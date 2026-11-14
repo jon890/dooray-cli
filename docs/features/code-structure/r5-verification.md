@@ -1,12 +1,12 @@
 # R5 설정·스킬 관리 분할 검증 기록
 
-완료: PR 전 실행 검증과 문서 대조. 독립 코드·문서 리뷰는 코디네이터가 Claude 리뷰 worker 에게 맡기며, 실제 결과는 PR 본문에 기록한다.
+완료: PR 전 실행 검증과 문서 대조. 코디네이터가 맡긴 Claude 독립 코드·문서 리뷰에서 차단할 문제는 없었다. 실제 리뷰 링크와 현재 HEAD 는 PR 본문에 기록한다.
 
 - 스펙: [spec.md](spec.md)
 - 기술 설계: [design.md](design.md) 의 R5 절
 - 계획과 인수 검증 계획: [tasks/r5/index.json](tasks/r5/index.json), [verification-plan.md](tasks/r5/verification-plan.md)
 - 기준 main: `6f7a8c1` (R4 머지 뒤)
-- 코드 검증 커밋: `8194a27`. 이후 검증 문서만 추가한다. PR HEAD 는 PR 본문에 적는다.
+- 코드 검증 커밋: `8194a27`. 이후 검증 기록과 문서 참조만 고쳤다. PR HEAD 는 PR 본문에 적는다.
 - 환경: macOS, Node.js v24.22.1, pnpm 12.18.0. mock 과 임시 디렉터리만 사용했다.
 
 ## 요구사항별 증거
@@ -16,7 +16,7 @@
 | REQ1 | 기준·작업 브랜치의 `pnpm test` | 기존 테스트 유지, 모두 통과 | 152개 파일 2,339개에서 152개 파일 2,341개로 증가. 재내보내기 구조 검사만 추가했고 기존 테스트는 수정하지 않았다 |
 | REQ1 | 각각 빌드한 뒤 `node scripts/help-snapshot.mjs --out`·`--check` | 도움말·등록 순서 유지 | 104개 명령 경로 일치 |
 | REQ1 | 기준 main 선언과 분할한 선언을 임시 TypeScript 스크립트로 비교 | 내보내는 이름과 기존 구현 유지 | 설정의 값·타입 이름 15개와 스킬의 값·타입 이름 10개가 같다. export 수정자를 제외한 원래 선언 37개·35개와 주석이 모두 동일하다 |
-| REQ1 | `pnpm test src/config src/architecture.test.ts` | ADR-069·080·081 동작 유지 | 8개 파일 203개 통과. 파일 권한, 키체인 쓰기 실패 복원, 평문 경고, 쿠키 생략 보존을 기존 테스트로 확인했다 |
+| REQ1 | `pnpm test src/config src/architecture.test.ts` | [ADR-069](../../adr/069-macos-keychain-secret-store.md)·[ADR-080](../../adr/080-secret-file-exposure-warning.md)·[ADR-081](../../adr/081-web-session-auth.md) 동작 유지 | 8개 파일 203개 통과. 파일 권한, 키체인 쓰기 실패 복원, 평문 경고, 쿠키 생략 보존을 기존 테스트로 확인했다 |
 | REQ1 | `pnpm test src/skill src/architecture.test.ts` | 설치 상태·보호·복원 동작 유지 | 4개 파일 81개 통과. 변경·손상·미관리 항목 보호와 설치 실패 복원을 기존 테스트로 확인했다 |
 | REQ3 | `src/architecture.test.ts`, `pnpm tsc --noEmit`, API diff 대조 | R1·R2 API 구조 유지 | API 소스 변경 없음. 기존 재내보내기 검사가 통과하고 config·skill 의 기존 진입 파일도 재내보내기만 남는다 |
 | REQ5, REQ6 | 구조 테스트·타입 검사·빌드 | 의존 규칙 유지, 별칭 해석 성공 | 모두 통과. 새 파일은 `@/…` 를 쓰며 내부 구현은 기존 재내보내기 진입 파일을 가져오지 않는다 |
@@ -61,11 +61,15 @@ REQ3 의 스펙 원문은 R1·R2 의 API 영역 구조다. R5 에서는 그 구�
 
 ## 문서 대조와 남은 작업
 
-스펙·설계의 R5 범위와 대조했다. ADR-069·080·081, PRD, flow, data-schema 의 동작과 저장 형식은 바뀌지 않아 수정하지 않았다.
-`docs/code-architecture.md` 의 config·skill 책임과 경로는 여전히 맞으며, 다른 worker 의 문서 변경과 겹치지 않도록 수정하지 않았다.
+스펙·설계의 R5 범위와 대조했다. [ADR-069](../../adr/069-macos-keychain-secret-store.md)·[ADR-080](../../adr/080-secret-file-exposure-warning.md)·[ADR-081](../../adr/081-web-session-auth.md), PRD, flow, data-schema 의 동작과 저장 형식은 바뀌지 않아 수정하지 않았다.
+`docs/code-architecture.md` 의 계층 책임과 진입 경로는 유지한다. 다만 `skill/manager.ts` 의 구현 위치 설명은 재내보내기 구조에 맞게 다듬을 여지가 있다. 코디네이터 지시에 따라 이 PR 에서는 고치지 않고 아래 문서 정리 후보로 남겼다.
 한국어 의미 점검 범위는 R5 계획·검증 기록·커밋 메시지·PR 제목과 본문이다. 반영하지 않은 발견은 없다.
 
-남은 작업은 PR CI 와 코디네이터가 맡기는 Claude 독립 코드·문서 리뷰, 코디네이터의 머지다. 머지 뒤 별도 실행 검증은 없다.
+자동 리뷰는 동작 변경을 찾지 못했고 P3 문서 참조 1건을 지적했다. 코디네이터가 수정 범위를 허용한 `docs/pitfalls/code-review/sensitive-file-mode-missing.md` 의 `ensureDir`·`writeConfigFile` 예시 경로만 `src/config/store-file.ts` 로 고쳤다.
+Claude 독립 리뷰는 P1·P2·P3 0건, P4 1건, P5 2건이었다. 기존 선언·export·보안 동작과 의존 방향을 대조했고, 같은 코드 커밋에서 관련 테스트 303개와 타입·PII 검사를 통과했다.
+P4 구현 위치 설명과 P5 과거 문서의 줄 번호는 후속 문서 정리 후보로 남긴다. P5 export 이름 고정 테스트 제안은 참고로 남겼다. 이번 PR 은 전후 값·타입 이름을 직접 비교했고, 새 구조 검사와 기존 호출부의 타입 검사도 통과했다.
+
+남은 작업은 문서 수정 뒤 PR CI 와 코디네이터의 머지다. 머지 뒤 별도 실행 검증은 없다.
 
 ## docs-consolidate 후보 (R0~R5)
 
@@ -75,5 +79,6 @@ REQ3 의 스펙 원문은 R1·R2 의 API 영역 구조다. R5 에서는 그 구�
 | `r1-verification.md` 부터 `r5-verification.md` | PR 별 실행 결과를 같은 형식으로 보존한다 | PR 완료 근거와 연결되는 실행 기록으로 모은다 |
 | `design.md` 의 PR 별 작업 절 | R5 까지 구현되면 미래 설계가 아니라 구현 이력이 된다 | 유지할 구조 결정과 완료한 작업 기록을 구분한다 |
 | `docs/code-architecture.md` 의 지금·목표 구조 | R5 로 마지막 선택 항목까지 구현한다 | 다른 문서 worker 의 변경과 합쳐 현재 구조만 남긴다 |
+| `docs/code-architecture.md` 의 스킬 구현 위치와 과거 스펙의 줄 번호 참조 | 독립 리뷰 P4·P5 에서 진입 파일과 실제 구현 위치의 차이를 확인했다 | 문서 정리 때 재내보내기 진입 파일의 역할과 현재 구현 위치를 구분한다 |
 
 이 PR 에서는 후보만 기록하고 다른 PR 의 계획·증거와 전역 문서는 정리하지 않는다. 새 공통 도메인 규칙 후보는 없다.
