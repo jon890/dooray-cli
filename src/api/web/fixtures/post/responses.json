@@ -1,0 +1,574 @@
+{
+  "detail": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": {
+      "id": "post-1",
+      "projectId": "project-1",
+      "subject": "예시 업무",
+      "number": 42,
+      "createdAt": "2026-01-02T03:04:05+09:00",
+      "updatedAt": "2026-01-03T04:05:06+09:00",
+      "dueDate": "2026-02-01T09:00:00+09:00",
+      "dueDateFlag": true,
+      "startedAt": null,
+      "endedAt": null,
+      "priority": "high",
+      "workflowId": "workflow-1",
+      "workflowClass": "registered",
+      "milestoneId": "milestone-1",
+      "tagIdList": [
+        "tag-1"
+      ],
+      "fileIdList": [
+        "file-1"
+      ],
+      "users": {
+        "from": {
+          "type": "member",
+          "member": {
+            "organizationMemberId": "member-1",
+            "name": "사용자",
+            "workflowId": "workflow-1",
+            "lastActionAt": "private"
+          }
+        },
+        "to": [
+          {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "사용자",
+              "workflowId": "workflow-1",
+              "lastActionAt": "private"
+            }
+          },
+          {
+            "type": "group",
+            "group": {
+              "projectMemberGroupId": "group-1",
+              "code": "sample-group",
+              "memberList": [
+                {
+                  "organizationMemberId": "member-1",
+                  "name": "사용자"
+                }
+              ]
+            }
+          }
+        ],
+        "cc": []
+      },
+      "body": {
+        "mimeType": "text/x-markdown",
+        "content": "원래 본문",
+        "emptyContent": false,
+        "version": 1
+      },
+      "version": 3,
+      "secretInternal": "excluded"
+    },
+    "references": {
+      "projectMap": {
+        "project-1": {
+          "id": "project-1",
+          "code": "sample"
+        }
+      },
+      "workflowMap": {
+        "workflow-1": {
+          "id": "workflow-1",
+          "name": "할 일",
+          "class": "registered",
+          "order": 0
+        }
+      },
+      "milestoneMap": {
+        "milestone-1": {
+          "id": "milestone-1",
+          "name": "단계"
+        }
+      },
+      "fileMap": {
+        "file-1": {
+          "id": "file-1",
+          "name": "sample.txt",
+          "size": 6,
+          "mimeType": "text/plain",
+          "createdAt": "2026-01-02T03:04:05+0900",
+          "creator": {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "사용자",
+              "workflowId": "workflow-1",
+              "lastActionAt": "private"
+            }
+          },
+          "downloadUrl": "https://example.com/private",
+          "extension": "txt"
+        }
+      }
+    }
+  },
+  "list": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": [
+      {
+        "id": "post-1",
+        "projectId": "project-1",
+        "subject": "예시 업무",
+        "number": 42,
+        "createdAt": "2026-01-02T03:04:05+09:00",
+        "updatedAt": "2026-01-03T04:05:06+09:00",
+        "dueDate": "2026-02-01T09:00:00+09:00",
+        "dueDateFlag": true,
+        "startedAt": null,
+        "endedAt": null,
+        "priority": "high",
+        "workflowId": "workflow-1",
+        "workflowClass": "registered",
+        "milestoneId": "milestone-1",
+        "tagIdList": [
+          "tag-1"
+        ],
+        "fileIdList": [
+          "file-1"
+        ],
+        "users": {
+          "from": {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "사용자",
+              "workflowId": "workflow-1",
+              "lastActionAt": "private"
+            }
+          },
+          "to": [
+            {
+              "type": "member",
+              "member": {
+                "organizationMemberId": "member-1",
+                "name": "사용자",
+                "workflowId": "workflow-1",
+                "lastActionAt": "private"
+              }
+            },
+            {
+              "type": "group",
+              "group": {
+                "projectMemberGroupId": "group-1",
+                "code": "sample-group",
+                "memberList": [
+                  {
+                    "organizationMemberId": "member-1",
+                    "name": "사용자"
+                  }
+                ]
+              }
+            }
+          ],
+          "cc": []
+        },
+        "body": {
+          "mimeType": "text/x-markdown",
+          "content": "원래 본문",
+          "emptyContent": false,
+          "version": 1
+        },
+        "version": 3,
+        "secretInternal": "excluded"
+      }
+    ],
+    "references": {
+      "projectMap": {
+        "project-1": {
+          "id": "project-1",
+          "code": "sample"
+        }
+      },
+      "workflowMap": {
+        "workflow-1": {
+          "id": "workflow-1",
+          "name": "할 일",
+          "class": "registered",
+          "order": 0
+        }
+      },
+      "milestoneMap": {
+        "milestone-1": {
+          "id": "milestone-1",
+          "name": "단계"
+        }
+      },
+      "fileMap": {
+        "file-1": {
+          "id": "file-1",
+          "name": "sample.txt",
+          "size": 6,
+          "mimeType": "text/plain",
+          "createdAt": "2026-01-02T03:04:05+0900",
+          "creator": {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "사용자",
+              "workflowId": "workflow-1",
+              "lastActionAt": "private"
+            }
+          },
+          "downloadUrl": "https://example.com/private",
+          "extension": "txt"
+        }
+      }
+    },
+    "totalCount": 1
+  },
+  "comment": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": {
+      "id": "comment-1",
+      "postId": "post-1",
+      "type": "comment",
+      "subtype": "general",
+      "createdAt": "2026-01-03T04:05:06+09:00",
+      "modifiedAt": null,
+      "creator": {
+        "type": "member",
+        "member": {
+          "organizationMemberId": "member-1",
+          "name": "사용자",
+          "workflowId": "workflow-1",
+          "lastActionAt": "private"
+        }
+      },
+      "body": {
+        "mimeType": "text/x-markdown",
+        "content": "댓글 [파일](/files/file-1)",
+        "emptyContent": false
+      },
+      "fileIdList": [
+        "file-1"
+      ],
+      "internalKey": "excluded"
+    },
+    "references": {
+      "projectMap": {
+        "project-1": {
+          "id": "project-1",
+          "code": "sample"
+        }
+      },
+      "workflowMap": {
+        "workflow-1": {
+          "id": "workflow-1",
+          "name": "할 일",
+          "class": "registered",
+          "order": 0
+        }
+      },
+      "milestoneMap": {
+        "milestone-1": {
+          "id": "milestone-1",
+          "name": "단계"
+        }
+      },
+      "fileMap": {
+        "file-1": {
+          "id": "file-1",
+          "name": "sample.txt",
+          "size": 6,
+          "mimeType": "text/plain",
+          "createdAt": "2026-01-02T03:04:05+0900",
+          "creator": {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "사용자",
+              "workflowId": "workflow-1",
+              "lastActionAt": "private"
+            }
+          },
+          "downloadUrl": "https://example.com/private",
+          "extension": "txt"
+        }
+      }
+    }
+  },
+  "comments": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": [
+      {
+        "id": "comment-1",
+        "postId": "post-1",
+        "type": "comment",
+        "subtype": "general",
+        "createdAt": "2026-01-03T04:05:06+09:00",
+        "modifiedAt": null,
+        "creator": {
+          "type": "member",
+          "member": {
+            "organizationMemberId": "member-1",
+            "name": "사용자",
+            "workflowId": "workflow-1",
+            "lastActionAt": "private"
+          }
+        },
+        "body": {
+          "mimeType": "text/x-markdown",
+          "content": "댓글 [파일](/files/file-1)",
+          "emptyContent": false
+        },
+        "fileIdList": [
+          "file-1"
+        ],
+        "internalKey": "excluded"
+      }
+    ],
+    "references": {
+      "projectMap": {
+        "project-1": {
+          "id": "project-1",
+          "code": "sample"
+        }
+      },
+      "workflowMap": {
+        "workflow-1": {
+          "id": "workflow-1",
+          "name": "할 일",
+          "class": "registered",
+          "order": 0
+        }
+      },
+      "milestoneMap": {
+        "milestone-1": {
+          "id": "milestone-1",
+          "name": "단계"
+        }
+      },
+      "fileMap": {
+        "file-1": {
+          "id": "file-1",
+          "name": "sample.txt",
+          "size": 6,
+          "mimeType": "text/plain",
+          "createdAt": "2026-01-02T03:04:05+0900",
+          "creator": {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "사용자",
+              "workflowId": "workflow-1",
+              "lastActionAt": "private"
+            }
+          },
+          "downloadUrl": "https://example.com/private",
+          "extension": "txt"
+        }
+      }
+    },
+    "totalCount": 1
+  },
+  "files": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": {
+      "content": [
+        {
+          "id": "file-1",
+          "name": "sample.txt",
+          "size": 6,
+          "mimeType": "text/plain",
+          "createdAt": "2026-01-02T03:04:05+0900",
+          "creator": {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "사용자",
+              "workflowId": "workflow-1",
+              "lastActionAt": "private"
+            }
+          },
+          "downloadUrl": "https://example.com/private",
+          "extension": "txt"
+        }
+      ]
+    }
+  },
+  "created": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": [
+      {
+        "id": "created-1",
+        "number": 44,
+        "version": 1
+      }
+    ]
+  },
+  "updated": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": {
+      "id": "post-1",
+      "number": 42,
+      "version": 4
+    }
+  },
+  "unit": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": null
+  },
+  "moved": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": {
+      "content": {
+        "id": "post-1",
+        "projectId": "project-1",
+        "subject": "예시 업무",
+        "number": 42,
+        "createdAt": "2026-01-02T03:04:05+09:00",
+        "updatedAt": "2026-01-03T04:05:06+09:00",
+        "dueDate": "2026-02-01T09:00:00+09:00",
+        "dueDateFlag": true,
+        "startedAt": null,
+        "endedAt": null,
+        "priority": "high",
+        "workflowId": "workflow-1",
+        "workflowClass": "registered",
+        "milestoneId": "milestone-1",
+        "tagIdList": [
+          "tag-1"
+        ],
+        "fileIdList": [
+          "file-1"
+        ],
+        "users": {
+          "from": {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "사용자",
+              "workflowId": "workflow-1",
+              "lastActionAt": "private"
+            }
+          },
+          "to": [
+            {
+              "type": "member",
+              "member": {
+                "organizationMemberId": "member-1",
+                "name": "사용자",
+                "workflowId": "workflow-1",
+                "lastActionAt": "private"
+              }
+            },
+            {
+              "type": "group",
+              "group": {
+                "projectMemberGroupId": "group-1",
+                "code": "sample-group",
+                "memberList": [
+                  {
+                    "organizationMemberId": "member-1",
+                    "name": "사용자"
+                  }
+                ]
+              }
+            }
+          ],
+          "cc": []
+        },
+        "body": {
+          "mimeType": "text/x-markdown",
+          "content": "원래 본문",
+          "emptyContent": false,
+          "version": 1
+        },
+        "version": 3,
+        "secretInternal": "excluded"
+      }
+    }
+  },
+  "workflows": {
+    "header": {
+      "isSuccessful": true,
+      "resultCode": 0,
+      "resultMessage": ""
+    },
+    "result": {
+      "contents": [
+        {
+          "id": "closed-1",
+          "class": "closed",
+          "name": "완료",
+          "order": 4
+        }
+      ]
+    }
+  },
+  "participants": {
+    "member": {
+      "type": "member",
+      "member": {
+        "organizationMemberId": "member-1",
+        "name": "사용자",
+        "workflowId": "workflow-1",
+        "lastActionAt": "private"
+      }
+    },
+    "group": {
+      "type": "group",
+      "group": {
+        "projectMemberGroupId": "group-1",
+        "code": "sample-group",
+        "memberList": [
+          {
+            "organizationMemberId": "member-1",
+            "name": "사용자"
+          }
+        ]
+      }
+    },
+    "emailUser": {
+      "type": "emailUser",
+      "emailUser": {
+        "emailAddress": "guest@example.com",
+        "name": "외부 사용자"
+      }
+    }
+  }
+}
