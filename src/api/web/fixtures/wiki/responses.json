@@ -1,0 +1,97 @@
+{
+  "wikis": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"totalCount": 2, "contents": [
+      {"tenantId": "t-1", "projectId": "project-1", "name": "팀 위키", "type": "public", "scope": "private", "hiddenFlag": false, "isMine": false, "id": "wiki-1",
+       "home": {"pageId": "page-home", "hasChildren": true, "childrenSortType": "manual", "subject": "홈", "me": {"permission": {"read": true, "register": true}}}}
+    ]}
+  },
+  "pagesRoot": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"totalCount": 1, "contents": [
+      {"pageId": "page-home", "wikiId": "wiki-1", "projectId": "project-1", "parentPageId": null, "version": 1, "order": 1, "childrenSortType": "manual", "status": "publish", "root": true, "hasChildren": true, "restricted": false, "inheritedViewRestricted": false, "favorited": false, "createOrganizationMemberId": "member-1", "subject": "홈"}
+    ], "references": {"projectMap": {}, "wikiMap": {}}}
+  },
+  "pagesChildren": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"totalCount": 2, "contents": [
+      {"pageId": "page-a", "wikiId": "wiki-1", "projectId": "project-1", "parentPageId": "page-home", "version": 4, "order": 1, "status": "publish", "root": false, "hasChildren": true, "restricted": false, "createOrganizationMemberId": "member-1", "subject": "가이드"},
+      {"pageId": "page-b", "wikiId": "wiki-1", "projectId": "project-1", "parentPageId": "page-home", "version": 2, "order": 2, "status": "publish", "root": false, "hasChildren": false, "restricted": false, "createOrganizationMemberId": "member-2", "subject": "공지"}
+    ]}
+  },
+  "pagesGrandchildren": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"totalCount": 1, "contents": [
+      {"pageId": "page-c", "wikiId": "wiki-1", "projectId": "project-1", "parentPageId": "page-a", "version": 1, "order": 1, "status": "publish", "root": false, "hasChildren": false, "restricted": false, "createOrganizationMemberId": "member-1", "subject": "세부"}
+    ]}
+  },
+  "pagesNone": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"totalCount": 0, "contents": []}
+  },
+  "pageDetail": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"content": {
+      "wikiId": "wiki-1", "pageId": "page-a", "version": 4, "parentPageId": "page-home", "breadcrumb": [{"pageId": "page-home", "root": true, "subject": "홈"}],
+      "body": {"mimeType": "text/x-markdown", "content": "본문", "contentId": "content-1"},
+      "order": 1, "childrenSortType": "manual", "status": "publish", "root": false,
+      "create": {"dateTime": "2026-11-14T01:07:00+09:00", "member": {"wikiMemberId": "wm-1", "organizationMemberId": "member-1", "name": "홍길동", "nickname": "", "locale": "ko_KR"}},
+      "lastUpdate": {"dateTime": "2026-11-14T02:00:00+09:00", "member": {"wikiMemberId": "wm-1", "organizationMemberId": "member-1", "name": "홍길동", "nickname": "", "locale": "ko_KR"}},
+      "files": [{"id": "file-1", "pageFileId": "file-1", "attachFileId": "attach-1", "type": "general", "name": "보고서.txt", "extension": "txt", "size": 22, "mimeType": "text/plain", "downloadUrl": "/page-files/file-1", "createdAt": "2026-11-14T01:08:00+09:00"}],
+      "images": [{"id": "image-1", "pageFileId": "image-1", "attachFileId": "attach-2", "type": "inline_image", "name": "그림.png", "extension": "png", "size": 70, "mimeType": "image/png", "downloadUrl": "/page-files/image-1"}],
+      "referrers": [{"wikiMemberId": "wm-2", "organizationMemberId": "member-2", "name": "김철수", "nickname": ""}],
+      "downloadUrl": "/wikis/wiki-1/pages/page-a/download-zip", "projectId": "project-1", "favorited": false, "me": {"permission": {"read": true, "update": true}}, "reactions": [], "restricted": false, "subject": "가이드"
+    }, "references": {"projectMap": {}, "organizationMemberMap": {}}}
+  },
+  "pageRootDetail": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"content": {
+      "wikiId": "wiki-1", "pageId": "page-home", "version": 1, "parentPageId": null, "body": {"mimeType": "text/x-markdown", "content": ""},
+      "status": "publish", "root": true, "files": [], "images": [], "referrers": [], "subject": "홈"
+    }}
+  },
+  "pageLight": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"content": {"pageId": "page-a", "projectId": "project-1", "wikiId": "wiki-1", "status": "publish", "subject": "가이드"}, "references": {}}
+  },
+  "created": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"wikiId": "wiki-1", "pageId": "page-new", "parentPageId": "page-home", "version": 1}
+  },
+  "updated": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"wikiId": "wiki-1", "pageId": "page-a", "parentPageId": "page-home", "version": 5}
+  },
+  "titleUpdated": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"wikiId": "wiki-1", "pageId": "page-a", "parentPageId": "page-home", "version": 5, "title": "새 제목"}
+  },
+  "deleted": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": null
+  },
+  "comments": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"totalCount": 5, "contents": [
+      {"pageCommentId": "comment-3", "pageId": "page-a", "body": {"mimeType": "text/x-markdown", "content": "셋째", "contentId": "c-3"}, "createdAt": "2026-11-14T01:03:00+09:00", "creator": {"wikiMemberId": "wm-1", "organizationMemberId": "member-1", "name": "홍길동", "nickname": "", "locale": "ko_KR"}, "modifiedAt": "2026-11-14T01:03:00+09:00", "modifier": {"organizationMemberId": "member-1"}, "files": [], "updatable": true, "deletable": true, "reactions": []},
+      {"pageCommentId": "comment-4", "pageId": "page-a", "body": {"mimeType": "text/x-markdown", "content": "넷째", "contentId": "c-4"}, "createdAt": "2026-11-14T01:04:00+09:00", "creator": {"wikiMemberId": "wm-1", "organizationMemberId": "member-1", "name": "홍길동", "nickname": "", "locale": "ko_KR"}, "modifiedAt": "2026-11-14T01:04:00+09:00", "files": [], "reactions": []},
+      {"pageCommentId": "comment-5", "pageId": "page-a", "body": {"mimeType": "text/x-markdown", "content": "다섯째", "contentId": "c-5"}, "createdAt": "2026-11-14T01:05:00+09:00", "creator": {"wikiMemberId": "wm-2", "organizationMemberId": "member-2", "name": "김철수", "nickname": "", "locale": "ko_KR"}, "files": [], "reactions": []}
+    ], "references": {"organizationMemberMap": {}}}
+  },
+  "comment": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"content": {"pageCommentId": "comment-3", "pageId": "page-a", "body": {"mimeType": "text/x-markdown", "content": "셋째", "contentId": "c-3"}, "createdAt": "2026-11-14T01:03:00+09:00", "creator": {"wikiMemberId": "wm-1", "organizationMemberId": "member-1", "name": "홍길동", "nickname": "", "locale": "ko_KR"}, "modifiedAt": "2026-11-14T01:03:00+09:00", "files": [], "reactions": []}, "references": {}}
+  },
+  "commentCreated": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"pageCommentId": "comment-9", "version": 0}
+  },
+  "uploaded": {
+    "result": {"id": "file-9", "pageFileId": "file-9", "attachFileId": "attach-9", "name": "올림.txt", "mimeType": "application/octet-stream", "type": "general", "size": 6, "createdAt": "2026-11-14T03:00:00+09:00", "extension": "txt"},
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""}
+  },
+  "notFound": {
+    "header": {"isSuccessful": false, "resultCode": 404, "resultMessage": "존재하지 않는 페이지입니다."},
+    "result": null
+  }
+}
