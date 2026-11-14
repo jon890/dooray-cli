@@ -28,6 +28,7 @@
 지원 명령·미지원 옵션·빠지는 필드는 [설정 가이드](../guide/setup.md)가 소유한다.
 
 영역 구현은 createXxxWeb(context: WebContext) 함수가 자기 영역 계약을 구현한 객체 리터럴을 반환한다. 클래스 인스턴스의 프로토타입 메서드는 조립 대상이 아니다. 공통 변환은 src/api/web/convert.ts, 고정 응답은 src/api/web/fixtures/<영역>/ 에 둔다.
+영역별로 필요한 요청 헤더는 해당 영역의 web.ts 에서 붙인다.
 
 공용 전송은 src/api/web/http.ts 의 requestBytes(input, options) 와 upload(input, formData, options) 를 쓴다. 요청 옵션의 searchParams 는 쿼리로 붙는다.
 requestBytes 는 로그인 응답·오류와 307 호스트를 확인한 Response 를 반환하므로 그 뒤에 바이트를 읽고 저장한다. upload 는 같은 경계의 JSON 응답을 반환한다.
