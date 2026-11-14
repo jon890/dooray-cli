@@ -236,27 +236,65 @@ dueDateFlag를 false로 새로 바꾸는 일정 없음 요청은 서버가 무�
 
 ### 메신저
 
-아직 지원하지 않음.
+| 지원 명령 | 지원하지 않는 옵션 |
+| --- | --- |
+| `messenger channels` | 없음 |
+| `messenger logs` | 없음 |
+| `messenger send` | 없음 |
+| `messenger channel-send` | 없음 |
+| `messenger thread-send` | 없음 |
+| `messenger file download` | 없음 |
+
+웹에는 상대 id 로 1:1 방에 바로 보내는 경로가 없다. `messenger send --to` 는 나 자신이면 나와의 대화방으로, 그 밖에는 이미 있는 1:1 방으로 보내고, 방이 없으면 요청 전에 종료 코드 3 으로 끝난다.
+메시지 보내기는 나에게 보내는 대화방에서만 실측했다. 다른 사람의 대화방과 스레드도 같은 요청이다.
 
 #### 웹 응답에서 빠질 수 있는 필드
 
-이 영역을 지원할 때 기록한다.
+`--json` 은 공식 API 의 필드 이름과 구조를 유지한다. 웹에 없는 값은 키를 만들지 않는다.
+
+| 명령 | 빠질 수 있는 필드 |
+| --- | --- |
+| `messenger channels` | 웹에 없는 `archivedAt`. 대화방 `role` 은 웹 값(`creator`, `member`)이다 |
+| `messenger logs` | 메시지 `type` 은 파일(`FILE`)과 답장(`REPLY`)만 채운다 |
+| `messenger send`, `messenger channel-send`, `messenger thread-send` | 결과는 `id`(와 `channelId`)만 낸다 |
 
 ### 캘린더
 
-아직 지원하지 않음.
+| 지원 명령 | 지원하지 않는 옵션 |
+| --- | --- |
+| `calendar list` | 없음 |
+| `calendar event list` | 없음 |
+| `calendar event get` | 없음 |
+| `calendar event create` | `--to`, `--cc` |
+| `calendar event edit` | `--to`, `--cc` |
+| `calendar event delete` | 없음 |
+
+참석자와 참조자를 넣는 쓰기는 웹에서 확인하지 못해 지원하지 않는다. 일정을 읽을 때의 참석자는 웹 응답대로 낸다.
+`member get --with-org` 의 소속 조회도 웹 경로를 확인하지 못해 지원하지 않는다.
 
 #### 웹 응답에서 빠질 수 있는 필드
 
-이 영역을 지원할 때 기록한다.
+`--json` 은 공식 API 의 필드 이름과 구조를 유지한다. 웹에 없는 값은 키를 만들지 않는다.
+
+| 명령 | 빠질 수 있는 필드 |
+| --- | --- |
+| `calendar list` | 웹에 없는 `projectId`(개인 캘린더). 구독 캘린더는 공식 목록처럼 나오지 않는다 |
+| `calendar event list` | 웹에 없는 `conferencing`. `category` 를 보내지 않아 일반 일정만 나온다 |
+| `calendar event get` | 웹에 없는 첨부 `files`, `conferencing` |
 
 ### 스트림
 
-아직 지원하지 않음.
+| 지원 명령 | 지원하지 않는 옵션 |
+| --- | --- |
+| `stream list` | 없음 |
 
 #### 웹 응답에서 빠질 수 있는 필드
 
-이 영역을 지원할 때 기록한다.
+`--json` 은 공식 API 의 필드 이름과 구조를 유지한다. 웹에 없는 값은 키를 만들지 않는다.
+
+| 명령 | 빠질 수 있는 필드 |
+| --- | --- |
+| `stream list` | 웹의 캘린더 공유 알림·위키 활동 같은 공식 종류에 없는 항목은 빠진다(처음 빠질 때 stderr 로 알린다). 웹 카드 하나가 원소 여러 개가 되므로 `--size` 는 카드 수다 |
 
 ## 보안 경고와 진단
 

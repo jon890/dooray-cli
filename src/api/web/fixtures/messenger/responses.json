@@ -1,0 +1,242 @@
+{
+  "channels": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "shortcuts": {},
+        "channels": [
+          {
+            "channelId": "channel-1",
+            "orgId": "tenant-1",
+            "tenantId": "tenant-1",
+            "type": "direct",
+            "scope": "tenant",
+            "memberId": "member-1",
+            "title": "",
+            "capacity": 2,
+            "seq": 3,
+            "flag": "normal",
+            "createdAt": 1763049600000,
+            "updatedAt": 1763049660000,
+            "starred": false,
+            "displayed": true,
+            "role": "member",
+            "status": 2,
+            "members": [
+              "member-1",
+              "member-2"
+            ],
+            "unreadCount": 0
+          },
+          {
+            "channelId": "channel-2",
+            "orgId": "tenant-1",
+            "tenantId": "tenant-1",
+            "type": "me",
+            "scope": "tenant",
+            "memberId": "member-1",
+            "title": "",
+            "capacity": 2,
+            "seq": 3,
+            "flag": "normal",
+            "createdAt": 1763049600000,
+            "updatedAt": 1763049660000,
+            "starred": false,
+            "displayed": true,
+            "role": "creator",
+            "status": 2,
+            "members": [
+              "member-1"
+            ],
+            "unreadCount": 0
+          },
+          {
+            "channelId": "channel-3",
+            "orgId": "tenant-1",
+            "tenantId": "tenant-1",
+            "type": "private",
+            "scope": "tenant",
+            "memberId": "member-1",
+            "title": "팀방",
+            "capacity": 2,
+            "seq": 3,
+            "flag": "archived",
+            "createdAt": 1763049600000,
+            "updatedAt": 1763049660000,
+            "starred": false,
+            "displayed": false,
+            "role": "member",
+            "status": 2,
+            "members": [
+              "member-1",
+              "member-2"
+            ],
+            "unreadCount": 0
+          }
+        ]
+      }
+    }
+  },
+  "logs": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "channelId": "channel-1",
+        "hasPrev": true,
+        "isFirst": false,
+        "logs": [
+          {
+            "id": "log-1",
+            "channelId": "channel-1",
+            "seq": 1,
+            "type": 0,
+            "senderId": "member-1",
+            "sentAt": 1763049600000,
+            "text": "첫 메시지",
+            "flags": 0,
+            "format": "x"
+          },
+          {
+            "id": "log-2",
+            "channelId": "channel-1",
+            "seq": 2,
+            "type": 4,
+            "senderId": "member-2",
+            "sentAt": 1763049660000,
+            "text": "a.txt",
+            "file": {
+              "id": "file-1",
+              "title": "a.txt",
+              "fileName": "a.txt",
+              "fileSize": 10,
+              "mimeType": "text/plain",
+              "thumb": false
+            },
+            "flags": 0
+          },
+          {
+            "id": "log-3",
+            "channelId": "channel-1",
+            "seq": 3,
+            "type": 10,
+            "senderId": "member-1",
+            "sentAt": 1763049720000,
+            "text": "답장",
+            "originalLogId": "log-1",
+            "thread": {
+              "channelId": "thread-1",
+              "totalCount": "2",
+              "lastUpdatedAt": 1763049780000
+            }
+          }
+        ]
+      }
+    }
+  },
+  "myMessenger": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "id": "member-1",
+        "orgId": "tenant-1"
+      }
+    }
+  },
+  "sent": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "id": "log-9",
+        "channelId": "channel-2",
+        "type": 0,
+        "senderId": "member-1",
+        "seq": 9,
+        "text": "x",
+        "token": "t"
+      }
+    }
+  },
+  "sentThread": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "id": "log-10",
+        "channelId": "thread-1",
+        "type": 0,
+        "senderId": "member-1",
+        "seq": 1,
+        "text": "x"
+      }
+    }
+  },
+  "threadCreated": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "channelId": "thread-1",
+        "parentChannelId": "channel-2",
+        "parentChannelLogId": "log-9",
+        "type": "thread"
+      }
+    }
+  },
+  "threadExists": {
+    "header": {
+      "resultCode": -300101,
+      "resultMessage": "CHANNEL_ALREADY_EXISTS_ERROR",
+      "isSuccessful": false
+    },
+    "result": null
+  },
+  "threadList": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "totalCount": 2,
+      "references": {
+        "channelMap": {}
+      },
+      "contents": [
+        {
+          "channelId": "thread-9",
+          "parentChannelId": "channel-1",
+          "parentChannelLogId": "log-7",
+          "totalCount": 1
+        },
+        {
+          "channelId": "thread-1",
+          "parentChannelId": "channel-1",
+          "parentChannelLogId": "log-3",
+          "totalCount": 2
+        }
+      ]
+    }
+  }
+}

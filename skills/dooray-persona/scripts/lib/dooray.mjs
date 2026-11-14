@@ -1,279 +1,94 @@
 import { execFile } from "node:child_process";
-import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { homedir, userInfo } from "node:os";
-import { join, resolve } from "node:path";
 
-const EMPTY_PAGE_RETRY_DELAY_MS = 1_000;
-const EMPTY_PAGE_MAX_RETRIES = 2;
+/**
+ * Dooray 호출은 모두 `dooray ... --json` CLI 실행으로 한다.
+ * 인증 방식(api-key·web)과 쿠키·키 읽기, 호출 간격은 CLI 가 같은 설정으로 맡는다.
+ * `--json` 은 인증 방식과 무관하게 공개 API 응답 모양이다.
+ */
 
-function defaultSleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const PAGE_SIZE = 100;
+const MAX_BUFFER = 256 * 1024 * 1024;
 
-function configError(configPath) {
-  return new Error(
-    `Dooray API 설정을 읽을 수 없습니다: ${configPath}\n먼저 \`dooray setup\`을 실행하세요.`,
+export class DoorayCliMissingError extends Error {}
+
+function cliMissing() {
+  return new DoorayCliMissingError(
+    "dooray CLI 를 찾을 수 없습니다. `npm install -g @bifos/dooray-cli` 로 설치한 뒤 `dooray setup` 을 실행하세요.",
   );
 }
 
-/**
- * dooray CLI 와 같은 규칙으로 키체인 account 를 정한다.
- * config 경로가 계정 홈의 `~/.dooray/config.json` 이면 `apiKey`, 아니면 `apiKey:<경로 sha256 앞 16자>` 다.
- */
-export function keychainApiKeyAccount(configPath) {
-  const resolved = resolve(configPath);
-  const defaultPath = resolve(join(userInfo().homedir, ".dooray", "config.json"));
-  if (resolved === defaultPath) return "apiKey";
-  const hash = createHash("sha256").update(resolved).digest("hex").slice(0, 16);
-  return `apiKey:${hash}`;
+/** 한 줄 요약: stderr 마지막 줄이나 종료 코드. 제어 문자는 뗀다. */
+function failureMessage(args, error, stderr) {
+  const lastLine = String(stderr ?? "")
+    .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ")
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .at(-1);
+  const command = args.slice(0, args[0] === "post" && args[1] === "comment" ? 3 : 2).join(" ");
+  return `dooray ${command} 실패 (종료 코드 ${error.code ?? "?"})${lastLine ? `: ${lastLine}` : ""}`;
 }
 
 /**
- * macOS 에서 dooray CLI 는 API 토큰을 config.json 이 아니라 로그인 키체인에 둔다.
- * 읽기는 argv 에 비밀값이 없어 execFile 로 불러도 된다. 항목이 없으면 undefined 다.
+ * dooray CLI 를 셸 없이 실행하고 `--json` 출력을 파싱한다. 실행기는 테스트가 바꿔 끼운다.
+ * 종료 코드가 0 이 아니면 CLI 의 안내(stderr)를 그대로 담아 던진다.
  */
-export function readKeychainApiKey(account = "apiKey") {
-  return new Promise((resolvePromise, reject) => {
-    execFile(
-      "/usr/bin/security",
-      ["find-generic-password", "-s", "dooray-cli", "-a", account, "-w"],
-      // security 는 로그인 키체인을 $HOME 에서 찾는다. HOME 이 바뀌어 있어도 계정의 실제 홈을 쓴다.
-      { env: { ...process.env, HOME: userInfo().homedir } },
-      (error, stdout, stderr) => {
-        if (error) {
-          if (error.code === 44) {
-            resolvePromise(undefined);
-            return;
-          }
-          reject(
-            new Error(
-              `macOS 키체인에서 Dooray API 토큰을 읽지 못했습니다: ${String(stderr).trim() || error.message}\n` +
-                "로그인 키체인이 잠겨 있거나 접근이 거부됐을 수 있습니다.",
-            ),
-          );
-          return;
-        }
-        // 끝 개행 하나만 뗀다. 값 앞뒤의 공백은 값의 일부다.
-        const value = String(stdout);
-        resolvePromise(value.endsWith("\n") ? value.slice(0, -1) : value);
-      },
-    );
+export function runDooray(args, { exec = execFile, bin = "dooray" } = {}) {
+  return new Promise((resolve, reject) => {
+    exec(bin, [...args, "--json"], { maxBuffer: MAX_BUFFER }, (error, stdout, stderr) => {
+      if (error) {
+        reject(error.code === "ENOENT" ? cliMissing() : new Error(failureMessage(args, error, stderr)));
+        return;
+      }
+      try {
+        resolve(JSON.parse(String(stdout)));
+      } catch {
+        reject(new Error(`dooray ${args.slice(0, 2).join(" ")} 의 --json 출력을 읽을 수 없습니다.`));
+      }
+    });
   });
 }
 
-export async function loadApiConfig(
-  configPath = join(homedir(), ".dooray", "config.json"),
-  { platform = process.platform, readKeychain = readKeychainApiKey } = {},
-) {
-  let raw;
-  try {
-    raw = await readFile(configPath, "utf8");
-  } catch (error) {
-    if (
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      error.code === "ENOENT"
-    ) {
-      throw configError(configPath);
-    }
-    throw error;
-  }
-
-  const config = JSON.parse(raw);
-  // macOS 에서 키체인으로 옮겨진 뒤에는 파일에 apiKey 가 없다. 그때만 키체인을 본다.
-  // CLI 와 같이 필드가 없거나 빈 문자열일 때만 「없음」 이다.
-  // 공백뿐인 값과 문자열이 아닌 값은 CLI 가 손상으로 보는 파일이라 키체인으로 메우지 않고 아래 검사에서 실패한다.
-  const fileApiKeyMissing = config.apiKey === undefined || config.apiKey === "";
-  if (fileApiKeyMissing && platform === "darwin") {
-    const keychainApiKey = await readKeychain(keychainApiKeyAccount(configPath));
-    if (keychainApiKey !== undefined) config.apiKey = keychainApiKey;
-  }
-  if (
-    typeof config.apiKey !== "string" ||
-    config.apiKey.trim() === "" ||
-    typeof config.baseUrl !== "string" ||
-    config.baseUrl.trim() === ""
-  ) {
-    throw configError(configPath);
-  }
-
-  return { apiKey: config.apiKey, baseUrl: config.baseUrl };
-}
-
-export function createRateLimiter(
-  rps,
-  { now = Date.now, sleep = defaultSleep } = {},
-) {
-  if (!Number.isInteger(rps) || rps <= 0) {
-    throw new Error("rps는 1 이상의 정수여야 합니다.");
-  }
-
-  const callTimes = [];
-  let virtualNow = Number.NEGATIVE_INFINITY;
-  let queue = Promise.resolve();
-
-  async function acquire() {
-    let current = Math.max(now(), virtualNow);
-    while (callTimes.length > 0 && callTimes[0] <= current - 1_000) {
-      callTimes.shift();
-    }
-
-    if (callTimes.length >= rps) {
-      const waitMs = callTimes[0] + 1_000 - current;
-      await sleep(waitMs);
-      virtualNow = current + waitMs;
-      current = Math.max(now(), virtualNow);
-
-      while (callTimes.length > 0 && callTimes[0] <= current - 1_000) {
-        callTimes.shift();
-      }
-    }
-
-    callTimes.push(current);
-  }
-
-  return function limit() {
-    const scheduled = queue.then(acquire);
-    queue = scheduled.catch(() => {});
-    return scheduled;
-  };
-}
-
-function addSearchParams(url, searchParams) {
-  for (const [key, value] of Object.entries(searchParams ?? {})) {
-    if (value == null) continue;
-    url.searchParams.set(key, String(value));
-  }
-}
-
-function responseExcerpt(body) {
-  return body
-    .replace(/[\u0000-\u001f\u007f]/g, " ")
-    .trim()
-    .slice(0, 500);
-}
-
-export function createClient({ apiKey, baseUrl, rps = 4 }) {
-  const limit = createRateLimiter(rps);
-  const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-
-  return {
-    async get(path, searchParams) {
-      await limit();
-
-      const url = new URL(String(path).replace(/^\/+/, ""), normalizedBaseUrl);
-      addSearchParams(url, searchParams);
-
-      const response = await fetch(url, {
-        headers: { Authorization: `dooray-api ${apiKey}` },
-      });
-      const body = await response.text();
-
-      if (!response.ok) {
-        const excerpt = responseExcerpt(body);
-        throw new Error(
-          `Dooray API 요청 실패 (${response.status})${excerpt ? `: ${excerpt}` : ""}`,
-        );
-      }
-
-      return JSON.parse(body);
-    },
-  };
-}
-
-async function getPage(client, path, searchParams, page, size) {
-  for (let retry = 0; retry <= EMPTY_PAGE_MAX_RETRIES; retry += 1) {
-    const response = await client.get(path, { ...searchParams, page, size });
-    const result = Array.isArray(response?.result) ? response.result : [];
-    const totalCount = Number(response?.totalCount ?? 0);
-
-    if (totalCount <= 0 || result.length > 0) {
-      return { result, totalCount };
-    }
-
-    if (retry === EMPTY_PAGE_MAX_RETRIES) {
-      throw new Error(
-        `Dooray API가 ${page}페이지에서 빈 결과를 반복했습니다. 속도 제한 가능성이 있습니다.`,
-      );
-    }
-
-    await defaultSleep(EMPTY_PAGE_RETRY_DELAY_MS);
-  }
-
-  throw new Error("페이지 조회 재시도 상태가 올바르지 않습니다.");
-}
-
-async function collectPages(
-  client,
-  path,
-  searchParams,
-  { size, maxPages, stopBefore },
-) {
+/** 페이지 번호를 0 부터 올리며 PAGE_SIZE 보다 적게 오거나 maxPages 에 닿거나 stop 이 참이 될 때까지 모은다. */
+async function collectPages(fetchPage, { maxPages = Infinity, stopBefore = null } = {}) {
   const collected = [];
-
   for (let page = 0; page < maxPages; page += 1) {
-    const { result, totalCount } = await getPage(
-      client,
-      path,
-      searchParams,
-      page,
-      size,
-    );
-
-    for (const item of result) {
+    const items = await fetchPage(page);
+    if (!Array.isArray(items)) throw new Error("dooray CLI 의 목록 출력이 배열이 아닙니다.");
+    for (const item of items) {
       if (stopBefore?.(item)) return collected;
       collected.push(item);
     }
-
-    if (collected.length >= totalCount) break;
+    if (items.length < PAGE_SIZE) break;
   }
-
   return collected;
 }
 
-export function getAllPages(
-  client,
-  path,
-  searchParams = {},
-  { size = 100, maxPages = Infinity } = {},
-) {
-  return collectPages(client, path, searchParams, {
-    size,
-    maxPages,
-    stopBefore: null,
-  });
+export async function getMe(options) {
+  const me = await runDooray(["member", "get", "me"], options);
+  return { organizationMemberId: me.id, name: me.name };
 }
 
-export async function getMe(client) {
-  const response = await client.get("common/v1/members/me");
-  return {
-    organizationMemberId: response.result.id,
-    name: response.result.name,
-  };
-}
-
-export async function listProjects(client) {
-  const projects = await getAllPages(client, "project/v1/projects", {
-    member: "me",
-  });
+export async function listProjects(options) {
+  const projects = await runDooray(["project", "list"], options);
   return projects.map(({ id, code, name }) => ({ id, code, name }));
 }
 
-export function listPosts(
-  client,
-  projectId,
-  { since = null, maxPages = Infinity } = {},
-) {
+export function listPosts(projectId, { since = null, maxPages = Infinity, ...options } = {}) {
   const sinceTimestamp = since == null ? null : Date.parse(since);
-
+  // 날짜만 준 값은 UTC 자정으로 읽던 전환 전 동작을 지킨다. CLI 는 날짜만 받으면 그 PC 의 시간대 자정으로 읽어 늦은 시간대에서 범위가 줄어든다.
+  const createdFrom = since == null ? null : new Date(sinceTimestamp).toISOString().replace(/\.\d{3}Z$/, "Z");
   return collectPages(
-    client,
-    `project/v1/projects/${projectId}/posts`,
-    { order: "-createdAt" },
+    (page) =>
+      runDooray(
+        [
+          "post", "list", projectId,
+          "--page", String(page), "--size", String(PAGE_SIZE), "--order", "-createdAt",
+          ...(createdFrom == null ? [] : ["--created", `${createdFrom}~`]),
+        ],
+        options,
+      ),
     {
-      size: 100,
       maxPages,
       stopBefore:
         sinceTimestamp == null
@@ -283,17 +98,17 @@ export function listPosts(
   );
 }
 
-export async function getPost(client, projectId, postId) {
-  const response = await client.get(
-    `project/v1/projects/${projectId}/posts/${postId}`,
-  );
-  return response.result;
+export function getPost(postId, options) {
+  return runDooray(["post", "get", "--id", postId], options);
 }
 
-export function listComments(client, projectId, postId) {
-  return getAllPages(
-    client,
-    `project/v1/projects/${projectId}/posts/${postId}/logs`,
+export function listComments(postId, options) {
+  return collectPages(
+    (page) =>
+      runDooray(
+        ["post", "comment", "list", "--id", postId, "--page", String(page), "--size", String(PAGE_SIZE)],
+        options,
+      ),
   );
 }
 

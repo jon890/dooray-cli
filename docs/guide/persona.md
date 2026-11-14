@@ -20,8 +20,9 @@ cp -R skills/dooray-persona ~/.claude/skills/
 ```
 
 설정 파일은 `~/.claude/dooray-persona.config.json`이며, 최초 실행에서는 후보 프로젝트를 탐색해 대상을 고른 뒤 본인 글을 수집한다.
-인증은 `dooray setup`이 저장한 설정을 읽어 사용하므로 토큰을 따로 입력하지 않는다. macOS 에서 설정 파일에 토큰이 없으면 로그인 키체인에서 읽는다.
-이 스킬은 CLI 와 함께 업데이트되지 않는다. macOS 에서는 CLI 를 업데이트한 뒤 설정을 한 번 저장하면 토큰이 설정 파일에서 키체인으로 옮겨지는데, 키체인을 읽지 못하는 예전 스크립트는 `dooray setup` 을 먼저 실행하라는 오류로 멈춘다.
+스크립트는 인증 정보를 직접 읽지 않고 `dooray ... --json` 명령을 실행한다. 그래서 `dooray` CLI 가 설치되어 있고 `dooray setup` 이 끝나 있어야 하며, 토큰이나 쿠키를 따로 입력하지 않는다.
+인증 방식(API 키 또는 웹 로그인 세션)은 CLI 의 `auth-mode` 설정을 따른다. 웹 방식에서는 수집에 쓰는 `project list`, `member get me`, `post list`, `post get`, `post comment list` 가 웹을 지원해야 동작하고, 지원하지 않는 명령이 있으면 CLI 가 종료 코드 3 과 안내로 멈춘다. 스크립트가 쓰는 명령 가운데 지원하지 않는 것은 없다.
+이 스킬은 CLI 와 함께 업데이트되지 않는다. 스크립트가 `member get me` 를 쓰므로 CLI 를 이 기능이 들어간 버전으로 올린 뒤에 쓴다.
 링크해서 쓰면 내려받은 저장소에서 `git pull` 을 하고, 복사해서 쓰면 스킬 디렉터리를 다시 복사한다.
 
 ## 터미널에 익숙하지 않은 동료에게 넘기기

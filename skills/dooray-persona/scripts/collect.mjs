@@ -3,12 +3,10 @@ import { basename, dirname, join } from "node:path";
 import { parseArgs, loadPersonaConfig } from "./lib/config.mjs";
 import {
   classifyInvolvement,
-  createClient,
   getMe,
   getPost,
   listComments,
   listPosts,
-  loadApiConfig,
 } from "./lib/dooray.mjs";
 
 function sanitizeForTerminal(value) {
@@ -120,9 +118,7 @@ async function main() {
     return;
   }
 
-  const apiConfig = await loadApiConfig();
-  const client = createClient(apiConfig);
-  const me = await getMe(client);
+  const me = await getMe();
   const entries = [];
 
   for (let targetIndex = 0; targetIndex < config.targets.length; targetIndex += 1) {
@@ -130,7 +126,7 @@ async function main() {
     process.stderr.write(
       `프로젝트 수집 중: ${targetIndex + 1}/${config.targets.length}\n`,
     );
-    const posts = await listPosts(client, target.projectId, {
+    const posts = await listPosts(target.projectId, {
       since: config.since,
     });
     const candidates = posts
@@ -146,7 +142,7 @@ async function main() {
     for (let index = 0; index < candidates.length; index += 1) {
       const { post, involvement } = candidates[index];
       if (involvement.authored) {
-        const detail = await getPost(client, target.projectId, post.id);
+        const detail = await getPost(post.id);
         // 첨부만 있거나 권한으로 본문이 누락된 업무가 섞여 있다.
         // 여기서 예외를 올리면 앞서 모은 표본까지 저장 전에 사라진다.
         if (detail?.body == null) {
@@ -156,7 +152,7 @@ async function main() {
         }
       }
 
-      const comments = await listComments(client, target.projectId, post.id);
+      const comments = await listComments(post.id);
       for (const comment of comments) {
         if (
           comment?.creator?.member?.organizationMemberId !==

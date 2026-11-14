@@ -7,8 +7,8 @@ import { formatMemberDetail } from "../../formatters/member.js";
 import type { OutputOptions } from "../../formatters/table.js";
 
 export const memberGetCommand = new Command("get")
-  .description("멤버 상세 정보 조회 (organizationMemberId)")
-  .argument("<member-id>", "조회할 organization member ID")
+  .description("멤버 상세 정보 조회 (organizationMemberId, 내 정보는 me)")
+  .argument("<member-id>", "조회할 organization member ID. me 는 로그인한 나 자신")
   .option("--with-org", "소속 회사·부서·직책을 함께 조회한다 (--json 출력에 organization 필드 추가)")
   .action(async (memberId, opts) => {
     const globalOpts = memberGetCommand.optsWithGlobals() as OutputOptions;
@@ -25,7 +25,8 @@ export const memberGetCommand = new Command("get")
 
     const config = await getConfigOrThrow();
     const client = createClient(config);
-    const res = await client.getMemberDetail(memberId);
-    const organization = withOrg ? await fetchMemberOrganization(client, memberId) : undefined;
+    // me 는 인증 방식과 무관하게 getMe 한 번으로 푼다. 목록 필터의 me 표기와 같다.
+    const res = memberId === "me" ? await client.getMe() : await client.getMemberDetail(memberId);
+    const organization = withOrg ? await fetchMemberOrganization(client, res.result.id) : undefined;
     formatMemberDetail(res.result, globalOpts, organization);
   });

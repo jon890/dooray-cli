@@ -15,8 +15,7 @@ import {
 const { spawnMock } = vi.hoisted(() => ({ spawnMock: vi.fn() }));
 
 // 실제 security 를 띄우지 않는다. 이 파일의 어떤 테스트도 키체인에 닿으면 안 된다.
-// execFile 은 일치 검사에서 불러오는 persona 스크립트가 import 한다.
-vi.mock("node:child_process", () => ({ spawn: spawnMock, execFile: vi.fn() }));
+vi.mock("node:child_process", () => ({ spawn: spawnMock }));
 
 /** security 는 계정의 실제 홈을 HOME 으로 받는다. */
 const SPAWN_OPTIONS = {
@@ -258,26 +257,6 @@ describe("keychainAccount", () => {
     const messy = join(userInfo().homedir, ".dooray", "..", ".dooray", "config.json");
 
     expect(keychainAccount("apiKey", messy)).toBe("apiKey");
-  });
-
-  // 같은 규칙을 persona 스킬 스크립트가 따로 구현한다. 한쪽만 바뀌면 스크립트가 다른 항목을 찾는다.
-  // 스킬 디렉터리는 복사해 따로 쓰일 수 있어, 저장소에 묶인 이 검사는 저장소 쪽에 둔다.
-  it("persona 스킬 스크립트의 keychainApiKeyAccount 와 같은 값을 낸다", async () => {
-    // 스킬 스크립트는 타입 선언이 없는 .mjs 라 경로를 URL 로 넘기고 쓰는 함수의 타입만 적는다.
-    const script = new URL("../../skills/dooray-persona/scripts/lib/dooray.mjs", import.meta.url).href;
-    const { keychainApiKeyAccount } = (await import(script)) as {
-      keychainApiKeyAccount: (configPath: string) => string;
-    };
-    const paths = [
-      join(userInfo().homedir, ".dooray", "config.json"),
-      join(userInfo().homedir, ".dooray", "..", ".dooray", "config.json"),
-      "/tmp/other-home/.dooray/config.json",
-      "relative/.dooray/config.json",
-    ];
-
-    for (const configPath of paths) {
-      expect(keychainApiKeyAccount(configPath)).toBe(keychainAccount("apiKey", configPath));
-    }
   });
 });
 

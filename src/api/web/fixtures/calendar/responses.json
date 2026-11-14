@@ -1,0 +1,284 @@
+{
+  "calendars": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "totalCount": 3,
+      "contents": [
+        {
+          "id": "calendar-1",
+          "tenantId": "tenant-1",
+          "name": "내 캘린더",
+          "description": null,
+          "projectId": null,
+          "type": "private",
+          "createdAt": "2026-01-01T09:00:00+09:00",
+          "updatedAt": "2026-01-02T09:00:00+09:00",
+          "ownerOrganizationMemberId": "member-1",
+          "me": {
+            "role": "owner",
+            "color": "#112233",
+            "listed": true,
+            "checked": true,
+            "order": 1,
+            "published": false,
+            "default": true,
+            "notification": {
+              "enabled": true,
+              "alarms": []
+            }
+          },
+          "ctag": "x",
+          "syncToken": "1",
+          "shared": false,
+          "size": "1"
+        },
+        {
+          "id": "calendar-2",
+          "tenantId": "tenant-1",
+          "name": "팀 캘린더",
+          "projectId": "project-1",
+          "type": "project",
+          "createdAt": "2026-01-01T09:00:00+09:00",
+          "ownerOrganizationMemberId": null,
+          "me": {
+            "role": "view",
+            "color": "#445566",
+            "listed": true,
+            "checked": true,
+            "order": 2,
+            "default": false
+          }
+        },
+        {
+          "id": "calendar-3",
+          "tenantId": "tenant-1",
+          "name": "구독",
+          "type": "subscription",
+          "createdAt": "2026-01-01T09:00:00+09:00",
+          "me": {
+            "role": "view",
+            "default": false
+          }
+        }
+      ],
+      "references": {
+        "organizationMemberMap": {}
+      }
+    }
+  },
+  "events": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "contents": [
+        {
+          "id": "event-1",
+          "calendarId": "calendar-1",
+          "masterScheduleId": "event-1",
+          "scheduleId": "event-1",
+          "recurrenceId": "",
+          "location": "",
+          "subject": "회의",
+          "createdAt": "2026-11-01T09:00:00+09:00",
+          "updatedAt": "2026-11-02T09:00:00+09:00",
+          "category": "general",
+          "wholeDayFlag": false,
+          "uid": "u1",
+          "tenantId": "tenant-1",
+          "recurrenceType": "none",
+          "conferencing": null,
+          "startedAt": "2026-11-20T10:00:00+09:00",
+          "endedAt": "2026-11-20T10:30:00+09:00",
+          "users": {
+            "from": null,
+            "to": [],
+            "cc": [],
+            "me": {
+              "type": "member",
+              "member": {
+                "organizationMemberId": "member-1",
+                "name": "홍길동",
+                "emailAddress": "hong@example.com",
+                "userType": "to",
+                "status": "accepted",
+                "calendarId": 1,
+                "clazz": "member"
+              }
+            }
+          }
+        },
+        {
+          "id": "event-2-20261121T010000Z",
+          "calendarId": "calendar-2",
+          "masterScheduleId": "event-2",
+          "recurrenceId": "20261121T010000Z",
+          "subject": "종일",
+          "createdAt": "2026-11-01T09:00:00+09:00",
+          "updatedAt": "2026-11-02T09:00:00+09:00",
+          "category": "general",
+          "wholeDayFlag": true,
+          "tenantId": "tenant-1",
+          "recurrenceType": "unmodified",
+          "startedAt": "2026-11-21+09:00",
+          "endedAt": "2026-11-22+09:00",
+          "users": {
+            "to": [],
+            "cc": [],
+            "me": {
+              "type": "member",
+              "member": {
+                "organizationMemberId": "member-1",
+                "name": "홍길동"
+              }
+            }
+          }
+        }
+      ],
+      "references": {
+        "calendarMap": {
+          "calendar-1": {
+            "id": "calendar-1",
+            "name": "내 캘린더"
+          },
+          "calendar-2": {
+            "id": "calendar-2",
+            "name": "팀 캘린더"
+          }
+        }
+      }
+    }
+  },
+  "detail": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "id": "event-1",
+        "calendarId": "calendar-1",
+        "masterScheduleId": "event-1",
+        "recurrenceId": "",
+        "location": "4층",
+        "subject": "회의",
+        "body": {
+          "mimeType": "text/x-markdown",
+          "content": "본문",
+          "emptyContent": false
+        },
+        "createdAt": "2026-11-01T09:00:00+09:00",
+        "updatedAt": "2026-11-02T09:00:00+09:00",
+        "category": "general",
+        "wholeDayFlag": false,
+        "uid": "u1",
+        "tenantId": "tenant-1",
+        "recurrenceType": "unmodified",
+        "startedAt": "2026-11-20T10:00:00+09:00",
+        "endedAt": "2026-11-20T10:30:00+09:00",
+        "users": {
+          "from": {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "홍길동",
+              "emailAddress": "hong@example.com",
+              "status": "accepted"
+            }
+          },
+          "to": [
+            {
+              "type": "member",
+              "member": {
+                "organizationMemberId": "member-2",
+                "name": "홍길동",
+                "emailAddress": "hong@example.com",
+                "status": "not_confirmed"
+              }
+            }
+          ],
+          "cc": [],
+          "me": {
+            "type": "member",
+            "member": {
+              "organizationMemberId": "member-1",
+              "name": "홍길동",
+              "emailAddress": "hong@example.com",
+              "userType": "from",
+              "status": "accepted"
+            }
+          }
+        },
+        "recurrenceRule": {
+          "frequency": "weekly",
+          "interval": 1,
+          "startedAt": "2026-11-20T10:00:00+09:00",
+          "endedAt": "2026-11-20T10:30:00+09:00",
+          "until": null,
+          "count": null,
+          "byday": "FR",
+          "bymonthday": "",
+          "bymonth": "",
+          "wkst": null,
+          "timezoneName": "Asia/Seoul"
+        }
+      },
+      "references": {
+        "calendarMap": {
+          "calendar-1": {
+            "id": "calendar-1",
+            "name": "내 캘린더"
+          }
+        }
+      }
+    }
+  },
+  "created": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": [
+      {
+        "id": "event-9",
+        "masterScheduleId": "event-9"
+      }
+    ]
+  },
+  "updated": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "id": "event-1"
+      }
+    }
+  },
+  "deleted": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": null
+  },
+  "failed": {
+    "header": {
+      "resultCode": -200430,
+      "resultMessage": "USER_INVALID_EXCEED_MAXIMUM_PERIOD",
+      "isSuccessful": false
+    },
+    "result": null
+  }
+}

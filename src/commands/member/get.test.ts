@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   fetchMemberOrganization: vi.fn(),
   client: {
     getMemberDetail: vi.fn(),
+    getMe: vi.fn(),
   },
 }));
 
@@ -70,10 +71,32 @@ beforeEach(() => {
     baseUrl: "https://example.dooray.com",
   });
   mocks.client.getMemberDetail.mockResolvedValue({ result: member });
+  mocks.client.getMe.mockResolvedValue({ result: { ...member, id: "me-1", name: "나" } });
   mocks.fetchMemberOrganization.mockResolvedValue({
     defaultOrganization: { id: "org-1", name: "두레이" },
     primaryDepartment: { id: null, name: "플랫폼개발팀" },
     positionName: null,
+  });
+});
+
+describe("member get me", () => {
+  it("me 는 getMe 한 번으로 풀고 멤버 상세는 부르지 않는다", async () => {
+    const out = await run(["me"]);
+
+    expect(out).toBe("이름: 나\nmember-id: me-1\n");
+    expect(mocks.client.getMe).toHaveBeenCalledTimes(1);
+    expect(mocks.client.getMemberDetail).not.toHaveBeenCalled();
+  });
+
+  it("--json 과 --quiet 은 일반 조회와 같은 모양이다", async () => {
+    expect(JSON.parse(await run(["me", "--json"]))).toMatchObject({ id: "me-1", name: "나" });
+    expect(await run(["me", "--quiet"])).toBe("me-1\n");
+  });
+
+  it("--with-org 는 getMe 로 푼 id 로 소속을 조회한다", async () => {
+    await run(["me", "--with-org"]);
+
+    expect(mocks.fetchMemberOrganization).toHaveBeenCalledWith(mocks.client, "me-1");
   });
 });
 

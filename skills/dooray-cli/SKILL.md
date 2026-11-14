@@ -111,7 +111,7 @@ web 은 비공식 웹 API 를 쓰므로 예고 없이 바뀔 수 있고 SESSION 
 | 태그 만들기 | `dooray project tags create <project> --name "<그룹>:<태그>" [--color <hex>]` — 그룹명 생략 가능 |
 | 태그 그룹 속성 변경 | `dooray project tags group <project> "<그룹>" [--mandatory] [--select-one]` — 해제는 `--no-` 접두 |
 | 프로젝트 템플릿 목록 | `dooray project templates <project>` |
-| 멤버 상세 | `dooray member get <organizationMemberId>` (캐시 우회) |
+| 멤버 상세 | `dooray member get <organizationMemberId>` (캐시 우회). 로그인한 나 자신은 `dooray member get me` |
 | 멤버 소속(회사·부서·직책) | `dooray member get <organizationMemberId> --with-org` — `--json` 에는 `organization` 키가 붙는다. 못 채우면 멈춘다 |
 | organization 전체 멤버 검색 | `dooray member search <keyword>` — 옵션은 [common.md](references/common.md) |
 
