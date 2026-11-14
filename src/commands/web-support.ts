@@ -45,5 +45,11 @@ export async function guardWebCommand(actionCommand: Command, readMode: () => Pr
     if (error instanceof DoorayCliError && error.exitCode === EXIT_CONFIG_ERROR) return;
     throw error;
   }
-  assertWebSupported(commandPath, actionCommand.optsWithGlobals(), mode);
+  // env 출처 옵션을 추가하면 환경 변수로 명시한 값도 검사할지 이 조건을 다시 본다.
+  const explicit = new Set<string>();
+  for (let current: Command | null = actionCommand; current; current = current.parent) {
+    for (const key of Object.keys(current.opts())) if (current.getOptionValueSource(key) === "cli") explicit.add(key);
+  }
+  const options = Object.fromEntries(Object.entries(actionCommand.optsWithGlobals()).filter(([key]) => explicit.has(key)));
+  assertWebSupported(commandPath, options, mode);
 }

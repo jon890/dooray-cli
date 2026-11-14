@@ -2,6 +2,11 @@
 import type { PostListResponse, PostDetailResponse, CreatePostApiResponse, CreatePostRequest, UpdatePostRequest, UpdatePostResponse, PostCommentListResponse, PostCommentDetailResponse, CreateCommentApiResponse, CreateCommentRequest, UpdateCommentRequest, UpdateCommentResponse, DeleteCommentResponse, DoorayApiUnitResponse, PostFileListResponse, PostFileMetaResponse, UploadFileResponse } from "../types.js";
 import type { GetPostsParams, GetPostCommentsParams } from "../types.js";
 
+export type SetPostParentResponse = DoorayApiUnitResponse | {
+  header: import("../types.js").DoorayApiHeader;
+  result: { post: { id: string }; project: { id: string } };
+};
+
 export interface PostClient {
   getPosts(projectId: string, params?: GetPostsParams): Promise<PostListResponse>;
   getPost(projectId: string, postId: string): Promise<PostDetailResponse>;
@@ -10,11 +15,11 @@ export interface PostClient {
   updatePost(projectId: string, postId: string, body: UpdatePostRequest): Promise<UpdatePostResponse>;
   setPostDone(projectId: string, postId: string): Promise<DoorayApiUnitResponse>;
   setPostWorkflow(projectId: string, postId: string, workflowId: string): Promise<DoorayApiUnitResponse>;
-  setPostParent(projectId: string, postId: string, parentPostId: string): Promise<DoorayApiUnitResponse>;
+  setPostParent(projectId: string, postId: string, parentPostId: string): Promise<SetPostParentResponse>;
   getPostComments(projectId: string, postId: string, params?: GetPostCommentsParams): Promise<PostCommentListResponse>;
   getPostComment(projectId: string, postId: string, logId: string): Promise<PostCommentDetailResponse>;
   createPostComment(projectId: string, postId: string, body: CreateCommentRequest): Promise<CreateCommentApiResponse>;
-  updatePostComment(projectId: string, postId: string, logId: string, body: UpdateCommentRequest): Promise<UpdateCommentResponse>;
+  updatePostComment(projectId: string, postId: string, logId: string, body: UpdateCommentRequest, options?: { removeFileId?: string }): Promise<UpdateCommentResponse>;
   deletePostComment(projectId: string, postId: string, logId: string): Promise<DeleteCommentResponse>;
   getPostFiles(projectId: string, postId: string): Promise<PostFileListResponse>;
   getPostFileMeta(projectId: string, postId: string, fileId: string): Promise<PostFileMetaResponse>;
