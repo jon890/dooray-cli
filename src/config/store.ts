@@ -242,16 +242,26 @@ function errorOffset(raw: string, message: string): number | undefined {
       Number(located[2]) - 1
     );
   }
+  const at = /in JSON at position (\d+)/.exec(message);
+  if (at) return Number(at[1]) <= raw.length ? Number(at[1]) : undefined;
   if (/^Unexpected end of JSON input/.test(message)) {
     return raw.length === 0 ? undefined : raw.length;
   }
   // Node 24 는 위치 대신 원문 발췌를 준다. 발췌를 원문에서 찾아 위치만 구한다.
-  const excerpt = /^Unexpected token '([\s\S])', (\.\.\.)?"([\s\S]*)"(?:\.\.\.)? is not valid JSON$/.exec(message);
+  const excerpt = /^Unexpected token '([\s\S])', (\.\.\.)?"([\s\S]*)"(\.\.\.)? is not valid JSON$/.exec(message);
   if (!excerpt) return undefined;
-  const [, token, leading, snippet] = excerpt;
-  const start = raw.indexOf(snippet);
-  if (start < 0) return undefined;
-  const offset = start + (leading ? 10 : snippet.indexOf(token));
+  const [, token, leading, snippet, trailing] = excerpt;
+  // 발췌는 오류 위치 앞뒤 10자다. 앞뒤 어느 쪽도 잘리지 않았으면 위치가 모호해 생략한다.
+  let offset: number;
+  if (leading) {
+    const start = raw.indexOf(snippet);
+    if (start < 0) return undefined;
+    offset = start + 10;
+  } else if (trailing) {
+    offset = snippet.length - 10;
+  } else {
+    return undefined;
+  }
   return raw[offset] === token ? offset : undefined;
 }
 
