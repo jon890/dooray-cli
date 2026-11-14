@@ -20,7 +20,7 @@
 | `createPost` | POST `/v2/wapi/projects/!{projectId}/posts` | 요청은 객체 배열. `result: [{id, number, version}]`에서 공식 필드 `id`만 낸다 |
 | `updatePost` | PUT `/v2/wapi/projects/!{projectId}/posts/{number}` | 요청은 객체. `result: {id, number, version}`를 공식 `null`로 바꾼다 |
 | `setPostWorkflow` | POST `/v2/wapi/projects/!{projectId}/posts/{number}/change-workflow` | `{workflowId}`. `result: null`. 변경 뒤 상세의 전체 상태와 담당자 상태가 바뀐 것을 확인했다 |
-| `setPostDone` | 위 전체 상태 변경 경로와 프로젝트 워크플로 조회 | 완료 클래스의 대표 워크플로 ID를 구해 보낸다. 완료 상태와 `endedAt` 생성 확인. 대표 선택은 프로젝트 워크플로 순서를 따른다 |
+| `setPostDone` | 위 전체 상태 변경 경로와 프로젝트 워크플로 조회 | 완료 클래스의 상태가 하나이면 그 ID를 보낸다. 완료 상태와 `endedAt` 생성 확인. 여러 상태이면 대표를 추측하지 않고 쓰기 전에 종료 코드 3으로 거절한다 |
 | `setPostParent` | POST `/v2/wapi/projects/!{projectId}/posts/{number}/move` | 웹 화면에서 CDP로 확인. `{targetProjectId: 현재 프로젝트 ID, parentPostNumber: 상위 업무 번호}`. SESSION만 보낸 재호출 후 상위 연결도 확인. 웹 결과는 `result.content` |
 | `getPostComments` | GET `/wapi/task/v1/projects/!{projectId}/tasks/{number}/events` | `result` 배열, 최상위 `totalCount`, `references`. 댓글만 요청한다. 페이지 번호를 그대로 보내면 안 된다 |
 | `getPostComment` | GET `/wapi/task/v1/tasks/{postId}/events/{eventId}` | `result` 객체, 최상위 `references`. 업무 소속을 검사한다 |
@@ -280,3 +280,13 @@ main의 post list 명령에는 workflow 옵션이 없다.
 편집기에서 날짜를 바꾸지 않은 웹 업무는 기존 dueDateFlag를 그대로 보낸다.
 날짜 미정(dueDate:null, dueDateFlag:true) 업무의 제목만 고쳐도 일정 없음 전환으로 오인하지 않는다.
 API 키 방식의 편집기 요청은 기존 동작을 유지한다.
+
+
+## 완료 상태가 여러 개인 프로젝트
+
+공식 set-done 설명은 완료 클래스에 상태가 여러 개이면 대표 상태로 바꾼다고 한다.
+대표 상태가 order의 최솟값이라는 규칙은 공식 문서와 이번 실측에서 확인하지 못했다.
+따라서 웹 post done은 완료 상태가 하나일 때만 실행한다.
+여러 상태가 있으면 쓰기 전에 종료 코드 3으로 끝내고 post workflow <상태>로 명시하도록 안내한다.
+이는 확인하지 못한 동작을 추측하지 않는 기존 DECISION7을 적용한 제약이다.
+공식 API 키 방식의 set-done은 바꾸지 않는다.

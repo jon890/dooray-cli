@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWebClient } from "../web/index.js";
 const fixtures = JSON.parse(readFileSync(new URL("../web/fixtures/post/responses.json", import.meta.url), "utf8"));
 const client = () => createWebClient("fake-session", "https://example.dooray.com", "https://api.dooray.com");
-function mockServer(detail = structuredClone(fixtures.detail)) {
+function mockServer(detail = structuredClone(fixtures.detail), workflows = structuredClone(fixtures.workflows)) {
   const writes: { path: string; body: any }[] = [];
   const mock = vi.fn(async (request: Request) => {
     const path = new URL(request.url).pathname;
@@ -11,7 +11,7 @@ function mockServer(detail = structuredClone(fixtures.detail)) {
       writes.push({ path, body: await request.clone().json() });
       return Response.json(path.endsWith("/move") ? fixtures.moved : path.endsWith("/posts") ? fixtures.created : fixtures.updated);
     }
-    return Response.json(path.endsWith("/workflows") ? fixtures.workflows : path.endsWith("/tasks") ? fixtures.list : detail);
+    return Response.json(path.endsWith("/workflows") ? workflows : path.endsWith("/tasks") ? fixtures.list : detail);
   });
   vi.stubGlobal("fetch", mock);
   return { mock, writes };
@@ -88,6 +88,13 @@ describe("웹 업무 요청과 공식 응답", () => {
     expect(writes[0]).toEqual({ path: "/v2/wapi/projects/!project-1/posts/42/change-workflow", body: { workflowId: "closed-1" } });
     expect(writes[1]).toEqual({ path: "/v2/wapi/projects/!project-1/posts/42/move", body: { targetProjectId: "project-1", parentPostNumber: 42 } });
     expect(moved.result).toEqual({ post: { id: "post-1" }, project: { id: "project-1" } });
+  });
+  it("완료 상태가 여러 개면 대표를 추측하지 않고 쓰기 전에 거절한다", async () => {
+    const workflows = structuredClone(fixtures.workflows);
+    workflows.result.contents.push({ id: "closed-2", class: "closed", name: "취소", order: 5 });
+    const { writes } = mockServer(undefined, workflows);
+    await expect(client().setPostDone("project-1", "post-1")).rejects.toMatchObject({ exitCode: 3, message: expect.stringContaining("post workflow") });
+    expect(writes).toEqual([]);
   });
   it("잘못된 필수 ID와 다른 프로젝트 대상은 쓰지 않는다", async () => {
     const detail = structuredClone(fixtures.detail); delete detail.result.id;

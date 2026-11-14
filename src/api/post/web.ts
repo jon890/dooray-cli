@@ -212,8 +212,11 @@ export function createPostWeb(context: WebContext): PostClient {
     },
     async setPostDone(projectId, postId) {
       const response = await http.request(apiPath`v2/wapi/projects/!${projectId}/workflows`);
-      const closed = rows(row(response.result).contents).filter((w) => w.class === "closed").sort((a, b) => count(a.order) - count(b.order));
+      const closed = rows(row(response.result).contents).filter((w) => w.class === "closed");
       if (!closed.length) return invalidResponse();
+      if (closed.length > 1) {
+        throw new DoorayCliError("웹 방식에서는 완료 상태가 여러 개인 프로젝트의 대표 상태를 확인할 수 없습니다. post workflow <상태>로 완료 상태를 명시하세요.", EXIT_PARAM_ERROR);
+      }
       return methods.setPostWorkflow(projectId, postId, identifier(closed[0].id));
     },
     async setPostParent(projectId, postId, parentPostId) {
