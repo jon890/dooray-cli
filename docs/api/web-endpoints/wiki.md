@@ -117,3 +117,20 @@ PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../fe
 | 이동·정렬 | 여러 번(첫 번째 실측에서 `beforePageId=0` 로 맨 앞에 둔 것 포함. 두 번째 실측은 프로브 부모 페이지 아래에서만 했다) | 프로브 페이지만 움직였다. 한때 프로브 페이지가 기존 페이지 앞에 있었다. 그 뒤 다른 이동·정렬을 거쳐 프로브 페이지가 모두 맨 뒤에 있는 것을 목록으로 확인했다. 기존 페이지끼리의 순서를 실측 전 값과 일일이 대조하지는 않았다 |
 
 위키 목록과 기존 페이지는 읽기만 했다. 삭제한 페이지가 위키 휴지통에 남는지는 확인하지 않았다.
+
+## CLI 로 웹 방식 실행 확인
+
+2026-11-14 임시 HOME 의 웹 방식 설정(쿠키는 stdin 으로)으로 `dist/index.js` 의 wiki 명령을 실제로 돌렸다. 쓰기는 `[cli-web-probe]` 부모 페이지 하나와 그 아래 자식 둘에만 했고 끝에 모두 지웠다(홈 아래 페이지 수 13 → 13).
+
+| 명령 | 결과 |
+| --- | --- |
+| `wiki list --json`, `wiki pages --json`(홈과 `--parent`), `wiki tree --depth 2 --json` | 성공. `--json` 키가 공식 필드 안에 든다 |
+| `wiki page create`(부모, 자식 둘) | 성공. 같은 부모·같은 제목 생성은 종료 코드 1 과 「같은 위치에 같은 제목의 페이지가 있습니다.」 |
+| `wiki page get --json`(`--id` 단독 조회 포함) | 성공. 키는 공식 필드 안이고 날짜는 오프셋을 단 ISO 8601 |
+| `wiki page edit`(`--title`, `--body`, 둘 다), `wiki page replace` | 성공하고 반영된 것을 다시 읽어 확인. 형제와 같은 제목으로 `--title` 은 종료 코드 1 |
+| `wiki page edit --mime-type`, `wiki page move --to-wiki` | 요청 전에 종료 코드 3 과 「웹 방식에서는 지원하지 않습니다」 |
+| `wiki page move`(`--first`, `--before`, `--parent`, `--no-children`) | 성공. 프로브 부모 아래에서만 했고 순서 변화를 확인 |
+| `wiki page file upload`, `list`, `download`, `download-all`, `delete -y` | 성공. 올린 바이트와 내려받은 바이트가 같다. 다른 페이지의 파일 id 로 `download` 는 종료 코드 1 |
+| `wiki page comment add`, `list`, `list --size 1 --page 1`, `latest`, `get`, `edit`, `delete -y` | 성공. 목록은 최신순이고 `--page` 가 공식 순서와 맞는다 |
+
+`wiki page file download -o <dir>` 은 폴더가 없으면 ENOENT 로 실패한다. 공개 API 방식과 같은 기존 동작이며 웹과 관계없다(`download-all` 은 폴더를 만든다).
