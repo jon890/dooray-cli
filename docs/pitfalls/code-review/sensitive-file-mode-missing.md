@@ -15,6 +15,6 @@ related: []
 tmp 이름은 `${path}.${process.pid}.${randomUUID()}.tmp` 로 고유하게 짓고 `flag: "wx"` 로 연다. 고정 이름이면 동시에 저장하는 프로세스끼리 tmp 를 덮어쓰고, 남아 있던 tmp 에는 `mode` 가 적용되지 않는다.
 rename 이 실패하면 tmp 를 지운다.
 `~/.dooray` 디렉터리는 `mkdir(..., { recursive: true, mode: 0o700 })` 으로 만들고, 이미 있던 디렉터리에는 mode 가 적용되지 않으니 `chmod(dir, 0o700)` 을 한 번 시도한다. 실패는 무시한다(Windows).
-`src/config/store.ts` 의 `ensureDir` 와 `writeConfigFile` 이 이 형태다.
+`src/config/store-file.ts` 의 `ensureDir` 와 `writeConfigFile` 이 이 형태다.
 **검출**: `grep -nE 'writeFile\([^,]+,\s*[^,]+\)' src/cache/ src/config/ | grep -v "mode:"` (옵션 인자가 없는 호출). 기존 파일을 덮어쓰는 호출은 `mode:` 가 있어도 rename 을 거치는지 본다.
 **Why**: PR #36 review — last-run.json 이 sanitized 후에도 argv 에 프로젝트 코드 / 19자리 ID 가 남아 있어 정보 노출 표면.
