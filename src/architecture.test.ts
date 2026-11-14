@@ -295,6 +295,13 @@ describe("규칙 판정", () => {
     expect(lines.every((line) => /^export (type )?\{[^}]+\} from "@\/config\/[^"/]+\.js";$/.test(line))).toBe(true);
   });
 
+  it("스킬 관리의 기존 진입 파일은 재내보내기만 남긴다", () => {
+    const source = readFileSync(join(SRC, "skill/manager.ts"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    const lines = source.split("\n").filter((line) => line.trim());
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.every((line) => /^export (type )?\{[^}]+\} from "@\/skill\/[^"/]+\.js";$/.test(line))).toBe(true);
+  });
+
   it("import 지정자를 읽고 별칭과 상대 경로를 같은 파일로 푼다", () => {
     const source = ['import { a } from "./a.js";', 'export { b } from "../b.js";', 'import type { C } from "@/c.js";', 'const d = await import("./d.js");'].join("\n");
     expect(importSpecifiers(source)).toEqual(["./a.js", "../b.js", "@/c.js", "./d.js"]);
