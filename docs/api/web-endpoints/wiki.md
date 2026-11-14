@@ -28,7 +28,7 @@ PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../fe
 | --- | --- | --- | --- |
 | getWikis | GET `/v2/wapi/wikis` | `page`, `size` | `page=0/1`, `size=1` 이 다른 위키를 주고 순서는 `size=2000` 전체 목록과 같다. `size=2000` 허용 |
 | getWikiPages | GET `/v2/wapi/wikis/{wikiId}/pages` | `parentPageId` | 없으면 홈 페이지 하나(`root: true`). 있으면 그 부모의 직접 자식 전부. `page`·`size` 는 무시한다(6건 위키에서 `size=2` 도 6건) |
-| getAllWikiPages | getWikiPages 를 반복한다 | | 한 번에 가져오는 전체 트리 경로는 없다. 웹 화면도 노드를 펼칠 때마다 `parentPageId` 로 부른다 |
+| collectWikiPages | getWikiPages 를 반복한다(`api/wiki/pages.ts`, 영역 인터페이스 밖) | | 한 번에 가져오는 전체 트리 경로는 없다. 웹 화면도 노드를 펼칠 때마다 `parentPageId` 로 부른다 |
 | getWikiPage | GET `/v2/wapi/wikis/{wikiId}/pages/{pageId}` | 없음 | `result.content` + `result.references` |
 | getWikiPageStandalone | GET `/v2/wapi/pages/{pageId}` | 없음 | `content` 에 `pageId`, `projectId`, `wikiId`, `status`, `subject` 만 있다. 본문이 없어 `wikiId` 를 얻는 데만 쓰고, 상세는 위 경로를 한 번 더 부른다. `/v2/wapi/wikis/*/pages/{pageId}` 는 500 이다 |
 | createWikiPage | POST `/v2/wapi/wikis/{wikiId}/pages` | `{ subject, body: { mimeType, content }, parentPageId }` | 201. 공개 API 요청 본문 그대로 통한다 |

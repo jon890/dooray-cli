@@ -22,7 +22,7 @@ npm link                    # dooray 명령으로 실행
 
 ## 새 명령을 추가할 때
 
-1. `src/api/client.ts` 에 API 호출을 추가한다. 기존 메서드로 되는지 먼저 확인한다
+1. `src/api/<영역>/types.ts` 의 영역 인터페이스에 메서드를 더하고 `src/api/<영역>/public.ts` 에 구현한다. 기존 메서드로 되는지 먼저 확인한다
 2. 이름을 ID 로 바꿔야 하면 `src/resolvers/` 에 resolver 를 만든다. 매칭 정책은 정확일치 → 부분일치 → 모호하면 후보와 함께 에러다
 3. `src/commands/` 에 명령을 정의한다. 인접한 명령의 구조를 따르는 것이 가장 빠르다
 4. 출력은 `src/formatters/` 에서 표·JSON·quiet 세 모드를 모두 지원한다
