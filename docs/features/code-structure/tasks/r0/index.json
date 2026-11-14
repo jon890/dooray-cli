@@ -1,0 +1,67 @@
+{
+  "name": "r0",
+  "description": "코드 구조 정리의 기반: 구조 ADR, 의존 규칙 테스트, 도움말 스냅숏, 경로 별칭, 문서 경로 검사",
+  "pr_scope": "동작을 바꾸지 않고 R1~R4 가 쓸 검사 도구와 규칙, 경로 별칭을 PR 하나로 들인다.",
+  "deferred": [
+    {
+      "what": "R1 타입 분할: api/types.ts 를 api/<영역>/types.ts 와 api/common/types.ts 로 나누고 이동 스크립트 scripts/move-paths.mjs 를 만든다",
+      "why": "PR 하나에 넣으면 리뷰할 수 없는 크기이고, 스펙이 동작 불변 PR 여럿으로 나눴다(DECISION7)",
+      "after": "R0 머지"
+    },
+    {
+      "what": "R2 공개 클라이언트 분할: api/public/ 과 api/<영역>/public.ts, api/mail/, 인벤토리 스크립트가 읽는 파일 변경 (REQ2·REQ3·REQ4)",
+      "why": "타입 자리가 먼저 정해져야 공개 구현이 영역 types.ts 를 가져온다",
+      "after": "R1 머지"
+    },
+    {
+      "what": "R3 utils 재분류와 body/ 신설로 허용 목록을 비운다",
+      "why": "api/mail 로 옮긴 뒤라야 attachment-check 의존을 끊을 수 있다",
+      "after": "R2 머지"
+    },
+    {
+      "what": "R4 명령 파일 로직 분리와 영역별 명령 나무, check-doc-paths --strict 를 CI 에 넣는다",
+      "why": "아래 계층 경로가 다 정해진 뒤 명령 쪽을 고쳐야 이동이 한 번으로 끝난다",
+      "after": "R3 머지"
+    },
+    {
+      "what": "R5(선택) config/store.ts, skill/manager.ts 분할",
+      "why": "스펙이 선택 항목으로 마지막에 두었다",
+      "after": "R4 머지"
+    }
+  ],
+  "status": "in_progress",
+  "created_at": "2026-11-14",
+  "spec": "docs/features/code-structure/spec.md",
+  "design": "docs/features/code-structure/design.md",
+  "verification_plan": "verification-plan.md",
+  "requirements": [
+    "REQ1",
+    "REQ5",
+    "REQ6",
+    "REQ7"
+  ],
+  "total_phases": 2,
+  "current_phase": 1,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ1",
+        "REQ5",
+        "REQ6",
+        "REQ7"
+      ]
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ5",
+        "REQ6"
+      ]
+    }
+  ]
+}

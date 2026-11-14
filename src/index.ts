@@ -62,7 +62,7 @@ import { setQuiet } from "./utils/spinner.js";
 import { writeLastRun } from "./cache/last-run.js";
 import { getConfig, readAuthModeFromFile } from "./config/store.js";
 import { guardWebCommand } from "./commands/web-support.js";
-import { CLI_VERSION } from "./version.js";
+import { CLI_VERSION } from "@/version.js";
 
 const program = new Command();
 
