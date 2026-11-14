@@ -21,6 +21,7 @@
 
 이름·이메일·사용자 코드 검색은 자기 값으로 일치하고 존재하지 않는 값으로 빈 목록을 확인했다.
 검색의 result.totalCount 는 최상위 totalCount 로 옮긴다.
+추가 실측(2026-11-14): 서로 다른 이메일 2개를 SESSION 단독 Node 요청으로 각각 조회하면 각 1명, 콤마로 연결해 externalEmailAddresses 에 넣으면 2명이 반환됐다. 합친 ID 집합이 단건 결과의 합집합과 같았다. 실제 이메일·ID 는 저장하지 않았다.
 프로젝트 멤버 목록의 이름은 getMemberNameFromList 로 resolver 에서 재사용한다. getMemberDetail 은 목록과 분리한 상세 캐시를 사용하므로 목록 조회 순서에 따라 반환 필드가 바뀌지 않는다.
 `/v2/wapi/members/search` 는 content 가 문자열이므로 쓰지 않는다.
 `member get --with-org` 는 캘린더 웹 경로를 필요로 하므로 PR1 에서는 지원하지 않는다.

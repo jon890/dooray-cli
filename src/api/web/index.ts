@@ -45,7 +45,9 @@ export function createWebClient(cookie: string, baseUrl: string, publicApiBaseUr
   return new Proxy(methods, {
     get(target, key, receiver) {
       // Promise.resolve / await 가 클라이언트를 thenable 로 오인하지 않게 한다.
-      if (key === "then" || key === "getMemberNameFromList" && !Reflect.has(target, key)) return undefined;
+      if (key === "then") return undefined;
+      // 선택 메서드는 미지원 thrower 대신 undefined 로 돌려 optional 호출을 보존한다.
+      if (key === "getMemberNameFromList" && !Reflect.has(target, key)) return undefined;
       if (Reflect.has(target, key)) return Reflect.get(target, key, receiver);
       if (typeof key === "symbol") return undefined;
       return async () => { throw new DoorayCliError("웹 방식에서는 지원하지 않습니다. auth-mode 를 api-key 로 바꾸세요.", EXIT_PARAM_ERROR); };

@@ -49,33 +49,19 @@ node scripts/check-public-refs.mjs
 
 ## 변경 파일
 
-이 표는 추가 독립 검토 지적을 반영하는 현재 커밋 범위다. 앞선 영역 분리·공용 기반 파일 목록은 이 계획의 이전 커밋에 남아 있다.
+이 표는 PR 자동 리뷰 지적을 반영하는 현재 커밋 범위다. 이전 구현·추가 독립 검토의 파일 목록은 이 계획의 이전 커밋에 남아 있다.
 
 | 파일 | 변경 |
 | --- | --- |
-| `docs/adr/081-web-session-auth.md` | 수정 |
-| `docs/api/web-endpoints.md` | 수정 |
-| `docs/code-architecture.md` | 수정 |
-| `docs/features/web-session-auth/design.md` | 수정 |
-| `src/api/dooray-client.test.ts` | 수정 |
-| `src/api/web/file-transfer.test.ts` | 수정 |
-| `src/api/web/http.test.ts` | 수정 |
-| `src/api/web/http.ts` | 수정 |
 | `src/api/web/index.ts` | 수정 |
-| `src/commands/web-support.test.ts` | 수정 |
-| `src/commands/web-support.ts` | 수정 |
-| `src/commands/web-support/calendar.ts` | 수정 |
-| `src/commands/web-support/member.ts` | 수정 |
-| `src/commands/web-support/messenger.ts` | 수정 |
-| `src/commands/web-support/post.ts` | 수정 |
-| `src/commands/web-support/project.ts` | 수정 |
-| `src/commands/web-support/stream.ts` | 수정 |
-| `src/commands/web-support/wiki.ts` | 수정 |
-| `src/config/store.test.ts` | 수정 |
-| `src/config/store.ts` | 수정 |
-
+| `docs/api/web-endpoints/member.md` | 수정 |
 
 ### 추가 독립 검토 권장 반영
 
 228aa44 기준 Claude 추가 검토는 차단 0건·권장 9건으로 머지 가능이었다. HTML 첨부는 본문 로그인 단어와 무관하게 보존한다. 첨부 307 은 웹 origin 또는 같은 클라우드의 정확한 https file-api origin 만 허용하고 새 Cookie 헤더만 보낸다. 공개 클라이언트의 호스트 규칙은 유지한다.
 선택 메서드가 없는 Proxy 는 undefined 를 반환한다. 오류의 bare 클라우드 호스트를 가리고, 웹 전환의 주소 설정 오류는 안내와 종료 코드 3 을 반환한다. 객체 리터럴·메서드 충돌 검사를 추가했다. 가이드 검사에서 영역별 한국어 이름을 가져오며 파일명 helper·메서드 검색 명령·import 배치를 맞췄다.
+
+
+### PR 자동 리뷰 반영
+
+최종 536c731 을 검토한 Claude 자동 리뷰는 차단 없음, P4 조건식 가독성 1건·P5 다중 이메일 실측 근거 1건이었다. then 과 선택 메서드 조건을 나누고 의도를 주석으로 적었다. 실제 이메일 2개를 각각 조회한 결과의 합집합과 콤마 연결 검색 결과가 일치함을 SESSION 단독 Node 읽기로 확인해 member 경로 문서에 남겼다. 이메일·ID·쿠키는 출력하거나 저장하지 않았으며 실측 브라우저 공간을 닫았다.
