@@ -649,6 +649,7 @@ describe("웹 상위 업무의 사전 확인", () => {
     await expect(program.parseAsync(["node", "dooray", "post", "edit", "--id", "post-1", "--body", "수정", "--parent", "sample/1"])).rejects.toMatchObject({ exitCode: 3 });
     expect(mocks.client.updatePost).not.toHaveBeenCalled();
     expect(mocks.client.setPostParent).not.toHaveBeenCalled();
+    expect(mocks.stopSpinner).toHaveBeenCalledWith(false);
   });
   it("같은 프로젝트의 상위는 먼저 확인한 ID로 변경한다", async () => {
     mocks.getConfigOrThrow.mockResolvedValue({ authMode: "web" });

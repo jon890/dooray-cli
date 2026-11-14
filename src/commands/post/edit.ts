@@ -96,10 +96,15 @@ export const postEditCommand = new Command("edit")
     const post = res.result;
     let validatedParentId: string | undefined;
     if (config.authMode === "web" && opts.parent && !opts.dryRun) {
-      validatedParentId = await resolvePostRef(client, opts.parent);
-      const parent = (await client.getPostStandalone(validatedParentId)).result;
-      if (parent.project.id !== projectId) {
-        throw new DoorayCliError("웹 방식에서는 다른 프로젝트의 상위 업무를 지정할 수 없습니다. auth-mode 를 api-key 로 바꾸세요.", EXIT_PARAM_ERROR);
+      try {
+        validatedParentId = await resolvePostRef(client, opts.parent);
+        const parent = (await client.getPostStandalone(validatedParentId)).result;
+        if (parent.project.id !== projectId) {
+          throw new DoorayCliError("웹 방식에서는 다른 프로젝트의 상위 업무를 지정할 수 없습니다. auth-mode 를 api-key 로 바꾸세요.", EXIT_PARAM_ERROR);
+        }
+      } catch (error) {
+        stopSpinner(false);
+        throw error;
       }
     }
     const members = await ensureMembers(client, projectId);
