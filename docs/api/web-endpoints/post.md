@@ -134,6 +134,34 @@ ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열로 유�
 위 표의 옵션은 대응 경로와 결과를 확인했으므로 지원 계획에 포함한다.
 구현 뒤 CLI 검증에서 확인하지 못한 옵션은 성공으로 간주하지 않고 지원 목록에서 막는다.
 
+## 나머지 옵션과 참여자 보존
+
+| 옵션 | 결정 | 웹 요청에서의 처리 |
+| --- | --- | --- |
+| `--title`, `--body`, `--body-file`, stdin | 지원 | subject·body.content로 전달 |
+| `--mention`, `--mention-group`, `--link-task` | 웹 필드 없이 지원 | 기존 본문 합성을 사용. 실측에서는 자기 자신이나 자기 전용 그룹만 멘션 |
+| `--mime-type` | 지원 | body.mimeType으로 전달. 기존 HTML·Markdown 합성 제약 유지 |
+| `--template` | 지원 | PR1 템플릿 조회 뒤 기존 우선순위로 생성 본문을 합성. 다른 사람에게 알림이 갈 템플릿만 있으면 실측을 건너뛰고 기록 |
+| `--dry-run` | 웹 필드 없이 지원 | 합성 결과만 출력하고 쓰지 않음 |
+| `--no-confirm` | 웹 필드 없이 지원 | 기존 첨부 누락 확인 절차에만 적용 |
+| `--id`, `--url`, URL 위치 인자 | 지원 | standalone 상세 조회로 업무·프로젝트를 확인 |
+| 목록의 페이지·정렬·기간·작성자 옵션 | 지원 | 이 문서의 쿼리 변환과 기존 명령의 결과 필터 사용 |
+| json·quiet·색상 옵션 | 웹 필드 없이 지원 | 변환한 공식 응답에 기존 포매터 적용 |
+
+참여자 왕복은 웹 상세 → 공식 응답 → 웹 수정 요청 순으로 검사한다.
+member.organizationMemberId와 group의 식별자는 읽은 값과 같은 값을 보낸다.
+그룹의 공식 참조에 id가 있으면 이를 인식하고, 현재 DTO의 projectMemberGroupId도 호환 입력으로 받는다.
+웹 요청은 항상 `{type: group, group: {projectMemberGroupId}}`로 보낸다.
+웹의 memberList를 공식 members로 바꾸며, 쓰기에서는 확인한 그룹 ID로만 대상을 지정한다.
+
+emailUser는 읽은 emailAddress·name을 보존한다.
+웹 쓰기 형식은 실측하지 않아 emailUser가 남은 요청은 HTTP 쓰기 전에 미지원 안내와 종료 코드 3으로 끝낸다.
+해당 참여자를 빼고 일부만 보내지 않는다.
+알 수 없는 참여자 종류도 같은 방식으로 거절한다.
+
+미지원 옵션의 기본값 때문에 명령 전체가 막히지 않도록 공용 guard는 Commander가 값의 출처를 cli라고 표시한 옵션만 판정에 전달한다.
+설정이나 기본값으로 들어온 옵션은 사용자가 명시한 옵션으로 보지 않는다.
+
 ## 추가 실측: 수정 시 필드 보존
 
 추가 실측 장소도 코디네이터 지시서가 지정한 프로젝트다.
@@ -162,6 +190,17 @@ ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열로 유�
 `{body, fileIdList: 기존 단건 조회의 목록}`으로 수정한 뒤에도 첨부 연결과 fileMap 참조가 유지됐다.
 변환기는 후자의 명시적인 보존 방식을 사용한다.
 업무 첨부 목록 전체를 댓글의 fileIdList로 보내지 않는다.
+
+## 추가 실측: 일정 없음과 날짜 미정
+
+일정이 있는 임시 업무에 dueDateFlag:false만 PUT하면 서버는 성공 헤더를 반환하지만 기존 flag:true와 날짜를 유지했다.
+`{dueDate:null, dueDateFlag:false}`로 PUT하면 날짜는 null이 됐지만 flag는 true였다.
+웹 UI도 만기일 편집에서 flag:true를 사용했다.
+따라서 일정 없음(false)과 날짜 미정(null, flag:true)을 같은 동작으로 처리하지 않는다.
+
+웹 변환기는 dueDateFlag를 false로 새로 바꾸는 요청을 쓰기 전에 미지원 안내와 종료 코드 3으로 거절한다.
+이미 false인 업무를 본문만 수정할 때는 해당 필드를 생략해 기존 상태를 보존한다.
+명시한 날짜 미정(null, flag:true)은 지원한다.
 
 ## 추가 실측: 파일 목록과 날짜
 
@@ -212,3 +251,28 @@ ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열로 유�
 브라우저 작업 공간은 finish했고, 사용자의 기존 탭은 닫지 않았다.
 임시 HOME을 지우고, 해당 설정 경로 해시의 키체인 항목도 지웠다.
 삭제 후 `find-generic-password` 종료 코드 44를 확인했다.
+
+## 구현 뒤 CLI 확인
+
+2026-11-14 임시 HOME에 실제 CLI의 config set session-cookie -로 SESSION을 입력했다.
+쿠키는 stdin으로만 넘겼고 키체인에 저장했다.
+빌드한 CLI에서 아래 동작이 성공했다.
+
+- post create/get/list/search/edit/replace/workflow/done. 생성의 태그·단계·만기·우선순위·그룹·상위 지정과 수정 뒤 그룹·메타데이터 보존을 확인했다.
+- post get의 일반·json·quiet와 post list의 quiet. 상세의 quiet는 기존 포매터처럼 일반 상세를 유지하고, 목록의 quiet는 기존처럼 업무 번호를 출력한다.
+- list의 created·updated·parent 조건과 comment list의 page·from-author, comment latest. 서로 다른 페이지와 최신 댓글이 기대한 ID와 같았다.
+- comment add/get/list/edit/delete와 comment file upload/list/download/delete. 본문만 수정해도 기존 첨부 카드가 남았고 새 파일을 지워도 기존 카드는 남았다.
+- file upload/list/download/download-all/delete. 받은 텍스트 바이트가 보낸 값과 같았다.
+- 자기 멤버·자기 전용 그룹 멘션과 업무 링크 합성의 dry-run, HTML·Markdown 본문 수정.
+- 다른 사람의 참여자·멘션이 없는 기존 템플릿을 골라 template 생성. 새 템플릿은 만들지 않았다.
+
+main의 post list 명령에는 workflow 옵션이 없다.
+실제 CLI도 이 옵션을 알 수 없는 옵션으로 거부했다.
+새 옵션을 추가하지 않고 getPosts의 상태 쿼리 변환을 HTTP 경계 테스트로 검증한다.
+
+인수용 임시 업무·댓글·첨부·단계·그룹을 삭제하고 접두사 조회 결과가 비었는지 확인했다.
+임시 HOME과 브라우저 공간을 정리했으며, Node가 실제로 사용한 HOME 경로의 해시로 키체인 항목을 지운 뒤 find 종료 코드 44를 확인했다.
+
+임시 단계 생성은 POST `/v2/wapi/projects/!{projectId}/milestones`에 `[{name, status:open}]`를 보냈다.
+임시 그룹 생성은 POST `/v2/wapi/projects/!{projectId}/project-member-groups`에 `[{code, organizationMemberIdList:[자기 ID]}]`를 보냈다.
+이 생성·삭제는 코디네이터가 전달한 사용자 승인(2026-11-14)으로만 수행했다.

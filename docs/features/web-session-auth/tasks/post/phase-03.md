@@ -12,7 +12,7 @@
 
 **요구사항**: REQ6, REQ7, REQ8, REQ17
 
-**근거 문서**: `docs/features/web-session-auth/spec.md`, `docs/features/web-session-auth/design.md`, `docs/api/web-endpoints/post.md`, `docs/guide/post-wiki.md`
+**근거 문서**: `docs/features/web-session-auth/spec.md`, `docs/features/web-session-auth/design.md`, `docs/api/web-endpoints/post.md`
 
 PR1이 `src/api/post/types.ts`의 PostClient와 클라이언트 합성 구조를 제공한다.
 영역별 지원 목록은 `src/commands/web-support/post.ts`에 둔다.
@@ -28,16 +28,15 @@ PR1이 `src/api/post/types.ts`의 PostClient와 클라이언트 합성 구조를
 
 ## 작업 항목
 
-### 1. 명령과 resolver의 클라이언트 경계를 바꾼다
+### 1. 이미 연결된 명령의 웹 쓰기 조건을 검사한다
 
-`src/commands/post/`의 실제 명령 파일을 찾아 createClient를 사용하게 한다.
-PR1에서 이미 바꾼 파일은 중복 수정하지 않는다.
-`src/resolvers/post.ts`, `post-input.ts`, `postRef.ts`, `post-users.ts`, `comment-file-input.ts`, `task-link.ts`, `template.ts`는 PR1이 인터페이스 매개변수로 이미 바꿀 예정이다.
-이 PR에서는 변경 없음으로 예상하며 main의 실제 타입을 확인한다.
-추가 변경이 필요하면 담당 범위를 먼저 확인한다.
-메서드 이름을 Pick으로 다시 나열하지 않는다.
-
-공개 타입과 웹 상세 모두의 fileIdList를 유지해 post file download-all의 기존 소속 검사 로직을 그대로 사용한다.
+PR1이 createClient와 resolver 인터페이스 연결을 이미 완료했다.
+이 PR은 그 교체를 반복하지 않는다.
+post edit의 웹 방식은 상위 업무의 프로젝트를 updatePost 전에 확인한다.
+다른 프로젝트를 상위로 지정하면 본문도 바꾸지 않고 종료 코드 3으로 끝낸다.
+공개 타입과 웹 상세의 fileIdList는 유지한다.
+댓글 파일 delete는 지울 파일 ID를 updatePostComment의 선택 인자로 넘기고, 웹 구현은 기존 연결에서 해당 ID만 뺀다.
+공개 API 키 방식은 기존 인자와 본문을 유지한다.
 
 ### 2. 지원 목록과 사용 안내를 맞춘다
 
@@ -49,17 +48,22 @@ post get·list·search·create·edit·replace·done·workflow·댓글 latest·�
 
 PR1이 만든 `docs/guide/setup.md`의 「업무」 절만 고쳐 미지원 옵션과 웹 응답에서 빠지는 필드를 기록한다.
 README·SKILL·common.md의 링크는 PR1이 이 가이드로 통일하므로 이 PR에서 고치지 않는다.
-`docs/api/web-endpoints.md`에서는 post 실측 문서로 연결하는 색인 줄만 고친다.
+web-endpoints.md의 post 색인 줄은 PR1이 이미 만들었으므로 변경하지 않는다.
 댓글 목록의 첫 조회가 큰 대화에서 오래 걸릴 수 있음을 설명한다.
 지원 목록과 이 가이드의 표가 같은지 테스트한다.
 필드 생략은 mailUsers 등 실측에서 없는 필드에 한정하고 관측하지 않은 값을 만들어 내지 않는다.
 
-`src/commands/post/web-support.test.ts`에서 명령별 지원 여부와 setup.md 업무 표의 일치, 아직 지원하지 않는 경로의 HTTP 호출 전 차단을 검사한다.
-API 키 방식은 순수 판정 함수를 직접 부르거나 store를 mock하여 실제 사용자 설정을 읽지 않고 검사한다.
-명령 테스트는 src/commands에 둔다.
-기존 명령 회귀 테스트로 상위 변경과 본문 수정을 함께 요청한 정상 경로도 확인한다.
+기존 `src/commands/web-support.test.ts`가 지원 목록과 가이드 표의 일치를 검사한다.
+같은 검사를 새 테스트 파일로 반복하지 않는다.
 
-### 3. 독립 검증과 문서 정리를 마친다
+### 3. `src/commands/web-support.test.ts`에 옵션 판정 회귀 테스트를 추가한다
+승인된 공용 guardWebCommand를 고쳐 getOptionValueSource(key)가 cli인 옵션만 미지원 옵션 판정에 넘긴다.
+기본값이 있는 미지원 옵션의 생략·명시 사례를 기존 공용 테스트에 추가한다.
+API 키 방식은 순수 판정 함수를 직접 부르거나 store를 mock하고 실제 사용자 설정을 읽지 않는다.
+명령 테스트는 src/commands에 둔다.
+post edit의 같은 프로젝트 상위 변경과 다른 프로젝트의 쓰기 전 거절을 기존 명령 테스트에 추가한다.
+
+### 4. 독립 검증과 문서 정리를 마친다
 
 인수 검증 계획을 실행하고 REQ6·REQ7·REQ8 증거를 PR 본문에 연결한다.
 웹 방식으로 실행한 명령과 만들고 지운 데이터를 기록한다.
@@ -72,7 +76,7 @@ API 키 방식은 순수 판정 함수를 직접 부르거나 store를 mock하�
 
 ```bash
 # cwd: 저장소 루트
-pnpm exec vitest run src/commands/post/web-support.test.ts
+pnpm exec vitest run src/commands/web-support.test.ts src/commands/post/edit.test.ts
 pnpm test
 pnpm tsc --noEmit
 pnpm run build
@@ -94,8 +98,9 @@ node scripts/check-public-refs.mjs
 | `src/api/web/index.ts` | 수정 (post 등록 한 줄) |
 | `src/commands/web-support/post.ts` | 수정 (PR1이 만든 영역 목록에 실제 지원 명령 등록) |
 | `src/commands/post/**/*.ts` | 수정 (기존 명령의 클라이언트 생성과 회귀 테스트) |
-| `src/commands/post/web-support.test.ts` | 신규 (지원 목록·가이드·호출 전 차단 검사) |
+| `src/commands/web-support.ts` | 수정 (명시한 CLI 옵션만 판정하는 승인된 공용 변경) |
+| `src/commands/web-support.test.ts` | 수정 (기본값·명시 옵션의 판정 회귀 검사) |
 | `docs/guide/setup.md` | 수정 (업무 절의 지원 범위·생략 필드 안내) |
-| `docs/api/web-endpoints.md` | 수정 (post 문서로 연결하는 색인 줄) |
 | `docs/api/web-endpoints/post.md` | 수정 (구현 뒤 재확인한 경로·사례) |
 | `docs/features/web-session-auth/tasks/post/index.json` | 수정 (완료 상태) |
+| `docs/features/web-session-auth/tasks/post/verification-result.md` | 신규 (실행 결과와 문서 대조 근거) |

@@ -62,8 +62,10 @@ PR1이 머지되었다는 코디네이터의 메시지를 받기 전에는 구�
 상위 지정은 상위 상세의 번호를 `parent.number`로 보낸다.
 태그 ID는 웹의 `tagIdList`로 바꾸고, 템플릿 합성 결과도 같은 생성 요청을 거친다.
 수정 전 웹 상세를 읽고 요청에 없는 tagIdList·milestoneId·dueDate·dueDateFlag·priority·fileIdList·참여자를 기존 값으로 채워 보낸다.
-누락 여부는 속성 존재 여부로 확인하고 명시한 빈 배열·null·false를 기존 값으로 덮지 않는다.
+undefined 값도 누락으로 보고 명시한 빈 배열·null·false를 기존 값으로 덮지 않는다.
 post replace의 태그·단계 생략과 post edit의 본문만 수정하는 호출을 회귀 사례로 둔다.
+일정 없음(false)으로 새로 바꾸는 요청은 실측에서 무시됐으므로 쓰기 전에 코드 3으로 거절한다.
+이미 false인 업무의 본문 수정은 이 필드를 생략해 보존하며 날짜 미정(null, flag:true)과 구분한다.
 수정 결과의 `{id, number, version}`는 공식 단위 응답으로 바꾼다.
 완료 처리는 프로젝트 워크플로 목록에서 순서상 대표 완료 상태를 선택해 전체 상태 변경 경로로 보낸다.
 완료 상태가 없거나 워크플로 응답이 깨지면 쓰기 전에 오류로 끝낸다.
@@ -76,6 +78,8 @@ targetProjectId는 현재 프로젝트 ID로 고정하고, 상위 업무의 소�
 공개 쪽 응답도 공식 post.id·project.id 참조를 받는다는 사실을 타입에 표현한다.
 PR1 머지 뒤 실제 시그니처를 대조하고 기존 소비자 코드의 호환성은 tsc로 검사한다.
 공개 API 클라이언트의 런타임 동작은 바꾸지 않는다.
+참여자 종류별 왕복 테스트를 두고, 웹 쓰기를 실측하지 않은 emailUser와 알 수 없는 종류는 버리지 않고 쓰기 전에 미지원 안내와 종료 코드 3으로 끝낸다.
+그룹은 공식 id와 기존 DTO의 projectMemberGroupId를 인식해 웹 group.projectMemberGroupId로 보낸다.
 
 ### 2. 댓글 메서드를 구현한다
 
@@ -83,7 +87,9 @@ PR1 머지 뒤 실제 시그니처를 대조하고 기존 소비자 코드의 �
 작성은 `sendMailFlag:false`와 본문을 배열로 감싸고 이메일을 발송하지 않는다.
 단건 조회는 응답의 postId가 대상 업무와 같은지 확인한다.
 수정 직전 단건을 읽어 해당 댓글의 fileIdList를 그대로 보낸다.
-본문 링크 변경·댓글 파일 upload/delete의 본문 수정에서도 기존 첨부 카드 연결을 잃지 않게 한다.
+본문 링크 변경·댓글 파일 upload의 본문 수정에서도 기존 첨부 카드 연결을 잃지 않게 한다.
+댓글 파일 delete는 선택 인자로 지울 파일 ID를 전달해 fileIdList에서 그 ID만 제외한다.
+이 선택 인자는 웹 구현에서만 사용하고 공개 요청 본문에는 추가하지 않는다.
 업무 전체의 첨부 목록을 댓글 연결 목록으로 사용하지 않는다.
 본문·creator·post·첨부 참조를 공식 필드로 바꾼다.
 mailUsers가 없으면 키를 생략한다.
@@ -129,3 +135,4 @@ node scripts/check-pii.mjs
 | `src/api/post/types.ts` | 수정 (승인된 상위 변경의 공식 응답 반환 타입과 소비자 호환성) |
 | `src/api/post/web-post.test.ts` | 신규 (업무 요청·응답·필터 검사) |
 | `src/api/post/web-comment.test.ts` | 신규 (댓글 커서·변환 검사) |
+| `src/api/web/fixtures/post/responses.json` | 신규 (실측 구조를 본떠 직접 작성한 가짜 응답) |

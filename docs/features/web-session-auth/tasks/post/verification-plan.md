@@ -30,14 +30,14 @@ macOS에서는 그 설정 경로의 키체인 항목을 사용한다.
 | REQ6 | 자기 임시 업무 | post list/get/search를 일반·json·quiet로 실행하고 공식 필드 표와 비교 | ID 문자열·참조 객체·시간대 유지, fileIdList 유지, 내부 필드 제외 | 임시 HOME과 로그인된 웹 세션 | worker | 없음 | PR 전 |
 | REQ6 | 서로 다른 생성 시각의 임시 댓글 | post comment list/get/latest와 list의 asc·desc·page·latest·since를 비교 | page별 댓글 구분, 오름차순 정렬 일치, 최신 조회가 최신 구간만 요청, 중복·무한 조회 없음 | 같은 임시 환경 | worker | 없음 | PR 전 |
 | REQ6 | 실측 구조를 본뜬 가짜 응답 | 업무의 dueDate·startedAt·endedAt, 댓글의 createdAt·modifiedAt, 파일의 createdAt를 필드별로 검사 | 실측의 오프셋 형식을 입력으로 사용, 파일 +HHmm를 +HH:mm으로 변환, null과 누락 구분 | 가짜 HTTP | worker | 없음 | PR 전 |
-| REQ7 | 자기 담당자·참조자와 임시 그룹·단계 | create의 milestone·due-date·priority·cc·to-group·cc-group·tag·workflow를 옵션별로 실행하고 상세 재조회 | 옵션 표의 대응 필드가 남음, 중복 참조 제외는 서버 동작과 일치 | 같은 임시 환경 | worker | 없음 | PR 전 |
-| REQ7 | 태그·단계·만기일·참여자·첨부가 있는 임시 업무 | post replace, 본문만 바꾸는 edit, edit의 to·cc·tag 추가·삭제·clear를 실행 | 요청하지 않은 필드 보존, 명시적으로 지운 배열만 비워짐, 본문과 제목 변경 성공 | 같은 임시 환경 | worker | 없음 | PR 전 |
-| REQ7 | 임시 상위·하위 업무 | create --parent, edit --parent, workflow, done을 실행하고 상세 재조회 | 같은 프로젝트에서 상위 연결·전체 상태·완료일이 바뀜, 다른 프로젝트로 이동하지 않음 | 같은 임시 환경 | worker | 없음 | PR 전 |
+| REQ7 | 코디네이터의 임시 단계·그룹 승인(사용자 2026-11-14), 자기 담당자·참조자와 임시 그룹·단계 | create의 milestone·due-date·priority·cc·to-group·cc-group·tag·workflow를 옵션별로 실행하고 상세 재조회 | 옵션 표의 대응 필드가 남음, 그룹 참여자 보존, 중복 참조 제외는 서버 동작과 일치 | 같은 임시 환경 | worker | 없음 (코디네이터의 임시 단계·그룹 승인 완료, 사용자 2026-11-14) | PR 전 |
+| REQ7 | 태그·단계·만기일·참여자·첨부가 있는 임시 업무 | post replace, 본문만 바꾸는 edit, edit의 to·cc·tag 추가·삭제·clear를 실행 | 요청하지 않은 필드 보존, 명시적으로 지운 배열만 비워짐, 본문과 제목 변경 성공, 일정 없음으로 새로 바꾸는 요청은 쓰기 전 코드 3 | 같은 임시 환경 | worker | 없음 | PR 전 |
+| REQ7 | 임시 상위·하위 업무 | create --parent, edit --parent, workflow, done을 실행하고 상세 재조회 | 같은 프로젝트에서 상위 연결·전체 상태·완료일이 바뀜, 이동 전후 번호·ID·태그·단계·상태 보존, 다른 프로젝트 상위는 본문 쓰기 전에 거절 | 같은 임시 환경 | worker | 없음 | PR 전 |
 | REQ7 | 읽을 수 있는 기존 템플릿 | 다른 사람의 멘션·참조가 없는지 먼저 보고 create --template에 자기 담당자·본문 명시 | 기존 우선순위 유지. 안전한 템플릿이 없으면 생성을 건너뛰고 이유 기록, 템플릿 새로 만들지 않음 | 같은 임시 환경 | worker | 없음 | PR 전 |
 | REQ6, REQ7 | 파일 연결이 있는 임시 댓글 | comment add/edit/delete와 comment file upload/list/download/delete 실행 | 본문만 수정해도 기존 첨부 카드 연결 유지, 원본 바이트 일치, 삭제 후 연결·파일 제거 | 같은 임시 환경 | worker | 없음 | PR 전 |
-| REQ4, REQ7 | 일반 파일·본문 이미지·댓글 첨부 | file upload/list/download/download-all/delete 실행 | 목록·상세·댓글 단건의 소속 근거 일치, 원본 바이트 일치, 업무 밖 파일 제외 | 같은 임시 환경 | worker | 없음 | PR 전 |
+| REQ4, REQ7 | 일반 파일·본문 이미지·댓글 첨부 | file upload/list/download/download-all/delete 실행 | 업무 첨부 목록·상세의 소속 근거 일치, 원본 바이트 일치, 업무 밖 파일 제외 | 같은 임시 환경 | worker | 없음 | PR 전 |
 | REQ3, REQ4, REQ9 | PR1 전송 helper와 가짜 서버 응답 | `src/api/post/web-file.test.ts`로 직접 200·허용 307·외부 307·재리다이렉트·로그인 302·HTML 200 검사 | 외부 호스트에 쿠키 없음, 세션 만료는 종료 코드 2와 안내, URL·비밀값 노출 없음 | 가짜 HTTP와 임시 파일 | worker | 없음 | PR 전 |
-| REQ8, REQ17 | 방식별 설정 대역 | `src/commands/post/web-support.test.ts`에서 실제 지원 경로와 미지원 경로 판정·가이드 표 비교, API 키 방식 직접 판정 | 아직 지원하지 않는 경로는 호출 전 종료 코드 3, API 키 방식 통과, 실제 사용자 설정 미조회 | 가짜 HTTP와 임시 설정 | worker | 없음 | PR 전 |
+| REQ8, REQ17 | 방식별 설정 대역 | `src/commands/web-support.test.ts`에서 실제 지원 경로와 미지원 경로 판정·가이드 표 비교, API 키 방식 직접 판정 | 아직 지원하지 않는 경로는 호출 전 종료 코드 3, API 키 방식 통과, 실제 사용자 설정 미조회 | 가짜 HTTP와 임시 설정 | worker | 없음 | PR 전 |
 | REQ9 | 만료·권한 실패의 가짜 응답 | 업무·댓글 읽기와 쓰기에 401·403 주입 | 401 쿠키 재입력 안내, 403 권한 안내, 종료 코드 2 유지 | 가짜 HTTP | worker | 없음 | PR 전 |
 | REQ6, REQ7 | 전체 구현 | phase-03의 테스트·타입·빌드·패키지·공개 문서 검사 실행 | 검사 통과, 기존 API 키 방식 회귀 없음. api:inventory는 웹 지원의 증거로 세지 않음 | 작업 워크트리 | worker | 없음 | PR 전 |
 | REQ6, REQ7, REQ8 | PR과 검증 증거 | 독립 검토 결과와 같은 head의 CI 확인 | 필수 검사·독립 검토 통과, 미해결 리뷰 없음 | GitHub PR | 코디네이터 | push | PR 뒤 |
