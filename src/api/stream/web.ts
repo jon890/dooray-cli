@@ -8,6 +8,8 @@ import { date, identifier, invalidResponse, pick, row, rows, text, type Row } fr
 import type { WebContext } from "../web/context.js";
 
 /** 웹 화면의 스트림 패널이 보내는 서비스 목록 그대로다. 비우면 빈 목록이 온다. */
+/** 걸러져 빈 페이지를 이어 받는 상한. 서버가 커서를 끝없이 주는 이상 동작에도 끝나게 한다. */
+const MAX_EMPTY_PAGES = 50;
 const SERVICES = "project,mail,calendar,drive,wiki,contacts,ai";
 
 function map(references: Row, name: string): Row {
@@ -15,7 +17,7 @@ function map(references: Row, name: string): Row {
   return value === undefined || value === null ? {} : row(value);
 }
 
-function entry(maps: Row, id: string, name: string): Row {
+function entry(maps: Row, id: string): Row {
   const found = maps[id];
   if (found === undefined) return invalidResponse();
   return row(found);
@@ -79,7 +81,7 @@ export function convertStreamCards(cards: Row[], references: Row): ConvertedStre
   for (const card of cards) {
     const type = text(card.type);
     if (type === "mail") {
-      const id = identifier(row(card.mail).id), mail = entry(mails, id, "mail"), inner = row(mail.mail ?? {});
+      const id = identifier(row(card.mail).id), mail = entry(mails, id), inner = row(mail.mail ?? {});
       items.push({ type, mail: {
         id, folder: { id: identifier(mail.folderId), name: text(mail.folderName) },
         sentAt: date(inner.sentAt ?? mail.createdAt), subject: text(mail.subject),
@@ -87,20 +89,20 @@ export function convertStreamCards(cards: Row[], references: Row): ConvertedStre
         body: body(mail.body),
       } });
     } else if (type === "post") {
-      const ref = row(card.post), id = identifier(ref.id), post = entry(posts, id, "post");
+      const ref = row(card.post), id = identifier(ref.id), post = entry(posts, id);
       items.push({ type, post: {
         read: ref.read === true, id, projectId: identifier(post.projectId), users: users(post.users),
         subject: text(post.subject), body: body(post.body), createdAt: date(post.createdAt), updatedAt: date(post.updatedAt),
       } });
       for (const sub of eventIds(card)) {
-        const eventId = identifier(sub.id), ev = entry(events, eventId, "event");
+        const eventId = identifier(sub.id), ev = entry(events, eventId);
         items.push({ type: "event", event: {
           read: sub.read === true, id: eventId, type: text(ev.type), postId: identifier(ev.postId),
           creator: { type: text(row(ev.creator).type), member: who(row(ev.creator).member) }, body: body(ev.body),
         } });
       }
     } else if (type === "page") {
-      const ref = row(card.page), id = identifier(ref.id), page = entry(pages, id, "page"), create = row(page.create);
+      const ref = row(card.page), id = identifier(ref.id), page = entry(pages, id), create = row(page.create);
       items.push({ type, page: {
         read: ref.read === true, id, wikiId: identifier(page.wikiId),
         ...(page.parentPageId ? { parentPageId: identifier(page.parentPageId) } : {}),
@@ -120,7 +122,7 @@ export function convertStreamCards(cards: Row[], references: Row): ConvertedStre
         else return invalidResponse();
       }
     } else if (type === "schedule") {
-      const ref = row(card.schedule), id = identifier(ref.id), schedule = entry(schedules, id, "schedule");
+      const ref = row(card.schedule), id = identifier(ref.id), schedule = entry(schedules, id);
       const rule = schedule.recurrenceRule && typeof schedule.recurrenceRule === "object" ? pick(row(schedule.recurrenceRule), ["frequency", "interval", "until", "byday", "bymonth", "bymonthday"]) : undefined;
       items.push({ type, schedule: {
         read: ref.read === true, id, calendarId: identifier(schedule.calendarId), users: scheduleUsers(schedule.users),
@@ -137,18 +139,24 @@ export function createStreamWeb(context: WebContext): StreamClient {
   let warned = false;
   return {
     async getStreams(params) {
-      const response = await context.http.request("v2/wapi/streams", {
-        searchParams: { services: SERVICES, size: params?.size, before: params?.before, read: params?.read },
-      });
-      const result = row(response.result), references = row(result.references ?? {});
-      const { items, dropped } = convertStreamCards(rows(result.contents), references);
-      if (dropped > 0 && !warned) {
-        warned = true;
-        process.stderr.write("ℹ  웹 응답에는 공식 활동 종류에 없는 항목(캘린더 공유 알림, 위키 활동 등)이 있어 뺐습니다.\n");
+      let before = params?.before;
+      // 한 페이지가 전부 공식 종류 밖이라 비면, 호출자가 끝으로 오해하지 않게 다음 페이지를 이어 받는다.
+      for (let attempt = 0; ; attempt += 1) {
+        const response = await context.http.request("v2/wapi/streams", {
+          searchParams: { services: SERVICES, size: params?.size, before, read: params?.read },
+        });
+        const result = row(response.result), references = row(result.references ?? {});
+        const cards = rows(result.contents);
+        const { items, dropped } = convertStreamCards(cards, references);
+        if (dropped > 0 && !warned) {
+          warned = true;
+          process.stderr.write("ℹ  웹 응답에는 공식 활동 종류에 없는 항목(캘린더 공유 알림, 위키 활동 등)이 있어 뺐습니다.\n");
+        }
+        const next = references.nextTimestamp;
+        const cursor = typeof next === "string" && next !== "" ? next : typeof next === "number" ? String(next) : undefined;
+        if (items.length === 0 && cards.length > 0 && cursor !== undefined && cursor !== before && attempt < MAX_EMPTY_PAGES) { before = cursor; continue; }
+        return { header: response.header, result: items, ...(cursor !== undefined && { cursor }) };
       }
-      const next = references.nextTimestamp;
-      const cursor = typeof next === "string" && next !== "" ? next : typeof next === "number" ? String(next) : undefined;
-      return { header: response.header, result: items, ...(cursor !== undefined && { cursor }) };
     },
   };
 }

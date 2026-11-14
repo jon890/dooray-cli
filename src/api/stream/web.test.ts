@@ -76,4 +76,16 @@ describe("웹 스트림", () => {
     respond(broken);
     await expect(client().getStreams()).rejects.toMatchObject({ exitCode: 1 });
   });
+
+  it("한 페이지가 전부 공식 종류 밖이라 비면 다음 페이지를 이어 받아 끝으로 오해하지 않게 한다", async () => {
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const onlyDropped = { header: fixtures.page.header, result: { totalCount: 1, contents: [fixtures.page.result.contents[4]], references: { nextTimestamp: "cursor-2" } } };
+    const bodies = [onlyDropped, fixtures.page];
+    const calls: URL[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (request: Request) => { calls.push(new URL(request.url)); return Response.json(bodies[Math.min(calls.length - 1, 1)]); }));
+    const res = await client().getStreams({ size: 1 });
+    expect(calls).toHaveLength(2);
+    expect(calls[1].searchParams.get("before")).toBe("cursor-2");
+    expect(res.result!.length).toBeGreaterThan(0);
+  });
 });

@@ -9,7 +9,6 @@ import type {
   CalendarEventDetail,
   CalendarEventUser,
   CalendarEventWriteRequest,
-  DoorayApiHeader,
 } from "../types.js";
 import { apiPath } from "../api-path.js";
 import { date, identifier, invalidResponse, pick, referenceMap, row, rows, text, type Row } from "../web/convert.js";
@@ -18,7 +17,6 @@ import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 
 const HEADERS = { "Dooray-Api-Version": "1.2" };
-const NO_HEADER: DoorayApiHeader = { isSuccessful: true, resultCode: 0, resultMessage: "" };
 const UNSUPPORTED = "웹 방식에서는 지원하지 않습니다. auth-mode 를 api-key 로 바꾸세요.";
 const unsupported = (): never => { throw new DoorayCliError(UNSUPPORTED, EXIT_PARAM_ERROR); };
 
@@ -186,7 +184,7 @@ export function createCalendarWeb(context: WebContext): CalendarClient {
     },
     async deleteCalendarEvent(calendarId, eventId, deleteType) {
       const response = await http.request(apiPath`v2/wapi/calendars/${calendarId}/schedules/${eventId}`, { method: "DELETE", searchParams: { deleteType }, headers: HEADERS });
-      return { header: response.header ?? NO_HEADER, result: null };
+      return { header: response.header, result: null };
     },
     fetchBusyHours: async () => unsupported(),
   };
