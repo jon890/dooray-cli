@@ -70,6 +70,7 @@ src/
 - `api/<영역>/types.ts` 가 인터페이스와 DTO 를 함께 갖는 것은 스펙 REQ3 의 세 파일 꼴을 따른다. 한 영역의 types.ts 가 800줄을 넘으면 `types-<주제>.ts` 로 나누고 `types.ts` 가 재내보낸다.
 - 영역 사이 DTO 참조(예: post 의 담당자가 member 의 타입을 쓰는 것)는 상대 영역의 `types.ts` 만 가져온다.
 - project 템플릿과 post 가 함께 쓰는 PostBody·PostUsers 는 common/types.ts 에 둔다. PostUsers 가 쓰는 PostUser·Member·EmailUser·Group·Workflow 도 함께 두어 common 이 다른 api 영역을 가져오지 않게 하고 project 와 post 의 타입 순환을 없앤다. 원래 영역 경로는 타입을 재내보낸다.
+- BusyHoursDepartment·BusyHoursOrganization 은 member/types.ts 에 둔다. calendar 가 이 조직 정보 타입을 가져오며, member 는 calendar 를 가져오지 않는다. 기존 calendar 경로는 타입을 재내보낸다.
 - `api/public/` 은 웹의 `api/web/` 와 짝이다. 공개 구현의 공용 부분을 영역 폴더 밖에 두어, 영역 폴더에는 그 영역 것만 남긴다.
 
 ### R1·R2 에서 정할 것

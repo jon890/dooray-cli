@@ -1,4 +1,5 @@
 /** calendar 영역의 DTO·요청 파라미터와 클라이언트 계약이다. */
+import type { BusyHoursDepartment, BusyHoursOrganization } from "@/api/member/types.js";
 import type { DoorayApiResponse } from "@/api/common/types.js";
 
 // ─── Calendar ───────────────────────────────────────────
@@ -188,21 +189,6 @@ export interface BusyHoursRequest {
   endDateTime: string;
 }
 
-/**
- * 소속 부서. 공식 문서는 부서가 없으면 `id` 와 `name` 이 각각 null 이라고 적는다.
- * 실측으로는 부서 이름이 있는데도 `id` 가 null 로 왔다. `id` 로 부서 유무를 판단하지 않는다.
- */
-export interface BusyHoursDepartment {
-  id: string | null;
-  name: string | null;
-}
-
-/** `member get` 응답의 `defaultOrganization` 은 id 뿐이고, 이름은 이 응답에만 온다. */
-export interface BusyHoursOrganization {
-  id: string | null;
-  name: string | null;
-}
-
 export interface BusyHoursMember {
   id: string;
   name?: string;
@@ -241,3 +227,5 @@ export interface CalendarClient {
   deleteCalendarEvent(calendarId: string, eventId: string, deleteType: CalendarEventDeleteType): Promise<DeleteCalendarEventResponse>;
   fetchBusyHours(request: BusyHoursRequest): Promise<BusyHoursResponse>;
 }
+
+export type { BusyHoursDepartment, BusyHoursOrganization } from "@/api/member/types.js";
