@@ -40,7 +40,8 @@ src/
   body/           # 본문 입력, 마크업, 참조와 첨부 확인 규칙. API·캐시 타입을 모른다
   utils/          # 오류, 종료 코드, 표준 입력, 출력 정리 같은 영역 공통 부품
   commands/       # 명령 하나에 파일 하나. 영역마다 index.ts 가 명령 나무를 내보낸다. 위 계층을 조합한다
-    messenger/  project/  member/  post/  wiki/  mail/  calendar/  stream/
+    messenger/  project/  member/  post/  wiki/  mail/  calendar/  stream/  feedback/
+    web-support/    # 웹 방식이 지원하는 명령·옵션 목록. web-support.ts 가 영역별 파일을 모은다 (ADR-081)
 ```
 
 ### 목표
@@ -115,9 +116,9 @@ src/
 ### 계층별 책임
 
 ```
-commands/* → resolvers/* → cache/store + api/dooray-client   (읽기: 이름 → id 번역)
+commands/* → resolvers/* → cache/store + api/<영역>/types   (읽기: 이름 → id 번역. 영역 계약만 받는다)
 commands/mail/{get,attachment,reply} → resolvers/mail-input → api/mail/imap   (캐시 없이 mail id → UID 조회)
-commands/* → services/*  → cache/store + api/dooray-client + config/store   (쓰기: 변경과 캐시 무효화, ADR-042)
+commands/* → services/*  → cache/store + api/<영역>/types + config/store   (쓰기: 변경과 캐시 무효화, ADR-042)
 commands/* → formatters/*
 commands/* → utils/errors
 commands/setup|doctor|skill → skill/manager → skill/manifest
@@ -130,13 +131,13 @@ editor/    → api/<영역>/types + cache/types + utils (편집 데이터 타입
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
 - `api/dooray-client`는 인증 방식에 맞는 구현을 고른다. 공개 HTTP 는 `api/public/http`, 웹 HTTP 는 `api/web/http` 가 맡는다.
 - 두 HTTP 구현은 `api/rate-limiter`의 토큰 버킷을 재사용한다. 호출부는 요청 간격을 신경 쓰지 않는다 ([ADR-039](adr/039-rate-limit-token-bucket.md))
-- 이름을 id 로 바꾸는 resolver 는 필요한 영역 계약을 받아 캐시를 우선 조회하고, 만료 시 `api/dooray-client` 를 호출한다.
+- 이름을 id 로 바꾸는 resolver 는 필요한 영역 계약(`api/<영역>/types.ts`)을 받아 캐시를 우선 조회하고, 만료 시 그 계약의 메서드를 호출한다. 어느 구현(공개·웹)인지는 모른다.
 - `resolvers/mail-input` 은 입력 형태를 분류하고, mail id 는 캐시 없이 `api/mail/imap` 에서 UID 로 조회한다.
 - `resolvers/*`는 읽기 전용이다. 쓰기 함수를 넣지 않는다
 - 캐시의 유효성을 깨는 변경은 `services/*`를 거친다. 그 함수가 성공 직후 무효해진 캐시를 지운다 ([ADR-042](adr/042-cache-invalidation-on-mutation.md))
   - 엔티티를 바꾸는 API 호출은 그 엔티티의 캐시 파일 하나를, 인증 계정·환경 변경은 전체 캐시를 지운다
 - `services/*`는 `resolvers/*`를 의존하지 않는다. 둘을 조합하는 것은 `commands/*`의 몫이다
-- `commands/*`는 resolvers, api/dooray-client, formatters 조합
+- `commands/*`는 `createClient`(`api/dooray-client`)로 구현을 고르고, resolvers·services·formatters 를 조합한다
 
 ## API Client 구조
 
@@ -184,7 +185,7 @@ rg "^\s+(async )?\w+\(" src/api/*/public.ts src/api/*/web.ts
 - `index.ts` 의 `parseAsync().catch` 가 전역에서 받는다. `오류: ` 접두사를 붙여 stderr 로 내고
   `DoorayCliError` 의 `exitCode` 로 끝내며 `trackLastRun` 기록도 여기서 한다
 - 그래서 `commands/*` 는 던지기만 한다. 명령 안에서 `process.exit` 를 부르면 위 셋을 건너뛴다
-- API 4xx: exitCode 1, 인증 401/403: exitCode 2, 파라미터: exitCode 3, config 없음: exitCode 4, 파일 시스템 오류: exitCode 5
+- 종료 코드의 값과 뜻은 `src/utils/exit-codes.ts` 가 소유한다(API 오류 1, 인증 2, 파라미터 3, config 4, 파일 시스템 5, 호출 한도 초과 6 등)
 
 ## 출력 원칙
 
@@ -229,9 +230,7 @@ CLI 버전은 `package.json`을 단일 원천으로 삼고 `tsup` 빌드 시 번
 빌드하지 않고 소스를 직접 실행하면 그 값이 없으므로 `"0.0.0-dev"` 가 된다.
 빌드 검증에서 `dist/index.js --version` 과 `package.json` 일치를 확인한다.
 
-빌드 옵션은 `package.json` 의 스크립트 문자열이 아니라 `tsup.config.ts` 가 소유한다.
-`entry`, `format: ["cjs"]`, `target: "node18"`, `clean`, shebang banner,
-그리고 `imapflow`·`mailparser`·`nodemailer` 를 번들에서 빼는 `external` 이 거기 있다.
+빌드 옵션(entry, format, target, banner, external 등)은 `package.json` 의 스크립트 문자열이 아니라 `tsup.config.ts` 가 소유한다.
 
 ```json
 // package.json 핵심

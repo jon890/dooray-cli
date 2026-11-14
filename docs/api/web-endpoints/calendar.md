@@ -12,7 +12,7 @@
 | 없음, `1.1` | 항목이 평평하다(`permission`, `color`, `listed`, `checked`, `default` 가 항목에 바로 있다). `totalCount` 가 없다 |
 | `1.2` | 항목에 `me` 객체(`role`, `color`, `listed`, `checked`, `order`, `default` …)가 있고 `result.totalCount` 가 있다. 공식 응답의 모양이다 |
 
-`Dooray-Caller: WEB` 은 응답에 영향이 없었다. 메신저 경로(`/messenger/...`)는 이 헤더를 보내지 않는다. 이 영역의 웹 구현은 호출마다 헤더를 붙인다. 다른 영역(PR1 의 멤버·프로젝트 경로)이 같은 헤더로 응답이 바뀌는지는 이 PR 에서 확인하지 않았다.
+`Dooray-Caller: WEB` 은 응답에 영향이 없었다. 메신저 경로(`/messenger/...`)는 이 헤더를 보내지 않는다. 이 영역의 웹 구현은 호출마다 헤더를 붙인다. 멤버·프로젝트 경로가 같은 헤더로 응답이 바뀌는지는 확인하지 않았다.
 
 ## 경로와 쿼리
 
@@ -23,7 +23,7 @@
 | getCalendarEvent | GET `/v2/wapi/calendars/{calendarId}/schedules/{eventId}` | 없음 | `result.content` 와 `references`. 반복 일정의 회차 id(`<id>-<날짜T시각Z>`)도 그대로 받는다. `calendarId` 자리에 `*` 는 서버 오류다 |
 | createCalendarEvent | POST `/v2/wapi/schedules` | 원소 하나인 배열(아래 본문) | `result: [{id, masterScheduleId}]` |
 | updateCalendarEvent | PUT `/v2/wapi/calendars/{calendarId}/schedules/{eventId}` | 바꿀 필드만 담은 객체 | `result: {content}`. 제목만 보내도 다른 필드(위치·본문·알림·공개 범위)는 그대로다 |
-| deleteCalendarEvent | DELETE `/v2/wapi/calendars/{calendarId}/schedules/{eventId}` | 쿼리 `deleteType=this|wholeFromThis|whole` | `result: null`. 반복 일정의 회차 id 에 `this` 는 그 회차만, `wholeFromThis` 는 그 회차부터, `whole` 은 전체를 지운다. `deleteType` 이 없으면 회차 id 로 불러도 전체가 지워진다. 본문에 `deleteType` 을 넣는 방식은 듣지 않는다 |
+| deleteCalendarEvent | DELETE `/v2/wapi/calendars/{calendarId}/schedules/{eventId}` | 쿼리 `deleteType=this\|wholeFromThis\|whole` | `result: null`. 반복 일정의 회차 id 에 `this` 는 그 회차만, `wholeFromThis` 는 그 회차부터, `whole` 은 전체를 지운다. `deleteType` 이 없으면 회차 id 로 불러도 전체가 지워진다. 본문에 `deleteType` 을 넣는 방식은 듣지 않는다 |
 | fetchBusyHours | (대응 경로 없음) | | 아래 「소속 조회」 |
 
 생성 본문(원소 하나). 실측으로 통과한 꼴이다.
@@ -80,7 +80,7 @@ HTTP 200 이어도 `header.isSuccessful` 이 `false` 인 오류가 있다. 웹 H
 
 ## 소속 조회(fetchBusyHours)
 
-공식 `POST /calendar/v1/fetch-busy-hours` 는 `member get --with-org` 이 멤버의 소속 회사·부서·직책을 얻으려고 빌려 쓴다([ADR-079](../adr/079-member-get-with-org.md)). 바쁨 시간 자체는 쓰지 않는다.
+공식 `POST /calendar/v1/fetch-busy-hours` 는 `member get --with-org` 이 멤버의 소속 회사·부서·직책을 얻으려고 빌려 쓴다([ADR-079](../../adr/079-member-get-with-org.md)). 바쁨 시간 자체는 쓰지 않는다.
 웹의 `POST /v2/wapi/freebusy/fetch` 는 `requestType` 쿼리 값과 요청 본문이 공식과 다르다(웹 화면은 `organizationMemberIdList`·`timeMin`·`timeMax`·`responseType` 을 보낸다). `requestType` 값을 알아내지 못해(`all`, `day` 는 404) 응답을 실측하지 못했다.
 웹 응답의 멤버 참조(`references.organizationMemberMap`)에는 `department`, `position`, `corporate`, `defaultOrganizationId` 가 문자열·id 로 있다. 부서 id 는 없다. 이 값으로 소속을 채울 수 있는지는 미실측이다.
-그래서 `member get --with-org` 는 이 PR 에서 계속 지원하지 않는 것으로 둔다. 실측 뒤 지원하려면 member 영역의 지원 목록(`src/commands/web-support/member.ts`)을 한 줄 고쳐야 한다.
+그래서 `member get --with-org` 는 웹 방식에서 지원하지 않는 것으로 둔다. 실측 뒤 지원하려면 member 영역의 지원 목록(`src/commands/web-support/member.ts`)을 한 줄 고쳐야 한다.

@@ -1,6 +1,6 @@
 # 웹 로그인 세션 API 확인 기록: wiki
 
-PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../features/web-session-auth/design.md)가 소유한다.
+위키 명령이 쓰는 웹 경로다. 인증·보안 규칙은 [기술 설계](../../features/web-session-auth/design.md)가 소유한다.
 공통 규칙과 영역 색인은 [web-endpoints.md](../web-endpoints.md)에, 프로젝트·멤버 경로는 [project.md](project.md)·[member.md](member.md)에 있다.
 
 2026-11-14 로그인된 브라우저에서 읽은 `SESSION` 하나만 붙인 Node 요청(1초에 한 번 이하)으로 확인했다.

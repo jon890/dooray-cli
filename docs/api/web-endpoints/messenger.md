@@ -46,7 +46,7 @@
 
 ### 메시지 목록
 
-공식 문서에는 이 경로(`GET /messenger/v1/channels/{id}/logs`)가 없다. 기준은 [ADR-061](../adr/061-messenger-logs-read.md)·[ADR-072](../adr/072-messenger-file-download.md) 가 적은 공개 API 응답(`MessengerLog`)이다.
+공식 문서에는 이 경로(`GET /messenger/v1/channels/{id}/logs`)가 없다. 기준은 [ADR-061](../../adr/061-messenger-logs-read.md)·[ADR-072](../../adr/072-messenger-file-download.md) 가 적은 공개 API 응답(`MessengerLog`)이다.
 
 | 웹(`logs[]`) | 공개 API | 변환 |
 | --- | --- | --- |

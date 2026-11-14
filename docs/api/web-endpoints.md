@@ -12,6 +12,7 @@
 | 메신저 | [messenger.md](web-endpoints/messenger.md) |
 | 캘린더 | [calendar.md](web-endpoints/calendar.md) |
 | 스트림 | [stream.md](web-endpoints/stream.md) |
+| 영역 공통 발견(헤더·200 실패·시각 표기·화면 부작용) | [collab.md](web-endpoints/collab.md) |
 
 ## 공통 규칙
 

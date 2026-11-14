@@ -23,10 +23,11 @@ npm link                    # dooray 명령으로 실행
 ## 새 명령을 추가할 때
 
 1. `src/api/<영역>/types.ts` 의 영역 인터페이스에 메서드를 더하고 `src/api/<영역>/public.ts` 에 구현한다. 기존 메서드로 되는지 먼저 확인한다
-2. 이름을 ID 로 바꿔야 하면 `src/resolvers/` 에 resolver 를 만든다. 매칭 정책은 정확일치 → 부분일치 → 모호하면 후보와 함께 에러다
-3. `src/commands/` 에 명령을 정의한다. 인접한 명령의 구조를 따르는 것이 가장 빠르다
-4. 출력은 `src/formatters/` 에서 표·JSON·quiet 세 모드를 모두 지원한다
-5. `src/**/*.test.ts` 에 테스트를 추가한다
+2. 웹 방식(`auth-mode web`)이 지원할 명령이면 `src/api/<영역>/web.ts` 에도 구현하고, 영역 계약 전체를 구현한 객체를 돌려준다. 지원하지 않을 명령은 `src/commands/web-support/<영역>.ts` 의 지원 목록에 넣지 않는다. 지원하면 그 목록에 명령과 막을 옵션을 적고 `docs/api/web-endpoints/` 에 실측을 남긴다
+3. 이름을 ID 로 바꿔야 하면 `src/resolvers/` 에 resolver 를 만든다. 매칭 정책은 정확일치 → 부분일치 → 모호하면 후보와 함께 에러다
+4. `src/commands/` 에 명령을 정의한다. 인접한 명령의 구조를 따르는 것이 가장 빠르다
+5. 출력은 `src/formatters/` 에서 표·JSON·quiet 세 모드를 모두 지원한다
+6. `src/**/*.test.ts` 에 테스트를 추가한다
 
 새 설정 값이 필요하면 `src/config/` 의 스키마와 `config set` 처리에 키를 추가한다.
 
@@ -59,46 +60,16 @@ argv 는 API 키 같은 값을 가린 뒤 저장한다. `config set <키> <값>`
 
 ## 프로젝트 구조
 
-```
-src/
-  index.ts       CLI 진입점
-  api/           Dooray REST API 클라이언트 (ky), IMAP·SMTP 클라이언트
-  cache/         ~/.dooray/cache/ 파일 캐시
-  config/        ~/.dooray/config.json 스키마와 읽기·쓰기, macOS 키체인의 비밀값 읽기·쓰기
-  resolvers/     이름·이메일·URL 을 ID 로 바꾸는 읽기 계층
-  services/      상태를 바꾸는 API 를 호출하고 그 엔티티의 캐시를 지우는 계층
-  commands/      Commander.js 명령 정의
-  formatters/    표·JSON·quiet 출력
-  editor/        $EDITOR 연동
-  skill/         Claude Code·Codex 스킬 설치·갱신
-  utils/         에러, 스피너, 종료 코드
-```
-
-의존 방향은 읽기와 쓰기로 나뉜다.
-읽기는 `api/` → `resolvers/` → `commands/` → `formatters/` 다.
-쓰기는 `commands/` → `services/` → `api/` 와 `cache/` 다.
-`services/` 는 `resolvers/` 를 의존하지 않는다. 이름을 ID 로 바꾸는 일과 바꾸는 일을 조합하는 것은 `commands/` 다.
+디렉터리 책임, 계층, 의존 방향은 [docs/code-architecture.md](docs/code-architecture.md)가 소유한다.
+기술 스택도 그 문서의 첫 표에 있다.
 
 | 문서 | 담는 것 |
 | --- | --- |
 | [docs/prd.md](docs/prd.md) | 제품 목적과 범위 |
 | [docs/flow.md](docs/flow.md) | 사용자 흐름 |
-| [docs/code-architecture.md](docs/code-architecture.md) | 디렉터리 책임, 레이어, 의존 방향 |
+| [docs/code-architecture.md](docs/code-architecture.md) | 디렉터리 책임, 레이어, 의존 방향, 기술 스택 |
 | [docs/data-schema.md](docs/data-schema.md) | 캐시 구조와 TTL |
 | [docs/adr/INDEX.md](docs/adr/INDEX.md) | 기술 의사결정 기록 |
 
 이 저장소를 AI 에이전트로 만든 과정은
 [AI 에이전트와 함께 MVP 만들기](https://blog.fosworld.co.kr/posts/AI/practice/mvp-with-ai-agent.md) 에 있다.
-
-## 기술 스택
-
-| 분류 | 사용 |
-| --- | --- |
-| 언어·런타임 | TypeScript, Node.js 20+ |
-| CLI 프레임워크 | Commander.js |
-| HTTP | ky |
-| 메일 | imapflow (조회), nodemailer (발송), mailparser |
-| 출력 | chalk, cli-table3, ora |
-| 대화형 입력 | @inquirer/prompts |
-| 빌드 | tsup (CJS 단일 번들) |
-| 테스트 | vitest |
