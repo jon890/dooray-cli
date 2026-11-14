@@ -46,19 +46,20 @@ function user(value: unknown, refs: unknown): PostUser {
 }
 
 /** 지원하지 않는 종류는 수정 전에 거절한다. 읽은 참여자를 일부만 보내지 않는다. */
-function requestUser(value: CreatePostUser): Row {
+function requestUser(value: CreatePostUser, previous: Row[] = []): Row {
   const u = row(value);
-  if (u.type === "member") return { type: "member", member: { organizationMemberId: identifier(row(u.member).organizationMemberId) } };
-  if (u.type === "group") {
-    const g = row(u.group);
-    return { type: "group", group: { projectMemberGroupId: identifier(g.id ?? g.projectMemberGroupId) } };
-  }
-  // emailUser 쓰기 형식은 실측하지 않았다. 읽기는 보존하지만 쓰기를 추측하지 않는다.
-  return unsupported();
+  if (u.type !== "member" && u.type !== "group") return unsupported();
+  const type = u.type, source = row(u[type]);
+  const key = type === "member" ? "organizationMemberId" : "projectMemberGroupId";
+  const id = identifier(source[key] ?? source.id);
+  const existing = previous.find((p) => p.type === type && (row(p[type])[key] ?? row(p[type]).id) === id);
+  const workflowId = existing ? row(existing[type]).workflowId : undefined;
+  return { type, [type]: { [key]: id, ...(workflowId != null && { workflowId: identifier(workflowId) }) } };
 }
-function requestUsers(value: unknown) {
-  const u = row(value);
-  return { to: rows(u.to).map((v) => requestUser(v as unknown as CreatePostUser)), cc: rows(u.cc).map((v) => requestUser(v as unknown as CreatePostUser)) };
+function requestUsers(value: unknown, previous?: unknown) {
+  const u = row(value), prior = row(previous ?? {});
+  const convert = (role: "to" | "cc") => rows(u[role]).map((v) => requestUser(v as unknown as CreatePostUser, rows(prior[role] ?? [])));
+  return { to: convert("to"), cc: convert("cc") };
 }
 function fileDate(value: unknown): string | null {
   return date(typeof value === "string" ? value.replace(/([+-]\d{2})(\d{2})$/, "$1:$2") : value);
@@ -150,6 +151,16 @@ export function createPostWeb(context: WebContext): PostClient {
     if (input.dueDateFlag === false && previous?.dueDateFlag !== false) {
       throw new DoorayCliError("웹 방식에서는 일정 없음(dueDateFlag:false)을 지원하지 않습니다. auth-mode 를 api-key 로 바꾸세요.", EXIT_PARAM_ERROR);
     }
+    if (previous?.users !== undefined) {
+      const states = rows(row(previous.users).to).flatMap((u) => {
+        const participant = u.type === "member" ? u.member : u.type === "group" ? u.group : undefined;
+        const state = participant == null ? undefined : row(participant).workflowId;
+        return state == null ? [] : [identifier(state)];
+      });
+      if (new Set(states).size > 1) {
+        throw new DoorayCliError("웹 방식에서는 담당자별 진행 상태가 서로 다른 업무의 수정을 지원하지 않습니다. auth-mode 를 api-key 로 바꾸세요.", EXIT_PARAM_ERROR);
+      }
+    }
     const out: Row = {};
     for (const key of ["subject", "body", "priority", "dueDate", "dueDateFlag", "milestoneId", "version"]) {
       if (previous?.[key] !== undefined) out[key] = previous[key];
@@ -158,10 +169,10 @@ export function createPostWeb(context: WebContext): PostClient {
     const users = input.users !== undefined ? input.users : previous?.users;
     // 기존 웹 참여자도 공개 형태로 바꾼 뒤 요청을 만든다.
     if (users !== undefined) {
-      if (input.users !== undefined) out.users = requestUsers(users);
+      if (input.users !== undefined) out.users = requestUsers(users, previous?.users);
       else {
         const raw = row(users);
-        out.users = requestUsers({ to: rows(raw.to).map((v) => user(v, {})), cc: rows(raw.cc).map((v) => user(v, {})) });
+        out.users = requestUsers({ to: rows(raw.to).map((v) => user(v, {})), cc: rows(raw.cc).map((v) => user(v, {})) }, previous?.users);
       }
     }
     out.tagIdList = input.tagIds !== undefined ? input.tagIds : previous?.tagIdList ?? [];

@@ -39,11 +39,12 @@ describe("웹 업무 요청과 공식 응답", () => {
   });
   it.each(["member", "group"])("%s 참여자의 상세→공식→수정 왕복에서 식별자가 같다", async (kind) => {
     const detail = structuredClone(fixtures.detail);
-    detail.result.users.to = [fixtures.participants[kind]];
+    detail.result.users.to = [structuredClone(fixtures.participants[kind])];
+    if (kind === "group") detail.result.users.to[0].group.workflowId = "workflow-1";
     const { writes } = mockServer(detail), api = client();
     const post = (await api.getPost("project-1", "post-1")).result;
     await api.updatePost("project-1", "post-1", { subject: post.subject, body: post.body, users: { to: post.users.to, cc: [] } });
-    expect(writes[0].body.users.to).toEqual(kind === "member" ? [{ type: "member", member: { organizationMemberId: "member-1" } }] : [{ type: "group", group: { projectMemberGroupId: "group-1" } }]);
+    expect(writes[0].body.users.to).toEqual(kind === "member" ? [{ type: "member", member: { organizationMemberId: "member-1", workflowId: "workflow-1" } }] : [{ type: "group", group: { projectMemberGroupId: "group-1", workflowId: "workflow-1" } }]);
   });
   it("emailUser 읽기는 보존하고 실측하지 않은 쓰기는 호출 전에 코드 3으로 막는다", async () => {
     const detail = structuredClone(fixtures.detail);
@@ -58,6 +59,19 @@ describe("웹 업무 요청과 공식 응답", () => {
     const { writes } = mockServer();
     await client().updatePost("project-1", "post-1", { subject: "수정", body: { mimeType: "text/x-markdown", content: "수정" }, users: { to: [], cc: [] }, tagIds: undefined, milestoneId: undefined, dueDate: undefined });
     expect(writes[0].body).toMatchObject({ tagIdList: ["tag-1"], milestoneId: "milestone-1", fileIdList: ["file-1"], priority: "high", dueDate: "2026-02-01T09:00:00+09:00", dueDateFlag: true });
+  });
+  it("명시한 참여자의 기존 진행 상태를 요청에 보존한다", async () => {
+    const { writes } = mockServer(), api = client();
+    const input = { subject: "수정", body: { mimeType: "text/x-markdown", content: "수정" } };
+    await api.updatePost("project-1", "post-1", { ...input, users: { to: [{ type: "member", member: { organizationMemberId: "member-1" } }], cc: [] } });
+    for (const write of writes) expect(write.body.users.to[0].member).toEqual({ organizationMemberId: "member-1", workflowId: "workflow-1" });
+  });
+  it("담당자별 진행 상태가 다르면 일부만 쓰지 않고 코드 3으로 거절한다", async () => {
+    const detail = structuredClone(fixtures.detail);
+    detail.result.users.to.push({ type: "member", member: { organizationMemberId: "member-2", workflowId: "workflow-2" } });
+    const { writes } = mockServer(detail);
+    await expect(client().updatePost("project-1", "post-1", { subject: "수정", body: { mimeType: "text/x-markdown", content: "수정" }, users: { to: [], cc: [] } })).rejects.toMatchObject({ exitCode: 3 });
+    expect(writes).toEqual([]);
   });
   it("명시한 빈 태그·참여자는 기존 값으로 덮지 않는다", async () => {
     const { writes } = mockServer();
