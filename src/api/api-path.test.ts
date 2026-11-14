@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { apiPath } from "./api-path.js";
-import { DoorayApiClient } from "./client.js";
+import type { KyInstance } from "ky";
+import type { DoorayClient } from "./dooray-client.js";
+import { PublicHttp } from "./public/http.js";
+import { createPublicClient } from "./public/index.js";
 import { buildThreadRequest } from "./messenger-thread-request.js";
 
 // 경로에 들어가는 id 가 모두 인코딩되는지 확인한다 (ADR-075).
@@ -44,21 +47,21 @@ describe("apiPath", () => {
 });
 
 function clientWithSpy() {
-  const c = new DoorayApiClient("key", "https://api.dooray.com");
   const json = vi.fn(() => Promise.resolve({ result: {} }));
   const call = vi.fn(() => ({ json }));
-  (c as unknown as { api: unknown }).api = { get: call, post: call, put: call, delete: call };
+  const fakeKy = { get: call, post: call, put: call, delete: call } as unknown as KyInstance;
+  const c = createPublicClient(new PublicHttp("key", "https://api.dooray.com", fakeKy));
   return { c, call };
 }
 
 describe("client 의 경로", () => {
   it.each([
-    ["getPost", (c: DoorayApiClient) => c.getPost(HOSTILE, HOSTILE), `project/v1/projects/${ENCODED}/posts/${ENCODED}`],
-    ["getPostComment", (c: DoorayApiClient) => c.getPostComment(HOSTILE, HOSTILE, HOSTILE), `project/v1/projects/${ENCODED}/posts/${ENCODED}/logs/${ENCODED}`],
-    ["deletePostFile", (c: DoorayApiClient) => c.deletePostFile(HOSTILE, HOSTILE, HOSTILE), `project/v1/projects/${ENCODED}/posts/${ENCODED}/files/${ENCODED}`],
-    ["getWikiPage", (c: DoorayApiClient) => c.getWikiPage(HOSTILE, HOSTILE), `wiki/v1/wikis/${ENCODED}/pages/${ENCODED}`],
-    ["sendChannelMessage", (c: DoorayApiClient) => c.sendChannelMessage(HOSTILE, "hi"), `messenger/v1/channels/${ENCODED}/logs`],
-    ["getCalendarEvent", (c: DoorayApiClient) => c.getCalendarEvent(HOSTILE, HOSTILE), `calendar/v1/calendars/${ENCODED}/events/${ENCODED}`],
+    ["getPost", (c: DoorayClient) => c.getPost(HOSTILE, HOSTILE), `project/v1/projects/${ENCODED}/posts/${ENCODED}`],
+    ["getPostComment", (c: DoorayClient) => c.getPostComment(HOSTILE, HOSTILE, HOSTILE), `project/v1/projects/${ENCODED}/posts/${ENCODED}/logs/${ENCODED}`],
+    ["deletePostFile", (c: DoorayClient) => c.deletePostFile(HOSTILE, HOSTILE, HOSTILE), `project/v1/projects/${ENCODED}/posts/${ENCODED}/files/${ENCODED}`],
+    ["getWikiPage", (c: DoorayClient) => c.getWikiPage(HOSTILE, HOSTILE), `wiki/v1/wikis/${ENCODED}/pages/${ENCODED}`],
+    ["sendChannelMessage", (c: DoorayClient) => c.sendChannelMessage(HOSTILE, "hi"), `messenger/v1/channels/${ENCODED}/logs`],
+    ["getCalendarEvent", (c: DoorayClient) => c.getCalendarEvent(HOSTILE, HOSTILE), `calendar/v1/calendars/${ENCODED}/events/${ENCODED}`],
   ])("%s 는 /·?·# 가 섞인 id 를 인코딩해 부른다", async (_name, run, expected) => {
     const { c, call } = clientWithSpy();
     await run(c).catch(() => undefined);

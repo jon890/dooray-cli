@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fileURLToPath } from "node:url";
+import type { KyInstance } from "ky";
 import { DoorayApiClient } from "./client.js";
+import { PublicHttp } from "./public/http.js";
+import { createPublicClient } from "./public/index.js";
 
 // 첨부 다운로드·업로드가 307 을 따라갈 때 인증 헤더를 어디로 보내는지 확인한다 (ADR-074).
 const BASE = "https://api.dooray.com";
@@ -10,13 +13,12 @@ const TRUSTED = "https://file-api.dooray.com/downloads/x";
 const FOREIGN = "https://other.example.com/downloads/x?sig=secret";
 
 function clientWithRedirect(status: number, location: string | null) {
-  const c = new DoorayApiClient("key", BASE);
   const api = {
     get: vi.fn(() =>
       Promise.resolve(new Response(null, { status, headers: location ? { location } : {} })),
     ),
   };
-  (c as unknown as { api: unknown }).api = api;
+  const c = createPublicClient(new PublicHttp("key", BASE, api as unknown as KyInstance));
   return { c, api };
 }
 

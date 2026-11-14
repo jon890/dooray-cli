@@ -4,6 +4,15 @@ import { createClient } from "./dooray-client.js";
 import { DoorayApiClient } from "./client.js";
 import { createProjectWeb } from "./project/web.js";
 import { createMemberWeb } from "./member/web.js";
+import { PublicHttp } from "./public/http.js";
+import { createPublicClient } from "./public/index.js";
+import { createProjectPublic } from "./project/public.js";
+import { createMemberPublic } from "./member/public.js";
+import { createPostPublic } from "./post/public.js";
+import { createWikiPublic } from "./wiki/public.js";
+import { createMessengerPublic } from "./messenger/public.js";
+import { createCalendarPublic } from "./calendar/public.js";
+import { createStreamPublic } from "./stream/public.js";
 import { WebContext } from "./web/context.js";
 const base = { version: 1 as const, apiKey: "fake-key", baseUrl: "https://api.dooray.com" };
 afterEach(() => vi.unstubAllGlobals());
@@ -13,6 +22,14 @@ describe("인증 방식 선택", () => {
     const areas = [createProjectWeb(context), createMemberWeb(context)];
     const keys = areas.flatMap((area) => { expect(Object.getPrototypeOf(area)).toBe(Object.prototype); return Object.keys(area); });
     expect(new Set(keys).size).toBe(keys.length);
+  });
+  it("공개 영역 구현은 객체 리터럴이며 메서드 이름이 겹치지 않고 조립 결과가 모두 갖는다", () => {
+    const http = new PublicHttp("fake-key", base.baseUrl);
+    const areas = [createProjectPublic, createMemberPublic, createPostPublic, createWikiPublic, createMessengerPublic, createCalendarPublic, createStreamPublic].map((create) => create(http));
+    const keys = areas.flatMap((area) => { expect(Object.getPrototypeOf(area)).toBe(Object.prototype); return Object.keys(area); });
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(Object.keys(createPublicClient(http)).sort()).toEqual([...keys].sort());
+    expect(Object.keys(new DoorayApiClient("fake-key", base.baseUrl)).sort()).toEqual([...keys].sort());
   });
   it("선택 메서드가 없으면 optional 호출이 동기 undefined 를 반환한다", () => {
     const client = createClient({ ...base, authMode: "web", tenantName: "my-org", sessionCookie: "fake-session" });
