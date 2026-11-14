@@ -1,0 +1,33 @@
+{
+  "name": "r2",
+  "description": "공개 API 클라이언트를 영역별 구현으로 나누고 메일 파일을 api/mail 로 옮긴다",
+  "pr_scope": "동작과 공개 메서드 이름·생성자를 지키면서 공개 구현의 자리와 조립 방식을 바꾼다.",
+  "deferred": [
+    {
+      "what": "utils 재분류와 body/, mail id → UID 풀이 분리, attachment-check 정리",
+      "why": "이번 PR 은 공개 구현과 메일 파일 이동까지만 한다",
+      "after": "R2 머지 뒤 R3 지시서"
+    },
+    {
+      "what": "resolvers 가 전체 DoorayClient 를 받는 곳 정리와 명령 영역 나무",
+      "why": "허용 목록으로 시작하고 R4 에서 비운다",
+      "after": "R4 지시서"
+    }
+  ],
+  "status": "completed",
+  "created_at": "2026-11-14",
+  "spec": "docs/features/code-structure/spec.md",
+  "design": "docs/features/code-structure/design.md",
+  "verification_plan": "verification-plan.md",
+  "requirements": ["REQ1", "REQ2", "REQ3", "REQ4", "REQ8"],
+  "total_phases": 1,
+  "current_phase": 1,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "requirements": ["REQ1", "REQ2", "REQ3", "REQ4", "REQ8"]
+    }
+  ]
+}
