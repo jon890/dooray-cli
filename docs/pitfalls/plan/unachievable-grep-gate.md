@@ -36,10 +36,10 @@ grep -c 'd{15,}' src/resolvers/wiki.ts          # = 0
 
 ```bash
 # phase 의 grep 기대값을 뽑아 현재 상태로 먼저 돌려 본다
-grep -nE '^grep .*# *[=><]' tasks/*/phase-*.md
+grep -nE '^grep .*# *[=><]' docs/features/*/tasks/*/phase-*.md
 
 # = N 형태 중 import 와 호출부가 함께 잡히는 이름인지 본다
-grep -nE '# *= *1$' tasks/*/phase-*.md
+grep -nE '# *= *1$' docs/features/*/tasks/*/phase-*.md
 ```
 
 **Self-check**:

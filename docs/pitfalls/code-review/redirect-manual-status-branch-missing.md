@@ -16,7 +16,7 @@ redirect 응답과 직접 응답을 status code 로 구분.
 
 **검출**:
 ```bash
-grep -nE "redirect.*manual|throwHttpErrors.*false" src/api/client.ts
+grep -rnE "redirect.*manual|throwHttpErrors.*false" src/api/
 # 그 위치에서 status === 307 분기 존재 확인
 ```
 

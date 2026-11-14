@@ -28,7 +28,7 @@ phase 는 그 ADR 을 근거로 삼는다.
 **검출**:
 
 ```bash
-grep -rnE '(messenger (send|thread-send|channel-send)|mail send|curl -X POST).*(<[^>]+>|\$\{?[A-Z_]+)' tasks/*/phase-*.md
+grep -rnE '(messenger (send|thread-send|channel-send)|mail send|curl -X POST).*(<[^>]+>|\$\{?[A-Z_]+)' docs/features/*/tasks/*/phase-*.md
 ```
 
 `<...>` placeholder 나 셸 변수가 대상 자리에 있는 발송 명령을 찾는다.

@@ -8,8 +8,8 @@ source: [1-16, PR #64, PR #67, PR #68]
 related: []
 ---
 
-**증상**: build-with-teams 5단계 critic 평가 (APPROVE/REVISE) → 6단계 executor 실행.
-  그런데 executor 가 5단계 critic 회신을 받기 전에 plan 본문만 보고 자체 구현 시작.
+**증상**: `plan` 의 critic 검토(APPROVE/REVISE) 뒤에 `implementation` 의 executor 실행이 이어진다.
+  그런데 executor 가 critic 회신을 받기 전에 plan 본문만 보고 자체 구현 시작.
   critic REVISE 가 도착해도 이미 옛 plan 본문 기준으로 코드를 작성해 사용자 결정 반영 안 됨 (이름·시그니처 임의).
   team-lead 가 reset 후 재투입 필요 → 1 cycle 낭비.
 
