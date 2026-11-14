@@ -14,7 +14,7 @@
 
 | 축 | 볼 것 |
 | --- | --- |
-| 레이어 경계 | `docs/code-architecture.md` 의 의존 방향을 실제 import 가 지키는지. grep 한 결과를 근거로 댄다 |
+| 레이어 경계 | `docs/code-architecture.md` 의 의존 방향을 실제 import 가 지키는지, `src/architecture.test.ts` 의 `ALLOWED_VIOLATIONS` 가 늘었거나 이유 없이 남았는지. grep 한 결과를 근거로 댄다 |
 | 명령 간 중복 | 입력 해석, `--json` 과 `--quiet` 출력, 확인 프롬프트, 오류 처리가 명령마다 따로 구현됐는지 |
 | 규약과 동작의 일치 | `CLAUDE.md` 「명령 공통 규약」 의 입력 형식을 모든 대상 명령이 받는지. 가능하면 빈 HOME 에서 빌드한 CLI 를 실행해 종료 코드로 확인한다 |
 | 큰 파일 | 나누는 것이 이득인지, 반복을 줄이는 것이 먼저인지. 테스트 mock 을 얼마나 고쳐야 하는지까지 비용에 넣는다 |
