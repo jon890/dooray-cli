@@ -147,6 +147,7 @@ editor/    → api/<영역>/types + cache/types + utils (편집 데이터 타입
 `public/http.ts` 의 `PublicHttp` 는 ky 인스턴스와 토큰 버킷, 오류 변환, 파일 서버 요청·다운로드 리다이렉트를 맡는다. 테스트는 생성자의 선택 인자로 ky 를 바꿔 끼운다.
 위키 트리처럼 영역 인터페이스의 메서드를 엮는 조합은 인터페이스에 넣지 않고 `api/wiki/pages.ts` 의 `collectWikiPages(client, …)` 로 둔다. 두 구현이 같은 순회를 따로 갖지 않게 하려는 것이다.
 웹 index 는 영역 구현을 조립하고 아직 없는 영역은 요청 없이 실패시킨다. `web/http.ts` 는 origin 검사·쿠키·리다이렉트·오류 변환을 맡는다.
+웹 영역 구현은 `createXxxWeb(context: WebContext)` 가 자기 영역 계약을 구현한 객체 리터럴을 돌려준다. 클래스 인스턴스의 프로토타입 메서드는 조립 대상이 아니다. 공통 변환은 `api/web/convert.ts`, 고정 응답은 `api/web/fixtures/<영역>/` 에 둔다.
 IMAP·SMTP 는 `DoorayClient` 밖이다. `api/mail/` 이 가진다.
 메서드 목록은 여기 적지 않는다. 메서드가 늘 때마다 낡고, 그 파일을 열면 바로 보인다.
 
