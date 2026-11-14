@@ -21,8 +21,6 @@ const WEB_UNSUPPORTED = "웹 방식에서는 지원하지 않습니다. auth-mod
 /** 확인한 값이다. 서버가 허용하는 최대치는 알 수 없다. */
 const MAX_COMMENT_WINDOW = 1000;
 const DEFAULT_COMMENT_SIZE = 20;
-/** 한 레벨의 형제 자식 조회를 병렬화하는 상한. 공개 클라이언트와 같다. */
-const TREE_CONCURRENCY = 10;
 
 function unsupported(reason: string): DoorayCliError {
   return new DoorayCliError(`${reason} ${WEB_UNSUPPORTED}`, EXIT_PARAM_ERROR);
@@ -121,24 +119,6 @@ export function createWikiWeb(context: WebContext): WikiClient {
     async getWikiPages(wikiId, parentPageId) {
       const response = await http.request(apiPath`v2/wapi/wikis/${wikiId}/pages`, { searchParams: parentPageId ? { parentPageId } : {} });
       return { header: response.header, result: rows(row(response.result).contents).map(pageSummary) };
-    },
-
-    async getAllWikiPages(wikiId, maxDepth) {
-      const all: WikiPage[] = [];
-      let level = (await client.getWikiPages(wikiId)).result;
-      let depth = 1;
-      while (level.length > 0) {
-        all.push(...level);
-        if (maxDepth !== undefined && depth >= maxDepth) break;
-        const next: WikiPage[] = [];
-        for (let i = 0; i < level.length; i += TREE_CONCURRENCY) {
-          const batches = await Promise.all(level.slice(i, i + TREE_CONCURRENCY).map((p) => client.getWikiPages(wikiId, p.id).then((r) => r.result)));
-          next.push(...batches.flat());
-        }
-        level = next;
-        depth++;
-      }
-      return all;
     },
 
     async getWikiPage(wikiId, pageId) {

@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { createClient } from "../../api/dooray-client.js";
+import { collectWikiPages } from "../../api/wiki/pages.js";
 import { resolveWiki } from "../../resolvers/wiki.js";
 import { formatWikiTree } from "../../formatters/wiki.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
@@ -28,7 +29,7 @@ export const wikiTreeCommand = new Command("tree")
 
     startSpinner("위키 페이지 트리 조회 중...");
     const wikiId = await resolveWiki(client, project);
-    const pages = await client.getAllWikiPages(wikiId, maxDepth);
+    const pages = await collectWikiPages(client, wikiId, maxDepth);
     stopSpinner(true, "위키 페이지 트리 조회 완료");
 
     formatWikiTree(pages, globalOpts);
