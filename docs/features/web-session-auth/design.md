@@ -34,7 +34,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | --- | --- |
 | `src/api/client.ts` | 지금의 공개 API 클라이언트. 동작을 바꾸지 않는다. `DoorayClient` 를 구현한다고 선언만 더한다 |
 | `src/api/dooray-client.ts` (새 파일) | `DoorayClient` 교집합 타입(영역 인터페이스의 공개 메서드 시그니처 그대로)와 `createClient(config)` |
-| `src/api/<영역>/types.ts` | ProjectClient·MemberClient·PostClient·WikiClient·MessengerClient·CalendarClient·StreamClient. 공개 메서드 시그니처를 영역별로 소유하며 DTO 는 api/types.ts 에 둔다 |
+| `src/api/<영역>/types.ts` | ProjectClient·MemberClient·PostClient·WikiClient·MessengerClient·CalendarClient·StreamClient. 공개 메서드 시그니처와 DTO 를 영역별로 소유한다 |
 | `src/api/web/http.ts` (새 파일) | 웹용 ky 인스턴스. 쿠키 헤더, origin 확인, 리다이렉트 처리, 오류 변환(URL 없는 메시지), 토큰 버킷, 큰 정수 파서 |
 | `src/api/web/index.ts`, `src/api/project/web.ts`, `src/api/member/web.ts`, `web/convert.ts`, `web/context.ts` (새 파일) | `DoorayClient` 의 웹 구현. 메서드마다 웹 경로를 부르고 공식 응답 스키마 모양으로 바꾼다. 붙이지 않은 메서드는 지원하지 않음 오류를 던진다 |
 | `src/config/web-auth.ts` (새 파일) | `resolveWebBaseUrl`, `parseSessionCookie`, `isConfigComplete`. 파일 시스템과 키체인을 쓰지 않는 순수 함수 |
@@ -119,7 +119,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 
 ### 응답 변환
 
-비교 기준은 공식 API 문서의 그 endpoint 응답 스키마다(스펙 DECISION26). `src/api/types.ts` 는 CLI 가 쓰는 필드만 담아 기준이 되지 못한다.
+비교 기준은 공식 API 문서의 그 endpoint 응답 스키마다(스펙 DECISION26). 영역별 `src/api/<영역>/types.ts` 의 DTO 는 CLI 가 쓰는 필드만 담아 기준이 되지 못한다.
 
 | 웹 응답 꼴 | 예 | 바꾸는 법 |
 | --- | --- | --- |
@@ -255,7 +255,7 @@ PR 마다 함께 고칠 문서(그 PR 이 닿는 것만):
 - `docs/guide/setup.md`, `README.md`, `skills/dooray-cli/SKILL.md`: 웹 방식 켜는 법, 비공식 API 경고, 쿠키 꺼내는 법, 지원하지 않는 명령 표. PR1 에서 만들고 PR 마다 표를 늘린다.
 - [ADR-042](../../adr/042-cache-invalidation-on-mutation.md): 무효화 대상 키. PR1.
 
-구현 배치 보완(사용자 결정 2026-11-14): 웹 구현은 api/<영역>/web.ts, 영역 계약은 api/<영역>/types.ts 로 나눈다. DTO 는 api/types.ts 에 남긴다. DoorayClient 는 영역 계약의 교집합이다. 지원 목록·웹 경로 명세·고정 응답도 영역별 파일로 나눈다. 뒤 PR 들이 동시에 자기 영역을 구현할 수 있게 한다. 기존 책임 경계와 보안 규칙은 유지한다.
+구현 배치 보완(사용자 결정 2026-11-14): 웹 구현은 api/<영역>/web.ts, 영역 계약은 api/<영역>/types.ts 로 나눈다. DTO 도 영역 types.ts 가 소유한다([ADR-082](../../adr/082-code-structure.md)). DoorayClient 는 영역 계약의 교집합이다. 지원 목록·웹 경로 명세·고정 응답도 영역별 파일로 나눈다. 뒤 PR 들이 동시에 자기 영역을 구현할 수 있게 한다. 기존 책임 경계와 보안 규칙은 유지한다.
 
 영역 계약은 PR1 에 모두 둔다(사용자 결정 2026-11-14). project·member 의 web.ts 는 자기 영역 인터페이스 전체를 구현해 누락을 컴파일러가 검사한다. web/index.ts 는 영역별 구현이나 미지원 기본값을 등록하고 공통 Proxy 로 지원하지 않는 메서드를 막는다. then 은 반환하지 않아 Promise 로 오인되지 않는다. 뒤 PR 은 자기 영역 web.ts 와 등록 줄을 더한다. 단일 영역 resolver·service 는 그 영역 계약만 받으며 여러 영역을 함께 쓰는 경로는 DoorayClient 를 유지한다.
 

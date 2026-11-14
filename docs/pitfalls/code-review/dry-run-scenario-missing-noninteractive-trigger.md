@@ -14,7 +14,7 @@ dry-run JSON 출력 블록은 non-interactive 안에만 존재 → 실증 시나
 **Good**: post edit/comment edit 류의 실증 시나리오에 `--dry-run` 을 쓰려면 항상 `--title "<원제목>"` 또는 `--body "..."` 동반. phase 본문 실증 단계에 "non-interactive 진입 보장을 위해 `--title` 동반 필수" 한 줄 명시.
 **검출**:
 ```bash
-grep -nE "\-\-dry-run" tasks/{plan}/phase-*.md | grep -vE "\-\-title|\-\-body"
+grep -nE "\-\-dry-run" docs/features/{기능}/tasks/{plan}/phase-*.md | grep -vE "\-\-title|\-\-body"
 # 결과 있으면 의심
 ```
 **Why**: PR #62 critic REVISE — phase-01 실증 시나리오 #5 가 `--parent --dry-run --json` 만 명시.

@@ -10,7 +10,7 @@
 
 ## 영역을 가로지르는 발견
 
-- **`Dooray-Api-Version` 헤더가 응답 모양을 바꾼다.** `/v2/wapi/calendars` 는 헤더가 없거나 `1.1` 이면 평평한 옛 모양(`permission`, `color`, `listed`, `default` 가 항목에 바로 있음)을, `1.2` 면 공식 응답과 같은 모양(`me` 객체, `totalCount`)을 준다. 웹 화면은 `Dooray-Api-Version: 1.2` 를 보낸다. 이 PR 의 캘린더 웹 구현은 호출마다 헤더를 붙인다. PR1 의 프로젝트·멤버 경로와 PR2·PR3 의 경로가 같은 헤더로 모양이 달라지는지는 이 PR 에서 확인하지 않았다. 공통 HTTP 층(`web-http.ts`)이 아닌 호출 쪽에서 붙이므로 영역별로 정한다.
+- **`Dooray-Api-Version` 헤더가 응답 모양을 바꾼다.** `/v2/wapi/calendars` 는 헤더가 없거나 `1.1` 이면 평평한 옛 모양(`permission`, `color`, `listed`, `default` 가 항목에 바로 있음)을, `1.2` 면 공식 응답과 같은 모양(`me` 객체, `totalCount`)을 준다. 웹 화면은 `Dooray-Api-Version: 1.2` 를 보낸다. 캘린더 웹 구현은 호출마다 헤더를 붙인다. 프로젝트·멤버·업무·위키 경로가 같은 헤더로 모양이 달라지는지는 확인하지 않았다. 공통 HTTP 층(`src/api/web/http.ts`)이 아닌 호출 쪽에서 붙이므로 영역별로 정한다.
 - **HTTP 200 이어도 실패일 수 있다.** 기간 초과(`-200430`), 없는 일정(`-100201`)이 `header.isSuccessful: false` 로 온다. 공통 HTTP 층이 `EXIT_API_ERROR` 로 바꾼다.
 - **시각 표기가 다르다.** 메신저는 epoch 밀리초 숫자를 준다. 공식 모양인 오프셋 ISO 8601 로 바꿀 때 실행 PC 의 시간대 오프셋을 쓴다. 계정의 시간대와 PC 의 시간대가 다르면 표기만 다르고 같은 시각이다.
 - **웹 화면을 열면 부작용이 있다.** 스트림 패널을 열면 화면이 항목을 읽음 처리한다. 메신저 대화방을 열면 마지막에 연 방이 바뀐다. CLI 는 이런 호출(`POST /v2/wapi/streams/read`, `setLastChannel=true`)을 하지 않는다.

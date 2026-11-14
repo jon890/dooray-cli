@@ -10,7 +10,7 @@
     me.json                   # 내 정보 캐시
     projects.json             # 프로젝트 목록 캐시
     projects-private.json     # 개인 프로젝트 목록 캐시
-    wikis.json                # 위키 목록 캐시 (projectId → wikiId 매핑)
+    wikis.json                # 위키 목록 캐시 (wikiId → homePageId 매핑, wiki page create 의 부모 해석)
     members/{projectId}.json       # 프로젝트별 멤버 캐시
     workflows/{projectId}.json      # 프로젝트별 워크플로우 캐시
     tags/{projectId}.json           # 프로젝트별 태그 캐시 ([ADR-019](adr/019-post-create-metadata-options.md))
@@ -105,7 +105,7 @@ Claude Code와 Codex의 활성 링크는 같은 저장소를 가리키며, 양�
 interface Config {
   version: 1;
   trackLastRun?: boolean; // feedback --last 에 쓸 직전 실행 기록 활성화
-  tenantName?: string;     // 회사 테넌트명 (e.g. "<tenant>"), 기본값: "<tenant>"
+  tenantName?: string;     // 회사 테넌트명 (e.g. "<tenant>"), 기본값: "example"
   apiKey: string;          // Dooray API 토큰. 웹 방식이면 빈 문자열 가능
   authMode?: "api-key" | "web"; // 없으면 api-key
   sessionCookie?: string;  // SESSION 쿠키 값, 비밀 필드
@@ -185,6 +185,7 @@ interface CacheEntry<CachedMe> {
 interface CachedMe {
   id: string; // organizationMemberId
   name: string; // /common/v1/members/me 에서 조회
+  orgId: string; // defaultOrganization.id. 없으면 캐시하지 않고 오류로 끝낸다
 }
 ```
 
@@ -241,8 +242,11 @@ interface CachedWorkflow {
 interface CachedTag {
   id: string;
   name: string;
-  color?: string;
-  // mandatoryTagGroup 등 메타는 코드 src/cache/types.ts 참조
+  color: string;
+  groupId: string | null;       // 태그 그룹 id. 그룹이 없으면 null
+  groupName: string | null;
+  groupMandatory: boolean;      // mandatory 검증에 쓴다
+  groupSelectOne: boolean;      // selectOne 검증에 쓴다
 }
 ```
 
@@ -280,6 +284,19 @@ interface CachedMemberGroup {
 `post create/edit --mention-group <code>` 시 code lookup.
 members/ 와 분리된 별도 캐시 — Dooray 의 그룹 멘션 endpoint 가 별도.
 resolver 는 code 누락 그룹을 사전 필터링하고 후보 5개 안내 출력.
+
+### wikis.json
+
+```typescript
+interface CachedWiki {
+  id: string;         // wikiId
+  projectId: string;
+  name: string;
+  homePageId: string; // 위키 홈 페이지 id
+}
+```
+
+`wiki page create` 가 부모를 주지 않았을 때 위키 id 로 홈 페이지 id 를 찾는 데 쓴다. 파일 하나가 위키 전체를 담는다.
 
 ### TTL 설계 근거
 
@@ -321,8 +338,9 @@ authMode·sessionCookie 변경도 전체 캐시를 비우며 웹 방식의 tenan
 ```
 → cache/me.json에서 조회
 → 캐시 없거나 TTL 만료 시 API /common/v1/members/me 호출 후 갱신
-→ doctor 커맨드 실행 시 자동 캐싱
-출력: CachedMe { id, name }
+→ 처음 채우는 곳은 setup(API 키 방식)이고, 만료되면 `ensureMe`(`src/resolvers/me.ts`)를 부르는 명령이 다시 채운다
+→ orgId 가 빈 캐시는 만료와 같게 보고 다시 조회한다
+출력: CachedMe { id, name, orgId }
 ```
 
 ### ProjectResolver

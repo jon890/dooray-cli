@@ -72,9 +72,8 @@ Claude Code 나 Codex 를 쓴다면 스킬을 설치해요. 에이전트가 이 
 dooray skill install
 ```
 
-스킬은 `~/.claude/skills/dooray-cli`와 `~/.agents/skills/dooray-cli`에 함께 연결돼요.
-Codex 설치 여부와 관계없이 양쪽 스킬을 관리하며, 필요한 `~/.agents/skills` 디렉터리도 만들어요.
-설치 상태와 Codex에서 호출하는 방법은 [설치와 설정 가이드](docs/guide/setup.md#에이전트-스킬)에 있어요.
+스킬은 Claude Code와 Codex 양쪽에 함께 연결돼요.
+설치 위치와 상태, Codex에서 호출하는 방법은 [설치와 설정 가이드](docs/guide/setup.md#에이전트-스킬)에 있어요.
 
 이제 에이전트에게 한국어로 시키면 돼요.
 에이전트가 알맞은 `dooray` 명령을 고르고, 필요하면 프로젝트 코드나 업무 번호를 먼저 찾아봐요.
@@ -151,7 +150,7 @@ dooray post comment add --id "$POST_ID" --body "시작합니다"
 
 ## 문제가 생기면
 
-- 설정이 의심되면 `dooray doctor` 를 먼저 실행해 보세요. 설정과 API 연결, 설정 파일 보안, 스킬 상태를 한 번에 확인해요. 설정·연결·보안에 실패 항목이 있으면 종료 코드 1, 경고나 스킬 미설치만 있으면 0이에요.
+- 설정이 의심되면 `dooray doctor` 를 먼저 실행해 보세요. 설정과 API 연결, 설정 파일 보안, 스킬 상태를 한 번에 확인해요. 항목별 결과와 종료 코드는 [설치와 설정 가이드](docs/guide/setup.md)에 있어요.
 - 에이전트가 새 명령을 모르면 `dooray skill update` 를 실행해 주세요.
 - 버그나 제안은 [GitHub Issues](https://github.com/jon890/dooray-cli/issues) 에 남겨 주세요. `dooray feedback` 으로 터미널에서 바로 올릴 수도 있어요.
 

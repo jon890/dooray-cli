@@ -14,7 +14,7 @@ related: []
 ```bash
 # phase 테스트 코드에서 .toThrow 정규식이 멀티라인 에러 메시지를 잡는지 확인
 # 에러 메시지에 \n 포함 여부: 대상 함수의 throw 구문 확인
-grep -A2 'toThrow(/' tasks/*/phase-*.md | grep -v '/s)'
+grep -A2 'toThrow(/' docs/features/*/tasks/*/phase-*.md | grep -v '/s)'
 # /s) 없이 .* 로 멀티라인 매칭 시도하면 실패
 ```
 

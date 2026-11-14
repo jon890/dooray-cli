@@ -1,6 +1,6 @@
 # 웹 로그인 세션 API 확인 기록: wiki
 
-PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../features/web-session-auth/design.md)가 소유한다.
+위키 명령이 쓰는 웹 경로다. 인증·보안 규칙은 [기술 설계](../../features/web-session-auth/design.md)가 소유한다.
 공통 규칙과 영역 색인은 [web-endpoints.md](../web-endpoints.md)에, 프로젝트·멤버 경로는 [project.md](project.md)·[member.md](member.md)에 있다.
 
 2026-11-14 로그인된 브라우저에서 읽은 `SESSION` 하나만 붙인 Node 요청(1초에 한 번 이하)으로 확인했다.
@@ -134,3 +134,8 @@ PR3(wiki 명령)의 경로다. 인증·보안 규칙은 [기술 설계](../../fe
 | `wiki page comment add`, `list`, `list --size 1 --page 1`, `latest`, `get`, `edit`, `delete -y` | 성공. 목록은 최신순이고 `--page` 가 공식 순서와 맞는다 |
 
 `wiki page file download -o <dir>` 은 폴더가 없으면 ENOENT 로 실패한다. 공개 API 방식과 같은 기존 동작이며 웹과 관계없다(`download-all` 은 폴더를 만든다).
+
+## 후속 확인
+
+공개 API 가 복구되면 같은 부모 아래 같은 제목으로 위키 페이지를 만들거나 제목을 바꿔 공개 API 방식과 웹 방식의 결과를 비교한다.
+공개 API 가 409 로 거절하는지, 웹처럼 ` (1)` 을 붙이는지 확인해 웹 클라이언트의 사전 확인(종료 코드 1)이 같은 결과인지 본다. 완료 조건이 아닌 후속 확인이다.

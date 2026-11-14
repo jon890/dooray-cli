@@ -1,10 +1,11 @@
-## ADR-059: plan 검사는 `planning` 스킬이 소유하고 저장소는 별도 검사기를 두지 않는다
+## ADR-059: plan 검사는 `plan` 스킬이 소유하고 저장소는 별도 검사기를 두지 않는다
 
 - **status**: `accepted`
 
 - **결정**: `scripts/check-plan.mjs` 와 그것을 부르던 CI 스텝을 없앤다.
-  plan phase 파일의 기계 판정은 `planning` 스킬의 `verify_task.py` 하나가 소유한다.
+  plan phase 파일의 기계 판정은 `plan` 스킬의 `verify_task.ts` 하나가 소유한다.
   검사는 plan 을 쓴 직후 로컬에서 돌고, CI 는 plan 을 검사하지 않는다.
+  이 결정을 내릴 때 스킬 이름은 `planning`, 검사기는 `verify_task.py` 였고 지금은 `plan`, `verify_task.ts` 다.
 
 - **대체된 부분**: [ADR-048](048-checks-to-mjs.md) 이 정한 「검사 스크립트를 `.mjs` 로 둔다」는
   `check-pii.mjs` 와 `check-public-refs.mjs` 에 계속 적용된다.
@@ -12,7 +13,7 @@
 
 - **맥락**: 같은 일을 하는 검사기가 둘이었다.
 
-  `planning` 스킬은 `verify_task.py` 를 번들에 담고 task 작성 직후 그것을 돌리라고 지시한다.
+  `plan` 스킬은 당시 `verify_task.py` 를 번들에 담고 task 작성 직후 그것을 돌리라고 지시한다.
   저장소는 `scripts/check-plan.mjs` 를 따로 가지고 CI 에서 돌렸다.
 
   규칙 다섯 중 넷이 겹친다. `# cwd:` 주석, 사람 의존 문구, `index.json` 완료 마킹,
@@ -28,18 +29,18 @@
   문서만 고치는 마지막 phase 에서는 마킹이 자연히 마지막 항목이 되어 스킬 쪽 규칙을 어긴다.
 
   **실측**: 이 저장소의 plan 을 두 검사기에 모두 돌렸다.
-  `check-plan.mjs` 는 통과했고 `verify_task.py` 는 같은 plan 을 위반으로 잡았다.
-  이미 머지된 `plan066` 도 `verify_task.py` 에서 위반 2건이 나온다.
+  `check-plan.mjs` 는 통과했고 당시 `verify_task.py` 는 같은 plan 을 위반으로 잡았다.
+  이미 머지된 PR #169(`thread-send`)의 계획서도 당시 `verify_task.py` 에서 위반 2건이 나온다.
   저장소가 그 스크립트를 한 번도 돌린 적이 없다는 뜻이다.
 
   검사기가 둘이라는 것 자체가 드러나지 않았다.
   저장소 문서가 `check-plan.mjs` 를 판정 주체로 적고 있어, 저장소 안에서만 보면 검사기가 하나로 보인다.
 
 - **왜 스킬 쪽을 남기는가**: 규칙이 저장소마다 갈리지 않는다.
-  plan 작성 규칙은 이 저장소의 성질이 아니라 `planning` 워크플로의 성질이다.
+  plan 작성 규칙은 이 저장소의 성질이 아니라 `plan` 워크플로의 성질이다.
   저장소가 사본을 가지면 스킬이 규칙을 고칠 때마다 사본이 뒤처진다.
 
-- **왜 CI 에서 뺐는가**: `verify_task.py` 는 스킬 번들 안에 있고 저장소에 없다.
+- **왜 CI 에서 뺐는가**: 당시 `verify_task.py` 는 스킬 번들 안에 있고 저장소에 없다.
   CI 러너가 그 경로에 닿을 수 없다.
   저장소로 복사해 오면 스킬과 사본이 갈라지는 문제가 그대로 돌아오고,
   Python 런타임을 CI 에 더해야 해서 [ADR-048](048-checks-to-mjs.md) 이 기각한 비용이 다시 붙는다.
@@ -51,11 +52,11 @@
 
 - **대안 기각**:
   - **둘 다 둔다** — 지금 상태다. 규칙이 겹치고 한 곳에서 부딪혀, 어느 쪽을 통과해야 하는지 정해져 있지 않다.
-  - **`verify_task.py` 를 저장소로 복사한다** — 스킬과 사본이 갈라진다.
+  - **당시 `verify_task.py` 를 저장소로 복사한다** — 스킬과 사본이 갈라진다.
     CI 에 Python 런타임이 늘고, ADR-048 이 「선언되지 않은 런타임」으로 기각한 것과 같은 상태가 된다.
   - **`check-plan.mjs` 를 남기고 스킬 쪽을 쓰지 않는다** — 규칙이 저장소마다 갈린다.
-    `planning` 을 쓰는 다른 저장소가 같은 검사기를 각각 만들게 된다.
-  - **`verify_task.py` 를 npm 패키지로 내보내 CI 에서 받는다** — plan 검사 하나에 배포 경로가 생긴다.
+    `plan` 을 쓰는 다른 저장소가 같은 검사기를 각각 만들게 된다.
+  - **`verify_task.ts` 를 npm 패키지로 내보내 CI 에서 받는다** — plan 검사 하나에 배포 경로가 생긴다.
     이 저장소의 plan 수와 머지 빈도에 비해 유지 비용이 크다.
 
 - **결과**:
@@ -66,8 +67,8 @@
     검사를 돌리지 않은 plan 이 머지될 수 있고, 그것을 막는 것은 사람과 리뷰다.
     `grep -c` 기대값 주석 규칙의 기계 판정이 사라져 사람 판정으로 내려간다.
     그 규칙이 필요하면 스킬에 넣어야 하고, 저장소에 다시 만들면 이 결정이 무효가 된다.
-    기존 plan 이 `verify_task.py` 의 규칙을 통과하지 못한다.
+    기존 plan 이 `verify_task.ts` 의 규칙을 통과하지 못한다.
     완료된 plan 을 고칠지는 `harness-cleanup` 이 판정한다.
 
 - **적용 범위**: `scripts/check-plan.mjs` 삭제, `.github/workflows/ci.yml` 의 plan 검사 스텝 삭제,
-  `docs/pitfalls/plan/00-checklist.md` 의 판정 주체 표, `.claude/planning-overlay.md` 의 검증 절.
+  `docs/pitfalls/plan/00-checklist.md` 의 판정 주체 표, `.claude/plan-overlay.md` 의 검증 절.

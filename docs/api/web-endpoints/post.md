@@ -4,7 +4,7 @@
 최초 실측은 요청 간격을 1초보다 길게 뒀다.
 추가 실측에서는 명령을 하나씩 직렬로 실행하고 저장소의 토큰 버킷과 응답 헤더에 요청 간격을 맡겼다.
 공식 응답 필드는 [공식 서비스 API 문서](https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419)의 Project > Projects > Posts, Files, Logs 절을 브라우저로 열어 대조했다.
-인증·보안 규칙은 [기술 설계](../../features/web-session-auth/design.md), 공통 프로젝트·멤버·템플릿 응답은 [PR1 실측 기록](../web-endpoints.md)이 소유한다.
+인증·보안 규칙은 [기술 설계](../../features/web-session-auth/design.md), 공통 프로젝트·멤버·템플릿 응답은 [project.md](project.md)·[member.md](member.md)가 소유한다.
 
 `{projectId}`, `{postId}`, `{eventId}`, `{fileId}`는 문자열 식별자다.
 `{number}`는 업무 번호이며 업무 ID와 다르다.
@@ -32,10 +32,10 @@
 | `downloadPostFile` | GET `/files/{fileId}?disposition=attachment` | 직접 200과 파일 바이트를 받았다. `Content-Disposition` 있음. 보낸 텍스트와 받은 바이트가 같았다 |
 | `uploadPostFile` | POST `/wapi/task/v1/tasks/{postId}/files?type=general` | multipart의 `file`. 직접 200, `result: [{id, ...}]`. 공식 응답은 `{id}`만 낸다 |
 | `deletePostFile` | DELETE `/v2/wapi/projects/!{projectId}/posts/{number}/files/{fileId}` | `result: null`. 삭제 후 목록이 비었다 |
-| `getProjectTemplates` | GET `/v2/wapi/projects/!{projectId}/templates?page=&size=` | PR1 소유. 이 영역에서도 목록 성공 확인. 공식 변환은 PR1 구현을 재사용한다 |
-| `getProjectTemplateDetail` | GET `/v2/wapi/projects/!{projectId}/templates/{templateId}?interpolation=true` | PR1 소유. 이 영역에서도 상세 성공 확인. 템플릿 적용은 기존 명령의 합성 로직을 유지한다 |
+| `getProjectTemplates` | GET `/v2/wapi/projects/!{projectId}/templates?page=&size=` | 프로젝트 영역 소유. 이 영역에서도 목록 성공 확인. 공식 변환은 프로젝트 영역 구현을 재사용한다 |
+| `getProjectTemplateDetail` | GET `/v2/wapi/projects/!{projectId}/templates/{templateId}?interpolation=true` | 프로젝트 영역 소유. 이 영역에서도 상세 성공 확인. 템플릿 적용은 기존 명령의 합성 로직을 유지한다 |
 
-프로젝트·참여자·태그·단계·워크플로·그룹 이름을 찾는 resolver는 PR1 구현을 재사용한다.
+프로젝트·참여자·태그·단계·워크플로·그룹 이름을 찾는 resolver는 프로젝트·멤버 영역 구현을 재사용한다.
 웹 요청에 다른 쿠키나 추가 인증 헤더는 필요하지 않았다.
 
 ## 쿼리와 페이지 넘기기
@@ -131,7 +131,7 @@ ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열로 유�
 참조 그룹 옵션 자체는 담당자를 비운 별도 업무로 확인했다.
 이는 옵션이 무시되는 것과 구분한다.
 
-위 표의 옵션은 대응 경로와 결과를 확인했으므로 지원 계획에 포함한다.
+위 표의 옵션은 대응 경로와 결과를 확인했으므로 지원 목록에 넣는다.
 구현 뒤 CLI 검증에서 확인하지 못한 옵션은 성공으로 간주하지 않고 지원 목록에서 막는다.
 
 ## 나머지 옵션과 참여자 보존
@@ -141,7 +141,7 @@ ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열로 유�
 | `--title`, `--body`, `--body-file`, stdin | 지원 | subject·body.content로 전달 |
 | `--mention`, `--mention-group`, `--link-task` | 웹 필드 없이 지원 | 기존 본문 합성을 사용. 실측에서는 자기 자신이나 자기 전용 그룹만 멘션 |
 | `--mime-type` | 지원 | body.mimeType으로 전달. 기존 HTML·Markdown 합성 제약 유지 |
-| `--template` | 지원 | PR1 템플릿 조회 뒤 기존 우선순위로 생성 본문을 합성. 다른 사람에게 알림이 갈 템플릿만 있으면 실측을 건너뛰고 기록 |
+| `--template` | 지원 | 프로젝트 영역의 템플릿 조회 뒤 기존 우선순위로 생성 본문을 합성. 다른 사람에게 알림이 갈 템플릿만 있으면 실측을 건너뛰고 기록 |
 | `--dry-run` | 웹 필드 없이 지원 | 합성 결과만 출력하고 쓰지 않음 |
 | `--no-confirm` | 웹 필드 없이 지원 | 기존 첨부 누락 확인 절차에만 적용 |
 | `--id`, `--url`, URL 위치 인자 | 지원 | standalone 상세 조회로 업무·프로젝트를 확인 |

@@ -53,14 +53,14 @@ CLI 가 아닌 무언가가 파일을 쓴 뒤 CLI 저장이 한 번도 일어나
 | DECISION3 | PR 순서 | 웹 방식 기능보다 먼저 별도 PR 로 낸다 | 사용자 2026-11-13 | 웹 방식과 무관하게 지금 필요한 고침이다 |
 | DECISION4 | Windows 비밀값 암호화 저장 | 범위 밖, 다음 PR | 사용자 2026-11-13 | Windows 실측 환경이 없다 |
 | DECISION5 | 저장소가 없는 OS 의 평문 알림 | `doctor` 경고만. Linux 의 넓은 권한은 REQ2 로 명령마다 경고하고 `doctor` 에서 실패 | 사용자 2026-11-13 | 고칠 방법이 없는 경고를 매번 띄우지 않는다 |
-| DECISION6 | 권한 검사 대상 OS | macOS·Linux 만. Windows 는 POSIX 권한 검사를 하지 않는다 | 작성자 | Windows 에서 `chmod` 는 읽기 전용 표시만 바꿔 0600 판정이 뜻이 없다(`src/config/store.ts:35`) |
+| DECISION6 | 권한 검사 대상 OS | macOS·Linux 만. Windows 는 POSIX 권한 검사를 하지 않는다 | 작성자 | Windows 에서 `chmod` 는 읽기 전용 표시만 바꿔 0600 판정이 뜻이 없다(`src/config/store.ts` 의 `ensureDir`) |
 | DECISION7 | 권한 경고 조건 | 파일에 비어 있지 않은 비밀 필드가 있을 때만 | 작성자 | 비밀값을 키체인으로 옮긴 파일은 테넌트 이름 같은 비밀 아닌 값만 담는다 |
 | DECISION8 | 고치는 명령 안내 | 비밀값과 무관한 `config set` 한 번으로 옮겨진다는 것을 안내한다 | 작성자 | 저장 때 옮기는 [ADR-069](../../adr/069-macos-keychain-secret-store.md) 경로를 그대로 쓴다. 2026-11-13 실측으로 `config set track-last-run true` 한 번에 키체인 이전과 0600·0700 이 맞춰졌다 |
 | DECISION9 | 이미 있는 캐시 파일 | 다시 쓸 때 맞춘다. 일괄 변경 명령은 두지 않는다 | 작성자 | `dooray cache clear` 로 지우면 다음 조회부터 새 권한으로 생긴다 |
 | DECISION10 | `doctor` 종료 코드 | 실패 항목이 있으면 1, 아니면 0. 실패는 설정 손상·읽기 실패·미설정·연결 실패·보안이고 스킬은 넣지 않는다. `--json` 에 항목별 결과 목록을 더한다 | 사용자 2026-11-13 | 지금은 늘 0 이다. 그 값을 읽는 곳은 저장소와 nhn-dev 플러그인에 없다. 화면의 ❌ 는 CLI 가 지금 동작할 수 없다는 뜻이라 스크립트가 믿고 쓸 수 있다 |
 | DECISION11 | 경고하는 명령 | 설정을 읽는 명령만(`config get` 포함). 설정을 저장하는 명령은 저장 뒤 상태로 보므로 경고하지 않는다 | 작성자 | `--version`·`skill`·`cache clear` 는 비밀값을 쓰지 않는다. 안내한 고치는 명령이 경고를 다시 내면 사용자가 고쳐지지 않았다고 오해한다 |
-| DECISION12 | 키체인에 넣을 수 없는 구버전 값 | 명령 실행 때는 알리지 않고 `doctor` 경고로만 보인다 | 사용자 2026-11-13 | 그 값은 `config set` 을 해도 파일에 남고(`src/config/store.ts:89-96`), 같은 값을 다시 넣으면 거절된다. 고칠 방법이 없는 경고를 매번 띄우지 않는다 |
-| DECISION13 | 캐시 권한 실패 | 조용히 넘어간다 | 작성자 | `src/config/store.ts:37-44` 의 `ensureDir` 과 같은 처리다 |
+| DECISION12 | 키체인에 넣을 수 없는 구버전 값 | 명령 실행 때는 알리지 않고 `doctor` 경고로만 보인다 | 사용자 2026-11-13 | 그 값은 `config set` 을 해도 파일에 남고(`src/config/store.ts` 의 `writeConfig`), 같은 값을 다시 넣으면 거절된다. 고칠 방법이 없는 경고를 매번 띄우지 않는다 |
+| DECISION13 | 캐시 권한 실패 | 조용히 넘어간다 | 작성자 | `src/config/store.ts` 의 `ensureDir` 과 같은 처리다 |
 | DECISION14 | 직전 실행 기록 | 이번 PR 에 넣는다 | 사용자 2026-11-13 | 같은 폴더를 권한 없이 만드는 경로라 함께 막는다 |
 
 ## 도메인 규칙 변경

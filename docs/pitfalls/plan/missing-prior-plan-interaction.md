@@ -13,7 +13,7 @@ related: []
 
 ```bash
 git log origin/main --oneline -20 -- <scope-dir>/
-ls -dt tasks/*/ | head -5
+ls -dt docs/features/*/tasks/*/ | head -5
 ```
 
 **Self-check**: 최근 10개 커밋 중 plan 범위 파일을 건드린 게 있는가? 있으면 "어느 쪽이 final" 명시?

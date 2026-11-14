@@ -10,28 +10,27 @@ related: []
 
 plan 제출 전 아래 패턴을 확인한다.
 
-**판정은 `planning` 스킬의 `verify_task.ts` 가 소유한다.**
+**판정은 `plan` 스킬의 `verify_task.ts` 가 소유한다.**
 저장소는 별도 검사기를 두지 않는다. 같은 규칙을 둘이 가지면 서로 어긋난다.
 근거는 [ADR-059](../../adr/059-plan-check-owned-by-skill.md) 가 적는다.
 
 ```bash
 # cwd: <repo root>
-node "$SKILL_DIR/scripts/verify_task.ts" plan065-...
+node "$SKILL_DIR/scripts/verify_task.ts" <plan 폴더 이름> --tasks-dir docs/features/<기능>/tasks
 ```
 
 `$SKILL_DIR` 은 plan 스킬이 설치된 디렉터리다. 경로는 스킬 번들 기준이다. 하네스가 알려주는 base 디렉터리가 다르면 그것에 붙여 쓴다.
-`tasks/` 를 가진 저장소 root 에서 실행한다.
+저장소 root 에서 실행한다. 계획서는 `docs/features/<기능>/tasks/` 아래에 있어 `--tasks-dir` 로 그 폴더를 준다.
 
 | 항목 | 판정 주체 |
 | --- | --- |
 | **1-1**: 모든 수치가 실측 명령 결과 | 사람 또는 critic |
 | **1-2**: 파일 목록이 `--name-only` 결과와 일치 | 사람 또는 critic |
 | **1-3**: 최근 10개 커밋과 이 plan 의 관계 서술 | 사람 또는 critic |
-| **1-4**: 모든 Bash 블록에 `# cwd:` 주석 | `verify_task.ts` |
+| **1-4**: 스킬 번들 스크립트를 부르는 Bash 블록에 `# cwd:` 주석 | `verify_task.ts` |
 | **1-5**: 성공 기준에 인간 의존 문구 없음 | `verify_task.ts` |
 | **1-6**: 외부 상태 변경 단계에 사전 점검과 rollback | 사람 또는 critic |
 | **1-7**: load-bearing 불변식 도입 시 4면 가드 | 사람 또는 critic |
-| **1-8**: 마지막 phase 에 index.json `completed` 마킹 지시 | `verify_task.ts` |
 | **1-9**: rename 시 일괄 치환 도구의 단어 경계 표기를 피한다 | `verify_task.ts` |
 | **1-10**: type 변경 phase 면 성공 기준에 `pnpm tsc --noEmit` 기준값 비교 | 사람 또는 critic |
 | **1-11**: grep 검증 기대값을 구현 후 상태로 실제로 돌려 확인 | 사람 또는 critic |

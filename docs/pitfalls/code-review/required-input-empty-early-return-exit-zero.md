@@ -3,7 +3,7 @@ id: required-input-empty-early-return-exit-zero
 category: code-review
 title: "필수 입력 빈 값을 조기 return하고 stdout 안내로 처리 (exit 0 오인)"
 triggers: [빈 본문, empty body, exit code, EXIT_PARAM_ERROR, 조기 return, stdout, $EDITOR fallback]
-tool_catchable: true
+tool_catchable: false
 source: [PR #100]
 related: [empty-result-to-stderr, resolver-before-editor]
 ---

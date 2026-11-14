@@ -10,4 +10,4 @@
 
 **지원 기능**: send (to/cc/bcc/subject/body/html), reply (In-Reply-To로 스레드 유지)
 
-**추후 고민**: 첨부파일(`--attach`) 지원
+**추후 고민**: 첨부파일(`--attach`)은 [ADR-076](076-mail-send-attach.md) 이, 보낸메일함 저장은 [ADR-077](077-mail-save-sent.md) 이 정했다.

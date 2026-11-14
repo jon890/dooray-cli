@@ -7,6 +7,9 @@ config 경로가 계정 홈의 기본 경로가 아니면 account 에 경로 해
 
 **대체된 부분**: 비밀 필드에 웹 로그인 세션 쿠키(`sessionCookie`)가 더해졌다([ADR-081](081-web-session-auth.md)). 저장 위치와 읽기·쓰기 규칙은 이 ADR 을 그대로 따른다. 필드 목록의 원본은 `src/config/secret-store.ts` 의 `SECRET_FIELDS` 다.
 
+**대체된 부분**: `dooray-persona` 스크립트는 키체인을 직접 읽지 않고 `dooray ... --json` 명령을 실행한다(2026-11-14).
+아래에서 스크립트가 키체인을 읽는다고 적은 부분은 이 변경 전의 기록이다. 근거는 [웹 로그인 세션 인증 스펙](../features/web-session-auth/spec.md) DECISION11 이다.
+
 - 비밀 저장소는 `src/config/secret-store.ts` 의 `SecretStore` 인터페이스(`get`·`set`·`delete`) 뒤에 둔다.
   `getSecretStore(configPath)` 가 macOS 에서 키체인 구현을, 그 밖에서 `null` 을 돌려준다.
   Linux·Windows 백엔드는 이 인터페이스를 구현해 붙인다.
@@ -118,7 +121,7 @@ config 경로가 계정 홈의 기본 경로가 아니면 account 에 경로 해
 **테스트**: 실행 OS 에 따라 실제 키체인을 건드리지 않게 한다.
 기존 `store.test.ts`·`store.fs.test.ts` 는 `secret-store.js` 를 mock 해 `getSecretStore` 를 `null`(파일 모드)로 고정한다.
 키체인 모드는 `store.keychain.test.ts` 가 가짜 `SecretStore` 를 넣어 보고, 키체인 구현은 `secret-store.test.ts` 가
-`node:child_process` 를 mock 해 본다. RETRO-0017 처럼 store 가 직접 부르는 모듈을 이름으로 mock 한다.
+`node:child_process` 를 mock 해 본다. store 가 직접 부르는 모듈은 이름으로 mock 한다([코드 구조](../code-architecture.md)의 「테스트」).
 
 **대안 기각**:
 
@@ -181,5 +184,3 @@ config 경로가 계정 홈의 기본 경로가 아니면 account 에 경로 해
   명령이 끝나지 않는다. 에이전트나 예약 작업에서 문제가 된다. 같은 창이 사용자가 암호를 넣는 정상 경로이기도 해서
   몇 초로 끊을지 정하기 어렵고, 멈춤을 재현하려면 실제 로그인 키체인을 잠가야 해서 이번 범위에서 뺐다.
   `dooray-persona` 스크립트의 읽기도 같다.
-
-갱신(2026-11-14): `dooray-persona` 스크립트는 키체인을 직접 읽지 않고 `dooray ... --json` 명령을 실행한다. 위에서 스크립트를 언급한 부분은 이 변경 전의 기록이다. 근거는 [웹 로그인 세션 인증 스펙](../features/web-session-auth/spec.md) DECISION11 이다.

@@ -115,7 +115,7 @@ Linux 의 권한 경고와 Windows 의 생략은 단위 테스트로만 본다. 
 
 | ID | 결정 | 답 | 누가 | 근거 |
 | --- | --- | --- | --- | --- |
-| DECISION1 | 경고를 거는 자리 | `getConfigOrThrow` 와 `config get` | 작성자 | 설정을 읽어 쓰는 명령은 `getConfigOrThrow` 를 거친다. `config get` 만 `getConfig` 를 직접 부른다(`src/commands/config.ts:49`). `config set`·`setup`·실행 기록은 저장 경로라 경고하지 않는다(스펙 DECISION11) |
+| DECISION1 | 경고를 거는 자리 | `getConfigOrThrow` 와 `config get` | 작성자 | 설정을 읽어 쓰는 명령은 `getConfigOrThrow` 를 거친다. `config get` 만 `getConfig` 를 직접 부른다(`src/commands/config.ts` 의 `config get` 동작). `config set`·`setup`·실행 기록은 저장 경로라 경고하지 않는다(스펙 DECISION11) |
 | DECISION2 | 판정 함수의 형태 | OS·권한·비밀 필드·저장소 유무를 인자로 받는 순수 함수. 입력 타입은 그 파일이 정의한다 | 작성자 | OS 조합을 실제 파일 없이 테스트한다. `store.ts` 의 비공개 타입을 가져오면 순환 의존이 생긴다 |
 | DECISION3 | 경고 횟수 | 프로세스마다 한 번 | 작성자 | `doctor` 처럼 설정을 여러 번 읽는 명령이 있다 |
 | DECISION4 | `doctor --json` 의 모양 | 기존 평면 키를 두고 `checks` 배열을 더한다 | 작성자 | 기존 키를 읽는 자동화가 깨지지 않는다 |

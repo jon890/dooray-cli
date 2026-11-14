@@ -22,7 +22,6 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-013](013-smtp-mail.md) — SMTP 메일 발송
 - [ADR-015](015-file-attachment-307-redirect.md) — 파일 첨부 API 307 리다이렉트 수동 처리
 - [ADR-016](016-setup-interactive-wizard.md) — `dooray setup` 대화형 초기 설정 마법사
-- [ADR-018](018-setup-skill-install.md) — `dooray setup` 에서 Claude Code 스킬 설치
 - [ADR-019](019-post-create-metadata-options.md) — `post create` 메타데이터 옵션 (`--tag`/`--parent`/`--workflow`/`--milestone`)
 - [ADR-020](020-post-input-unification-vitest.md) — post 명령 input 통합 (`--id`/URL/positional)과 첫 테스트 인프라 (vitest)
 - [ADR-021](021-member-command-creator-enrich.md) — `member` 명령과 `comment list` Creator 이름 자동 채우기
@@ -63,7 +62,7 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-056](056-json-enrichment-behind-option.md) — `--json` 의 raw 유지는 그대로 두고 이름 보강은 `--with-tag-names` 로 연다 (Issue #174)
 - [ADR-057](057-download-all-includes-inline-files.md) — `download-all` 은 첨부 목록과 본문에 삽입된 파일을 함께 받는다 (Issue #171)
 - [ADR-058](058-unknown-option-usage-hint.md) — 알 수 없는 옵션 오류에 그 이름의 실제 사용법을 붙인다 (Issue #170)
-- [ADR-059](059-plan-check-owned-by-skill.md) — plan 검사는 `planning` 스킬의 `verify_task.py` 가 소유하고 저장소 검사기와 CI 스텝을 없앤다
+- [ADR-059](059-plan-check-owned-by-skill.md) — plan 검사는 `plan` 스킬의 `verify_task.ts` 가 소유하고 저장소 검사기와 CI 스텝을 없앤다
 - [ADR-060](060-mail-reply-confirmation-policy.md) — 메일 답장은 입력 형식과 무관하게 확인을 거친다 (UID 직접 입력 포함, Issue #179)
 - [ADR-061](061-messenger-logs-read.md) — 메신저 대화방 읽기를 `messenger logs` 로 두고 최근 N건(상한 1000)까지만 지원한다 (페이징·날짜 필터 부재 실측)
 - [ADR-062](062-undocumented-endpoint-policy.md) — 공식 문서에 없는 endpoint 는 조건 넷을 채운 읽기 전용에만 쓴다
@@ -77,9 +76,9 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-070](070-calendar-event-write.md) — 캘린더 일정 생성·수정·삭제를 `event create`·`edit`·`delete` 로 둔다 (생성은 `users`·`body` 키가 없으면 500, 수정의 `users` 는 통째 교체라 한쪽만 주면 기존 값으로 채움, 회차 id 수정은 반복 전체가 바뀌어 거부, `bymonthday` 쉼표 목록 전개, 이름 검색 부분일치라 정확일치만 인정 실측. 종일 여부는 `--start` 형식, 종일 `--end` 는 마지막 날 포함)
 - [ADR-071](071-mail-attachment-download.md) — 메일 첨부는 `mail get` 이 보여 주는 순번으로 골라 `mail attachment` 로 저장하고, 기존 파일은 `--force` 없이 덮어쓰지 않으며, 대상 메일은 확인 없이 stderr 로 알린다 (Issue #222)
 - [ADR-072](072-messenger-file-download.md) — 메신저 첨부 파일을 `messenger file download` 로 받고 `logs` 표 `참조` 칸에 파일 id 와 스레드 channelId 를 자르지 않고 보여준다 (공식 문서에 없는 경로, api 서버는 조합 검증 없이 항상 307·틀린 조합은 file-api 본문 없는 404 실측, 로그의 `file`·`thread` 필드와 `totalCount` 문자열 실측)
-- [ADR-076](076-mail-send-attach.md) — `mail send`·`mail reply` 의 `--attach` 는 발송 전에 모든 경로를 확인해 하나라도 일반 파일이 아니면 아무것도 보내지 않고, 크기 상한은 CLI 가 두지 않는다
 - [ADR-074](074-file-redirect-hardening.md) — 첨부 다운로드·업로드의 307 은 API 주소와 같은 도메인의 https 주소에만 인증 헤더를 싣고 파일 서버의 연쇄 redirect 는 막으며, 다운로드는 첫 응답까지 30초로 끊고 307 이 아니면 따라가지 않으며, 첨부 경로의 id 를 인코딩한다 (Issue #232, `file-api.dooray.com` 실측)
 - [ADR-075](075-api-path-encoding.md) — 공개 구현의 API 경로는 `apiPath` tagged template 으로 만들어 끼운 값을 모두 `encodeURIComponent` 로 인코딩한다. `baseUrl`·쿼리·리터럴은 helper 밖에 두고, 인벤토리 스크립트가 `apiPath` 태그를 읽는다 (Issue #240)
+- [ADR-076](076-mail-send-attach.md) — `mail send`·`mail reply` 의 `--attach` 는 발송 전에 모든 경로를 확인해 하나라도 일반 파일이 아니면 아무것도 보내지 않고, 크기 상한은 CLI 가 두지 않는다
 - [ADR-077](077-mail-save-sent.md) — `mail send`·`mail reply` 는 한 번 만든 원문을 SMTP 로 보내고 IMAP `\Sent` 메일함에 같은 바이트로 `APPEND` 하며, 발송 뒤 저장이 실패해도 재발송하지 않고 경고와 종료 코드 0 으로 끝낸다
 - [ADR-078](078-stream-list.md) — 활동 피드를 `stream list` 로 두고 `--all` 은 빈 배열까지, `--since` 는 응답 커서로 멈추며, 429 는 모든 명령에서 종료 코드 6 으로 끝낸다 (2주 5113건·한 페이지 189/200·나노초 커서·원소 시각 최대 29초 어긋남·`event.createdAt` 실측)
 - [ADR-079](079-member-get-with-org.md) — `member get --with-org` 으로 소속 회사·부서·직책을 바쁨 시간 조회 응답에서 채운다 (부서 이름이 있어도 `id` 가 null 실측)
@@ -91,3 +90,4 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 
 - [ADR-014](superseded/014-ts-path-alias-deferred.md) — TypeScript Path Alias 보류. [ADR-082](082-code-structure.md) 가 대체
 - [ADR-017](superseded/017-api-types-single-file.md) — `api/types.ts` 단일 파일 유지. [ADR-082](082-code-structure.md) 가 대체
+- [ADR-018](superseded/018-setup-skill-install.md) — `dooray setup` 에서 Claude Code 스킬 설치. [ADR-035](035-managed-skill-lifecycle.md) 가 대체

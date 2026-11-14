@@ -14,7 +14,7 @@ related: []
 **self-check**:
 ```bash
 # phase 의 테스트 코드 블록에서 vi.mock 경로가 테스트 대상과 같은 파일인지 확인
-grep -n 'vi\.mock("\./' tasks/*/phase-*.md
+grep -n 'vi\.mock("\./' docs/features/*/tasks/*/phase-*.md
 # "vi.mock("./project.js")" 같이 같은 디렉터리 파일을 mock 하면 self-mock 의심
 ```
 

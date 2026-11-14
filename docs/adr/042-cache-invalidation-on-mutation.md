@@ -67,9 +67,9 @@ config 변경이라면 저장이 이미 끝났고, 실패로 만들면 `dooray c
 
 **대안 기각**:
 
-- `api/client.ts` 의 쓰기 메서드가 스스로 캐시를 지운다.
+- 당시 `api/client.ts` 의 쓰기 메서드가 스스로 캐시를 지운다.
   `api/client` 는 순수 HTTP 래퍼이고 비즈니스 로직을 두지 않는다는 규칙과 어긋난다.
-  의존 방향도 `commands → resolvers + services → cache/store + api/client` 라서 역방향이 된다.
+  의존 방향도 `commands → resolvers + services → cache/store + api/client`(당시 이름) 라서 역방향이 된다.
 - `src/resolvers/` 에 쓰기 함수를 넣는다.
   파일이 새로 생기지 않는 대신 읽기 전용 계열에 쓰기가 섞인다.
   mutation 이 늘어나면 계열 이름이 역할을 설명하지 못한다.

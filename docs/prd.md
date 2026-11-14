@@ -26,14 +26,14 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 
 ### 포함
 
-- `dooray setup` — 대화형 초기 설정 마법사 (API endpoint·API key·메일 설정·Claude Code·Codex 스킬 설치)
+- `dooray setup` — 대화형 초기 설정 마법사 (인증 방식 선택·API endpoint·API key 또는 웹 로그인 세션 쿠키·메일 설정·Claude Code·Codex 스킬 설치)
 - `dooray skill` — Claude Code·Codex 스킬 설치 상태 조회·설치·갱신. Node 전역 설치 경로가 바뀌어도 명시적으로 최신 상태 복구
-- `dooray config` — API key·base URL·IMAP/SMTP 설정 (개별 수동 관리)
+- `dooray config` — auth-mode·API key·SESSION 쿠키·base URL·IMAP/SMTP 설정 (개별 수동 관리)
 - `dooray doctor` — 설정·연결 검증
 - `dooray cache` — 캐시 관리
 - `dooray project` — 목록·멤버·워크플로우·템플릿 조회, 태그 조회와 생성
   - 태그: `project tags create` 로 `"그룹:태그"` 생성, `project tags group` 으로 그룹의 필수·단일선택 속성 변경 (ADR-041)
-- `dooray member` — 표시명/이메일 조회 (`get`/`list`, ADR-021)
+- `dooray member` — 표시명/이메일 조회 (`get`/`list`, ADR-021)와 조직 멤버 검색 (`search`), `get --with-org` 로 회사·부서·직책 ([ADR-079](adr/079-member-get-with-org.md))
 - `dooray post` — 목록·검색·조회·생성·수정($EDITOR)·완료·상태변경
   - 메타데이터: `--tag`, `--parent`, `--workflow`, `--milestone` (ADR-019)
   - 인터랙션: `--mention`, `--mention-group`, `--link-task`, `--dry-run` (post comment 도 동일)
@@ -43,7 +43,7 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
   - 태그 확인과 태그 필터: `post get` 의 태그 줄과 `post get --with-tag-names`, `post list --tag <이름>` (ADR-056)
   - 목록 필터: `post list` 의 `--from`·`--to`·`--cc`(`me` 포함), `--parent`, `--created`·`--updated` 기간, `--order` (ADR-064)
   - 본문 부분 치환: `post replace --old/--new` 와 `wiki page replace` — 정확 일치, 2건 이상은 `--all` 필요, `--dry-run` 은 바뀌는 줄만 (ADR-065)
-- `dooray post comment` — 목록·추가·수정($EDITOR)·삭제
+- `dooray post comment` — 목록·최신(`latest`)·단건(`get`)·추가·수정($EDITOR)·삭제
 - `dooray post file` — 목록·다운로드·전체다운로드·업로드·삭제 (v0.3.0)
 - `dooray post comment file` — 댓글 첨부 파일 목록·업로드·다운로드·삭제 (댓글 조회·수정 API와 post-level files API 조합, ADR-024)
   - 업로드는 이미지 파일을 인라인 이미지로, 그 외 파일을 클릭 가능한 링크로 댓글 본문에 추가한다.
@@ -54,7 +54,9 @@ CLI는 터미널이 있는 환경이면 어디서든 동작하고, 자연스러�
 - `dooray mail` — 목록·조회·검색·발송·답장·인증정보 제거 (v0.2.0), 첨부 목록(`get`)과 첨부 저장(`attachment`, ADR-071, Issue #222)
 - `dooray feedback` — `gh` CLI 위임으로 GitHub 이슈 자동 생성 (`--last` 옵션으로 직전 명령 sanitized argv와 에러 자동 첨부, ADR-022/023)
 - `dooray messenger` — 1:1 다이렉트 메시지 (`send`) / 대화방 메시지 (`channel-send`) / 대화방 스레드 생성 (`thread-send`) 전송 + 대화방 메시지 조회 (`logs`) + 대화방 목록 (`channels`) + 대화방 첨부 파일 저장 (`file download`) (`--to` id·email, `--channel` id·이름, ADR-033, 스레드는 ADR-052, 조회는 ADR-061 — 최근 N건·상한 1000·페이징 없음, 목록은 ADR-066 — 필터·정렬은 클라이언트, 제목 없는 방은 참여자 이름으로 표시, 첨부 파일 저장은 ADR-072 — 공식 문서에 없는 endpoint, `logs` 표의 참조 칸에 파일 ID·스레드 channelId)
-- `dooray calendar` — 캘린더 목록 (`list`) + 기간 일정 조회 (`event list`) + 일정 상세 (`event get`). 읽기 전용이며 `--from`·`--to` 는 날짜만 주면 로컬 시간대로 하루 시작·끝까지 늘어나고 기본값은 오늘 하루다. 한 번에 최대 50일까지 조회한다. 목록은 페이징이 없고 참석자 이름과 본문은 상세에만 있으며, 목록 표는 내 참여 여부를 함께 낸다
+- `dooray calendar` — 캘린더 목록 (`list`) + 기간 일정 조회 (`event list`) + 일정 상세 (`event get`) + 일정 생성·수정·삭제 (`event create`·`edit`·`delete`, [ADR-070](adr/070-calendar-event-write.md)). 조회의 `--from`·`--to` 는 날짜만 주면 로컬 시간대로 하루 시작·끝까지 늘어나고 기본값은 오늘 하루다. 한 번에 최대 50일까지 조회한다. 목록은 페이징이 없고 참석자 이름과 본문은 상세에만 있으며, 목록 표는 내 참여 여부를 함께 낸다
+- `dooray stream` — 활동 피드 조회 (`list`, [ADR-078](adr/078-stream-list.md)). 응답 커서로 페이지를 넘기고 `--since`·`--unread` 로 좁힌다
+- 웹 로그인 세션 인증 — `auth-mode` 를 `web` 으로 두면 `SESSION` 쿠키로 비공식 웹 API 를 부른다. 지원 명령은 `docs/api/web-endpoints.md` 와 `docs/guide/setup.md` 가 소유한다 ([ADR-081](adr/081-web-session-auth.md))
 - `skills/dooray-persona` — Dooray 에 쌓인 본인 글을 수집해 업무 글 문체 문서를 만드는 워크플로우 스킬. CLI 명령이 아니라 저장소를 내려받아 쓰는 자산이다 (ADR-038)
 
 ### 제외 (v1)

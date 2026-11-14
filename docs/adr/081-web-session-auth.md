@@ -29,8 +29,8 @@
   - 감당할 것: 웹 경로와 응답이 예고 없이 바뀔 수 있고, 쓰기가 바뀌면 데이터가 의도와 다르게 남을 수 있다. 세션 쿠키는 API 키보다 권한이 넓고 브라우저 로그아웃이나 세션 만료로 무효가 된다. 웹의 호출 한도는 실측하지 않았다. `dooray.com` 이 아닌 세 클라우드의 웹 주소 규칙은 실측하지 않았다.
 - **확인 방법**: 웹 HTTP 층과 응답 변환의 단위 테스트, PR 마다 웹 방식으로 돌린 실측 기록(`docs/api/web-endpoints.md`).
 
-구현 배치 보완(사용자 결정 2026-11-14): 웹 구현은 `src/api/web/index.ts` 가 `src/api/<영역>/web.ts` 를 조립하고 미지원 영역의 기본값을 제공한다. 영역 계약은 각 영역의 types.ts, DTO 는 api/types.ts 가 소유한다. 지원 목록은 `src/commands/web-support/` 의 영역별 파일을 `web-support.ts` 가 모은다. 응답 fixture 와 웹 경로 명세도 영역별로 둔다. 그룹의 project.code 는 프로젝트 메모리나 실측한 웹 단건 조회로 보강한다. `member get --with-org` 는 캘린더 웹 구현 전에는 지원하지 않는다.
+구현 배치 보완(사용자 결정 2026-11-14): 웹 구현은 `src/api/web/index.ts` 가 `src/api/<영역>/web.ts` 를 조립하고 미지원 영역의 기본값을 제공한다. 영역 계약과 DTO 는 각 영역의 `types.ts` 가 소유한다([ADR-082](082-code-structure.md)). 지원 목록은 `src/commands/web-support/` 의 영역별 파일을 `web-support.ts` 가 모은다. 응답 fixture 와 웹 경로 명세도 영역별로 둔다. 그룹의 project.code 는 프로젝트 메모리나 실측한 웹 단건 조회로 보강한다. `member get --with-org` 는 웹의 바쁨 시간 조회 응답을 실측하지 못해 지원하지 않는다([캘린더 웹 경로](../api/web-endpoints/calendar.md)).
 
 영역 계약은 PR1 에 함께 둔다(사용자 결정 2026-11-14). 영역 web.ts 는 자기 계약 전체를 구현하고 DoorayClient 는 영역 계약의 교집합이다. 메서드별 stub 은 두지 않는다. 공통 Proxy 가 미지원 호출을 거절하며 then 을 제외해 thenable 오인을 막는다.
 
-공용 기반 보완(코디네이터 결정 2026-11-14): 웹 HTTP 와 첨부 전송은 `src/api/web/http.ts` 를 공유한다. 공개 API 주소를 전달받아 웹 origin 또는 같은 클라우드의 정확한 https file-api 호스트로 첨부 307 을 한 번만 허용하며, 새 Cookie 헤더만 붙인다(코디네이터 결정 2026-11-14). 공개 클라이언트의 isTrustedFileHost 는 바꾸지 않는다. 다운로드 시간 제한은 [첨부 시간 제한 규칙](074-file-redirect-hardening.md)을 따른다. 뒤 영역의 빈 지원 목록·가이드 절·웹 경로 색인을 PR1 에 준비해 동시 구현에서 공용 파일 변경을 줄인다. 목록용 이름 캐시와 상세 응답 캐시는 분리하며, 매개변수 DTO 는 `src/api/types.ts` 가 소유한다.
+공용 기반 보완(코디네이터 결정 2026-11-14): 웹 HTTP 와 첨부 전송은 `src/api/web/http.ts` 를 공유한다. 공개 API 주소를 전달받아 웹 origin 또는 같은 클라우드의 정확한 https file-api 호스트로 첨부 307 을 한 번만 허용하며, 새 Cookie 헤더만 붙인다(코디네이터 결정 2026-11-14). 공개 클라이언트의 isTrustedFileHost 는 바꾸지 않는다. 다운로드 시간 제한은 [첨부 시간 제한 규칙](074-file-redirect-hardening.md)을 따른다. 뒤 영역의 빈 지원 목록·가이드 절·웹 경로 색인을 PR1 에 준비해 동시 구현에서 공용 파일 변경을 줄인다. 목록용 이름 캐시와 상세 응답 캐시는 분리하며, 매개변수 DTO 는 각 영역의 `types.ts` 가 소유한다.

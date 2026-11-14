@@ -12,6 +12,7 @@
 | 메신저 | [messenger.md](web-endpoints/messenger.md) |
 | 캘린더 | [calendar.md](web-endpoints/calendar.md) |
 | 스트림 | [stream.md](web-endpoints/stream.md) |
+| 영역 공통 발견(헤더·200 실패·시각 표기·화면 부작용) | [collab.md](web-endpoints/collab.md) |
 
 ## 공통 규칙
 
@@ -27,8 +28,7 @@
 
 지원 명령·미지원 옵션·빠지는 필드는 [설정 가이드](../guide/setup.md)가 소유한다.
 
-영역 구현은 createXxxWeb(context: WebContext) 함수가 자기 영역 계약을 구현한 객체 리터럴을 반환한다. 클래스 인스턴스의 프로토타입 메서드는 조립 대상이 아니다. 공통 변환은 src/api/web/convert.ts, 고정 응답은 src/api/web/fixtures/<영역>/ 에 둔다.
-영역별로 필요한 요청 헤더는 해당 영역의 web.ts 에서 붙인다.
+웹 구현의 구조(영역별 `web.ts` 조립, 공통 변환, 고정 응답 위치)는 [코드 구조](../code-architecture.md)의 「API Client 구조」 가 소유한다. 영역에 필요한 요청 헤더는 그 영역의 `web.ts` 에서 붙인다.
 
 공용 전송은 src/api/web/http.ts 의 requestBytes(input, options) 와 upload(input, formData, options) 를 쓴다. 요청 옵션의 searchParams 는 쿼리로 붙는다.
 requestBytes 호출자는 파일명을 [ADR-067](../adr/067-attachment-file-name-decoding.md) 의 parseContentDispositionFileName·fallbackFileName helper 로 정한다.
