@@ -14,7 +14,7 @@
 
 **근거 문서**: `docs/api/web-endpoints/calendar.md`(경로·쿼리·본문·오류·변환 기준), `docs/features/web-session-auth/design.md` 「웹 HTTP 층」·「응답 변환」
 
-**전제**: PR1 머지 뒤 main 의 `CalendarClient`(`src/api/calendar/types.ts`), `WebContext`·`WebHttp`(`src/api/web/context.ts`, `src/api/web-http.ts`), `src/api/web/convert.ts` 도우미를 쓴다. 꼴이 plan 과 다르면 2단계 시작 때 plan 을 맞춘다.
+**전제**: PR1 머지 뒤 main 의 `CalendarClient`(`src/api/calendar/types.ts`), `WebContext`·`WebHttp`(`src/api/web/context.ts`, `src/api/web/http.ts`), `src/api/web/convert.ts` 도우미를 쓴다. 꼴이 plan 과 다르면 2단계 시작 때 plan 을 맞춘다.
 
 ## 작업 항목
 

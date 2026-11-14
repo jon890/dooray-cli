@@ -19,7 +19,7 @@
 ### 1. `web-auth.ts` 에 쿠키 파싱·웹 주소·완료 판정을 둔다. 기존 키체인 저장과 보안 검사에 sessionCookie 를 포함하고 API 방식에서는 쿠키 읽기를 생략하되 저장 시 보존한다.
 ### 2. 웹 HTTP 는 요청 origin 검사 후 SESSION 을 붙이고 리다이렉트를 차단한다. 토큰 버킷과 큰 정수 파서를 재사용한다. 오류·서버 메시지에서 호스트와 쿠키를 제거한다.
 ### 3. 캐시 비교에 방식·쿠키·웹 테넌트를 포함한다. API 방식 생략값은 api-key 와 같다.
-### 4. `src/config/web-auth.test.ts`, `src/api/web-http.test.ts`, `src/services/config.test.ts` 에 정상·잘못된 쿠키, 다른 origin, 401/403/302/HTML/429/네트워크, 키체인·설정 완료·캐시 무효화 테스트를 작성한다.
+### 4. `src/config/web-auth.test.ts`, `src/api/web/http.test.ts`, `src/services/config.test.ts` 에 정상·잘못된 쿠키, 다른 origin, 401/403/302/HTML/429/네트워크, 키체인·설정 완료·캐시 무효화 테스트를 작성한다.
 
 ### 5. 설정 명령과 안전한 주소 판정
 
@@ -46,8 +46,8 @@ node scripts/check-pii.mjs
 | --- | --- |
 | `src/config/web-auth.ts` | 신규 |
 | `src/config/web-auth.test.ts` | 신규 |
-| `src/api/web-http.ts` | 신규 |
-| `src/api/web-http.test.ts` | 신규 |
+| `src/api/web/http.ts` | 신규 |
+| `src/api/web/http.test.ts` | 신규 |
 | `src/config/*.ts` | 수정 |
 | `src/commands/config.ts` | 수정 |
 | `src/commands/config.test.ts` | 수정 |

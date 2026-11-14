@@ -27,7 +27,7 @@ DoorayClient 인터페이스와 createClient 를 만들고 공개 클라이언�
 
 명령 생성자는 createClient, resolver·services 의 매개변수는 DoorayClient 로 바꾼다. 명령 안 helper 매개변수도 바꾼다: post/edit.ts, post/get.ts, post/create.ts, post/list.ts, post/comment/list.ts, calendar/event-delete.ts, calendar/event-write.ts, stream/list.ts, messenger/channels.ts. 클라이언트를 참조하지 않는 src/editor/index.ts 는 바꾸지 않는다.
 
-### 3. `src/api/dooray-client.test.ts`, `src/api/web/project.test.ts`, `src/api/web/member.test.ts`
+### 3. `src/api/dooray-client.test.ts`, `src/api/project/web.test.ts`, `src/api/member/web.test.ts`
 
 방식 없음은 공개 클라이언트, web 은 웹 클라이언트, 잘못된 주소는 요청 전 4 를 확인한다. 실제 응답을 저장하지 않고 직접 쓴 가짜 fixture 로 변환·누락·페이지·쓰기·멤버 재사용을 확인한다. 실명·실제 ID·프로젝트 코드가 고정 파일에 없는지 직접 읽는다(PII 검사기로 한국어 이름을 모두 찾을 수 없다).
 
@@ -52,10 +52,10 @@ node scripts/check-pii.mjs
 | `src/api/dooray-client.ts` | 신규 |
 | `src/api/dooray-client.test.ts` | 신규 |
 | `src/api/web/index.ts` | 신규 |
-| `src/api/web/project.test.ts` | 신규 |
-| `src/api/web/member.test.ts` | 신규 |
-| `src/api/web/project.ts` | 신규 |
-| `src/api/web/member.ts` | 신규 |
+| `src/api/project/web.test.ts` | 신규 |
+| `src/api/member/web.test.ts` | 신규 |
+| `src/api/project/web.ts` | 신규 |
+| `src/api/member/web.ts` | 신규 |
 | `src/api/web/convert.ts` | 신규 |
 | `src/api/web/context.ts` | 신규 |
 | `src/api/web/fixtures/project/responses.json` | 신규 |
