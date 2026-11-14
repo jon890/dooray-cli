@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { getMail } from "../../api/imapClient.js";
+import { getMail } from "@/api/mail/imap.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";

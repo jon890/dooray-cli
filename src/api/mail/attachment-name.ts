@@ -1,5 +1,5 @@
 // 메일 첨부의 저장 이름을 정한다 (ADR-071). 파일 시스템에 의존하지 않는 순수 함수다.
-import { sanitizeFileName } from "./content-disposition.js";
+import { sanitizeFileName } from "@/utils/content-disposition.js";
 
 const MAX_FILE_NAME_BYTES = 255;
 

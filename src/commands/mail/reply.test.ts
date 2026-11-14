@@ -28,7 +28,7 @@ vi.mock("../../config/store.js", () => ({
   getConfigOrThrow: mocks.getConfigOrThrow,
 }));
 
-vi.mock("../../api/imapClient.js", () => ({
+vi.mock("@/api/mail/imap.js", () => ({
   getMail: mocks.getMail,
   resolveUidByMailId: mocks.resolveUidByMailId,
   createImapClient: vi.fn(() => mocks.client),
@@ -38,7 +38,7 @@ vi.mock("../../api/imapClient.js", () => ({
   saveToSent: mocks.saveToSent,
 }));
 
-vi.mock("../../api/smtpClient.js", () => ({
+vi.mock("@/api/mail/smtp.js", () => ({
   sendMail: mocks.sendMail,
 }));
 

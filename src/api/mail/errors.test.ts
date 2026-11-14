@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ImapFlow } from "imapflow";
-import { closeImapClient, connectImapClient } from "./imapClient.js";
-import { toMailConnectionError } from "./mailErrors.js";
-import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "../utils/exit-codes.js";
-import type { Config } from "../config/types.js";
+import { closeImapClient, connectImapClient } from "./imap.js";
+import { toMailConnectionError } from "./errors.js";
+import { EXIT_API_ERROR, EXIT_AUTH_ERROR } from "@/utils/exit-codes.js";
+import type { Config } from "@/config/types.js";
 
 const config: Config = {
   version: 1,

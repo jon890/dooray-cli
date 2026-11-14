@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { getConfigOrThrow } from "../../config/store.js";
-import { getMailAttachments } from "../../api/imapClient.js";
+import { getMailAttachments } from "@/api/mail/imap.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";

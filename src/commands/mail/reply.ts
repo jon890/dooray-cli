@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { getMail } from "../../api/imapClient.js";
-import { sendMail } from "../../api/smtpClient.js";
+import { getMail } from "@/api/mail/imap.js";
+import { sendMail } from "@/api/mail/smtp.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";

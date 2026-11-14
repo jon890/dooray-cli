@@ -18,7 +18,7 @@ vi.mock("../../config/store.js", () => ({
   getConfigOrThrow: mocks.getConfigOrThrow,
 }));
 
-vi.mock("../../api/imapClient.js", () => ({
+vi.mock("@/api/mail/imap.js", () => ({
   getMailAttachments: mocks.getMailAttachments,
   resolveUidByMailId: mocks.resolveUidByMailId,
 }));

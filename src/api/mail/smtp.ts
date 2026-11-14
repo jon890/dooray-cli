@@ -1,10 +1,10 @@
 import nodemailer from "nodemailer";
 import MailComposer from "nodemailer/lib/mail-composer/index.js";
-import type { Config } from "../config/types.js";
-import { DEFAULTS } from "../config/types.js";
-import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_CONFIG_ERROR } from "../utils/exit-codes.js";
-import { toMailConnectionError } from "./mailErrors.js";
+import type { Config } from "@/config/types.js";
+import { DEFAULTS } from "@/config/types.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_CONFIG_ERROR } from "@/utils/exit-codes.js";
+import { toMailConnectionError } from "./errors.js";
 
 export interface SendMailOptions {
   to: string[];

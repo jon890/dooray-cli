@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FetchMessageObject } from "imapflow";
-import type { Config } from "../config/types.js";
-import { DoorayCliError } from "../utils/errors.js";
+import type { Config } from "@/config/types.js";
+import { DoorayCliError } from "@/utils/errors.js";
 
 type FakeClient = ReturnType<typeof createFakeClient>;
 
@@ -20,7 +20,7 @@ vi.mock("imapflow", () => ({
   },
 }));
 
-import { getMail, getMailAttachments, resolveUidByMailId, saveToSent } from "./imapClient.js";
+import { getMail, getMailAttachments, resolveUidByMailId, saveToSent } from "./imap.js";
 
 const config: Config = {
   version: 1,

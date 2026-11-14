@@ -1,5 +1,5 @@
 import type { Config } from "../../config/types.js";
-import { saveToSent } from "../../api/imapClient.js";
+import { saveToSent } from "@/api/mail/imap.js";
 
 export interface SaveSentOutcome {
   savedToSent: boolean;

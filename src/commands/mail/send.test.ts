@@ -17,8 +17,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../../config/store.js", () => ({
   getConfigOrThrow: mocks.getConfigOrThrow,
 }));
-vi.mock("../../api/smtpClient.js", () => ({ sendMail: mocks.sendMail }));
-vi.mock("../../api/imapClient.js", () => ({ saveToSent: mocks.saveToSent }));
+vi.mock("@/api/mail/smtp.js", () => ({ sendMail: mocks.sendMail }));
+vi.mock("@/api/mail/imap.js", () => ({ saveToSent: mocks.saveToSent }));
 vi.mock("../../utils/spinner.js", () => ({
   startSpinner: mocks.startSpinner,
   stopSpinner: mocks.stopSpinner,
