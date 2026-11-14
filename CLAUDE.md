@@ -70,7 +70,7 @@ dooray                # 글로벌 링크 시
   - 제목은 post·wiki 모두 `--title` 이다. `post list` 의 `--subject` 는 제목 키워드 필터다. `post create`·`post edit` 는 `--subject` alias 를 받지 않는다
   - 본문은 `--body` / `--body-file` (둘 다 `-` 로 stdin 을 받는다)
   - `config set <key> <value>` 의 값도 `-` 로 stdin 을 받는다 — 토큰이 셸 기록과 프로세스 목록에 남지 않게 하는 경로다
-  - `post edit`, `wiki page edit`, `comment add`/`edit`, `messenger send` 계열은 제목·본문 옵션이 둘 다 없으면 `$EDITOR` 가 열린다. 비대화형으로 실행하는 예외(태그·참조자·담당자·`--mime-type`·`--dry-run` 등)는 `skills/dooray-cli/references/post.md` 와 `mention-link.md` 가 소유한다. `create` 계열은 `$EDITOR` 폴백이 없고, 둘 다 없으면 에러 대신 빈 본문으로 생성한다
+  - `post edit`, `wiki page edit`, `comment add`/`edit`, `messenger send` 계열은 제목·본문 옵션이 둘 다 없으면 `$EDITOR` 가 열린다. 비대화형으로 실행하는 예외(태그·참조자·담당자·`--mime-type`·`--dry-run` 등)는 `skills/dooray-cli/SKILL.md` 「본문 형식」 과 `references/post.md`, `references/mention-link.md` 가 소유한다. `create` 계열은 `$EDITOR` 폴백이 없고, 둘 다 없으면 에러 대신 빈 본문으로 생성한다
 - **mail 계열 입력**: `mail get`·`mail reply` 는 IMAP UID 외에 메일 웹 주소와 그 주소의 mail id 도 받는다. mail id 는 도착 시각으로 풀어 UID 를 찾는다 ([ADR-040](docs/adr/040-mail-url-to-uid-lookup.md))
   - 세 입력 형식 모두 답장 발송 전에 원본을 보여주고 확인을 거친다. 확인 절차와 종료 코드 규약은 [ADR-060](docs/adr/060-mail-reply-confirmation-policy.md) 이 소유한다
 - **resolver 매칭**: 정확일치 → 이름 부분일치 → 모호하면 에러와 후보 목록 출력

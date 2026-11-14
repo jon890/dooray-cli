@@ -34,6 +34,8 @@ export function extractTargets(diffText) {
   for (const block of addedBlocks(diffText)) {
     for (const m of block.matchAll(COMMAND_PATTERN)) commands.add(m[1]);
     // `.command("move <project>")` 처럼 인자 표기가 붙으면 첫 낱말만 이름이다.
+    // diff 만으로는 부모 명령을 몰라, `set` 같은 짧은 이름은 문서 어딘가에 우연히 있어도 통과한다.
+    // 그런 이름의 문서 여부는 사람이 부모와 함께 확인한다.
     for (const m of block.matchAll(SUBCOMMAND_PATTERN)) commands.add(m[1].trim().split(/\s+/)[0]);
     // 옵션 선언은 `--json` 처럼 긴 이름만 있기도 하고 `-y, --yes` 처럼 짧은 플래그가
     // 앞서기도 한다. 따옴표 안 전체를 잡아 그 안에서 긴 이름을 다시 훑는다.

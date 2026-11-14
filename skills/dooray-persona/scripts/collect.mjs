@@ -139,6 +139,8 @@ async function main() {
 
   await mkdir(outDir, { recursive: true, mode: 0o700 });
   await writePrivateFile(corpusPath, serializeEntries(entries));
+  // 완성본을 만들었으면 이전 실패가 남긴 부분 저장본은 쓸모가 없다.
+  await rm(join(outDir, "corpus.partial.jsonl"), { force: true });
   process.stdout.write(
     `${JSON.stringify({ outputPath: corpusPath, entries: entries.length })}\n`,
   );

@@ -66,4 +66,18 @@ describe("collect.mjs", () => {
     expect(JSON.parse(partial.trim())).toMatchObject({ id: "p1#body", text: "본문 원문" });
     await expect(readFile(join(dir, "work", "corpus.jsonl"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
   });
+
+  it("다시 수집해 성공하면 이전 실패의 corpus.partial.jsonl 을 지운다", async () => {
+    await runCollect();
+    // 두 번째 실행은 댓글이 성공하도록 가짜 CLI 를 바꾼다.
+    await writeFile(
+      join(dir, "dooray"),
+      FAKE_DOORAY.replace("process.exit(6);", "process.stdout.write('[]\\n'); process.exit(0);"),
+    );
+    const retry = await runCollect();
+
+    expect(retry.code).toBe(0);
+    await expect(readFile(join(dir, "work", "corpus.partial.jsonl"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    expect((await readFile(join(dir, "work", "corpus.jsonl"), "utf8")).trim().split("\n")).toHaveLength(1);
+  });
 });
