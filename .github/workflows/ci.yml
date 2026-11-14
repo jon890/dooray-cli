@@ -35,6 +35,9 @@ jobs:
       - name: Check public docs for internal references
         run: node scripts/check-public-refs.mjs
 
+      - name: Check source paths in docs
+        run: node scripts/check-doc-paths.mjs --strict
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

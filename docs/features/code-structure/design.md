@@ -98,8 +98,10 @@ R3 이 끝나면 utils 의 허용 목록은 빈다. R2 에서 추가한 resolver
 
 ### R4 의 명령 정리
 
-- project·post·wiki·mail 도 `commands/<영역>/index.ts` 에서 `<영역>Command()` 를 내보내고, `index.ts` 는 영역 나무를 `addCommand` 로 붙이기만 한다. 명령 등록 순서는 지금 `--help` 순서를 지킨다(REQ1 스냅숏이 확인한다).
+- project·post·wiki·mail 도 `commands/<영역>/index.ts` 에서 `<영역>Command` 를 내보내고, `index.ts` 는 영역 나무를 `addCommand` 로 붙이기만 한다. 기존 영역(member·messenger·stream·calendar)처럼 `export const <영역>Command = new Command(…)` 꼴이다. post 의 comment·file 묶음은 `post/comment/index.ts`·`post/file/index.ts` 가 맡고, wiki 의 `page` 묶음은 `wiki/index.ts` 안에 둔다. 명령 등록 순서는 지금 `--help` 순서를 지킨다(REQ1 스냅숏이 확인한다).
 - 명령 파일 안의 영역 로직을 같은 영역의 주제 파일로 뺀다. 대상은 「진단」 의 여섯 파일이다. 새 계층을 만들지 않는다. 캐시 무효화가 필요한 쓰기는 기존 규칙대로 `services/`, 이름 풀이는 `resolvers/` 로 보낸다.
+  - 뺀 자리: `stream/feed.ts`(활동 원소 읽기와 페이지 넘기기), `messenger/channel-list.ts`(방 필터·정렬·표시명·검색·참여자 이름 조회), `wiki/page-move-request.ts`(이동 요청 본문), `resolvers/wiki.ts` 의 `resolveTargetWikiId`(대상 위키 풀이), `calendar/event-delete-rules.ts`·`event-edit-rules.ts`(삭제 범위와 반복 일정 거부, 수정 경고와 기존 값 채우기), `post/comment/comment-lookup.ts`(댓글 조회와 작성자 이름 채우기).
+  - 옵션 해석(`--size`·`--since` 같은 값 읽기)과 출력은 명령 파일에 남긴다. 캐시를 쓰는 쓰기가 명령 파일에 있던 것은 없어 `services/` 로 보낸 것은 없다.
 
 ### R5 (선택)
 

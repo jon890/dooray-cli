@@ -26,7 +26,7 @@ PR 마다 무엇이 옮겨지는지는 [코드 구조 정리 기술 설계](feat
 
 ```
 src/
-  index.ts        # CLI entrypoint. Commander 루트와 명령 나무 조립
+  index.ts        # CLI entrypoint. Commander 루트. 영역마다 내보낸 명령 나무를 붙인다
   version.ts      # 빌드 때 주입된 CLI_VERSION
 
   api/            # HTTP·IMAP·SMTP 래퍼와 API 요청·응답 타입
@@ -39,7 +39,7 @@ src/
   formatters/     # 엔티티별 표·JSON·quiet 출력
   body/           # 본문 입력, 마크업, 참조와 첨부 확인 규칙. API·캐시 타입을 모른다
   utils/          # 오류, 종료 코드, 표준 입력, 출력 정리 같은 영역 공통 부품
-  commands/       # 명령 하나에 파일 하나. 위 계층을 조합한다
+  commands/       # 명령 하나에 파일 하나. 영역마다 index.ts 가 명령 나무를 내보낸다. 위 계층을 조합한다
     messenger/  project/  member/  post/  wiki/  mail/  calendar/  stream/
 ```
 
@@ -219,7 +219,7 @@ rg "^\s+(async )?\w+\(" src/api/*/public.ts src/api/*/web.ts
 | 도구 | 하는 일 |
 | --- | --- |
 | `scripts/help-snapshot.mjs` | 빌드한 CLI 의 모든 명령 경로 `--help` 를 모은다. `--check <기준>` 은 다르면 종료 코드 1. 정리 PR 이 기준 브랜치 빌드와 비교해 사용자에게 보이는 명령이 그대로인지 보인다 |
-| `scripts/check-doc-paths.mjs` | 문서의 `src/…` 경로가 있는 파일을 가리키는지 본다. 기본은 보고만, `--strict` 는 낡은 경로가 있으면 종료 코드 1 |
+| `scripts/check-doc-paths.mjs` | 문서의 `src/…` 경로가 있는 파일을 가리키는지 본다. 기본은 보고만, `--strict` 는 낡은 경로가 있으면 종료 코드 1. CI 가 `--strict` 로 돌려 낡은 경로가 든 PR 을 막는다 |
 
 ## 빌드·배포
 
