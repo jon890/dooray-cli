@@ -200,6 +200,7 @@ export class DoorayApiClient {
 | `rewrite` | 모든 `src/**/*.ts` 의 `import`·`export from`·`import()`·`vi.mock`·`vi.importActual`·`vi.doMock`·`vi.unmock`·`vi.doUnmock`·`vi.importMock` 지정자 가운데 옮긴 파일을 가리키는 것을 `@/<새 경로>.js` 로 바꾼다. 옮긴 파일 안의 상대 import 는 위치가 바뀌었으므로 같은 폴더가 아니면 `@/…` 로 바꾼다. 문서(`check-doc-paths.mjs` 가 읽는 범위)의 `src/<옛 경로>` 를 `src/<새 경로>` 로 바꾼다 | 내용 수정 커밋 |
 
 - 지정자는 옛 위치 기준으로 풀어 표와 비교한다. 문자열만 바꾸지 않고 경로를 풀어 비교하므로 `../../api/types.js` 와 `../types.js` 를 같은 파일로 알아본다.
+- move 는 작업 공간의 Git 메타데이터(이동 표 해시별 dooray-move-paths 파일)에 원본을 보관한다. rewrite 는 이 원본으로 계산하므로 옛 폴더와 새 폴더에 동명 파일이 있어도 재실행이 대상을 바꾸지 않는다. rewrite 전에 옮긴 파일의 내용을 따로 수정했으면 덮어쓰지 않고 실패한다. move 와 rewrite 는 같은 작업 공간에서 실행한다.
 - `new URL("…", import.meta.url)` 같은 파일 상대 경로는 지원하지 않는다. 파일을 옮긴 뒤 해당 경로를 직접 확인하고 고친다.
 - 표에 없는 파일은 손대지 않는다. 실행 뒤 `git diff --stat` 을 PR 본문에 붙인다.
 - 이동 커밋은 내용을 바꾸지 않으므로 git 의 이름 바꾸기 탐지가 100% 유사도로 잡는다(REQ8). 이 저장소는 PR 을 merge commit 으로 합치므로 두 커밋이 main 이력에 남는다.

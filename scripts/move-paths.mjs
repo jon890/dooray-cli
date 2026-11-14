@@ -7,8 +7,10 @@
  * rewrite 는 move 직후, 내용 수정 전에 같은 표로 실행한다.
  * 타입 선언 분할은 이 스크립트의 대상이 아니다.
  * new URL("…", import.meta.url) 같은 파일 상대 경로는 고치지 않는다.
+ * move 가 Git 메타데이터에 원본을 보관해 rewrite 재실행도 같은 경로를 계산한다.
  */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -200,11 +202,18 @@ function rewriteDoc(source, moves) {
 export function runMoves(root, table, step) {
   if (!["move", "rewrite"].includes(step)) throw new Error("--step move|rewrite 를 지정한다");
   const moves = expandMoves(root, table);
+  const key = createHash("sha256").update(JSON.stringify([...moves].sort((a, b) => a.from.localeCompare(b.from)))).digest("hex");
+  const snapshotFile = moves.length ? resolve(root, execFileSync("git", ["-C", root, "rev-parse", "--git-path", `dooray-move-paths/${key}.json`], { encoding: "utf8" }).trim()) : undefined;
   if (step === "move") {
     const tracked = new Set(execFileSync("git", ["-C", root, "ls-files", "-z"], { encoding: "utf8" }).split("\0"));
     for (const { from, to } of moves) {
       if (!tracked.has(`src/${from}`) || !existsSync(join(root, "src", from))) throw new Error(`git 추적 파일이 없다: ${from}`);
       if (existsSync(join(root, "src", to))) throw new Error(`도착 파일이 이미 있다: ${to}`);
+    }
+    const originals = Object.fromEntries(moves.map(({ from, to }) => [to, readFileSync(join(root, "src", from), "utf8")]));
+    if (snapshotFile) {
+      mkdirSync(dirname(snapshotFile), { recursive: true });
+      writeFileSync(snapshotFile, JSON.stringify(originals), { mode: 0o600 });
     }
     for (const { from, to } of moves) {
       mkdirSync(dirname(join(root, "src", to)), { recursive: true });
@@ -215,11 +224,16 @@ export function runMoves(root, table, step) {
   for (const { from, to } of moves) {
     if (existsSync(join(root, "src", from)) || !existsSync(join(root, "src", to))) throw new Error(`먼저 move 단계를 실행한다: ${from} -> ${to}`);
   }
+  const originals = snapshotFile ? JSON.parse(readFileSync(snapshotFile, "utf8")) : {};
   const updates = [];
   for (const file of filesUnder(join(root, "src"), ".ts")) {
     const source = readFileSync(file, "utf8");
     const current = file.slice(join(root, "src").length + 1).split("\\").join("/");
-    const next = rewriteSource(root, source, current, moves);
+    const moved = moves.some(({ to }) => to === current);
+    const original = moved ? originals[current] : source;
+    if (typeof original !== "string") throw new Error(`이동 원본이 없다. 같은 작업 공간에서 move 를 먼저 실행한다: ${current}`);
+    const next = rewriteSource(root, original, current, moves);
+    if (moved && source !== original && source !== next) throw new Error(`옮긴 파일 내용이 바뀌었다. rewrite 는 내용 수정 전에 실행한다: ${current}`);
     if (next !== source) updates.push([file, next]);
   }
   for (const file of [...new Set(DOC_TARGETS.flatMap((target) => filesUnder(join(root, target), ".md")))]) {

@@ -164,6 +164,38 @@ describe("rewrite", () => {
     runMoves(root, table, "rewrite");
     expect(read(root, "src/body/new.ts")).toBe(source);
   });
+
+  it("옛 폴더와 새 폴더에 같은 이름이 있어도 첫 실행과 재실행이 같은 대상을 가리킨다", () => {
+    const root = fixture();
+    write(root, "src/body/helper.ts", "export const helper = 2;\n");
+    write(root, "src/utils/old.ts", 'import { helper } from "../body/helper.js";\n');
+    runMoves(root, table, "move");
+    runMoves(root, table, "rewrite");
+    expect(read(root, "src/body/new.ts")).toBe('import { helper } from "./helper.js";\n');
+    runMoves(root, table, "rewrite");
+    expect(read(root, "src/body/new.ts")).toBe('import { helper } from "./helper.js";\n');
+    git(root, "add", ".");
+    git(root, "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "rewrite");
+    runMoves(root, table, "rewrite");
+    expect(read(root, "src/body/new.ts")).toBe('import { helper } from "./helper.js";\n');
+  });
+
+  it("새 폴더에 동명 파일이 있어도 첫 실행은 옛 위치의 의존을 유지한다", () => {
+    const root = fixture();
+    write(root, "src/body/helper.ts", "export const helper = 2;\n");
+    runMoves(root, table, "move");
+    runMoves(root, table, "rewrite");
+    expect(read(root, "src/body/new.ts")).toContain('from "@/utils/helper.js"');
+  });
+
+  it("이동 뒤 수정한 파일을 원본으로 덮어쓰지 않는다", () => {
+    const root = fixture();
+    runMoves(root, table, "move");
+    write(root, "src/body/new.ts", "export const edited = true;\n");
+    expect(() => runMoves(root, table, "rewrite")).toThrow("내용이 바뀌었다");
+    expect(read(root, "src/body/new.ts")).toBe("export const edited = true;\n");
+    expect(read(root, "src/body/new.test.ts")).toContain('from "./old.js"');
+  });
 });
 
 describe("CLI", () => {
