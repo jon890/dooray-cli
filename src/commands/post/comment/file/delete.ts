@@ -8,8 +8,8 @@ import {
 import { startSpinner, stopSpinner } from "../../../../utils/spinner.js";
 import { DoorayCliError } from "../../../../utils/errors.js";
 import { EXIT_API_ERROR, EXIT_PARAM_ERROR } from "../../../../utils/exit-codes.js";
-import { removeFileReference } from "../../../../utils/comment-files.js";
-import { resolveBodyMimeType } from "../../../../utils/body-input.js";
+import { removeFileReference } from "@/body/comment-files.js";
+import { resolveBodyMimeType } from "@/body/body-input.js";
 import {
   authorizeDeletion,
   promptDeletion,

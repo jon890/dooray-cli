@@ -1,6 +1,7 @@
+import { readStdin } from "@/utils/stdin.js";
 import { readFile } from "node:fs/promises";
-import { DoorayCliError } from "./errors.js";
-import { EXIT_PARAM_ERROR } from "./exit-codes.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
 
 export interface BodyInputOptions {
   body?: string;
@@ -146,18 +147,4 @@ export async function readBodyInputOrNull(
 ): Promise<string | null> {
   if (opts.body == null && opts.bodyFile == null) return null;
   return readBodyInput(opts);
-}
-
-export async function readStdin(): Promise<string> {
-  if (process.stdin.isTTY) {
-    throw new DoorayCliError(
-      "stdin에서 읽으려면 파이프로 데이터를 전달해주세요.",
-      EXIT_PARAM_ERROR,
-    );
-  }
-  const chunks: Buffer[] = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString("utf-8");
 }

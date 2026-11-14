@@ -7,9 +7,9 @@ import { printJson, type OutputOptions } from "../../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../../utils/spinner.js";
 import { DoorayCliError } from "../../../../utils/errors.js";
 import { EXIT_API_ERROR, EXIT_PARAM_ERROR } from "../../../../utils/exit-codes.js";
-import { appendFileReference } from "../../../../utils/comment-files.js";
-import { resolveBodyMimeType } from "../../../../utils/body-input.js";
-import { checkMarkupSupport } from "../../../../utils/body-markup.js";
+import { appendFileReference } from "@/body/comment-files.js";
+import { resolveBodyMimeType } from "@/body/body-input.js";
+import { checkMarkupSupport } from "@/body/body-markup.js";
 
 export const uploadCommentFileCommand = new Command("upload")
   .description("댓글에 파일 업로드 (첨부 카드가 아닌 본문 링크로 표시)")

@@ -42,11 +42,11 @@ pnpm test
 | 파일 | 변경 |
 | --- | --- |
 | `src/utils/*.ts` | 수정 (설계 표의 구현과 짝 테스트 이동) |
-| `src/body/*.ts` | 신규 (이동 목적지) |
+| `src/body/*.ts` | 신규·수정 (이동 목적지) |
 | `src/formatters/comment-enrich*.ts` | 신규 (이동 목적지) |
 | `src/commands/feedback/meta*.ts` | 신규 (이동 목적지) |
 | `src/commands/mail/attach*.ts` | 신규 (이동 목적지) |
 
-| `src/body/*.test.ts` | 신규 (기존 테스트 이동) |
+| `src/body/*.test.ts` | 신규·수정 (기존 테스트 이동) |
 
-| `src/body/body-input.test.ts` | 신규 (기존 입력 테스트 유지) |
+| `src/body/body-input.test.ts` | 수정 (기존 입력 테스트 유지) |

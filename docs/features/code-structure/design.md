@@ -94,7 +94,7 @@ src/
 | mail-attach | `commands/mail/attach.ts` | `mail send`·`reply` 만 쓴다 |
 | mail-attachment-name | `api/mail/attachment-name.ts` (R2) | IMAP 응답을 다루는 api 쪽 조각이다 |
 
-R3 이 끝나면 허용 목록은 빈다.
+R3 이 끝나면 utils 의 허용 목록은 빈다. R2 에서 추가한 resolver 의 전체 클라이언트 의존은 R4 에서 비운다.
 
 ### R4 의 명령 정리
 
@@ -221,7 +221,7 @@ export class DoorayApiClient {
 | R0 | 규칙 테스트가 지금 저장소에서 허용 목록 4건으로 통과하고, 판정 함수 단위 테스트가 위반 꼴을 잡는다. `path-alias.test.ts`(vitest·`vi.mock`), `index.ts` 의 별칭 import(tsc·빌드, `dist/index.js --version`). 도움말 스냅숏이 main 빌드와 같다. 문서 경로 검사가 보고만 한다 |
 | R1 | 스냅숏 같음, 테스트 수 같음 이상, `api/types.ts` 가 재내보내기만인지 확인, 허용 목록 경로 갱신 |
 | R2 | 위에 더해 `pnpm api:inventory` 전후 같음, 공개·웹 상호 import 0건(규칙 테스트), `client.ts` 재내보내기만, `createPublicClient` 에서 영역 하나를 빼면 tsc 가 실패하는지 한 번 확인 |
-| R3 | 허용 목록이 빈다. `api/mail/imap.ts` 가 readline 을 가져오지 않는다 |
+| R3 | utils 의 허용 목록이 빈다. resolver 의 전체 클라이언트 의존은 R4 까지 남긴다. `api/mail/imap.ts` 가 readline 을 직접·간접으로 가져오지 않는다 |
 | R4 | 명령 나무를 영역에서 받는다. 스냅숏이 순서까지 같다. 문서 경로 검사 `--strict` 가 0건이고 CI 단계에 들어간다 |
 | R5 | 내보내는 이름이 같고 스냅숏·테스트가 같다 |
 

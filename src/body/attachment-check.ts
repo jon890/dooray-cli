@@ -1,7 +1,7 @@
 import readline from "node:readline";
-import { DoorayCliError } from "./errors.js";
-import { EXIT_PARAM_ERROR } from "./exit-codes.js";
-import { sanitizeForTerminal } from "./sanitize.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
+import { sanitizeForTerminal } from "@/utils/sanitize.js";
 
 export interface AttachmentReference {
   id: string;
@@ -51,16 +51,10 @@ export function findDroppedAttachments(
   return dropped;
 }
 
-// 서버에서 받은 파일명에 ANSI escape 나 control sequence 가 들어있을 수 있어
-// 터미널 변조 방지 목적으로 출력 직전 sanitize.
-export function sanitizeFileName(name: string): string {
-  return sanitizeForTerminal(name);
-}
-
 function printDroppedWarning(dropped: DroppedAttachment[]): void {
   process.stderr.write(`⚠  새 본문에서 ${dropped.length}개 attachment reference 가 빠집니다:\n`);
   for (const a of dropped) {
-    const safe = a.name ? sanitizeFileName(a.name) : undefined;
+    const safe = a.name ? sanitizeForTerminal(a.name) : undefined;
     process.stderr.write(`   - /files/${a.id}  ${safe ? "← " + safe : ""}\n`);
   }
   process.stderr.write(`   (attachment 자체는 서버에 남지만 본문에서 사라져 보입니다.)\n`);

@@ -55,7 +55,7 @@
     넘기지 않으면 기본값으로 떨어지므로, 기본값을 `text/x-markdown` 으로 두어 종전 동작을 유지한다.
     HTML 표기가 공식 문서에 없을 때 거절하는 경로가 늘어, `text/html` 본문을 쓰던 자동화가 멈출 수 있다.
 
-- **적용 범위**: `src/utils/mention.ts`, `src/utils/task-link.ts`, `src/utils/comment-files.ts` 와
+- **적용 범위**: `src/body/mention.ts`, `src/body/task-link.ts`, `src/body/comment-files.ts` 와
   그 셋을 부르는 `src/commands/post/edit.ts`, `src/commands/post/comment/edit.ts`,
   `src/commands/post/comment/file/upload.ts`, `src/commands/post/comment/file/delete.ts`.
 
@@ -69,7 +69,7 @@
 | 첨부 reference | 정하지 못했다 | 확인 못함 |
 
 넷이 모두 `확인 못함` 이므로 `text/html` 본문의 네 경로는 모두 거절한다.
-`src/utils/body-markup.ts` 의 `HTML_SUPPORTED_KINDS` 가 그 목록을 코드에서 소유한다.
+`src/body/body-markup.ts` 의 `HTML_SUPPORTED_KINDS` 가 그 목록을 코드에서 소유한다.
 표기를 확정하면 이 표를 고치고 그 목록에 종류를 더한다.
 
 **어떻게 확인했는가:**

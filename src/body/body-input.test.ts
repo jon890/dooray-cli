@@ -12,8 +12,8 @@ import {
   HTML_MIME,
   BODY_MIME_TYPES,
 } from "./body-input.js";
-import { DoorayCliError } from "./errors.js";
-import { EXIT_PARAM_ERROR } from "./exit-codes.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
 
 describe("resolveBodyMimeType", () => {
   it("override 가 있으면 기존 값보다 우선한다", () => {

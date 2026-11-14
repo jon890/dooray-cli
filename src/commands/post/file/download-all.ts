@@ -5,7 +5,7 @@ import { getConfigOrThrow } from "../../../config/store.js";
 import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
-import { extractInlineFileIds } from "../../../utils/inline-file-refs.js";
+import { extractInlineFileIds } from "@/body/inline-file-refs.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { printJson } from "../../../formatters/table.js";
 import { emitDownloadAllResult } from "../../../formatters/file-output.js";

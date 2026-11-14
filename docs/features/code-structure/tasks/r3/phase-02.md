@@ -28,9 +28,10 @@
 ### utils 허용 목록만 비우고 resolver 항목은 유지한다. IMAP 조회가 readline 에 기대지 않는 것을 확인한다.
 ### 코드 구조 문서와 이동 경로를 맞추고 인수 결과와 공통화 후보를 기록한다.
 
-### 기존 본문 입력 테스트를 유지한다
+### 기존 본문 입력 테스트와 의존 규칙 검사를 유지한다
 
 `src/body/body-input.test.ts` 의 파일·stdin·오류 검증을 그대로 보존한다.
+`src/architecture.test.ts` 에 utils 예외와 IMAP 조회의 readline 의존을 검사하는 사례를 추가한다.
 
 ## 검증
 

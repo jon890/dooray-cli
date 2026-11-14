@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { applyReplace } from "../utils/body-replace.js";
+import { applyReplace } from "@/body/body-replace.js";
 import { CR_MARKER, formatHunks, printReplacePreview } from "./body-replace.js";
 
 // ANSI escape 시작 바이트. 리터럴로 두면 편집기에서 보이지 않아 escape 표기로 쓴다.

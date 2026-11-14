@@ -1,4 +1,4 @@
-import type { LastRun } from "../cache/last-run.js";
+import type { LastRun } from "@/cache/last-run.js";
 
 export interface FeedbackMeta {
   cliVersion: string;

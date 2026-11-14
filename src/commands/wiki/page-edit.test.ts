@@ -36,8 +36,8 @@ vi.mock("../../editor/index.js", async (importOriginal) => {
   return { ...actual, openInEditor: mocks.openInEditor };
 });
 
-vi.mock("../../utils/body-input.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../utils/body-input.js")>();
+vi.mock("@/body/body-input.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/body/body-input.js")>();
   return { ...actual, readBodyInput: mocks.readBodyInput };
 });
 

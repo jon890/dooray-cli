@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildIssueBody, buildLastRunBlock, collectMeta } from "./feedback-meta.js";
-import { CLI_VERSION } from "../version.js";
+import { buildIssueBody, buildLastRunBlock, collectMeta } from "./meta.js";
+import { CLI_VERSION } from "@/version.js";
 
 const FAKE_META = {
   cliVersion: "0.5.2",

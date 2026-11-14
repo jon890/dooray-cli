@@ -4,10 +4,10 @@ import { sendMail } from "@/api/mail/smtp.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
-import { readBodyInput } from "../../utils/body-input.js";
+import { readBodyInput } from "@/body/body-input.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
-import { resolveMailAttachments } from "../../utils/mail-attach.js";
+import { resolveMailAttachments } from "./attach.js";
 import { saveSentCopy } from "./save-sent.js";
 
 export const mailSendCommand = new Command("send")

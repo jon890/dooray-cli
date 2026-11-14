@@ -34,8 +34,8 @@ vi.mock("../../../resolvers/post-input.js", () => ({
   resolvePostInput: mocks.resolvePostInput,
 }));
 
-vi.mock("../../../utils/body-input.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../../utils/body-input.js")>();
+vi.mock("@/body/body-input.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/body/body-input.js")>();
   return { ...actual, readBodyInputOrNull: mocks.readBodyInputOrNull };
 });
 
@@ -44,8 +44,8 @@ vi.mock("../../../editor/index.js", async (importOriginal) => {
   return { ...actual, openInEditor: mocks.openInEditor };
 });
 
-vi.mock("../../../utils/attachment-check.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../../utils/attachment-check.js")>();
+vi.mock("@/body/attachment-check.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/body/attachment-check.js")>();
   return { ...actual, checkAndGuardDropped: mocks.checkAndGuardDropped };
 });
 

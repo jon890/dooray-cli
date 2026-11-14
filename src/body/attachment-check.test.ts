@@ -1,9 +1,9 @@
+import { sanitizeForTerminal } from "@/utils/sanitize.js";
 import { describe, it, expect } from "vitest";
 import {
   extractAttachmentFileIds,
   extractAttachmentReferences,
   findDroppedAttachments,
-  sanitizeFileName,
 } from "./attachment-check.js";
 
 describe("extractAttachmentReferences", () => {
@@ -87,15 +87,15 @@ describe("findDroppedAttachments", () => {
   });
 });
 
-describe("sanitizeFileName", () => {
+describe("sanitizeForTerminal", () => {
   it("ANSI escape 제거", () => {
-    expect(sanitizeFileName("evil\x1b[31mname")).toBe("evil?[31mname");
+    expect(sanitizeForTerminal("evil\x1b[31mname")).toBe("evil?[31mname");
   });
   it("control char 제거", () => {
-    expect(sanitizeFileName("a\x00b\x07c\x7fd")).toBe("a?b?c?d");
+    expect(sanitizeForTerminal("a\x00b\x07c\x7fd")).toBe("a?b?c?d");
   });
   it("일반 문자 유지", () => {
-    expect(sanitizeFileName("img.png")).toBe("img.png");
-    expect(sanitizeFileName("한글파일.pdf")).toBe("한글파일.pdf");
+    expect(sanitizeForTerminal("img.png")).toBe("img.png");
+    expect(sanitizeForTerminal("한글파일.pdf")).toBe("한글파일.pdf");
   });
 });

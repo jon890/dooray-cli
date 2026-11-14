@@ -36,11 +36,6 @@ export const LAYER_DEPENDENCIES: Record<string, readonly string[]> = {
  * 위반을 고치면 이 목록에서 지운다. 고친 뒤에도 남아 있으면 테스트가 실패한다.
  */
 export const ALLOWED_VIOLATIONS: readonly string[] = [
-  // utils 는 다른 계층을 모르는 잎이어야 한다. 영역 규칙과 상위 계층 타입에 기대는 것들이다.
-  "utils/comment-enrich.ts -> api/post/types.ts",
-  "utils/feedback-meta.ts -> cache/last-run.ts",
-  "utils/mention.ts -> cache/types.ts",
-  "utils/task-link.ts -> cache/types.ts",
   // resolvers 는 필요한 영역 인터페이스만 받아야 한다. 아직 전체 DoorayClient 를 받는 곳이다. R4 에서 비운다.
   "resolvers/comment-file-input.ts -> api/dooray-client.ts",
   "resolvers/messenger-channel.ts -> api/dooray-client.ts",
@@ -208,6 +203,23 @@ describe("의존 규칙", () => {
   it("허용 목록 밖의 위반이 없다", () => {
     const unexpected = [...violations].filter(([key]) => !ALLOWED_VIOLATIONS.includes(key)).map(([key, reason]) => `${key} (${reason})`);
     expect(unexpected, "의존 규칙을 어긴 import 다. docs/code-architecture.md 「의존 규칙」 을 보고 고친다").toEqual([]);
+  });
+
+  it("utils 에 상위 계층 의존 예외가 없다", () => {
+    expect(ALLOWED_VIOLATIONS.filter((edge) => edge.startsWith("utils/"))).toEqual([]);
+  });
+
+  it("IMAP 조회의 의존 경로에 readline 이 없다", () => {
+    const pending = ["api/mail/imap.ts"];
+    const visited = new Set<string>();
+    while (pending.length > 0) {
+      const file = pending.pop()!;
+      if (visited.has(file)) continue;
+      visited.add(file);
+      const specs = importSpecifiers(readFileSync(join(SRC, file), "utf8"));
+      expect(specs.filter((spec) => /^(?:node:)?readline(?:\/|$)/.test(spec)), file).toEqual([]);
+      pending.push(...edges.filter((edge) => edge.from === file).map((edge) => edge.to));
+    }
   });
 
   it("허용 목록에 고쳐진 위반이 남지 않는다", () => {

@@ -1,12 +1,16 @@
-import type { CachedMe } from "../cache/types.js";
-import { DoorayCliError } from "./errors.js";
-import { EXIT_PARAM_ERROR } from "./exit-codes.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
 import { buildLink, escapeLinkText } from "./body-markup.js";
 import { MARKDOWN_MIME } from "./body-input.js";
 
 // escapeLinkText 의 본체는 body-markup.ts 로 옮겼다. 링크 텍스트 escape 의 이름이
 // 이 파일에서 사라지면 읽는 사람이 다시 찾아야 하므로 여기서 다시 내보낸다.
 export { escapeLinkText };
+
+/** 업무 링크에 필요한 조직 식별자. */
+export interface TaskLinkContext {
+  orgId: string;
+}
 
 export interface TaskLinkInput {
   projectCode: string;
@@ -18,7 +22,7 @@ export interface TaskLinkInput {
 
 export function buildTaskLink(
   t: TaskLinkInput,
-  me: CachedMe,
+  me: TaskLinkContext,
   mimeType: string = MARKDOWN_MIME,
 ): string {
   return buildLink(mimeType, {
@@ -50,7 +54,7 @@ export function parseLinkRef(ref: string): { projectArg?: string; postNumberArg?
 export function appendTaskLinks(
   body: string,
   links: TaskLinkInput[],
-  me: CachedMe,
+  me: TaskLinkContext,
   mimeType: string = MARKDOWN_MIME,
 ): string {
   if (links.length === 0) return body;

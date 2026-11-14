@@ -8,8 +8,8 @@
  * 왜 별도 명령인지, 유일성 규칙과 왕복의 한계는 ADR-065 가 소유한다.
  */
 import { readTextInput, type TextInputBehavior } from "./body-input.js";
-import { DoorayCliError } from "./errors.js";
-import { EXIT_PARAM_ERROR } from "./exit-codes.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
 
 export interface ReplaceInputOptions {
   old?: string;

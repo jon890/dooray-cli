@@ -1,6 +1,11 @@
-import type { CachedMe } from "../cache/types.js";
 import { buildLink } from "./body-markup.js";
 import { MARKDOWN_MIME } from "./body-input.js";
+
+/** 멘션에 필요한 조직과 본인의 식별자. */
+export interface MentionContext {
+  id: string;
+  orgId: string;
+}
 
 export interface MentionMember {
   memberId: string;
@@ -15,7 +20,7 @@ export interface MentionGroup {
 
 export function buildMemberMention(
   m: MentionMember,
-  me: CachedMe,
+  me: MentionContext,
   mimeType: string = MARKDOWN_MIME,
 ): string {
   return buildLink(mimeType, {
@@ -27,7 +32,7 @@ export function buildMemberMention(
 
 export function buildGroupMention(
   g: MentionGroup,
-  me: CachedMe,
+  me: MentionContext,
   mimeType: string = MARKDOWN_MIME,
 ): string {
   return buildLink(mimeType, {
@@ -44,7 +49,7 @@ export function prependMentions(
   body: string,
   members: MentionMember[],
   groups: MentionGroup[],
-  me: CachedMe,
+  me: MentionContext,
   mimeType: string = MARKDOWN_MIME,
 ): string {
   const parts: string[] = [];

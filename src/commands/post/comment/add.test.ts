@@ -32,8 +32,8 @@ vi.mock("../../../resolvers/post-input.js", () => ({
   resolvePostInput: mocks.resolvePostInput,
 }));
 
-vi.mock("../../../utils/body-input.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../../utils/body-input.js")>();
+vi.mock("@/body/body-input.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/body/body-input.js")>();
   return { ...actual, readBodyInputOrNull: mocks.readBodyInputOrNull };
 });
 

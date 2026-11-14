@@ -8,7 +8,7 @@
  */
 
 import type { CalendarEventAlarm, CalendarEventUser, CalendarEventPersonalSettings, CalendarEventRecurrenceRule, CalendarEventRecurrenceRuleDetail, CalendarEventWriteRequest, CalendarEventWriteUser } from "@/api/calendar/types.js";
-import { MARKDOWN_MIME } from "../../utils/body-input.js";
+import { MARKDOWN_MIME } from "@/body/body-input.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { DAY_END, expandDateInZone, parseLocalDate } from "../../utils/local-date.js";

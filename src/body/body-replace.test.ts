@@ -5,8 +5,8 @@ import { join } from "node:path";
 import { Readable } from "node:stream";
 
 import { applyReplace, findOccurrences, readReplaceInputs } from "./body-replace.js";
-import { DoorayCliError } from "./errors.js";
-import { EXIT_PARAM_ERROR } from "./exit-codes.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
 
 /** stdin 을 파이프 입력처럼 바꾼다. 돌려받은 spy 로 stdin 접근 여부를 확인한다. */
 function stubStdin(data: string) {

@@ -12,7 +12,7 @@ import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
 import type { WikiPageFileType } from "@/api/wiki/types.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { printJson } from "../../../formatters/table.js";
-import { wikiInlineImageSnippet } from "../../../utils/wiki-snippet.js";
+import { wikiInlineImageSnippet } from "@/body/wiki-snippet.js";
 
 export const wikiPageFileUploadCommand = new Command("upload")
   .description("위키 페이지 첨부파일 업로드")

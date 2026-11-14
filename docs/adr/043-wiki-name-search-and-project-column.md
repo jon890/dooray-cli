@@ -27,7 +27,7 @@
   이 두 명령은 페이지 ID 가 아니라 project 를 받으므로 ADR-045 의 경로로 대체되지 않는다.
 
   `dooray://<number>/pages/<pageId>` 의 앞 숫자는 orgId 다.
-  `src/utils/task-link.ts` 와 `src/utils/mention.ts` 가 `dooray://${me.orgId}/...` 형태로 링크를 만든다.
+  `src/body/task-link.ts` 와 `src/body/mention.ts` 가 `dooray://${me.orgId}/...` 형태로 링크를 만든다.
   이 값을 project 자리에 넣으면 `resolveProject` 의 15자리 이상 numeric 우회(ADR-030)를 통과해 그대로 반환되고,
   `resolveWiki` 가 그 값으로 프로젝트 캐시를 다시 뒤져 실패한다.
   사용자가 받은 `프로젝트에 위키가 없습니다` 는 이 경로에서 나온 것이다.

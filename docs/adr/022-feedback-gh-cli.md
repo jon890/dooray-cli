@@ -16,4 +16,4 @@ baseUrl 노출 시 사내 endpoint 사용자가 OSS public repo 로 보낼 때 �
 - octokit SDK — 외부 dep 추가, gh 위임이면 0
 - baseUrl host 마스킹 — suffix 로 회사 식별 가능, 누출 0 인 "제외" 가 단순·안전
 
-세부 옵션 (`--title` / `--body-file` / `--label` / `--dry-run`) 동작은 `src/commands/feedback.ts` 참조.
+세부 옵션 (`--title` / `--body-file` / `--label` / `--dry-run`) 동작은 `src/commands/feedback/index.ts` 참조.

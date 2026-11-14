@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { escapeLinkText, buildTaskLink, appendTaskLinks } from "./task-link.js";
-import type { CachedMe } from "../cache/types.js";
+import type { CachedMe } from "@/cache/types.js";
 
 const ME: CachedMe = { id: "user-1", orgId: "1234567890123456789", name: "tester" };
 

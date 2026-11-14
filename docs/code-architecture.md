@@ -37,7 +37,8 @@ src/
   skill/          # 번들 스킬의 설치 상태 판정과 install/update
   editor/         # $EDITOR 실행과 frontmatter 직렬화
   formatters/     # 엔티티별 표·JSON·quiet 출력
-  utils/          # 오류, 종료 코드, 본문 입력, 마크업, 확인 절차 같은 공용 조각
+  body/           # 본문 입력, 마크업, 참조와 첨부 확인 규칙. API·캐시 타입을 모른다
+  utils/          # 오류, 종료 코드, 표준 입력, 출력 정리 같은 영역 공통 부품
   commands/       # 명령 하나에 파일 하나. 위 계층을 조합한다
     messenger/  project/  member/  post/  wiki/  mail/  calendar/  stream/
 ```

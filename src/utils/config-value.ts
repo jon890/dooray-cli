@@ -1,4 +1,4 @@
-import { readStdin } from "./body-input.js";
+import { readStdin } from "./stdin.js";
 import { DoorayCliError } from "./errors.js";
 import { EXIT_PARAM_ERROR } from "./exit-codes.js";
 
