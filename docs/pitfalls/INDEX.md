@@ -43,7 +43,7 @@ id: <kebab-slug>              # 영어 kebab-case, 번호 아님 (예: adr-numbe
 category: plan | team | code-review
 title: <원본 패턴 제목 그대로>
 triggers: [<키워드>, ...]     # 한/영 키워드 (원본 제목·본문에서 추출)
-tool_catchable: true | false  # tsc·test·검사기가 이미 잡으면 true
+tool_catchable: false         # 도구가 잡으면 파일을 지우므로 남은 파일은 false
 source: [<출처>]              # 원본 번호(1-3 / 2-5 / CLI7 / code-review 5-2) + PR#/ADR# 있으면 함께
 related: [<다른 id>, ...]     # 관련 패턴 id (없으면 빈 배열)
 ---

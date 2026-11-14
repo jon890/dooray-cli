@@ -338,7 +338,7 @@ authMode·sessionCookie 변경도 전체 캐시를 비우며 웹 방식의 tenan
 ```
 → cache/me.json에서 조회
 → 캐시 없거나 TTL 만료 시 API /common/v1/members/me 호출 후 갱신
-→ 처음 채우는 곳은 setup(API 키 방식)이고, 만료되면 me 를 쓰는 명령(post create·edit, post comment add·edit)이 다시 채운다
+→ 처음 채우는 곳은 setup(API 키 방식)이고, 만료되면 `ensureMe`(`src/resolvers/me.ts`)를 부르는 명령이 다시 채운다
 → orgId 가 빈 캐시는 만료와 같게 보고 다시 조회한다
 출력: CachedMe { id, name, orgId }
 ```
