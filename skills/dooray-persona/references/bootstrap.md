@@ -41,7 +41,7 @@ CLI 설치, 설정 저장, 스킬 연결, 수집, 문서 생성, 주입이 여�
 | 수집한 업무와 댓글 | 본인 컴퓨터의 `~/.local/share/dooray-persona` | 나가지 않는다 |
 | 표본 원문 | 모델 컨텍스트 | **들어간다** |
 
-세 번째 줄이 핵심이다.
+표의 마지막 줄(표본 원문)이 핵심이다.
 문체를 뽑으려면 모델이 원문을 직접 읽어야 하므로, 회사 업무 글이 모델 컨텍스트로 들어간다.
 
 **회사가 발급한 계정으로 승인된 환경에서만 진행한다.**
@@ -52,7 +52,7 @@ CLI 설치, 설정 저장, 스킬 연결, 수집, 문서 생성, 주입이 여�
 그 시점은 이미 토큰까지 넣은 뒤이고, 받는 사람은 판단할 근거를 받지 못한 상태다.
 
 토큰은 stdin 으로 저장하게 되어 있다. 명령 인자로 넘기면 셸 기록과 실행 로그에 값이 남는다.
-이 경로는 `@bifos/dooray-cli` 0.18.0 부터 동작하므로, 그보다 낮은 버전이 깔려 있으면 프롬프트가 먼저 올린다.
+프롬프트는 CLI 를 항상 최신으로 설치한다. 예전 버전(0.22 이하)은 토큰 저장 방식이 없거나 수집 단계에서 실패하기 때문이다.
 
 ## 전달할 프롬프트
 
@@ -105,21 +105,17 @@ node --version 으로 Node.js 20 이상인지 확인한다.
   그래도 안 잡히면 앱을 껐다 켜야 할 수 있다고 알려주고, 다시 확인한다.
 
 [2단계 — Dooray CLI 준비]
-dooray --version 을 실행한다.
-
-- 명령이 없으면 npm install -g @bifos/dooray-cli 로 설치한다.
-- 버전이 0.18.0 보다 낮으면 같은 명령으로 최신을 설치한다.
-  낮은 버전에는 다음 단계에서 쓸 토큰 저장 방식이 없어, 그대로 두면 토큰이 잘못 저장된다.
-- 0.18.0 이상이면 넘어간다.
+설치되어 있는지와 관계없이 npm install -g @bifos/dooray-cli 로 최신 버전을 설치한다.
+예전 버전은 다음 단계에서 쓸 토큰 저장 방식이 없거나 수집에서 실패한다.
 
 권한 오류가 나면 임의로 sudo 를 붙이지 말고 나에게 알려준다.
 
 [3단계 — 인증 설정]
-dooray config get api-key 로 이미 인증이 되어 있는지 먼저 확인한다.
-출력이 (미설정) 이 아니면 4단계로 넘어간다.
-설정 파일만 있고 값이 비어 있는 상태가 있으므로, 파일 존재 여부가 아니라 이 값으로 판단한다.
+dooray doctor 로 이미 인증이 되어 있는지 먼저 확인한다.
+통과하면(종료 코드 0) 설정을 건너뛰고 4단계로 넘어간다. API 키 방식과 웹 로그인 세션 방식 모두 이 결과로 판단한다.
+실패하면 아래 설정을 안내한다.
 
-없으면 내가 쓰는 Dooray 주소를 묻는다. 회사 Dooray 를 열었을 때 주소창에 보이는
+내가 쓰는 Dooray 주소를 묻는다. 회사 Dooray 를 열었을 때 주소창에 보이는
 "https://회사이름.dooray.com" 에서 회사이름 부분이다.
 
 그 값으로 https://회사이름.dooray.com/setting/api/token 을 만들어 나에게 알려주고,
@@ -133,7 +129,7 @@ dooray config get api-key 로 이미 인증이 되어 있는지 먼저 확인한
   Windows PowerShell
     '<받은 토큰>' | dooray config set api-key -
 
-저장한 뒤 dooray config get api-key 로 (미설정) 이 아닌지 확인한다.
+저장한 뒤 dooray doctor 로 통과하는지 확인한다.
 
 설정 파일이 없으면 이 명령이 만들면서 일반 Dooray 주소를 기본값으로 채우므로 접속 주소는 따로 설정하지 않는다.
 회사가 공공이나 금융 전용 Dooray 를 쓸 때만 dooray config set base-url <그 환경의 주소> 를 추가로 실행한다.
@@ -141,8 +137,20 @@ dooray config get api-key 로 이미 인증이 되어 있는지 먼저 확인한
 앞에서 물어본 회사이름은 dooray config set tenant-name <회사이름> 으로 함께 저장한다.
 나중에 안내 링크가 이 값으로 만들어진다.
 
-dooray project list 로 목록이 나오는지 확인한다.
-실패하면 토큰이 잘못됐을 가능성이 높으니 다시 발급받아 달라고 요청한다.
+doctor 가 실패하면 토큰이 잘못됐을 가능성이 높으니 다시 발급받아 달라고 요청한다.
+토큰 발급 화면을 쓸 수 없고 웹 로그인으로만 쓰는 환경이면, 나에게 브라우저 개발자 도구의 Application → Cookies 에서 SESSION 값을 복사해 붙여넣어 달라고 요청한다.
+받은 값은 stdin 으로 저장한다. 값을 화면에 다시 출력하지 않는다.
+
+  macOS
+    dooray config set tenant-name <회사이름>
+    dooray config set auth-mode web
+    printf '%s' '<받은 SESSION 값>' | dooray config set session-cookie -
+  Windows PowerShell
+    dooray config set tenant-name <회사이름>
+    dooray config set auth-mode web
+    '<받은 SESSION 값>' | dooray config set session-cookie -
+
+그 뒤 dooray doctor 로 다시 확인한다.
 
 [4단계 — 문체 스킬 연결]
 ~/.claude/skills/dooray-persona 가 이미 있으면 넘어간다.
