@@ -17,6 +17,7 @@ import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { WebContext } from "./context.js";
 import { createProjectWeb } from "../project/web.js";
 import { createMemberWeb } from "../member/web.js";
+import { createWikiWeb } from "../wiki/web.js";
 import { createMessengerWeb } from "../messenger/web.js";
 import { createCalendarWeb } from "../calendar/web.js";
 import { createStreamWeb } from "../stream/web.js";
@@ -38,7 +39,7 @@ export function createWebClient(cookie: string, baseUrl: string, publicApiBaseUr
     project: createProjectWeb(context),
     member: createMemberWeb(context),
     post: unsupported,
-    wiki: unsupported,
+    wiki: createWikiWeb(context),
     messenger: createMessengerWeb(context),
     calendar: createCalendarWeb(context),
     stream: createStreamWeb(context),
