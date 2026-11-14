@@ -5,52 +5,11 @@ import { cacheCommand } from "./commands/cache.js";
 import { doctorCommand } from "./commands/doctor.js";
 import { setupCommand } from "./commands/setup.js";
 import { skillCommand } from "./commands/skill.js";
-import { projectListCommand } from "./commands/project/list.js";
-import { projectMembersCommand } from "./commands/project/members.js";
-import { projectWorkflowsCommand } from "./commands/project/workflows.js";
-import { projectGroupsCommand } from "./commands/project/groups.js";
-import { projectTagsCommand, projectTagsListCommand } from "./commands/project/tags.js";
-import { projectTagsCreateCommand } from "./commands/project/tags-create.js";
-import { projectTagsGroupCommand } from "./commands/project/tags-group.js";
-import { projectTemplatesCommand } from "./commands/project/templates.js";
-import { postListCommand } from "./commands/post/list.js";
-import { postSearchCommand } from "./commands/post/search.js";
-import { postGetCommand } from "./commands/post/get.js";
-import { postEditCommand } from "./commands/post/edit.js";
-import { postReplaceCommand } from "./commands/post/replace.js";
-import { postCreateCommand } from "./commands/post/create.js";
-import { postDoneCommand } from "./commands/post/done.js";
-import { postWorkflowCommand } from "./commands/post/workflow.js";
-import { commentListCommand } from "./commands/post/comment/list.js";
-import { commentLatestCommand } from "./commands/post/comment/latest.js";
-import { commentAddCommand } from "./commands/post/comment/add.js";
-import { commentEditCommand } from "./commands/post/comment/edit.js";
-import { commentDeleteCommand } from "./commands/post/comment/delete.js";
-import { commentGetCommand } from "./commands/post/comment/get.js";
-import { commentFileCommand } from "./commands/post/comment/file/index.js";
-import { fileListCommand } from "./commands/post/file/list.js";
-import { fileDownloadCommand } from "./commands/post/file/download.js";
-import { fileDownloadAllCommand } from "./commands/post/file/download-all.js";
-import { fileUploadCommand } from "./commands/post/file/upload.js";
-import { fileDeleteCommand } from "./commands/post/file/delete.js";
-import { wikiListCommand } from "./commands/wiki/list.js";
-import { wikiPagesCommand } from "./commands/wiki/pages.js";
-import { wikiTreeCommand } from "./commands/wiki/tree.js";
-import { wikiPageGetCommand } from "./commands/wiki/page-get.js";
-import { wikiPageCreateCommand } from "./commands/wiki/page-create.js";
-import { wikiPageEditCommand } from "./commands/wiki/page-edit.js";
-import { wikiPageReplaceCommand } from "./commands/wiki/page-replace.js";
-import { wikiPageDeleteCommand } from "./commands/wiki/page-delete.js";
-import { wikiPageMoveCommand } from "./commands/wiki/page-move.js";
-import { wikiPageFileCommand } from "./commands/wiki/page-file/index.js";
-import { wikiPageCommentCommand } from "./commands/wiki/page-comment/index.js";
 import { memberCommand } from "./commands/member/index.js";
-import { mailListCommand } from "./commands/mail/list.js";
-import { mailGetCommand } from "./commands/mail/get.js";
-import { mailAttachmentCommand } from "./commands/mail/attachment.js";
-import { mailSendCommand } from "./commands/mail/send.js";
-import { mailReplyCommand } from "./commands/mail/reply.js";
-import { mailLogoutCommand } from "./commands/mail/logout.js";
+import { projectCommand } from "@/commands/project/index.js";
+import { postCommand } from "@/commands/post/index.js";
+import { wikiCommand } from "@/commands/wiki/index.js";
+import { mailCommand } from "@/commands/mail/index.js";
 import { messengerCommand } from "./commands/messenger/index.js";
 import { streamCommand } from "./commands/stream/index.js";
 import { calendarCommand } from "./commands/calendar/index.js";
@@ -85,76 +44,6 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   }
   await guardWebCommand(actionCommand, readAuthModeFromFile);
 });
-
-// project 커맨드 그룹
-const projectCommand = new Command("project").description("프로젝트 관련 명령");
-projectCommand.addCommand(projectListCommand);
-projectCommand.addCommand(projectMembersCommand);
-projectCommand.addCommand(projectWorkflowsCommand);
-projectCommand.addCommand(projectGroupsCommand);
-projectCommand.addCommand(projectTagsCommand);
-projectCommand.addCommand(projectTemplatesCommand);
-projectTagsCommand.addCommand(projectTagsListCommand);
-projectTagsCommand.addCommand(projectTagsCreateCommand);
-projectTagsCommand.addCommand(projectTagsGroupCommand);
-
-// post 커맨드 그룹
-const postCommand = new Command("post").description("업무 관련 명령");
-postCommand.addCommand(postListCommand);
-postCommand.addCommand(postSearchCommand);
-postCommand.addCommand(postGetCommand);
-postCommand.addCommand(postEditCommand);
-postCommand.addCommand(postReplaceCommand);
-postCommand.addCommand(postCreateCommand);
-postCommand.addCommand(postDoneCommand);
-postCommand.addCommand(postWorkflowCommand);
-
-// comment 서브커맨드 그룹
-const commentCommand = new Command("comment").description("댓글 관련 명령");
-commentCommand.addCommand(commentListCommand);
-commentCommand.addCommand(commentLatestCommand);
-commentCommand.addCommand(commentGetCommand);
-commentCommand.addCommand(commentAddCommand);
-commentCommand.addCommand(commentEditCommand);
-commentCommand.addCommand(commentDeleteCommand);
-commentCommand.addCommand(commentFileCommand);
-postCommand.addCommand(commentCommand);
-
-// file 서브커맨드 그룹
-const fileCommand = new Command("file").description("첨부파일 관련 명령");
-fileCommand.addCommand(fileListCommand);
-fileCommand.addCommand(fileDownloadCommand);
-fileCommand.addCommand(fileDownloadAllCommand);
-fileCommand.addCommand(fileUploadCommand);
-fileCommand.addCommand(fileDeleteCommand);
-postCommand.addCommand(fileCommand);
-
-// wiki 커맨드 그룹
-const wikiCommand = new Command("wiki").description("위키 관련 명령");
-wikiCommand.addCommand(wikiListCommand);
-wikiCommand.addCommand(wikiPagesCommand);
-wikiCommand.addCommand(wikiTreeCommand);
-
-// wiki page 서브커맨드 그룹
-const wikiPageCommand = new Command("page").description("위키 페이지 관련 명령");
-wikiPageCommand.addCommand(wikiPageGetCommand);
-wikiPageCommand.addCommand(wikiPageCreateCommand);
-wikiPageCommand.addCommand(wikiPageEditCommand);
-wikiPageCommand.addCommand(wikiPageReplaceCommand);
-wikiPageCommand.addCommand(wikiPageDeleteCommand);
-wikiPageCommand.addCommand(wikiPageMoveCommand);
-wikiPageCommand.addCommand(wikiPageFileCommand);
-wikiPageCommand.addCommand(wikiPageCommentCommand);
-wikiCommand.addCommand(wikiPageCommand);
-
-// mail 커맨드 그룹
-const mailCommand = new Command("mail").description("메일 관련 명령");
-mailCommand.addCommand(mailListCommand);
-mailCommand.addCommand(mailGetCommand);
-mailCommand.addCommand(mailAttachmentCommand);
-mailCommand.addCommand(mailSendCommand);
-mailCommand.addCommand(mailReplyCommand);
-mailCommand.addCommand(mailLogoutCommand);
 
 program.addCommand(setupCommand);
 program.addCommand(skillCommand);
