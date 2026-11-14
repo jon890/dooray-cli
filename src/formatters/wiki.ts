@@ -1,4 +1,4 @@
-import type { Wiki, WikiPage, WikiPageDetail } from "../api/types.js";
+import type { Wiki, WikiPage, WikiPageDetail } from "@/api/wiki/types.js";
 import type { OutputOptions } from "./table.js";
 import { output, printJson, printQuiet } from "./table.js";
 

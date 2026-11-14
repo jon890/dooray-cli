@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { WikiComment } from "../api/types.js";
+import type { WikiComment } from "@/api/wiki/types.js";
 import { formatWikiCommentDetail, formatWikiCommentList } from "./wiki-comment.js";
 
 const fixture: WikiComment = {

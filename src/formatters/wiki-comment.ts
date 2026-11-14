@@ -1,4 +1,4 @@
-import type { WikiComment } from "../api/types.js";
+import type { WikiComment } from "@/api/wiki/types.js";
 import type { OutputOptions } from "./table.js";
 import { output, printJson, printQuiet } from "./table.js";
 

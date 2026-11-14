@@ -12,80 +12,19 @@ import { createTokenBucket, parseRateLimitHeaders } from "./rate-limiter.js";
 import { apiPath } from "./api-path.js";
 import { parseJsonPreservingLargeIntegers } from "./json-large-integer.js";
 import { buildThreadRequest } from "./messenger-thread-request.js";
-import type {
-  GetPostsParams, GetProjectsParams, GetPostCommentsParams, GetMembersParams, SearchMembersParams, GetWikisParams,
-  ProjectListResponse,
-  PostListResponse,
-  PostDetailResponse,
-  CreatePostApiResponse,
-  CreatePostRequest,
-  UpdatePostRequest,
-  UpdatePostResponse,
-  SetWorkflowRequest,
-  SetParentPostRequest,
-  PostCommentListResponse,
-  PostCommentDetailResponse,
-  CreateCommentApiResponse,
-  CreateCommentRequest,
-  UpdateCommentRequest,
-  UpdateCommentResponse,
-  DeleteCommentResponse,
-  ProjectMemberListResponse,
-  ProjectWorkflowListResponse,
-  MemberDetailResponse,
-  MemberSearchResponse,
-  MeResponse,
-  TagListResponse,
-  CreateTagRequest,
-  CreateTagApiResponse,
-  UpdateTagGroupRequest,
-  UpdateTagGroupResponse,
-  MilestoneListResponse,
-  MemberGroupListResponse,
-  WikiListResponse,
-  WikiPage,
-  WikiPagesResponse,
-  WikiPageResponse,
-  CreateWikiPageRequest,
-  CreateWikiPageResponse,
-  UpdateWikiPageRequest,
-  UpdateWikiPageTitleRequest,
-  UpdateWikiPageContentRequest,
-  MoveWikiPageRequest,
-  WikiPageFileType,
-  UploadWikiPageFileResponse,
-  WikiCommentListResponse,
-  WikiCommentDetailResponse,
-  CreateWikiCommentRequest,
-  UpdateWikiCommentRequest,
-  CreateWikiCommentApiResponse,
-  DoorayApiUnitResponse,
-  DoorayErrorResponse,
-  PostFileListResponse,
-  PostFileMetaResponse,
-  UploadFileResponse,
-  TemplateListResponse,
-  TemplateDetailResponse,
-  DirectSendRequest,
-  ChannelLogRequest,
-  MessengerSendResponse,
-  MessengerChannelListResponse,
-  MessengerLogListResponse,
-  CalendarListResponse,
-  CalendarEventListResponse,
-  CalendarEventDetailResponse,
-  CalendarEventWriteRequest,
-  CreateCalendarEventResponse,
-  UpdateCalendarEventResponse,
-  CalendarEventDeleteType,
-  DeleteCalendarEventResponse,
-  StreamListResponse,
-  GetStreamsParams,
-  BusyHoursRequest,
-  BusyHoursResponse,
-} from "./types.js";
+import type { GetPostsParams, GetPostCommentsParams, PostListResponse, PostDetailResponse, CreatePostApiResponse, CreatePostRequest, UpdatePostRequest, UpdatePostResponse, SetWorkflowRequest, SetParentPostRequest, PostCommentListResponse, PostCommentDetailResponse, CreateCommentApiResponse, CreateCommentRequest, UpdateCommentRequest, UpdateCommentResponse, DeleteCommentResponse, PostFileListResponse, PostFileMetaResponse, UploadFileResponse } from "@/api/post/types.js";
+import type { GetProjectsParams, ProjectListResponse, ProjectWorkflowListResponse, TagListResponse, CreateTagRequest, CreateTagApiResponse, UpdateTagGroupRequest, UpdateTagGroupResponse, MilestoneListResponse, MemberGroupListResponse, TemplateListResponse, TemplateDetailResponse } from "@/api/project/types.js";
+import type { GetMembersParams, SearchMembersParams, ProjectMemberListResponse, MemberDetailResponse, MemberSearchResponse, MeResponse } from "@/api/member/types.js";
+import type { GetWikisParams, WikiListResponse, WikiPage, WikiPagesResponse, WikiPageResponse, CreateWikiPageRequest, CreateWikiPageResponse, UpdateWikiPageRequest, UpdateWikiPageTitleRequest, UpdateWikiPageContentRequest, MoveWikiPageRequest, WikiPageFileType, UploadWikiPageFileResponse, WikiCommentListResponse, WikiCommentDetailResponse, CreateWikiCommentRequest, UpdateWikiCommentRequest, CreateWikiCommentApiResponse } from "@/api/wiki/types.js";
+import type { DoorayApiUnitResponse, DoorayErrorResponse } from "@/api/common/types.js";
+import type { DirectSendRequest, ChannelLogRequest, MessengerSendResponse, MessengerChannelListResponse, MessengerLogListResponse } from "@/api/messenger/types.js";
+import type { CalendarListResponse, CalendarEventListResponse, CalendarEventDetailResponse, CalendarEventWriteRequest, CreateCalendarEventResponse, UpdateCalendarEventResponse, CalendarEventDeleteType, DeleteCalendarEventResponse, BusyHoursRequest, BusyHoursResponse } from "@/api/calendar/types.js";
+import type { StreamListResponse, GetStreamsParams } from "@/api/stream/types.js";
 
-export type { GetPostsParams, GetProjectsParams, GetPostCommentsParams, GetMembersParams, SearchMembersParams, GetWikisParams } from "./types.js";
+export type { GetPostsParams, GetPostCommentsParams } from "@/api/post/types.js";
+export type { GetProjectsParams } from "@/api/project/types.js";
+export type { GetMembersParams, SearchMembersParams } from "@/api/member/types.js";
+export type { GetWikisParams } from "@/api/wiki/types.js";
 
 function joinIds(ids: string[] | undefined): string | undefined {
   return ids && ids.length > 0 ? ids.join(",") : undefined;

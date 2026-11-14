@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
-import type { PostDetail } from "../../api/types.js";
+import type { PostDetail } from "@/api/post/types.js";
 import { EXIT_API_ERROR } from "../../utils/exit-codes.js";
 
 const mocks = vi.hoisted(() => ({

@@ -6,7 +6,7 @@ import { createTokenBucket, parseRateLimitHeaders } from "../rate-limiter.js";
 import { parseJsonPreservingLargeIntegers } from "../json-large-integer.js";
 import { fetchWithResponseTimeout } from "../file-redirect.js";
 import { API_ENDPOINTS } from "../../config/types.js";
-import type { DoorayApiHeader } from "../types.js";
+import type { DoorayApiHeader } from "@/api/common/types.js";
 
 export interface WebEnvelope { header: DoorayApiHeader; result: unknown; totalCount?: number; references?: unknown; }
 export type WebFileOptions = Omit<RequestInit, "body"> & { searchParams?: Record<string, string | number | boolean | undefined> };

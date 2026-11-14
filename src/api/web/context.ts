@@ -1,7 +1,8 @@
 /** 한 CLI 실행 안에서 멤버·프로젝트 참조를 공유해 불필요한 웹 호출을 줄인다. */
 import { WebHttp } from "./http.js";
 import { apiPath } from "../api-path.js";
-import type { MemberDetail, Project } from "../types.js";
+import type { MemberDetail } from "@/api/member/types.js";
+import type { Project } from "@/api/project/types.js";
 import { project, row } from "./convert.js";
 
 export class WebContext {

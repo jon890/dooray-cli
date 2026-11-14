@@ -8,7 +8,7 @@
 import { Command, Option } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { createClient, type DoorayClient } from "../../api/dooray-client.js";
-import { type GetPostsParams } from "../../api/client.js";
+import { type GetPostsParams } from "@/api/post/types.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { lookupTagIds } from "../../resolvers/tag.js";
 import { ensureMembers, needsMemberList, resolveMember } from "../../resolvers/member.js";
@@ -20,7 +20,7 @@ import { resolveDateFilter } from "./date-filter.js";
 import { parseParentRef, type ParentRef } from "./parent-ref.js";
 import { formatPostList } from "../../formatters/post.js";
 import type { OutputOptions } from "../../formatters/table.js";
-import type { Post } from "../../api/types.js";
+import type { Post } from "@/api/post/types.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";

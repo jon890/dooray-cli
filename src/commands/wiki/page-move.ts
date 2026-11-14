@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { createClient } from "../../api/dooray-client.js";
-import type { MoveWikiPageRequest } from "../../api/types.js";
+import type { MoveWikiPageRequest } from "@/api/wiki/types.js";
 import { resolveWiki } from "../../resolvers/wiki.js";
 import {
   resolveWikiPageInput,

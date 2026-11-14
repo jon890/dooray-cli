@@ -9,7 +9,7 @@ import {
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
-import type { WikiPageFileType } from "../../../api/types.js";
+import type { WikiPageFileType } from "@/api/wiki/types.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { printJson } from "../../../formatters/table.js";
 import { wikiInlineImageSnippet } from "../../../utils/wiki-snippet.js";

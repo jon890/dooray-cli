@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseUserSpec, mergeUsers } from "./post-users.js";
-import type { CreatePostUser } from "../api/types.js";
+import type { CreatePostUser } from "@/api/post/types.js";
 
 describe("parseUserSpec", () => {
   it("멤버 id 들을 type:member 객체로 변환", () => {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
-import type { CalendarEventDetail } from "../../api/types.js";
+import type { CalendarEventDetail } from "@/api/calendar/types.js";
 
 const mocks = vi.hoisted(() => ({
   getConfigOrThrow: vi.fn(),

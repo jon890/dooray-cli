@@ -7,7 +7,7 @@
  */
 
 import type { CalendarClient } from "../api/calendar/types.js";
-import type { Calendar } from "../api/types.js";
+import type { Calendar } from "@/api/calendar/types.js";
 import { sanitizeForTerminal } from "../utils/sanitize.js";
 import { matchByName } from "./match.js";
 

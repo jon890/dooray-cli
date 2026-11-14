@@ -9,7 +9,7 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { createClient, type DoorayClient } from "../../api/dooray-client.js";
-import type { StreamItem, StreamListResponse } from "../../api/types.js";
+import type { StreamItem, StreamListResponse } from "@/api/stream/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { output, printJson, truncate } from "../../formatters/table.js";
 import { formatSentAt } from "../../formatters/datetime.js";

@@ -9,7 +9,7 @@ import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { createClient } from "../../api/dooray-client.js";
 import { resolvePostInput } from "../../resolvers/post-input.js";
-import type { CreatePostUser, PostDetail, PostUser } from "../../api/types.js";
+import type { CreatePostUser, PostDetail, PostUser } from "@/api/post/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";

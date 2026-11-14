@@ -1,4 +1,4 @@
-import type { MemberDetail, MemberOrganization } from "../api/types.js";
+import type { MemberDetail, MemberOrganization } from "@/api/member/types.js";
 import type { OutputOptions } from "./table.js";
 import { output, printJson } from "./table.js";
 

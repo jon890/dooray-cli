@@ -37,7 +37,7 @@ export const LAYER_DEPENDENCIES: Record<string, readonly string[]> = {
  */
 export const ALLOWED_VIOLATIONS: readonly string[] = [
   // utils 는 다른 계층을 모르는 잎이어야 한다. 영역 규칙과 상위 계층 타입에 기대는 것들이다.
-  "utils/comment-enrich.ts -> api/types.ts",
+  "utils/comment-enrich.ts -> api/post/types.ts",
   "utils/feedback-meta.ts -> cache/last-run.ts",
   "utils/mention.ts -> cache/types.ts",
   "utils/task-link.ts -> cache/types.ts",

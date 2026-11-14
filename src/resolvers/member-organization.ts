@@ -5,7 +5,7 @@
  * 바쁨 시간 자체는 쓰지 않으므로 기간은 1분으로 둔다 (ADR-079).
  */
 import type { CalendarClient } from "../api/calendar/types.js";
-import type { MemberOrganization } from "../api/types.js";
+import type { MemberOrganization } from "@/api/member/types.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_API_ERROR } from "../utils/exit-codes.js";
 

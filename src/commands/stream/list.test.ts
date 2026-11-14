@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
-import type { StreamListResponse } from "../../api/types.js";
+import type { StreamListResponse } from "@/api/stream/types.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import {

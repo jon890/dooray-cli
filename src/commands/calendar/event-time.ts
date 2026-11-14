@@ -5,7 +5,7 @@
  * 마지막 날을 하루 앞으로 잡는다. 폴백이 서버 문자열을 그대로 돌려주므로 반환 직전 control char 를 없앤다.
  */
 
-import type { CalendarEvent } from "../../api/types.js";
+import type { CalendarEvent } from "@/api/calendar/types.js";
 import { sanitizeForTerminal } from "../../utils/sanitize.js";
 
 /**

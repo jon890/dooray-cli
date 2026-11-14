@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
-import type { Post } from "../../api/types.js";
+import type { Post } from "@/api/post/types.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { localOffset } from "../../utils/local-date.js";
 

@@ -12,7 +12,7 @@
 import { Command, Option } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
 import { createClient, type DoorayClient } from "../../api/dooray-client.js";
-import type { CalendarEventDeleteType, CalendarEventDetail } from "../../api/types.js";
+import type { CalendarEventDeleteType, CalendarEventDetail } from "@/api/calendar/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { emitDeleteResult } from "../../formatters/file-output.js";
 import { resolveWritableCalendar, type ResolvedCalendar } from "../../resolvers/calendar.js";

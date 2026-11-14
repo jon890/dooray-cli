@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { MemberDetail, MemberOrganization } from "../api/types.js";
+import type { MemberDetail, MemberOrganization } from "@/api/member/types.js";
 import { formatMemberDetail } from "./member.js";
 
 const member: MemberDetail = {

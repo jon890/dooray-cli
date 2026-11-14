@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import tmp from "tmp";
 import { dump as yamlDump, load as yamlLoad } from "js-yaml";
-import type { PostDetail } from "../api/types.js";
+import type { PostDetail } from "@/api/post/types.js";
 import type { CachedMember } from "../cache/types.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";

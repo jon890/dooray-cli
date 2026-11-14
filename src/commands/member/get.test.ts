@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
-import type { MemberDetail } from "../../api/types.js";
+import type { MemberDetail } from "@/api/member/types.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_API_ERROR } from "../../utils/exit-codes.js";
 

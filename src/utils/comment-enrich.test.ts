@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { enrichCommentCreators } from "./comment-enrich.js";
-import type { PostComment } from "../api/types.js";
+import type { PostComment } from "@/api/post/types.js";
 
 function makeComment(opts: { id: string; memberId?: string; name?: string }): PostComment {
   return {

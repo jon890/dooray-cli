@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Command } from "commander";
-import type { CalendarEvent } from "../../api/types.js";
+import type { CalendarEvent } from "@/api/calendar/types.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 
 const mocks = vi.hoisted(() => ({
