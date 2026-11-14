@@ -8,6 +8,7 @@
  * 타입 선언 분할은 이 스크립트의 대상이 아니다.
  * new URL("…", import.meta.url) 같은 파일 상대 경로는 고치지 않는다.
  * move 가 Git 메타데이터에 원본을 보관해 rewrite 재실행도 같은 경로를 계산한다.
+ * 문서는 check-doc-paths.mjs 와 같은 범위의 src/ 접두 경로만 고친다.
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
