@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { ensureTemplates } from "../../resolvers/template.js";
 import { output, type OutputOptions } from "../../formatters/table.js";
@@ -12,7 +12,7 @@ export const projectTemplatesCommand = new Command("templates")
   .action(async (project: string) => {
     const globalOpts = projectTemplatesCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("템플릿 목록 조회 중...");
     try {

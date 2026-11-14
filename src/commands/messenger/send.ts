@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveMemberByIdOrEmail } from "../../resolvers/member.js";
 import { openInEditor } from "../../editor/index.js";
 import { readBodyInputOrNull } from "../../utils/body-input.js";
@@ -22,7 +22,7 @@ export const messengerSendCommand = new Command("send")
 
     const globalOpts = messengerSendCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const memberId = await resolveMemberByIdOrEmail(client, opts.to);
     if (memberId == null) {

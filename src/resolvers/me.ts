@@ -1,11 +1,11 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { MemberClient } from "../api/member/types.js";
 import type { CachedMe } from "../cache/types.js";
 import { getMe, setMe, isExpired } from "../cache/store.js";
 import { ME_TTL_MS } from "../cache/types.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
-export async function ensureMe(client: DoorayApiClient): Promise<CachedMe> {
+export async function ensureMe(client: MemberClient): Promise<CachedMe> {
   const entry = await getMe();
   if (entry && !isExpired(entry.updatedAt, ME_TTL_MS) && entry.data.orgId) {
     return entry.data;

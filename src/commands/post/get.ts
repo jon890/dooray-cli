@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient, type DoorayClient } from "../../api/dooray-client.js";
 import { resolvePostInput } from "../../resolvers/post-input.js";
 import { attachTagNames } from "../../resolvers/tag.js";
 import { formatPostDetail, type PostDetailTag } from "../../formatters/post.js";
@@ -20,7 +20,7 @@ export const postGetCommand = new Command("get")
   .action(async (project, postNumberStr, opts) => {
     const globalOpts = postGetCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("업무 조회 중...");
     const { projectId, postId } = await resolvePostInput(client, {
@@ -64,7 +64,7 @@ export const postGetCommand = new Command("get")
  * 이름을 붙이지 않는 경우에는 `undefined` 를 돌려주고 포맷터가 응답을 그대로 내게 한다 (ADR-056).
  */
 async function resolveTagNames(
-  client: DoorayApiClient,
+  client: DoorayClient,
   projectId: string,
   tags: ReadonlyArray<{ id: string; name?: string }>,
   mode: { json: boolean; withTagNames: boolean },

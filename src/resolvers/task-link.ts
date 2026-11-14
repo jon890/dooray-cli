@@ -1,9 +1,9 @@
-import type { DoorayApiClient } from "../api/client.js";
+import type { DoorayClient } from "../api/dooray-client.js";
 import { resolvePostInput } from "./post-input.js";
 import { parseLinkRef, type TaskLinkInput } from "../utils/task-link.js";
 
 export async function resolveTaskLinks(
-  client: DoorayApiClient,
+  client: DoorayClient,
   linkInputs: string[],
 ): Promise<TaskLinkInput[]> {
   return Promise.all(

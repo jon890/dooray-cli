@@ -13,9 +13,9 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | REQ1 | `Config.authMode` 를 더하고 `config set auth-mode` 가 값을 검사한다. 명령은 `createClient(config)` 로 클라이언트를 받는다 |
 | REQ2 | `config set session-cookie` 가 입력을 `parseSessionCookie` 로 정규화해 `SESSION` 값만 저장한다 |
 | REQ3 | `sessionCookie` 를 `SECRET_FIELDS` 에 더한다. 웹 HTTP 층의 오류 메시지는 URL·호스트·쿠키를 담지 않는다 |
-| REQ4 | 웹 HTTP 층이 요청마다 origin 을 확인하고, 리다이렉트를 따라가지 않는다. 첨부 307 은 기존 `isTrustedFileHost` 에 공개 API 주소를 기준으로 넘겨 판정한다 |
+| REQ4 | 웹 HTTP 층이 요청마다 origin 을 확인하고, 리다이렉트를 따라가지 않는다. 첨부 307 은 테넌트 웹 origin 또는 같은 클라우드의 정확한 https file-api 호스트로만 한 번 허용한다 |
 | REQ5 | `resolveWebBaseUrl(config)` 가 `base-url` 을 알려진 클라우드 표로 바꾼다 |
-| REQ6 | 웹 클라이언트 메서드가 웹 응답을 공식 문서의 그 endpoint 응답 스키마 모양으로 바꿔 돌려준다. 포매터는 바꾸지 않는다 |
+| REQ6 | 영역별 웹 클라이언트 메서드가 웹 응답을 공식 문서의 그 endpoint 응답 스키마 모양으로 바꿔 돌려준다. 포매터는 바꾸지 않는다 |
 | REQ7 | 쓰기 메서드도 같은 방법으로 웹 경로에 붙인다. PR 마다 지정된 테스트 장소에서 실측한다 |
 | REQ8 | `assertWebSupported(명령 경로, 옵션, 방식)` 가 `src/index.ts` 의 `preAction` 에서 API 호출 전에 막는다. 지원하지 않는 옵션도 같은 함수가 막는다 |
 | REQ9 | 웹 HTTP 층이 401·로그인 리다이렉트와 403 을 나눠 `DoorayCliError` 로 바꾼다 |
@@ -33,9 +33,10 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | 자리 | 책임 |
 | --- | --- |
 | `src/api/client.ts` | 지금의 공개 API 클라이언트. 동작을 바꾸지 않는다. `DoorayClient` 를 구현한다고 선언만 더한다 |
-| `src/api/dooray-client.ts` (새 파일) | `DoorayClient` 인터페이스(`DoorayApiClient` 의 공개 메서드 시그니처 그대로)와 `createClient(config)` |
-| `src/api/web-http.ts` (새 파일) | 웹용 ky 인스턴스. 쿠키 헤더, origin 확인, 리다이렉트 처리, 오류 변환(URL 없는 메시지), 토큰 버킷, 큰 정수 파서 |
-| `src/api/web-client.ts` (새 파일) | `DoorayClient` 의 웹 구현. 메서드마다 웹 경로를 부르고 공식 응답 스키마 모양으로 바꾼다. 붙이지 않은 메서드는 지원하지 않음 오류를 던진다 |
+| `src/api/dooray-client.ts` (새 파일) | `DoorayClient` 교집합 타입(영역 인터페이스의 공개 메서드 시그니처 그대로)와 `createClient(config)` |
+| `src/api/<영역>/types.ts` | ProjectClient·MemberClient·PostClient·WikiClient·MessengerClient·CalendarClient·StreamClient. 공개 메서드 시그니처를 영역별로 소유하며 DTO 는 api/types.ts 에 둔다 |
+| `src/api/web/http.ts` (새 파일) | 웹용 ky 인스턴스. 쿠키 헤더, origin 확인, 리다이렉트 처리, 오류 변환(URL 없는 메시지), 토큰 버킷, 큰 정수 파서 |
+| `src/api/web/index.ts`, `src/api/project/web.ts`, `src/api/member/web.ts`, `web/convert.ts`, `web/context.ts` (새 파일) | `DoorayClient` 의 웹 구현. 메서드마다 웹 경로를 부르고 공식 응답 스키마 모양으로 바꾼다. 붙이지 않은 메서드는 지원하지 않음 오류를 던진다 |
 | `src/config/web-auth.ts` (새 파일) | `resolveWebBaseUrl`, `parseSessionCookie`, `isConfigComplete`. 파일 시스템과 키체인을 쓰지 않는 순수 함수 |
 | `src/config/store.ts`, `types.ts` | `authMode`, `sessionCookie` 필드와 검사, `config set` 키, `readAuthModeFromFile()`(파일만 읽어 방식을 돌려준다) |
 | `src/commands/web-support.ts` (새 파일) | 웹 방식에서 지원하는 명령 경로와 명령별 미지원 옵션, 순수 함수 `assertWebSupported` |
@@ -45,7 +46,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | `src/commands/*` | `new DoorayApiClient(...)` 를 `createClient(config)` 로 바꾼다. `doctor`·`setup`·`config` 는 아래 절대로 고친다 |
 | `docs/api/web-endpoints.md` (새 파일) | 메서드마다 부르는 웹 경로, 쿼리, 실측 날짜, 공식 스키마와 다른 점. [ADR-062](../../adr/062-undocumented-endpoint-policy.md) 조건 2 의 자리다 |
 
-- 의존 방향은 `commands → api/dooray-client → (api/client | api/web-client → api/web-http)` 다. resolver·services·editor 는 `DoorayClient` 타입만 안다.
+- 의존 방향은 `commands → api/dooray-client → (api/client | api/web/index → api/<영역>/web → api/web/http)` 다. resolver·services 는 필요한 영역 계약이나 DoorayClient 를 받는다. editor 는 HTTP 클라이언트를 참조하지 않는다.
 - `DoorayApiClient` 는 private 필드가 있어 TypeScript 가 다른 구현을 그 타입으로 받지 않는다. 그래서 인터페이스로 바꾸는 일은 resolver·services 매개변수까지 간다.
 - 웹 클라이언트를 공개 클라이언트의 하위 클래스로 만들지 않는다. 덮지 않은 메서드가 공개 API 를 부르는 사고가 난다.
 - `web-support.ts` 는 명령 경로를 다루므로 `commands/` 에 둔다. api 층은 CLI 명령을 모른다.
@@ -63,7 +64,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 
 - `config get` 은 `auth-mode`, `session-cookie` 를 받는다. `session-cookie` 는 `설정됨`·`미설정` 만 낸다.
 - `getConfig` 는 키체인에서 `sessionCookie` 를 `authMode === "web"` 일 때만 읽는다. `api-key` 사용자의 모든 명령에 키체인 읽기 한 번이 더해지지 않게 한다.
-- `config set tenant-name` 은 영문 소문자·숫자·`-` 만 받는다. `config set base-url` 은 `https://` 로 시작해야 하고 끝 `/` 는 떼어 저장한다.
+- API 방식의 base-url·tenant-name 저장은 기존 입력을 그대로 유지한다. auth-mode web 을 저장할 때와 웹 방식에서 주소·테넌트 값을 바꿀 때만 알려진 클라우드의 https 주소와 영문 소문자·숫자·하이픈 테넌트를 검증한다. 웹 주소의 끝 / 는 떼어 저장한다.
 
 `isConfigComplete(config)` 는 빠진 항목 이름 목록을 돌려준다. 비면 완료다.
 
@@ -94,7 +95,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 
 표는 `API_ENDPOINTS`(`src/config/types.ts`)와 같은 네 클라우드다. 표 밖이거나 `https` 가 아니면 REQ15 의 설정 오류다.
 
-### 웹 HTTP 층(`web-http.ts`)
+### 웹 HTTP 층(`web/http.ts`)
 
 - ky 인스턴스의 `prefix` 는 웹 주소다. `Cookie: SESSION=<값>` 은 인스턴스 헤더가 아니라 `beforeRequest` 훅에서 붙인다. 훅은 `new URL(request.url).origin` 이 웹 주소의 origin 과 같지 않으면 쿠키를 붙이지 않고 요청 전에 멈춘다. `URL`·`Request` 객체 입력은 ky 가 `prefix` 를 붙이지 않기 때문이다.
 - `Authorization` 은 보내지 않는다. `redirect: "manual"` 이다.
@@ -108,12 +109,13 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 | 429 | `EXIT_RATE_LIMITED` | 공개 클라이언트와 같다 |
 | 그 밖 4xx·5xx | `EXIT_API_ERROR` | 본문의 `header.resultMessage`, 없으면 상태 코드 |
 | 2xx 인데 `header.isSuccessful === false` | `EXIT_API_ERROR` | `header.resultMessage` |
-| HTML 본문, JSON 파싱 실패 | `EXIT_API_ERROR` | 웹 응답이 JSON 이 아니다 |
+| 로그인 HTML 200 | `EXIT_AUTH_ERROR`(2) | 세션 만료 안내. 첨부로 반환하지 않는다 |
+| 그 밖 JSON 파싱 실패 | `EXIT_API_ERROR` | 웹 응답이 JSON 이 아니다 |
 | 타임아웃, 네트워크 오류 | `EXIT_API_ERROR` | 종류만 말한다 |
 
 - 어느 메시지에도 요청 URL, 호스트, 쿠키 값을 넣지 않는다. ky 의 `HTTPError`·`TimeoutError` 메시지는 URL 을 담으므로 그대로 쓰지 않는다. 메시지는 `last-run.json` 을 거쳐 `feedback --last` 로 공개 이슈에 들어갈 수 있다(`src/index.ts`).
 - 토큰 버킷과 큰 정수 파서는 공개 클라이언트와 같이 쓴다.
-- 첨부 다운로드·업로드의 307 은 `isTrustedFileHost(location, <공개 API 주소>)` 로 판정한다. 함수는 바꾸지 않는다. 공개 API 주소를 넘기면 `api.` 를 뗀 도메인(`*.dooray.com`)이 허용되고, 그 밖은 막힌다. 파일 서버 요청에는 쿠키를 붙이되 `redirect: "manual"` 과 연쇄 리다이렉트 거부는 [ADR-074](../../adr/074-file-redirect-hardening.md) 와 같다.
+- 첨부 다운로드·업로드의 307 은 테넌트 웹 origin 또는 공개 API 와 같은 클라우드의 정확한 `https://file-api.<클라우드 도메인>` 만 한 번 허용한다. 다른 하위 호스트·포트·사용자 정보는 거절한다. 새 Cookie 헤더만 붙여 요청하며 연쇄 리다이렉트는 막는다. 공개 클라이언트의 `isTrustedFileHost` 는 바꾸지 않는다. 다운로드의 응답 시간 제한은 [ADR-074](../../adr/074-file-redirect-hardening.md) 를 따른다.
 
 ### 응답 변환
 
@@ -129,7 +131,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 - 날짜는 공식 스키마의 표기(오프셋을 단 ISO 8601)로 맞춘다. 19자리 id 는 문자열로 둔다([ADR-051](../../adr/051-json-large-integer-precision.md)).
 - 공식 스키마의 필수 필드를 웹에서 얻지 못하면 변환 함수가 `EXIT_API_ERROR` 로 멈춘다. 웹 쪽 변경을 조용히 넘기지 않는다.
 - 웹 경로의 프로젝트 id 앞 `!` 는 웹 클라이언트가 `apiPath` 로 인코딩한 뒤 붙인다([ADR-075](../../adr/075-api-path-encoding.md)).
-- 웹 프로젝트 멤버 응답은 원소마다 `member` 객체를 담는다. 웹 클라이언트가 그것을 프로세스 메모리에 담아 두고 `getMemberDetail` 에 재사용한다. `fetchAllMembers`(`src/resolvers/member.ts`)가 멤버마다 상세를 병렬로 부르는 호출 수를 줄인다. 웹 호출 한도를 실측하지 않았고, 사고 직후라 많은 비브라우저 호출이 세션 차단을 부를 수 있다.
+- 웹 프로젝트 멤버 응답은 원소마다 `member` 객체를 담는다. 웹 클라이언트는 목록용 이름과 상세 응답 캐시를 따로 둔다. 목록의 이름은 선택적인 getMemberNameFromList 로 resolver 에서 재사용하며 getMemberDetail 은 상세 경로의 응답만 재사용한다. `fetchAllMembers`(`src/resolvers/member.ts`)가 멤버마다 상세를 병렬로 부르는 호출 수를 줄인다. 웹 호출 한도를 실측하지 않았고, 사고 직후라 많은 비브라우저 호출이 세션 차단을 부를 수 있다.
 
 ### PR1 웹 경로
 
@@ -151,7 +153,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 
 `/v2/wapi/members/search` 는 200 이지만 `result.content` 가 문자열이라 쓰지 않는다.
 
-PR1 plan 의 첫 작업은 아래 실측이다. 결과를 `docs/api/web-endpoints.md` 에 적은 뒤 구현한다.
+아래 실측은 2026-11-14 완료했고 [웹 경로 색인](../../api/web-endpoints.md)에서 영역별 기록을 찾는다. 쓰기는 새 임시 그룹에서만 했고 웹 화면에서 정리했다. 반복해서 쓰지 않는다.
 
 - 공개 호출이 쓰는 쿼리(`member=me`, `type`, `scope`, `state`, `page`, `size`, `externalEmailAddresses`, `userCode`)를 웹이 받는지. `page` 를 무시하면 목록 루프(`src/resolvers/project.ts`)가 같은 페이지를 거듭 받으므로 페이지 넘기기를 꼭 본다.
 - `ensureMe` 가 쓰는 `defaultOrganization` 의 id 를 웹 `me` 응답에서 얻는 법.
@@ -160,10 +162,12 @@ PR1 plan 의 첫 작업은 아래 실측이다. 결과를 `docs/api/web-endpoint
 
 ### 지원 범위 막기(`web-support.ts`)
 
-- 목록은 웹 방식으로 돌 수 있는 명령 경로와, 명령마다 웹에서 지원하지 않는 옵션이다. 예: PR1 의 `member search` 는 `--email`·`--user-code`·`--user-code-exact` 를 웹 경로에서 받는지 실측해 정한다.
+- 목록은 `commands/web-support/project.ts`, `member.ts` 처럼 영역별 파일에 두고 `web-support.ts` 가 모은다. 판정 함수는 하나다. 목록은 웹 방식으로 돌 수 있는 명령 경로와, 명령마다 웹에서 지원하지 않는 옵션이다. PR1 의 `member get --with-org` 는 캘린더 경로가 필요해 막는다. 예: PR1 의 `member search` 는 `--email`·`--user-code`·`--user-code-exact` 를 웹 경로에서 받는지 실측해 정한다.
 - `assertWebSupported(path, opts, mode)` 는 순수 함수다. 방식이 `web` 이고 명령이 목록에 없거나 미지원 옵션 값이 있으면 스펙 REQ8 의 메시지와 `EXIT_PARAM_ERROR` 를 던진다.
 - 설정을 쓰지 않는 명령(`setup`, `config`, `doctor`, `cache`, `skill`, `feedback`)과 `mail` 은 목록과 무관하게 통과한다.
-- `preAction` 은 `readAuthModeFromFile()` 로 파일만 읽는다. 키체인을 읽지 않고, 보안 경고도 내지 않는다. 비밀값·캐시 파일 보호 강화 설계가 `config`·`setup` 에서 경고하지 않기로 한 것을 지킨다.
+- `preAction` 은 `readAuthModeFromFile()` 로 파일만 읽는다. 키체인을 읽지 않고, 보안 경고도 내지 않는다. 설정 파일이 손상됐거나 읽지 못하면 guardWebCommand 는 API 방식으로 통과시켜 각 명령의 기존 검사 순서(삭제 확인 등)를 지킨다. 비밀값·캐시 파일 보호 강화 설계가 `config`·`setup` 에서 경고하지 않기로 한 것을 지킨다.
+- `web/index.ts` 가 영역별 web.ts 구현을 조립한다. 미지원 영역의 기본값은 index 에만 두고 뒤 PR 은 자기 영역 파일과 등록 줄을 더한다.
+
 - 웹 클라이언트의 붙이지 않은 메서드도 같은 오류를 던진다. 목록에 넣은 명령이 붙이지 않은 메서드를 부르는 실수를 런타임에도 막는다.
 - 가이드의 「웹 방식에서 지원하지 않는 명령·옵션」 표는 문서에 적고, vitest 테스트가 그 표와 목록이 같은지 본다. CI 의 문서 검사는 의존성 설치 전에 돌아 TS 파일을 불러올 수 없다([ADR-048](../../adr/048-checks-to-mjs.md)).
 
@@ -206,8 +210,8 @@ PR1 plan 의 첫 작업은 아래 실측이다. 결과를 `docs/api/web-endpoint
 | --- | --- | --- |
 | REQ1, REQ15, REQ16 | `web-auth.ts`, `createClient` | 단위 테스트. 방식별 `isConfigComplete`, 표 밖 `base-url`, `http`, 빠진 `tenant-name`, `example` |
 | REQ2 | `parseSessionCookie` | 단위 테스트. 값만, `=` 로 끝나는 값, `SESSION=`, 헤더 전체, 따옴표·공백, `SESSION` 없는 헤더, 서로 다른 `SESSION` 둘, 비ASCII |
-| REQ3 | `web-http`, `config get`, 실행 기록 | 웹 HTTP 층의 모든 오류 경로에서 메시지에 호스트·쿠키 값이 없다. 기존 비밀 필드 테스트에 `sessionCookie` 를 더한다 |
-| REQ4, REQ9 | `web-http` | ky 에 가짜 `fetch` 를 넣는 단위 테스트. 401, 403, `/auth/signin` 302, 다른 호스트 302, HTML 200, `isSuccessful: false`, 타임아웃, `URL` 객체로 다른 origin 을 넘긴 요청(쿠키 없이 멈춤), 첨부 307 의 `*.dooray.com` 허용과 그 밖 거부 |
+| REQ3 | `web/http`, `config get`, 실행 기록 | 웹 HTTP 층의 모든 오류 경로에서 메시지에 호스트·쿠키 값이 없다. 기존 비밀 필드 테스트에 `sessionCookie` 를 더한다 |
+| REQ4, REQ9 | `web/http` | ky 에 가짜 `fetch` 를 넣는 단위 테스트. 401, 403, `/auth/signin` 302, 다른 호스트 302, HTML 200, `isSuccessful: false`, 타임아웃, `URL` 객체로 다른 origin 을 넘긴 요청(쿠키 없이 멈춤), 첨부 307 의 웹 origin·정확한 file-api 호스트 허용과 그 밖 거부 |
 | REQ5 | `resolveWebBaseUrl` | 단위 테스트. 네 클라우드와 표 밖 |
 | REQ6 | 변환 함수 | 메서드마다 실측 응답의 꼴을 본뜬 고정 파일(값은 가짜, `node scripts/check-pii.mjs` 통과)로, 결과의 키·구조·날짜 형식이 공식 문서 스키마와 같은지 본다. 공식 스키마의 필드 목록은 `docs/api/web-endpoints.md` 에 메서드마다 적는다 |
 | REQ6, REQ7 | 실제 웹 | PR 마다 그 PR 명령을 웹 방식으로 돌려 `--json` 을 공식 스키마와 대조한다. 쓰기는 사용자가 지정한 사내 테스트 프로젝트, 나에게 보내는 메신저, 개인 캘린더에서 하고 만든 것은 지운다. API 복구 뒤 두 방식 비교는 후속 확인이다 |
@@ -225,12 +229,12 @@ PR1 plan 의 첫 작업은 아래 실측이다. 결과를 `docs/api/web-endpoint
 | DECISION1 | 두 방식을 나누는 경계 | `DoorayClient` 인터페이스와 구현 두 개, `createClient` 로 고른다. resolver·services 의 매개변수 타입도 인터페이스로 바꾼다 | 작성자 | 명령·포매터를 바꾸지 않는다. 하위 클래스는 덮지 않은 메서드가 공개 API 를 부른다 |
 | DECISION2 | 응답 변환 자리와 기준 | 웹 클라이언트 메서드 안, 기준은 공식 응답 스키마 | 작성자 | 포매터가 한 모양만 안다. `types.ts` 는 필드 일부만 담는다(스펙 DECISION26) |
 | DECISION3 | 지원 범위의 원본 | `src/commands/web-support.ts` 의 명령·옵션 목록과 순수 판정 함수 | 작성자 | REQ8 을 명령 시작에서 지키고 단위 테스트로 본다 |
-| DECISION4 | 웹 경로 명세 자리 | `docs/api/web-endpoints.md` 한 파일 | 작성자 | 스펙 DECISION25 |
+| DECISION4 | 웹 경로 명세 자리 | `docs/api/web-endpoints.md` 색인과 영역별 `web-endpoints/*.md` | 작성자 | 스펙 DECISION25 |
 | DECISION5 | 테넌트 웹 주소 | 네 클라우드 표. 웹 방식의 `example` 은 미설정 | 작성자 | `dooray.com` 실측과 같은 규칙. `example` 은 `setup` 기본값이라 그대로 두면 엉뚱한 호스트로 쿠키가 나간다 |
 | DECISION6 | 리다이렉트 판정 | `/auth/signin` 은 세션 만료, 그 밖은 따라가지 않는 API 오류 | 작성자 | 2026-11-13 실측 |
 | DECISION7 | 공개 클라이언트 | 동작을 바꾸지 않는다 | 작성자 | API 가 복구되면 지금 동작 그대로 돌아가야 한다 |
 | DECISION8 | 쿠키를 붙이는 자리 | `beforeRequest` 에서 origin 을 확인한 뒤 | 작성자 | 인스턴스 헤더는 `URL` 객체 입력 한 번에 다른 호스트로 나간다 |
-| DECISION9 | 첨부 307 판정 | `isTrustedFileHost` 를 바꾸지 않고 공개 API 주소를 기준으로 넘긴다 | 작성자 | 함수를 바꾸면 공개 클라이언트의 판정이 바뀐다 |
+| DECISION9 | 첨부 307 판정 | 웹 origin·같은 클라우드의 정확한 file-api 호스트만 허용한다 | 작성자 | 함수를 바꾸면 공개 클라이언트의 판정이 바뀐다 |
 | DECISION10 | 오류 메시지 | URL·호스트·쿠키를 담지 않는다 | 작성자 | 메시지가 실행 기록을 거쳐 공개 이슈로 나갈 수 있다. 테넌트 주소는 사내 식별자다(CLAUDE.md) |
 | DECISION11 | 웹 멤버 상세 | 멤버 목록 응답의 `member` 를 프로세스 메모리에 담아 재사용한다 | 작성자 | 멤버 수만큼 병렬 호출을 줄인다. 웹 호출 한도를 실측하지 않았다 |
 | DECISION12 | `preAction` 의 설정 읽기 | 파일만 읽는 `readAuthModeFromFile` | 작성자 | 키체인 읽기를 늘리지 않고 `config`·`setup` 에서 보안 경고를 내지 않는다 |
@@ -249,3 +253,9 @@ PR 마다 함께 고칠 문서(그 PR 이 닿는 것만):
 - `docs/data-schema.md`: 비밀 필드 목록, `tenantName` 이 캐시와 무관하다는 서술. PR1.
 - `docs/guide/setup.md`, `README.md`, `skills/dooray-cli/SKILL.md`: 웹 방식 켜는 법, 비공식 API 경고, 쿠키 꺼내는 법, 지원하지 않는 명령 표. PR1 에서 만들고 PR 마다 표를 늘린다.
 - [ADR-042](../../adr/042-cache-invalidation-on-mutation.md): 무효화 대상 키. PR1.
+
+구현 배치 보완(사용자 결정 2026-11-14): 웹 구현은 api/<영역>/web.ts, 영역 계약은 api/<영역>/types.ts 로 나눈다. DTO 는 api/types.ts 에 남긴다. DoorayClient 는 영역 계약의 교집합이다. 지원 목록·웹 경로 명세·고정 응답도 영역별 파일로 나눈다. 뒤 PR 들이 동시에 자기 영역을 구현할 수 있게 한다. 기존 책임 경계와 보안 규칙은 유지한다.
+
+영역 계약은 PR1 에 모두 둔다(사용자 결정 2026-11-14). project·member 의 web.ts 는 자기 영역 인터페이스 전체를 구현해 누락을 컴파일러가 검사한다. web/index.ts 는 영역별 구현이나 미지원 기본값을 등록하고 공통 Proxy 로 지원하지 않는 메서드를 막는다. then 은 반환하지 않아 Promise 로 오인되지 않는다. 뒤 PR 은 자기 영역 web.ts 와 등록 줄을 더한다. 단일 영역 resolver·service 는 그 영역 계약만 받으며 여러 영역을 함께 쓰는 경로는 DoorayClient 를 유지한다.
+
+공용 첨부 기반(코디네이터 결정 2026-11-14): WebHttp.requestBytes 는 검증한 Response 를, upload 는 FormData 요청의 WebEnvelope 를 돌려준다. WebContext·createWebClient 는 공개 API 주소를 받아 웹 origin 또는 같은 클라우드의 정확한 https file-api 호스트로 첨부 307 을 한 번만 따라간다. 다운로드의 헤더 응답 제한은 [ADR-074](../../adr/074-file-redirect-hardening.md) 의 helper 를 재사용하고 업로드에는 걸지 않는다. 로그인 HTML·로그인 리다이렉트는 2 로 끝내 파일로 반환하지 않는다. 다음 영역의 지원 목록·가이드 절·웹 경로 색인은 PR1 에 빈 등록 자리로 둔다.

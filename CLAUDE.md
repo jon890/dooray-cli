@@ -26,6 +26,8 @@ Dooray 공식 API 문서: [https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO
 스냅샷이 낡았으면 `docs/api/official-endpoints.txt` 를 갱신하고, 비공식 경로인데 쓰기로 정했으면
 그 스크립트의 `KNOWN_UNDOCUMENTED` 로 옮긴다.
 
+웹 인증 방식의 비공식 웹 경로는 ADR-081 의 예외를 따른다. 공개 API 방식에는 아래 정책이 적용된다.
+
 **공식 문서에 없는 endpoint 는 기본으로 쓰지 않는다.** 쓰려면 읽기 전용이어야 하고
 확인·실측·등록·경고를 모두 채워야 한다. 조건과 그 이유는
 [ADR-062](docs/adr/062-undocumented-endpoint-policy.md)가 소유한다.
@@ -74,7 +76,7 @@ dooray                # 글로벌 링크 시
 - **mail 계열 입력**: `mail get`·`mail reply` 는 IMAP UID 외에 메일 웹 주소와 그 주소의 mail id 도 받는다. mail id 는 도착 시각으로 풀어 UID 를 찾는다 (ADR-040)
   - 세 입력 형식 모두 답장 발송 전에 원본을 보여주고 확인을 거친다. 확인 절차와 종료 코드 규약은 ADR-060 이 소유한다
 - **resolver 매칭**: 정확일치 → 이름 부분일치 → 모호하면 에러와 후보 목록 출력
-- **출력**: `--json` 은 raw 유지, `--quiet` 은 식별자만
+- **출력**: `--json` 은 공개 API 응답 모양 유지(웹 방식은 공식 필드로 변환), `--quiet` 은 식별자만
   - 보강한 값이 필요하면 그것을 명시하는 옵션을 둔다. `post get --with-tag-names` 가 그 형태다.
     옵션을 주지 않은 호출의 출력은 달라지지 않는다 (ADR-056)
 - **파괴적 삭제 명령**: 확인을 기본으로 하고 `-y`/`--yes` 로 생략한다 (ADR-036)

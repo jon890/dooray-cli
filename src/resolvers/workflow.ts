@@ -1,4 +1,4 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { ProjectClient } from "../api/project/types.js";
 import type { CachedWorkflow } from "../cache/types.js";
 import { getWorkflows, setWorkflows, isExpired } from "../cache/store.js";
 import { WORKFLOWS_TTL_MS } from "../cache/types.js";
@@ -7,7 +7,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 export async function ensureWorkflows(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
 ): Promise<CachedWorkflow[]> {
   const entry = await getWorkflows(projectId);
@@ -26,7 +26,7 @@ export async function ensureWorkflows(
 }
 
 export async function resolveWorkflow(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
   input: string,
 ): Promise<string> {

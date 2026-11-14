@@ -7,7 +7,7 @@
  */
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolvePostInput } from "../../resolvers/post-input.js";
 import type { CreatePostUser, PostDetail, PostUser } from "../../api/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
@@ -40,7 +40,7 @@ export const postReplaceCommand = new Command("replace")
     const { oldText, newText } = await readReplaceInputs(opts);
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
     const globalOpts = postReplaceCommand.optsWithGlobals() as OutputOptions;
 
     // 대상 해석은 스피너 전에 한다. 입력 오류 메시지가 스피너 문자와 섞이지 않게 한다.

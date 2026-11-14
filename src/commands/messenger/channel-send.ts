@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveMessengerChannel } from "../../resolvers/messenger-channel.js";
 import { openInEditor } from "../../editor/index.js";
 import { readBodyInputOrNull } from "../../utils/body-input.js";
@@ -22,7 +22,7 @@ export const messengerChannelSendCommand = new Command("channel-send")
 
     const globalOpts = messengerChannelSendCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const channelId = await resolveMessengerChannel(client, opts.channel);
 

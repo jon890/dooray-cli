@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { ensureTags } from "../../resolvers/tag.js";
 import { output, type OutputOptions } from "../../formatters/table.js";
@@ -8,7 +8,7 @@ import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 
 async function runTagsList(project: string, opts: OutputOptions): Promise<void> {
   const config = await getConfigOrThrow();
-  const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+  const client = createClient(config);
 
   startSpinner("태그 목록 조회 중...");
   let tags;

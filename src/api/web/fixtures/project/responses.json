@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": [{"id": "project-1", "code": "my-project", "description": "테스트", "state": "active", "scope": "private", "type": "public", "organizationId": "org-1", "driveId": "drive-1", "wikiId": "wiki-1", "projectCategoryId": null, "hiddenFlag": false}], "totalCount": 2
+  },
+  "workflows": {"header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""}, "result": {"contents": [{"id": "workflow-1", "name": "등록", "class": "registered", "order": 1, "names": [{"locale": "ko_KR", "name": "등록"}], "projectId": "project-1"}]}},
+  "tags": {"header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""}, "result": {"contents": [{"id": "tag-1", "name": "단계:준비", "color": "e0e0e0", "tagPrefixId": "group-1", "projectId": "project-1"}, {"id": "tag-2", "name": "단독", "color": "ffffff"}], "totalCount": 2, "references": {"tagPrefixMap": {"group-1": {"id": "group-1", "name": "단계", "mandatory": false, "selectOne": true}}}}},
+  "created": {"header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""}, "result": [{"id": "tag-3"}]},
+  "updated": {"header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""}, "result": null},
+  "milestones": {"header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""}, "result": {"contents": [{"id": "milestone-1", "name": "출시", "status": "open", "startedAt": "2026-11-14+09:00", "endedAt": "2026-12-01+09:00", "closedAt": null, "createdAt": "2026-11-14T10:00:00+09:00", "updatedAt": "2026-11-14T01:00:00Z", "projectId": "project-1"}], "totalCount": 1}},
+  "groups": {"header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""}, "result": {"contents": [{"id": "group-1", "code": "reviewers", "projectId": "project-1", "createdAt": "2026-11-14T01:00:00Z", "updatedAt": "2026-11-14T10:00:00+09:00", "organizationMemberIdList": ["member-1"]}], "totalCount": 1}},
+  "projectDetail": {"header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""}, "result": {"content": {"id": "project-1", "code": "my-project"}}},
+  "templates": {"header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""}, "result": {"contents": [{"id": "template-1", "templateName": "기본", "projectId": "project-1", "subject": "할 일", "users": {"from": null, "to": [{"type": "member", "member": {"organizationMemberId": "member-1", "internal": "drop"}}], "cc": []}, "body": {"mimeType": "text/x-markdown", "content": "본문", "emptyContent": false}, "guide": {"mimeType": "text/plain", "content": "안내"}, "dueDate": "2026-12-01T10:00:00+09:00", "dueDateFlag": true, "isDefault": true, "priority": "normal", "milestoneId": "milestone-1", "tagIdList": ["tag-1"], "version": 2}], "totalCount": 1, "references": {"projectMap": {"project-1": {"id": "project-1", "code": "my-project"}}, "milestoneMap": {"milestone-1": {"id": "milestone-1", "name": "출시"}}}}}
+}

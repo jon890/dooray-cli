@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveProject } from "../../resolvers/project.js";
 import { createTag } from "../../services/tag.js";
 import { printJson, printQuiet, type OutputOptions } from "../../formatters/table.js";
@@ -49,7 +49,7 @@ export const projectTagsCreateCommand = new Command("create")
     const color = normalizeTagColor(opts.color);
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     startSpinner("태그 생성 중...");
     let tagId: string;

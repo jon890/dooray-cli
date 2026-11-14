@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { formatWikiList } from "../../formatters/wiki.js";
 import { fetchAllWikis, filterWikisByName } from "../../resolvers/wiki.js";
 import { buildProjectCodeMap } from "../../resolvers/project.js";
@@ -17,7 +17,7 @@ export const wikiListCommand = new Command("list")
   .action(async (opts) => {
     const globalOpts = wikiListCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     // project 조회 실패 시 빈 Map fallback — 위키 목록 자체는 그대로 낸다.
     // Project 열은 코드를 찾지 못하면 project id 를 그대로 낸다.

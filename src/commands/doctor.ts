@@ -7,11 +7,12 @@ import {
   SKILL_AGENT_NAMES,
   type SkillStatus,
 } from "../skill/manager.js";
-import { getConfig, getConfigOrThrow, readConfigFileSecurity } from "../config/store.js";
+import { getConfig, readConfigFileSecurity } from "../config/store.js";
 import { getConfigFileSecurityFixAdvice } from "../config/file-security.js";
 import { getCacheStats } from "../cache/store.js";
-import { DoorayApiClient } from "../api/client.js";
-import { ensureMe } from "../resolvers/me.js";
+import { createClient } from "../api/dooray-client.js";
+import { isConfigComplete, WEB_AUTH_WARNING } from "../config/web-auth.js";
+import type { Config } from "../config/types.js";
 
 function formatSkillStatus(status: SkillStatus): string {
   switch (status.status) {
@@ -42,15 +43,12 @@ function formatSkillStatus(status: SkillStatus): string {
  * `--json` 과 텍스트 모드가 같은 판정을 쓰도록 분리했다.
  * 설정이 갖춰지지 않은 경우는 부르는 쪽이 `skipped` 로 처리한다.
  */
-async function probeApiConnection(): Promise<"ok" | "failed"> {
+async function probeApiConnection(config: Config): Promise<{ status: "ok" | "failed"; name?: string; message: string }> {
   try {
-    const validConfig = await getConfigOrThrow({ securityWarning: false });
-    const client = new DoorayApiClient(validConfig.apiKey, validConfig.baseUrl);
-    await client.getProjects({ page: 0, size: 1 });
-    await ensureMe(client);
-    return "ok";
-  } catch {
-    return "failed";
+    const response = await createClient(config).getMe();
+    return { status: "ok", name: response.result.name, message: "API 연결에 성공했습니다." };
+  } catch (error) {
+    return { status: "failed", message: error instanceof Error ? error.message : "API 연결에 실패했습니다." };
   }
 }
 
@@ -68,12 +66,21 @@ export const doctorCommand = new Command("doctor")
     const config = await getConfig();
     const apiKeyOk = config.state === "ok" && !!config.config.apiKey;
     const baseUrlOk = config.state === "ok" && !!config.config.baseUrl;
+    const authMode = config.state === "ok" ? config.config.authMode ?? "api-key" : "api-key";
+    const missing = config.state === "ok" ? isConfigComplete(config.config) : ["config"];
+    const complete = missing.length === 0;
     const json = opts.json || !!command.parent?.opts().json;
     const checks: DoctorCheck[] = [];
     if (config.state === "ok") {
       checks.push({ id: "config", status: "pass", message: "설정 파일을 읽었습니다." });
-      checks.push({ id: "api-key", status: apiKeyOk ? "pass" : "fail", message: apiKeyOk ? "API 키가 설정되어 있습니다." : "API 키가 없습니다.", ...(!apiKeyOk && { fix: "dooray setup" }) });
-      checks.push({ id: "base-url", status: baseUrlOk ? "pass" : "fail", message: baseUrlOk ? "Base URL 이 설정되어 있습니다." : "Base URL 이 없습니다.", ...(!baseUrlOk && { fix: "dooray setup" }) });
+      checks.push({ id: "auth-mode", status: authMode === "web" ? "warn" : "pass", message: authMode === "web" ? WEB_AUTH_WARNING : "API 키 방식을 사용합니다." });
+      if (authMode === "web") {
+        for (const [id, label] of [["session-cookie", "SESSION 쿠키"], ["tenant-name", "테넌트 이름"]]) {
+          const ok = !missing.includes(id);
+          checks.push({ id, status: ok ? "pass" : "fail", message: `${label}: ${ok ? "설정됨" : "미설정 또는 올바르지 않음"}`, ...(!ok && { fix: "dooray setup" }) });
+        }
+      } else checks.push({ id: "api-key", status: apiKeyOk ? "pass" : "fail", message: apiKeyOk ? "API 키가 설정되어 있습니다." : "API 키가 없습니다.", ...(!apiKeyOk && { fix: "dooray setup" }) });
+      checks.push({ id: "base-url", status: !missing.includes("base-url") ? "pass" : "fail", message: !missing.includes("base-url") ? "Base URL 이 설정되어 있습니다." : "Base URL 이 없거나 웹 방식에 맞지 않습니다.", ...(missing.includes("base-url") && { fix: "dooray setup" }) });
     } else {
       const message = config.state === "absent" ? "설정 파일이 없습니다."
         : config.state === "invalid" ? `설정 파일이 손상되었습니다: ${config.reason}`
@@ -112,7 +119,12 @@ export const doctorCommand = new Command("doctor")
         // state 가 ok 일 때만 config 에 접근할 수 있다. 지역 변수로 좁힘을 캐시해
         // 템플릿 안에서 도달 불가 분기를 만들지 않는다.
         const okConfig = config.state === "ok" ? config.config : undefined;
-        console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
+        console.log(`  인증 방식: ${authMode}`);
+        if (authMode === "web") {
+          console.log(chalk.yellow(`  ⚠ ${WEB_AUTH_WARNING}`));
+          console.log(`  SESSION 쿠키: ${okConfig?.sessionCookie ? "설정됨" : "미설정"}`);
+          console.log(`  테넌트 이름: ${missing.includes("tenant-name") ? "미설정 또는 올바르지 않음" : "설정됨"}`);
+        } else console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
         console.log(`  Base URL: ${okConfig?.baseUrl ? chalk.green(`✅ ${okConfig.baseUrl}`) : chalk.red("❌ 미설정")}`);
       }
   
@@ -127,12 +139,13 @@ export const doctorCommand = new Command("doctor")
           for (const fix of fixes) console.log(`  수정: ${fix}`);
         }
       }
-      if (apiKeyOk && baseUrlOk) console.log(chalk.bold("\n🌐 API 연결 테스트\n"));
+      if (complete) console.log(chalk.bold("\n🌐 API 연결 테스트\n"));
     }
-    const apiConnection = apiKeyOk && baseUrlOk ? await probeApiConnection() : "skipped";
+    const probe = complete && config.state === "ok" ? await probeApiConnection(config.config) : undefined;
+    const apiConnection = probe?.status ?? "skipped";
     if (apiConnection !== "skipped") checks.push({
       id: "api-connection", status: apiConnection === "ok" ? "pass" : "fail",
-      message: apiConnection === "ok" ? "API 연결에 성공했습니다." : "API 연결에 실패했습니다. API 키 또는 URL 을 확인하세요.",
+      message: probe!.message,
     });
     process.exitCode = checks.some((check) => check.status === "fail") ? 1 : 0;
     if (json) {
@@ -140,6 +153,7 @@ export const doctorCommand = new Command("doctor")
         configState: config.state,
         apiKeyOk,
         baseUrlOk,
+        authMode,
       };
       // 텍스트 모드가 이유를 보여주므로 JSON 도 같이 담는다.
       // 담지 않으면 자동화가 손상과 읽기 실패의 원인을 알 방법이 없다.
@@ -160,17 +174,9 @@ export const doctorCommand = new Command("doctor")
     }
 
     // API connection test
-    if (apiKeyOk && baseUrlOk) {
-      // 판정은 probeApiConnection 이 소유한다. --json 과 같은 결과를 쓴다.
-      // 텍스트 모드만 성공 시 표시명을 덧붙이므로 me 를 따로 읽는다.
-      if (apiConnection === "ok") {
-        const validConfig = await getConfigOrThrow({ securityWarning: false });
-        const client = new DoorayApiClient(validConfig.apiKey, validConfig.baseUrl);
-        const me = await ensureMe(client);
-        console.log(`  연결:     ${chalk.green("✅ 성공")} (${me.name})`);
-      } else {
-        console.log(`  연결:     ${chalk.red("❌ 실패 — API 키 또는 URL을 확인하세요")}`);
-      }
+    if (complete) {
+      if (apiConnection === "ok") console.log(`  연결:     ${chalk.green("✅ 성공")} (${probe?.name})`);
+      else console.log(chalk.red(`  연결:     ❌ 실패 — ${probe?.message}`));
     }
 
     // Cache checks
@@ -197,9 +203,9 @@ export const doctorCommand = new Command("doctor")
 
     // Summary
     console.log();
-    if (apiKeyOk && baseUrlOk && process.exitCode === 1) {
+    if (complete && process.exitCode === 1) {
       console.log(chalk.red("❌ 진단에서 실패한 항목을 확인하세요."));
-    } else if (apiKeyOk && baseUrlOk) {
+    } else if (complete) {
       console.log(chalk.green("✓ 기본 설정이 완료되었습니다."));
     } else if (config.state === "invalid") {
       console.log(chalk.yellow("⚠ 설정 파일이 손상되었습니다."));

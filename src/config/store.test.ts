@@ -385,6 +385,26 @@ describe("config.json 저장 권한", () => {
 });
 
 describe("setConfigValue 값 검증", () => {
+  it.each([{ baseUrl: "https://api.dooray.com" }, { baseUrl: "https://example.com", tenantName: "my-org" }])("웹 전환 전에 주소 설정을 안내한다: %j", async (config) => {
+    readFileMock.mockResolvedValueOnce(JSON.stringify({ version: 1, apiKey: "", ...config }));
+    await expect(setConfigValue("auth-mode", "web")).rejects.toMatchObject({ exitCode: EXIT_PARAM_ERROR, message: expect.stringContaining("tenant-name·base-url 을 먼저 설정") });
+    expect(writeFileMock).not.toHaveBeenCalled();
+  });
+  it.each([["auth-mode", "other"], ["tenant-name", "test.example"], ["base-url", "http://api.dooray.com"], ["session-cookie", "a=1; b=2"]])("%s 의 잘못된 입력을 저장 전에 거절한다", async (key, value) => {
+    readFileMock.mockResolvedValueOnce(JSON.stringify({ version: 1, apiKey: "", baseUrl: "https://api.dooray.com", authMode: "web", tenantName: "my-org" }));
+    await expect(setConfigValue(key, value)).rejects.toMatchObject({ exitCode: EXIT_PARAM_ERROR });
+    expect(writeFileMock).not.toHaveBeenCalled();
+  });
+  it("base-url 끝 슬래시를 없앤다", async () => {
+    readFileMock.mockResolvedValueOnce(JSON.stringify({ version: 1, apiKey: "", baseUrl: "https://api.dooray.com", authMode: "web", tenantName: "my-org" }));
+    await setConfigValue("base-url", "https://api.dooray.com/");
+    expect(writtenConfig().baseUrl).toBe("https://api.dooray.com");
+  });
+  it.each([["base-url", "http://localhost:8080/", "baseUrl"], ["tenant-name", "custom.tenant", "tenantName"]])("API 방식의 기존 %s 입력은 그대로 저장한다", async (key, value, field) => {
+    readFileMock.mockRejectedValueOnce(ENOENT());
+    await setConfigValue(key, value);
+    expect(writtenConfig()[field]).toBe(value);
+  });
   it.each(["abc", "", "0", "65536", "-1", "99.5", "993abc"])(
     "포트 값 %j 는 저장하지 않고 EXIT_PARAM_ERROR 로 거절한다",
     async (value) => {

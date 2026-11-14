@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import type { MoveWikiPageRequest } from "../../api/types.js";
 import { resolveWiki } from "../../resolvers/wiki.js";
 import {
@@ -116,7 +116,7 @@ export const wikiPageMoveCommand = new Command("move")
 
     const globalOpts = wikiPageMoveCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const { wikiId, pageId } = await resolveWikiPageInput(client, {
       projectArg: arg1,

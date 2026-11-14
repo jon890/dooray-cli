@@ -1,4 +1,4 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { DoorayClient } from "../api/dooray-client.js";
 import { resolvePostInput } from "./post-input.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
@@ -145,18 +145,18 @@ export function parseCommentFilePositional(
 }
 
 export function resolveCommentFileInput(
-  client: DoorayApiClient,
+  client: DoorayClient,
   args: CommentFileInputBaseArgs & {
     requireSecondary: true;
     secondaryLabel: CommentFileSecondaryLabel;
   },
 ): Promise<CommentFileInputRequiredResult>;
 export function resolveCommentFileInput(
-  client: DoorayApiClient,
+  client: DoorayClient,
   args: CommentFileInputBaseArgs & { requireSecondary: false },
 ): Promise<CommentFileInputResult>;
 export async function resolveCommentFileInput(
-  client: DoorayApiClient,
+  client: DoorayClient,
   args: CommentFileInputArgs,
 ): Promise<CommentFileInputResult> {
   const { projectArg, postNumberArg, commentId, secondary } = parseImpl(args);
