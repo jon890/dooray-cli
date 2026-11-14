@@ -21,7 +21,7 @@
 | 지금(`lib/dooray.mjs`) | 바꿀 CLI 호출 |
 | --- | --- |
 | `loadApiConfig`, `readKeychainApiKey`, `keychainApiKeyAccount`, `createClient`, `createRateLimiter` | 삭제. 인증과 호출 간격은 CLI 가 맡는다 |
-| `getMe` (`common/v1/members/me`) | **대응 명령이 없다.** 아래 「열린 결정」 |
+| `getMe` (`common/v1/members/me`) | `dooray member get me --json` |
 | `listProjects` (`project/v1/projects?member=me`) | `dooray project list --json` (이미 `member=me`) |
 | `listPosts` (`project/v1/projects/{id}/posts`, `order=-createdAt`, 100 건씩, `since` 에서 멈춤) | `dooray post list <projectId> --all --size 100 --order -createdAt --created "<since>~" --json` |
 | `getPost` | `dooray post get --id <postId> --json` |
@@ -50,12 +50,9 @@
 
 `skills/dooray-persona/SKILL.md`, `references/collection.md`, `references/bootstrap.md` 와 `docs/guide/persona.md` 에서 「API 호출이 초당 5회를 넘으면」 「토큰을 따로 입력하지 않는다」 「키체인에서 읽는다」 같은 자기 호출 전제를 CLI 전제로 고친다. `docs/guide/persona.md` 에 「웹 방식에서는 `post` 명령이 웹을 지원해야 동작한다」 와 지원하지 않는 명령 표(없음)를 적는다.
 
-## 열린 결정
+## 결정
 
-스크립트가 내 organizationMemberId 를 얻을 CLI 명령이 없다. `member get` 은 id 를 받고 `me` 를 받지 않는다. 안은 둘이다.
-
-- 안 1(권장): `dooray member get me` 가 `getMe` 결과를 낸다. `--from me` 처럼 이미 쓰는 `me` 표기와 같다. 대신 member 영역의 명령(`src/commands/member/get.ts`)과 지원 목록을 고쳐야 해 이 영역 담당 밖이다. 2단계 시작 때 ask 로 묻는다.
-- 안 2: `post list <projectId> --from me --size 1 --json` 의 첫 업무에서 등록자 id 를 얻는다. 새 명령이 필요 없지만 내가 쓴 업무가 없는 프로젝트에서는 얻지 못해 프로젝트를 돌며 찾아야 한다.
+스크립트가 내 organizationMemberId 를 얻는 길은 `dooray member get me --json` 이다(사용자 결정 2026-11-14). 이 PR 이 `src/commands/member/get.ts` 를 고쳐 `me` 를 받게 했다. 두 인증 방식 모두 `getMe` 를 한 번 부른다.
 
 ## 검증
 
