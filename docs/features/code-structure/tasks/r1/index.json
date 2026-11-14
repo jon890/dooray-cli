@@ -9,7 +9,7 @@
       "after": "R1 머지 뒤 R2 지시서"
     }
   ],
-  "status": "in_progress",
+  "status": "completed",
   "created_at": "2026-11-14",
   "spec": "docs/features/code-structure/spec.md",
   "design": "docs/features/code-structure/design.md",
