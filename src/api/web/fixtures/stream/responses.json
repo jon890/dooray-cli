@@ -27,6 +27,11 @@
               "id": "comment-1",
               "read": true,
               "type": "comment"
+            },
+            {
+              "id": "event-nobody",
+              "read": false,
+              "type": null
             }
           ]
         },
@@ -165,6 +170,18 @@
             "body": {
               "mimeType": "text/x-markdown",
               "content": "댓글"
+            }
+          },
+          "event-nobody": {
+            "id": "event-nobody",
+            "type": "workflow",
+            "postId": "post-1",
+            "creator": {
+              "type": "member",
+              "member": {
+                "organizationMemberId": "member-1",
+                "name": "홍길동"
+              }
             }
           }
         },

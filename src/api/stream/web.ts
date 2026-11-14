@@ -94,6 +94,8 @@ export function convertStreamCards(cards: Row[], references: Row): ConvertedStre
       } });
       for (const sub of eventIds(card)) {
         const eventId = identifier(sub.id), ev = entry(events, eventId);
+        // 본문이 없는 이벤트(상태 변경 같은 시스템 활동)는 공식 event 모양에 담을 수 없어 뺀다.
+        if (!ev.body || typeof row(ev.body).mimeType !== "string") { dropped += 1; continue; }
         items.push({ type: "event", event: {
           read: sub.read === true, id: eventId, type: text(ev.type), postId: identifier(ev.postId),
           creator: { type: text(row(ev.creator).type), member: who(row(ev.creator).member) }, body: body(ev.body),

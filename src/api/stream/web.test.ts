@@ -50,6 +50,13 @@ describe("웹 스트림", () => {
     stderr.mockRestore();
   });
 
+  it("본문이 없는 시스템 이벤트는 event 원소로 만들지 않고 건너뛴다", async () => {
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    respond(fixtures.page);
+    const res = await client().getStreams();
+    expect(res.result!.filter((i) => i.type === "event")).toHaveLength(1);
+  });
+
   it("다음 페이지 커서를 최상위 cursor 로 올린다. 끝에서는 cursor 가 없다", async () => {
     vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     respond(fixtures.page);
