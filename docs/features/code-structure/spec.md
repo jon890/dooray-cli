@@ -9,11 +9,10 @@
 
 ## 배경
 
-- `src/api/client.ts` 1328줄·메서드 65개, `src/api/types.ts` 995줄·타입 157개다. [ADR-017](../../adr/017-api-types-single-file.md) 의 재검토 조건(800줄, 새 영역)을 둘 다 넘었다.
+- `src/api/client.ts` 1328줄·메서드 65개, `src/api/types.ts` 995줄·타입 157개다. [ADR-017](../../adr/superseded/017-api-types-single-file.md) 의 재검토 조건(800줄, 새 영역)을 둘 다 넘었다.
 - 웹 로그인 세션 기능이 영역 인터페이스(`api/<영역>/types.ts`)와 웹 구현(`api/<영역>/web.ts`)을 먼저 들였다. 공개 구현은 아직 `client.ts` 한 파일이다.
 - `utils/` 30개에 영역을 모르는 공통 부품, post·wiki 본문 규칙, 메일 전용 코드가 섞여 있고 일부가 상위 계층을 import 한다.
 - 명령 파일 일부(`stream/list.ts`, `messenger/channels.ts` 등)에 도메인 로직이 들어 있고, 명령 나무 조립 자리가 영역마다 다르다.
-- 진단 전문: 2026-11-14 구조 진단(코디네이터 작업 기록 `.orch/structure-assessment.md`).
 
 ## 범위
 
@@ -60,7 +59,7 @@ PR 순서와 단위(동작을 바꾸지 않는 PR 여럿):
 | DECISION1 | 목표 구조 | 계층 폴더 유지, api 안만 영역별(A1). 영역 세로 폴더(B)는 범위 밖 | 사용자 2026-11-14 | 실제 고통은 api 두 파일에 몰려 있고, B 는 약 300개 파일 이동과 기여자 충돌이 크다 |
 | DECISION2 | 영역 인터페이스 | 영역 인터페이스의 교집합 `DoorayClient`, 공개·웹 두 구현 | 사용자 2026-11-14 | 웹 PR1 에서 이미 들였다 |
 | DECISION3 | 의존 규칙 테스트 | CI 에서 실패로 막는다. 지금 위반은 허용 목록으로 시작해 PR 마다 줄인다 | 사용자 2026-11-14 | 정리한 구조가 다시 섞이지 않게 한다 |
-| DECISION4 | 경로 별칭 | 이번 정리에서 `@/…` 를 도입한다([ADR-014](../../adr/014-ts-path-alias-deferred.md) 대체) | 사용자 2026-11-14 | 2026-11-14 실측으로 빌드와 vitest 가 별칭을 푼다 |
+| DECISION4 | 경로 별칭 | 이번 정리에서 `@/…` 를 도입한다([ADR-014](../../adr/superseded/014-ts-path-alias-deferred.md) 대체) | 사용자 2026-11-14 | 2026-11-14 실측으로 빌드와 vitest 가 별칭을 푼다 |
 | DECISION5 | 옛 문서·ADR 의 코드 경로 | 이동 스크립트가 문서 경로도 함께 고친다 | 사용자 2026-11-14 | 옛 ADR 을 읽을 때 현재 파일로 바로 간다 |
 | DECISION6 | 시작 시점 | 웹 PR1~PR4 머지 뒤 지금 | 사용자 2026-11-14 | 충돌이 없다 |
 | DECISION7 | PR 단위 | R0~R5, 모두 동작 불변 PR. R5 는 선택 | 작성자 | 진단 결과의 실행 순서 |
@@ -73,5 +72,5 @@ PR 순서와 단위(동작을 바꾸지 않는 PR 여럿):
 
 | 결정 | 종류 | 선택 이유를 남길 ADR | 현재 규칙의 원본 |
 | --- | --- | --- | --- |
-| DECISION1, DECISION3 | architecture | 새 구조 ADR(R0). [ADR-017](../../adr/017-api-types-single-file.md) 을 대체한다 | `docs/code-architecture.md`, 의존 규칙 테스트 |
-| DECISION4 | engineering-process | 같은 ADR 에서 [ADR-014](../../adr/014-ts-path-alias-deferred.md) 를 대체한다 | `tsconfig.json`, `vitest.config.ts` |
+| DECISION1, DECISION3 | architecture | 새 구조 ADR(R0). [ADR-017](../../adr/superseded/017-api-types-single-file.md) 을 대체한다 | `docs/code-architecture.md`, 의존 규칙 테스트 |
+| DECISION4 | engineering-process | 같은 ADR 에서 [ADR-014](../../adr/superseded/014-ts-path-alias-deferred.md) 를 대체한다 | `tsconfig.json`, `vitest.config.ts` |
