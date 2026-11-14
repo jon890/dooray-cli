@@ -134,3 +134,8 @@
 | `wiki page comment add`, `list`, `list --size 1 --page 1`, `latest`, `get`, `edit`, `delete -y` | 성공. 목록은 최신순이고 `--page` 가 공식 순서와 맞는다 |
 
 `wiki page file download -o <dir>` 은 폴더가 없으면 ENOENT 로 실패한다. 공개 API 방식과 같은 기존 동작이며 웹과 관계없다(`download-all` 은 폴더를 만든다).
+
+## 후속 확인
+
+공개 API 가 복구되면 같은 부모 아래 같은 제목으로 위키 페이지를 만들거나 제목을 바꿔 공개 API 방식과 웹 방식의 결과를 비교한다.
+공개 API 가 409 로 거절하는지, 웹처럼 ` (1)` 을 붙이는지 확인해 웹 클라이언트의 사전 확인(종료 코드 1)이 같은 결과인지 본다. 완료 조건이 아닌 후속 확인이다.
