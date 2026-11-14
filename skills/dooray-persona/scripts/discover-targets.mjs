@@ -3,11 +3,9 @@ import { basename, dirname, join } from "node:path";
 import { parseArgs, loadPersonaConfig } from "./lib/config.mjs";
 import {
   classifyInvolvement,
-  createClient,
   getMe,
   listPosts,
   listProjects,
-  loadApiConfig,
 } from "./lib/dooray.mjs";
 
 function sanitizeForTerminal(value) {
@@ -53,10 +51,8 @@ async function main() {
   const maxPages = parseMaxPages(args.flags);
   const { config } = await loadPersonaConfig(args.configPath);
   const outDir = args.outDir ?? config.workDir;
-  const apiConfig = await loadApiConfig();
-  const client = createClient(apiConfig);
-  const me = await getMe(client);
-  const projects = await listProjects(client);
+  const me = await getMe();
+  const projects = await listProjects();
   const candidates = [];
 
   if (Number.isFinite(maxPages)) {
@@ -70,7 +66,7 @@ async function main() {
     process.stderr.write(
       `프로젝트 업무 수집 중: ${index + 1}/${projects.length}\n`,
     );
-    const posts = await listPosts(client, project.id, { maxPages });
+    const posts = await listPosts(project.id, { maxPages });
     const summary = {
       projectId: project.id,
       code: project.code,
