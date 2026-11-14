@@ -45,5 +45,10 @@ export async function guardWebCommand(actionCommand: Command, readMode: () => Pr
     if (error instanceof DoorayCliError && error.exitCode === EXIT_CONFIG_ERROR) return;
     throw error;
   }
-  assertWebSupported(commandPath, actionCommand.optsWithGlobals(), mode);
+  const explicit = new Set<string>();
+  for (let current: Command | null = actionCommand; current; current = current.parent) {
+    for (const key of Object.keys(current.opts())) if (current.getOptionValueSource(key) === "cli") explicit.add(key);
+  }
+  const options = Object.fromEntries(Object.entries(actionCommand.optsWithGlobals()).filter(([key]) => explicit.has(key)));
+  assertWebSupported(commandPath, options, mode);
 }

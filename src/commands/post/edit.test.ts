@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   stopSpinner: vi.fn(),
   client: {
     getPost: vi.fn(),
+    getPostStandalone: vi.fn(),
     updatePost: vi.fn(),
     setPostParent: vi.fn(),
   },
@@ -32,6 +33,7 @@ vi.mock("../../api/client.js", () => ({
     return mocks.client;
   }),
 }));
+vi.mock("../../api/dooray-client.js", () => ({ createClient: () => mocks.client }));
 
 vi.mock("../../resolvers/post-input.js", () => ({
   resolvePostInput: mocks.resolvePostInput,
@@ -635,6 +637,31 @@ describe("post edit 멘션·링크·상위 업무 단독 호출", () => {
     expect(mocks.openInEditor).not.toHaveBeenCalled();
     expect(mocks.client.setPostParent).toHaveBeenCalledWith("project-1", "post-1", "post-parent");
     stdout.mockRestore();
+  });
+});
+
+describe("웹 상위 업무의 사전 확인", () => {
+  it("다른 프로젝트의 상위를 지정하면 본문을 수정하기 전에 멈춘다", async () => {
+    mocks.getConfigOrThrow.mockResolvedValue({ authMode: "web" });
+    mocks.resolvePostRef.mockResolvedValue("post-parent");
+    mocks.client.getPostStandalone.mockResolvedValue({ result: { project: { id: "other-project" } } });
+    const program = await createCommandTree();
+    await expect(program.parseAsync(["node", "dooray", "post", "edit", "--id", "post-1", "--body", "수정", "--parent", "sample/1"])).rejects.toMatchObject({ exitCode: 3 });
+    expect(mocks.client.updatePost).not.toHaveBeenCalled();
+    expect(mocks.client.setPostParent).not.toHaveBeenCalled();
+  });
+  it("같은 프로젝트의 상위는 먼저 확인한 ID로 변경한다", async () => {
+    mocks.getConfigOrThrow.mockResolvedValue({ authMode: "web" });
+    mocks.resolvePostRef.mockResolvedValue("post-parent");
+    mocks.client.getPostStandalone.mockResolvedValue({ result: { project: { id: "project-1" } } });
+    const program = await createCommandTree();
+    const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+    try {
+      await program.parseAsync(["node", "dooray", "post", "edit", "--id", "post-1", "--parent", "sample/1"]);
+      expect(mocks.client.updatePost).toHaveBeenCalledOnce();
+      expect(mocks.client.setPostParent).toHaveBeenCalledWith("project-1", "post-1", "post-parent");
+      expect(mocks.resolvePostRef).toHaveBeenCalledTimes(1);
+    } finally { stdout.mockRestore(); }
   });
 });
 

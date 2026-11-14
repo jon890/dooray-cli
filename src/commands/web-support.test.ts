@@ -46,8 +46,16 @@ describe("preAction 의 명령 연결", () => {
     const read = vi.fn(async () => "web" as const);
     await expect(guardWebCommand(list, read)).resolves.toBeUndefined();
     expect(read).toHaveBeenCalledTimes(1);
-    const get = root.command("member").command("get").option("--with-org"); get.setOptionValue("withOrg", true);
+    const get = root.command("member").command("get").option("--with-org"); get.setOptionValueWithSource("withOrg", true, "cli");
     if (WEB_SUPPORTED_COMMANDS["member get"].includes("withOrg")) await expect(guardWebCommand(get, read)).rejects.toMatchObject({ exitCode: 3 });
+  });
+  it("미지원 옵션의 기본값은 통과하고 명시한 값만 막는다", async () => {
+    const root = new Command("dooray");
+    const get = root.command("member").command("get").option("--with-org", "", true);
+    await expect(guardWebCommand(get, async () => "web")).resolves.toBeUndefined();
+    get.setOptionValueWithSource("withOrg", true, "cli");
+    await expect(guardWebCommand(get, async () => "web")).rejects.toMatchObject({ exitCode: 3 });
+    await expect(guardWebCommand(get, async () => "api-key")).resolves.toBeUndefined();
   });
   it("면제 명령은 설정 파일을 읽지 않는다", async () => {
     const root = new Command("dooray"), read = vi.fn(async () => "web" as const);

@@ -1,3 +1,27 @@
+/** 실측한 post 명령. 참여자 종류처럼 데이터에 따른 제약은 웹 구현이 쓰기 전에 검사한다. */
 export const postWebAreaName = "업무";
-/** post 웹 지원 목록. 영역 구현이 준비되면 이 파일만 채운다. */
-export const postWebSupport: Readonly<Record<string, readonly string[]>> = {};
+export const postWebSupport: Readonly<Record<string, readonly string[]>> = {
+  "post list": [],
+  "post search": [],
+  "post get": [],
+  "post create": [],
+  "post edit": [],
+  "post replace": [],
+  "post done": [],
+  "post workflow": [],
+  "post comment list": [],
+  "post comment latest": [],
+  "post comment get": [],
+  "post comment add": [],
+  "post comment edit": [],
+  "post comment delete": [],
+  "post comment file list": [],
+  "post comment file upload": [],
+  "post comment file download": [],
+  "post comment file delete": [],
+  "post file list": [],
+  "post file upload": [],
+  "post file download": [],
+  "post file download-all": [],
+  "post file delete": [],
+};

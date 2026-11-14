@@ -22,6 +22,7 @@ vi.mock("../../../../api/client.js", () => ({
     return mocks.client;
   }),
 }));
+vi.mock("../../../../api/dooray-client.js", () => ({ createClient: () => mocks.client }));
 
 vi.mock("../../../../resolvers/comment-file-input.js", async (importOriginal) => {
   const actual = await importOriginal<
@@ -83,6 +84,18 @@ const args = [
   "file-1",
   "-y",
 ];
+
+it("웹 파일 삭제는 본문 수정에 지울 첨부 ID를 전달한 뒤 파일을 삭제한다", async () => {
+  mocks.getConfigOrThrow.mockResolvedValue({ authMode: "web" });
+  mocks.client.getPostComment.mockResolvedValue({ result: { body: { mimeType: "text/x-markdown", content: "기존 [파일](/files/file-1)" }, files: [{ id: "file-1" }, { id: "kept-file" }] } });
+  const program = await createCommandTree();
+  const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+  try {
+    await program.parseAsync(args);
+    expect(mocks.client.updatePostComment.mock.calls[0][4]).toEqual({ removeFileId: "file-1" });
+    expect(mocks.client.updatePostComment.mock.invocationCallOrder[0]).toBeLessThan(mocks.client.deletePostFile.mock.invocationCallOrder[0]);
+  } finally { stdout.mockRestore(); }
+});
 
 describe("post comment file delete mimeType 보존", () => {
   it("text/html 댓글의 reference 제거도 text/html 로 나간다", async () => {
