@@ -3,6 +3,7 @@ import { readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 import { loadPersonaConfig, parseArgs } from "./lib/config.mjs";
+import { extractCommentIds } from "./lib/session-ids.mjs";
 
 function sanitizeForTerminal(value) {
   return String(value).replace(/[\u0000-\u001f\u007f]/g, "?");
@@ -57,14 +58,6 @@ function parseJsonLines(contents, sourcePath) {
     });
 }
 
-const COMMENT_ID_PATTERN = /댓글이 추가되었습니다:\s*([A-Za-z0-9_-]+)/g;
-
-function collectCommentIds(contents, ids) {
-  for (const match of contents.matchAll(COMMENT_ID_PATTERN)) {
-    ids.add(match[1]);
-  }
-}
-
 /**
  * 세션 로그를 줄 단위로 훑는다.
  * 대화가 길어진 jsonl 은 파일 하나가 수십 MB 까지 커지는데 필요한 줄은 극소수다.
@@ -77,9 +70,7 @@ async function collectCommentIdsFromFile(path, ids) {
   });
   try {
     for await (const line of reader) {
-      if (line.includes("댓글이 추가되었습니다:")) {
-        collectCommentIds(line, ids);
-      }
+      extractCommentIds(line, ids);
     }
   } finally {
     reader.close();

@@ -6,9 +6,7 @@ description: Dooray 업무 관리 CLI. 프로젝트/업무/댓글/위키 조회�
 # dooray-cli
 
 NHN Dooray API 를 호출하는 CLI 다. 인증 방식은 api-key(기본) 또는 web 이다.
-web 은 비공식 웹 API 를 쓰므로 예고 없이 바뀔 수 있고 SESSION 쿠키는 로그인 계정의 모든 권한을 가진다.
-지원 명령·옵션은 [설정 가이드의 웹 방식 지원 범위](https://github.com/jon890/dooray-cli/blob/main/docs/guide/setup.md#웹-방식의-지원-범위)를 따른다.
-쿠키를 명령 인자·로그에 넣지 말고 가려진 setup 입력이나 config set session-cookie - 의 stdin 으로 받는다. 자세한 설정은 [common.md](references/common.md)를 읽는다.
+web 방식의 설정, 쿠키 다루기, 지원 범위는 [common.md](references/common.md) 의 「웹 인증」 이 소유한다.
 이 파일은 라우터이므로, 작업 영역에 맞는 reference 를 먼저 읽는다.
 
 ## 어느 reference 를 읽을지
@@ -28,9 +26,8 @@ web 은 비공식 웹 API 를 쓰므로 예고 없이 바뀔 수 있고 SESSION 
 
 ## 대상 지정 방법
 
-`post get`/`edit`/`replace`/`done`/`workflow`, `post comment` 전체, `post file` 전체, `post comment file` 전체,
-`wiki page get` 과 `wiki page edit` 과 `wiki page replace`, `wiki page file` 과 `wiki page comment` 전체,
-그리고 `wiki page delete` 와 `wiki page move` 가 아래 형태를 모두 받는다.
+`post` 와 `wiki page` 아래에서 대상 하나를 가리키는 명령(댓글·첨부 계열 포함)이 아래 형태를 모두 받는다.
+목록·검색·생성(`post list`, `post search`, `post create`)은 받지 않는다.
 
 - `<project> <number>` — 업무는 번호, 위키는 `<project> <page-id>`
 - `--id <postId>` / `--id <pageId>` — 위키는 `--project` 없이도 조회된다. 함께 주면 wikiId 를 해석하는 호출을 한 번 아낀다
@@ -84,6 +81,7 @@ web 은 비공식 웹 API 를 쓰므로 예고 없이 바뀔 수 있고 SESSION 
 | `wiki page file delete` | 있음 | `-y`, `--yes` |
 | `post comment delete` | 있음 | `-y`, `--yes` |
 | `wiki page comment delete` | 있음 | `-y`, `--yes` |
+| `calendar event delete` | 있음 | `-y`, `--yes` |
 
 - TTY 확인은 기본값이 아니오다.
 - non-TTY에서 플래그가 없으면 설정 조회나 삭제 API 호출 전에 종료 코드 3으로 중단한다.
@@ -130,7 +128,7 @@ web 은 비공식 웹 API 를 쓰므로 예고 없이 바뀔 수 있고 SESSION 
 | 태그 이름까지 받기 | `dooray post get <project> <number> --json --with-tag-names` — `--json` 의 `tags[]` 에 `name` 을 채운다. 하나라도 못 채우면 멈춘다 |
 | 업무 생성 | `dooray post create <project> --title "..." [--body "..." \| --body-file <path>]` — 담당자는 `--to <name\|email>`, 참조자는 `--cc`, 둘 다 여러 명 가능 |
 | 템플릿으로 생성 | `dooray post create <project> --template <name\|id>` — 본문·담당자·태그가 채워지고 사용자 옵션이 우선한다 |
-| 제목·본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` — 본문 전체를 바꾼다. 본문 형식이 기존과 다르면 `--mime-type` 을 함께 준다 |
+| 제목·본문 수정 | `dooray post edit <project> <number> --title "..." --body "..."` — 본문 전체를 바꾼다. 형식은 위 「본문 형식」 을 따른다 |
 | 본문 일부만 수정 | `dooray post replace <project> <number> --old "..." --new "..."` — 긴 본문에서 몇 군데만 고칠 때 `edit` 대신 쓴다. 여러 줄은 `--old-file`/`--new-file`, 먼저 `--dry-run` 으로 확인. 규칙은 [post.md](references/post.md) |
 | 완료 처리 (업무 상태를 완료로) | `dooray post done <project> <number>` |
 | 워크플로우 변경 (업무 상태·진행 상태 변경) | `dooray post workflow <project> <number> <workflow>` |
@@ -185,8 +183,7 @@ dooray post get <project> <number> --json --with-tag-names
 
 그룹 지정(`--cc-group`, `--mention-group`)은 15자리 이상 numeric 이면 ID 로, 그 외에는 code 부분일치로 찾는다.
 
-본문 형식이 `text/html` 인 업무와 댓글에서는 `--mention`, `--mention-group`, `--link-task` 가 종료 코드 3 으로 멈춘다.
-그 형식의 표기가 확인되지 않아서다. `--mime-type text/x-markdown` 으로 형식을 바꾸면 쓸 수 있다.
+본문 형식이 `text/html` 이면 `--mention` 계열이 거절된다. 이유와 대처는 [mention-link.md](references/mention-link.md) 가 소유한다.
 
 ## 업무 댓글
 
@@ -196,8 +193,8 @@ dooray post get <project> <number> --json --with-tag-names
 | 최신 댓글 | `dooray post comment latest <project> <number>` (`-n <N>` 으로 개수 지정) |
 | 단일 댓글 | `dooray post comment get <project> <number> <comment-id>` |
 | 댓글 추가 | `dooray post comment add <project> <number> --body "..."` |
-| 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` — 본문 형식이 기존과 다르면 `--mime-type` 을 함께 준다 |
-| 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` — 확인 있음, `-y`/`--yes`로 생략. `--json` 은 `{"commentId": "...", "status": "deleted"}` |
+| 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` — 형식은 위 「본문 형식」 을 따른다 |
+| 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` — `--json` 은 `{"commentId": "...", "status": "deleted"}` |
 
 내부 ID 를 positional 자리에 넣으면 입력 오류가 나지만, 그 오류가 `--id` 를 쓴 완성 명령을 그대로 보여준다.
 그 줄을 그대로 복사해 실행하면 되고, 자동화는 오류 출력을 읽어 재시도할 수 있다.
@@ -212,20 +209,14 @@ dooray post get <project> <number> --json --with-tag-names
 | 첨부 다운로드 | `dooray post file download <project> <number> <file-id>` — 저장 파일 경로를 정하려면 `--output-file <path>` (주면 `-o` 는 무시) |
 | 첨부 일괄 다운로드 | `dooray post file download-all <project> <number>` — 첨부 목록과 본문에 삽입된 파일을 함께 받는다. 본문 쪽을 빼려면 `--no-inline` |
 | 첨부 업로드 | `dooray post file upload <project> <number> <file-path>` |
-| 첨부 삭제 | `dooray post file delete <project> <number> <file-id>` — 확인 있음, `-y`/`--yes`로 생략 |
+| 첨부 삭제 | `dooray post file delete <project> <number> <file-id>` |
 | 댓글 첨부 목록 | `dooray post comment file list <project> <number> <comment-id>` |
 | 댓글 첨부 업로드 | `dooray post comment file upload <project> <number> <comment-id> <path>` — 댓글 본문이 `text/html` 이면 파일을 올리기 전에 종료 코드 3 으로 멈춘다 |
 | 댓글 첨부 다운로드 | `dooray post comment file download <project> <number> <comment-id> <file-id>` — 저장 경로는 `--out <path>` 다. 다른 download 명령의 `-o, --output <dir>` 와 옵션 이름이 다르다. 저장 파일 경로를 정하려면 `--output-file <path>` (주면 `--out` 은 무시). `--json` 은 `{ outputPath, fileName, size }` |
-| 댓글 첨부 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id>` — 확인 있음, `-y`/`--yes`로 생략. 본문에서 그 파일의 참조를 찾지 못하면 본문도 파일도 건드리지 않고 종료 코드 3 으로 멈춘다 |
+| 댓글 첨부 삭제 | `dooray post comment file delete <project> <number> <comment-id> <file-id>` — 본문에서 그 파일의 참조를 찾지 못하면 본문도 파일도 건드리지 않고 종료 코드 3 으로 멈춘다 |
 
 - 댓글 파일 업로드는 이미지 확장자면 이미지 마크다운을, 그 외에는 일반 링크를 만든다.
-- `comment file list`의 `출처`는 다음과 같다.
-  - `attachment` (`첨부`): 웹 UI 첨부
-  - `body-link` (`본문 링크`): CLI 업로드 링크
-  - `both` (`둘 다`): 양쪽에 있는 파일
-- `--json` 항목은 `{ id, name, size, mimeType, source }` 형식이다.
-  `source`는 위 값 중 하나다.
-- 메타데이터를 채우지 못하면 `name`, `size`, `mimeType`은 `null`이다.
+- `comment file list` 의 `출처` 열과 `--json` 항목은 [post.md](references/post.md) 의 「댓글 첨부 목록의 출처」 를 따른다.
 
 ## 위키
 
@@ -239,22 +230,22 @@ dooray post get <project> <number> --json --with-tag-names
 | 페이지 ID 로 바로 조회 | `wiki page edit`, `wiki page file`, `wiki page comment`, `wiki page delete` 도 `--id` 만으로 동작한다 |
 | 페이지 생성 | `dooray wiki page create <project> --title "..." [--parent <page-id>] [--body "..."]` — `--parent` 를 생략하면 위키 home 아래에 만든다 |
 | 페이지 제목 수정 | `dooray wiki page edit <project> <page-id> --title "..."` — `--id <page-id>` 와 `--url` 도 받는다 |
-| 페이지 본문 수정 | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` — `--id <page-id>` 와 `--url` 도 받는다. 본문 형식이 기존과 다르면 `--mime-type` 을 함께 준다 |
+| 페이지 본문 수정 | `dooray wiki page edit <project> <page-id> --body "..."` 또는 `--body-file ./new.md` — `--id <page-id>` 와 `--url` 도 받는다. 형식은 위 「본문 형식」 을 따른다 |
 | 페이지 본문 일부만 수정 | `dooray wiki page replace --id <page-id> --old "..." --new "..."` — 긴 본문에서 몇 군데만 고칠 때 `edit` 대신 쓴다. 규칙은 [wiki.md](references/wiki.md) |
 | 페이지 에디터로 수정 | `dooray wiki page edit <project> <page-id>` — 플래그가 없으면 `$EDITOR` 가 열린다 |
 | 페이지 이동 | `dooray wiki page move <project> <page-id> --parent <parent-page-id>` — `--parent` 는 필수다. 하위 페이지는 기본으로 함께 이동하고, `--no-children` 으로 페이지 하나만 옮긴다. `--to-wiki <project-or-wiki-id>` 로 다른 위키로 옮기며, `--first` 와 `--before <page-id>` 로 형제 사이 정렬을 바꾼다 |
-| 페이지 삭제 | `dooray wiki page delete <project> <page-id>` — 확인 있음, `-y`/`--yes`로 생략. 하위 페이지는 삭제한 페이지의 부모 아래로 재부착되어 orphan 이 생기지 않는다 |
+| 페이지 삭제 | `dooray wiki page delete <project> <page-id>` — 하위 페이지는 삭제한 페이지의 부모 아래로 재부착되어 orphan 이 생기지 않는다 |
 | 첨부 목록 | `dooray wiki page file list <project> <page-id>` — general 과 inline 을 합쳐 보여준다 |
 | 첨부 업로드 | `dooray wiki page file upload <project> <page-id> --file <path> [--type inline_image]` |
 | 첨부 다운로드 | `dooray wiki page file download <project> <page-id> --file-id <id> -o <dir>` — 저장 파일 경로를 정하려면 `--output-file <path>` (주면 `-o` 는 무시) |
 | 첨부 일괄 다운로드 | `dooray wiki page file download-all <project> <page-id> -o <dir>` |
-| 첨부 삭제 | `dooray wiki page file delete <project> <page-id> --file-id <id>` — 확인 있음, `-y`/`--yes`로 생략 |
+| 첨부 삭제 | `dooray wiki page file delete <project> <page-id> --file-id <id>` |
 | 댓글 목록 | `dooray wiki page comment list <project> <page-id> [--latest N]` (최신순) |
 | 최신 댓글 | `dooray wiki page comment latest <project> <page-id>` |
 | 단일 댓글 | `dooray wiki page comment get <project> <page-id> <comment-id>` |
 | 댓글 추가 | `dooray wiki page comment add <project> <page-id> --body "..."` (`$EDITOR` fallback) |
 | 댓글 수정 | `dooray wiki page comment edit <project> <page-id> <comment-id> --body "..."` |
-| 댓글 삭제 | `dooray wiki page comment delete <project> <page-id> <comment-id>` — 확인 있음, `-y`/`--yes`로 생략 |
+| 댓글 삭제 | `dooray wiki page comment delete <project> <page-id> <comment-id>` |
 
 ## 메일
 
@@ -308,7 +299,7 @@ dooray post get <project> <number> --json --with-tag-names
 | 일정 상세 | `dooray calendar event get <calendar-id> <event-id>` — 두 id 가 모두 필요하다 |
 | 일정 생성 | `dooray calendar event create <calendar> --title "..." --start <날짜\|일시> [--end ...] [--to <멤버...>]` — 캘린더는 id 나 이름, 날짜만 주면 종일 |
 | 일정 수정 | `dooray calendar event edit <calendar> <event-id> [--title ...] [--start ... --end ...]` — 준 항목만 바뀐다. 반복 일정 회차 id 는 거부된다 |
-| 일정 삭제 | `dooray calendar event delete <calendar> <event-id> [--scope this\|from-this\|all] --yes` — non-TTY 는 `--yes` 필수 |
+| 일정 삭제 | `dooray calendar event delete <calendar> <event-id> [--scope this\|from-this\|all]` — 확인은 위 표를 따른다 |
 
 일정을 조회하거나 만들기 전에 [calendar.md](references/calendar.md) 를 읽는다. 기간 해석과 조회 상한, 참석자를 확인하는 방법, 종일 일정의 `--end` 해석이 거기 있다.
 

@@ -28,8 +28,7 @@ description: dooray-cli 의 새 버전을 npm 에 내보낸다. "/release", "릴
 2단계와 4단계의 실패는 그 절의 복구를 따른다.
 태그를 민 뒤인 5~7단계에서 실패하면 멈추고 사용자에게 보고한다.
 
-명령 블록은 저장소 root 에서 붙여넣는다. 스크립트는 그 뒤 root 를 스스로 확인한다.
-실행 규약은 `.claude/rules/skill-authoring.md` 가 소유한다.
+명령 블록은 저장소 root 에서 붙여넣는다.
 
 ## 워크플로 상세
 
@@ -56,7 +55,6 @@ gh pr list --state open --json number,title,author --jq '.[] | "#\(.number)  \(.
 
 넣을 PR 이 있으면 그것을 머지한 뒤에 분석을 시작한다. 열린 PR 이 없으면 확정 없이 진행한다.
 태그를 민 뒤에 PR 을 머지하면 그 변경은 다음 버전으로 밀린다.
-v0.23.0 은 태그를 밀고 npm 게시 전에 README PR 을 머지해, 게시하지 못하고 v0.23.1 을 다시 냈다.
 
 ```bash
 LAST_TAG="$(git describe --tags --abbrev=0)"
@@ -106,7 +104,7 @@ node .claude/skills/release/scripts/doc-sync-check.mjs
 
 ### 3. 버전 올리기
 
-**`package.json` 의 `version` 필드만 바꾼다.** `src/index.ts` 는 손대지 않는다.
+**`package.json` 의 `version` 필드만 바꾼다.**
 CLI 버전은 빌드 시 `package.json` 에서 주입되고, 4단계가 둘이 같은지 확인한다.
 
 문서와 스킬에 적힌 다른 버전 숫자는 특정 기능의 최소 버전 하한이다.
@@ -118,9 +116,7 @@ CLI 버전은 빌드 시 `package.json` 에서 주입되고, 4단계가 둘이 �
 node .claude/skills/release/scripts/preflight.mjs
 ```
 
-검사 목록은 그 스크립트가 소유한다.
-CI release 워크플로의 태그-버전 일치와 pre-release 거부는 게시 단계에서 따로 검사한다.
-실패한 것을 마지막에 나열한다.
+검사 목록은 그 스크립트가 소유한다. 실패한 것은 마지막에 나열된다.
 
 개인 식별 정보 검사가 걸리면 `CLAUDE.md` 의 대체 표를 따라 교체하고 보완 커밋을 만든 뒤 다시 돌린다.
 사용자가 명시로 동의하지 않는 한 릴리스를 막는다.
@@ -153,7 +149,7 @@ git push origin "v$VERSION"
 **본문은 파일로 쓰고 `--notes-file` 로 넘긴다.** 인라인 `--notes` 와 heredoc 은 쓰지 않는다.
 7단계가 본문의 escape 잔재를 확인한다.
 
-**Release 를 만들기 전에 `/fos-skills:korean-check` 스킬을 호출해 노트 파일을 검사한다.**
+**Release 를 만들기 전에 `korean-check` 스킬을 호출해 노트 파일을 검사한다.**
 검사기의 위치와 판정 기준은 그 스킬이 소유한다. 검사기에 걸리면 문장을 고친 뒤 아래를 실행한다.
 
 ```bash
@@ -168,9 +164,7 @@ gh release create "v$VERSION" --title "v$VERSION" --notes-file "$NOTES" --verify
 
 ### 6. 게시
 
-**`references/publish.md` 를 읽고 따른다.** 경로가 CI 와 로컬 둘이고,
-저장소 변수 `NPM_TRUSTED_PUBLISHING` 이 어느 쪽인지 정한다.
-그 문서가 두 경로와 Trusted Publishing 등록 상태를 소유한다.
+**`references/publish.md` 를 읽고 따른다.** 게시 경로(CI 와 로컬)와 Trusted Publishing 등록 상태는 그 문서가 소유한다.
 
 ### 7. 마감
 
@@ -181,15 +175,16 @@ node .claude/skills/release/scripts/verify-release.mjs "$VERSION"
 ```
 
 npm 은 게시를 접수한 뒤 몇 분 지나서 최신 버전을 바꾼다. 스크립트가 최대 10분 기다린다.
-10분 안에 반영되지 않으면 게시 로그에 `PUT 202` 가 있는지 먼저 본다. 없으면 게시가 되지 않은 것이다.
+10분 안에 반영되지 않으면 `references/publish.md` 에서 게시 경로별 확인 방법을 본다.
 
 **종료 코드 0 을 받은 뒤에만** 1단계에서 확정한 이슈를 닫는다.
 close 대상이 없으면 아래 블록을 건너뛴다.
 
 ```bash
 VERSION="" # package.json 에 넣은 버전에서 v를 뺀 값을 넣는다.
-ISSUES=(12 34) # 1단계에서 확정한 이슈 번호로 바꾼다.
+ISSUES=() # 1단계에서 확정한 이슈 번호를 넣는다. 예: ISSUES=(12 34)
 : "${VERSION:?VERSION을 넣는다}"
+[ "${#ISSUES[@]}" -gt 0 ] || { echo "STOP: close 대상 이슈가 없다"; exit 1; }
 RELEASE_URL="https://github.com/jon890/dooray-cli/releases/tag/v$VERSION"
 for n in "${ISSUES[@]}"; do
   gh issue close "$n" --comment "v$VERSION 에서 구현이 끝나 닫는다. ${RELEASE_URL}"

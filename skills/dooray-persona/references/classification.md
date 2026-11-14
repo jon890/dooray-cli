@@ -56,6 +56,7 @@ node ~/.claude/skills/dooray-persona/scripts/classify.mjs --report
 - 판단할 수 없으면 보류하고 문체 표본에서 제외
 
 확정 결과를 `classified.jsonl`에 반영하고 `confirmed`를 `true`로 바꾼다.
+`confirmed` 가 `true` 인 항목은 분류 스크립트를 다시 돌려도 라벨이 유지된다. 다시 분류하면 나머지 항목의 라벨만 새 신호로 바뀐다.
 경계 항목 확인이 끝나기 전에는 문체 추출 단계로 넘어가지 않는다.
 
 ## 선택적인 세션 로그 대조
@@ -66,6 +67,7 @@ node ~/.claude/skills/dooray-persona/scripts/classify.mjs --report
 node ~/.claude/skills/dooray-persona/scripts/scan-sessions.mjs
 ```
 
+대조 대상은 `post comment add` 가 낸 기본 출력(`댓글이 추가되었습니다: <id>`)과 `--json` 출력(`{ "id": "<id>" }`)의 댓글 id 다. `--quiet` 로 받은 id 는 어느 명령의 결과인지 알 수 없어 대조하지 않는다.
 일치한 댓글은 `ai-confirmed`로 갱신되어 분류 정확도가 높아진다.
 설정 파일이 없거나 기능이 꺼져 있거나 로그 경로에 파일이 없으면 스크립트가 안내하고 건너뛴다.
 세션 로그는 선택 기능이며, 사용할 수 없어도 사용자 확인 절차로 계속 진행한다.

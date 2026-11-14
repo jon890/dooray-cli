@@ -127,7 +127,7 @@ editor/    → api/<영역>/types + cache/types + utils (편집 데이터 타입
 
 - `commands/setup.ts`는 services/config, api/dooray-client, @inquirer/prompts에 의존하고 스킬 파일시스템 처리는 `skill/manager.ts`에 위임. config 저장을 `services/config`로 보내 계정·환경이 바뀌면 캐시가 함께 비워지게 한다 ([ADR-042](adr/042-cache-invalidation-on-mutation.md))
 - `skill/context.ts`는 절대 경로 `XDG_DATA_HOME`이 있으면 `dataRoot`를 `$XDG_DATA_HOME/dooray-cli`로 주입하고, 없거나 상대 경로이면 `homeDir/.local/share/dooray-cli`를 주입한다.
-- `skill/manager.ts`는 경로·현재 버전을 주입받아 명령 출력과 분리된 순수 상태 전이를 제공한다. 테스트 전용 등으로 `SkillManagerContext.dataRoot?`가 없으면 `homeDir/.local/share/dooray-cli`를 사용한다.
+- `skill/manager.ts`는 기존 import 경로를 지키는 진입 파일이고 구현은 같은 폴더의 주제 파일에 있다. 경로·현재 버전을 주입받으며 명령 출력과 분리된다. 테스트 전용 등으로 `SkillManagerContext.dataRoot?`가 없으면 `homeDir/.local/share/dooray-cli`를 사용한다.
 - `skill/manifest.ts`는 외부 JSON을 타입 가드로 검증하고 매니페스트 자신을 제외한 정규 파일만 결정론적으로 해시
 - `api/dooray-client`는 인증 방식에 맞는 구현을 고른다. 공개 HTTP 는 `api/public/http`, 웹 HTTP 는 `api/web/http` 가 맡는다.
 - 두 HTTP 구현은 `api/rate-limiter`의 토큰 버킷을 재사용한다. 호출부는 요청 간격을 신경 쓰지 않는다 ([ADR-039](adr/039-rate-limit-token-bucket.md))

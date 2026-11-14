@@ -70,3 +70,8 @@ THREAD=$(dooray messenger thread-send --channel "배포알림" --body "v1.2.3 �
 dooray messenger channel-send --channel "$THREAD" --body "빌드 통과"
 dooray messenger channel-send --channel "$THREAD" --body "배포 완료"
 ```
+
+## 웹 방식에서 보내기
+
+웹 방식의 `messenger send --to` 는 이미 있는 1:1 방(또는 나와의 대화)에만 보낸다. 상대와 대화방이 아직 없으면 종료 코드 3 으로 멈추고 새 방을 만들지 않는다.
+사용자에게 메신저에서 1:1 대화를 먼저 시작하게 하거나 API 키 방식으로 바꿀지 묻는다.

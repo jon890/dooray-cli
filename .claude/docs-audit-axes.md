@@ -22,11 +22,16 @@
 | --- | --- |
 | [docs/prd.md](../docs/prd.md) | 제품 목적, MVP 범위, 우선순위 |
 | [docs/flow.md](../docs/flow.md) | 사용자 흐름, 명령 사용 패턴 |
-| [docs/adr/](../docs/adr/) | 기술 의사결정, 왜, 대안 기각 |
+| [docs/adr/](../docs/adr/) | 기술 의사결정, 왜, 대안 기각. 목록은 `docs/adr/INDEX.md` |
 | [docs/data-schema.md](../docs/data-schema.md) | 캐시 구조, TTL, resolver 로직 |
 | [docs/code-architecture.md](../docs/code-architecture.md) | 디렉터리 책임, 레이어, 의존 방향 |
-| [CLAUDE.md](../CLAUDE.md) | 코드 작업 지침 |
-| [README.md](../README.md), [skills/dooray-cli/](../skills/dooray-cli/) | 사용자와 에이전트 대상 사용 가이드 |
+| [docs/guide/](../docs/guide/) | 영역별 사용 가이드 (외부 facing) |
+| [docs/features/](../docs/features/) | 기능별 스펙, 설계, 계획, 검증 기록 |
+| [docs/pitfalls/](../docs/pitfalls/) | 반복 실패 패턴 목록. 라우터는 `INDEX.md` |
+| [docs/api/](../docs/api/) | 공식 endpoint 목록(`official-endpoints.txt`, `pnpm api:inventory` 의 대조 기준)과 웹 endpoint 실측 |
+| [CLAUDE.md](../CLAUDE.md) | 코드 작업 지침, 전 명령 공통 규약, 노출 금지 정책 |
+| [README.md](../README.md), [skills/dooray-cli/](../skills/dooray-cli/) | 사용자와 에이전트 대상 사용 가이드 (외부 facing) |
+| [skills/dooray-persona/](../skills/dooray-persona/) | 문체 페르소나 워크플로우 (외부 facing) |
 
 ## A. 부패
 

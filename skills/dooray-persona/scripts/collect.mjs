@@ -121,6 +121,39 @@ async function main() {
   const me = await getMe();
   const entries = [];
 
+  try {
+    await collectEntries(config, me, entries);
+  } catch (error) {
+    // 호출 한도나 네트워크 오류로 중간에 멈추면 이미 모은 원문이 사라진다.
+    // 완성본(corpus.jsonl)과 섞이지 않게 따로 저장하고, 다시 실행할 때 참고하게 한다.
+    if (entries.length > 0) {
+      const partialPath = join(outDir, "corpus.partial.jsonl");
+      await mkdir(outDir, { recursive: true, mode: 0o700 });
+      await writePrivateFile(partialPath, serializeEntries(entries));
+      process.stderr.write(
+        `중간에 멈췄지만 모은 ${entries.length}건은 ${partialPath} 에 저장했습니다. corpus.jsonl 은 만들지 않았습니다.\n`,
+      );
+    }
+    throw error;
+  }
+
+  await mkdir(outDir, { recursive: true, mode: 0o700 });
+  await writePrivateFile(corpusPath, serializeEntries(entries));
+  // 완성본을 만들었으면 이전 실패가 남긴 부분 저장본은 쓸모가 없다.
+  await rm(join(outDir, "corpus.partial.jsonl"), { force: true });
+  process.stdout.write(
+    `${JSON.stringify({ outputPath: corpusPath, entries: entries.length })}\n`,
+  );
+}
+
+function serializeEntries(entries) {
+  return (
+    entries.map((entry) => JSON.stringify(entry)).join("\n") +
+    (entries.length > 0 ? "\n" : "")
+  );
+}
+
+async function collectEntries(config, me, entries) {
   for (let targetIndex = 0; targetIndex < config.targets.length; targetIndex += 1) {
     const target = config.targets[targetIndex];
     process.stderr.write(
@@ -174,15 +207,6 @@ async function main() {
       }
     }
   }
-
-  const serialized =
-    entries.map((entry) => JSON.stringify(entry)).join("\n") +
-    (entries.length > 0 ? "\n" : "");
-  await mkdir(outDir, { recursive: true, mode: 0o700 });
-  await writePrivateFile(corpusPath, serialized);
-  process.stdout.write(
-    `${JSON.stringify({ outputPath: corpusPath, entries: entries.length })}\n`,
-  );
 }
 
 main().catch((error) => {
