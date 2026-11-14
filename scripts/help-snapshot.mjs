@@ -7,7 +7,9 @@
  *   node scripts/help-snapshot.mjs [--bin dist/index.js] --check <기준 파일>
  *
  * `--check` 는 기준과 다르면 처음 어긋난 줄을 보이고 종료 코드 1 로 끝난다.
- * 설정과 캐시를 읽지 않도록 빈 임시 HOME 으로 실행하고, 색과 줄 폭을 고정한다.
+ * `--out` 과 `--check` 는 함께 줄 수 없다.
+ * 설정과 캐시를 읽지 않도록 빈 임시 HOME 으로 실행하고 색을 끈다.
+ * 줄 폭은 stdout 이 파이프라 Commander 기본 폭 80 으로 고정된다.
  * `node:` 빌트인만 쓴다 (ADR-048).
  */
 import { execFileSync } from "node:child_process";
@@ -57,7 +59,7 @@ export function firstDifference(expected, actual) {
   return 0;
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const options = { bin: "dist/index.js" };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -69,6 +71,9 @@ function parseArgs(argv) {
       throw new Error(`모르는 인자: ${arg}`);
     }
   }
+  if (options.out !== undefined && options.check !== undefined) {
+    throw new Error("--out 과 --check 는 함께 줄 수 없다");
+  }
   return options;
 }
 
@@ -77,7 +82,7 @@ function main() {
   const bin = resolve(options.bin);
   const home = mkdtempSync(join(tmpdir(), "dooray-help-"));
   try {
-    const env = { ...process.env, HOME: home, NO_COLOR: "1", FORCE_COLOR: "0", COLUMNS: "120" };
+    const env = { ...process.env, HOME: home, NO_COLOR: "1", FORCE_COLOR: "0" };
     delete env.XDG_DATA_HOME;
     const runHelp = (path) => execFileSync(process.execPath, [bin, ...path, "--help"], { env, encoding: "utf8" });
     const snapshot = renderSnapshot(collectHelp(runHelp));

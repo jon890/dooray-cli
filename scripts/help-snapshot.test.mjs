@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { collectHelp, firstDifference, parseSubcommands, renderSnapshot } from "./help-snapshot.mjs";
+import { collectHelp, firstDifference, parseArgs, parseSubcommands, renderSnapshot } from "./help-snapshot.mjs";
 
 const ROOT_HELP = `Usage: dooray [options] [command]
 
@@ -44,5 +44,12 @@ describe("firstDifference", () => {
     expect(firstDifference("a\nb\n", "a\nb\n")).toBe(0);
     expect(firstDifference("a\nb\n", "a\nc\n")).toBe(2);
     expect(firstDifference("a\n", "a\nb\n")).toBe(2);
+  });
+});
+
+describe("parseArgs", () => {
+  it("--out 과 --check 를 함께 주면 거부한다", () => {
+    expect(() => parseArgs(["--out", "a.txt", "--check", "b.txt"])).toThrow("함께 줄 수 없다");
+    expect(parseArgs(["--check", "b.txt"])).toEqual({ bin: "dist/index.js", check: "b.txt" });
   });
 });
