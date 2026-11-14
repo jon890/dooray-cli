@@ -1,4 +1,5 @@
 /** member 영역의 DTO·요청 파라미터와 클라이언트 계약이다. */
+import type { Member } from "@/api/common/types.js";
 import type { DoorayApiHeader, DoorayApiResponse } from "@/api/common/types.js";
 import type { BusyHoursDepartment, BusyHoursOrganization } from "@/api/calendar/types.js";
 
@@ -17,20 +18,8 @@ export interface SearchMembersParams {
   size?: number;
 }
 
-export interface EmailUser {
-  emailAddress: string;
-  name: string;
-}
 
-export interface Member {
-  organizationMemberId: string;
-  name?: string;
-}
 
-export interface Group {
-  projectMemberGroupId: string;
-  members: Member[];
-}
 
 // ─── Project Member ─────────────────────────────────────
 
@@ -89,3 +78,5 @@ export interface MemberClient {
   getMemberDetail(memberId: string): Promise<MemberDetailResponse>;
   searchMembers(params: SearchMembersParams): Promise<MemberSearchResponse>;
 }
+
+export type { EmailUser, Member, Group } from "@/api/common/types.js";

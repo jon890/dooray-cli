@@ -44,8 +44,8 @@
 
 | 결정 | 선택과 이유 |
 | --- | --- |
-| 공통 타입 | 응답 봉투·오류 DTO 만 common 에 두었다. 이름이 일반적이어도 영역 데이터는 그 영역에 둔다 |
-| 프로젝트 타입 | 프로젝트 참조·태그·마일스톤·워크플로·그룹·템플릿은 project 에 둔다. project 메서드가 제공하는 데이터다 |
+| 공통 타입 | 응답 봉투·오류 DTO 와 project·post 가 함께 쓰는 PostBody·PostUsers 를 common 에 둔다. PostUsers 의 하위 DTO 도 함께 옮겨 common 의 다른 api 영역 의존을 막는다 |
+| 프로젝트 타입 | 프로젝트 참조·태그·마일스톤·상세 워크플로·그룹·템플릿은 project 에 둔다. 여러 영역이 쓰는 Workflow 의 식별자와 이름은 common 에 둔다 |
 | 멤버와 소속 정보 | Member·EmailUser·Group·MemberOrganization 은 member 에 둔다. 소속 응답에 쓰는 바쁨 시간 조회 타입은 calendar 에서 직접 가져온다 |
 | 타입 파일 크기 | 영역 파일이 설계의 분할 기준보다 작아서 types-주제 파일은 만들지 않았다 |
 | 선언 분할과 파일 이동 | R1 은 이동 스크립트의 대상이 아니다. 선언 분할과 소비자 import 수정은 직접 수행하고 별도 커밋으로 남겼다. 충돌하면 두 변경을 직접 다시 맞춘다 |

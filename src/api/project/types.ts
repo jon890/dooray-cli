@@ -1,6 +1,7 @@
 /** project 영역의 DTO·요청 파라미터와 클라이언트 계약이다. */
+import type { Workflow } from "@/api/common/types.js";
 import type { DoorayApiHeader, DoorayApiResponse, DoorayApiUnitResponse } from "@/api/common/types.js";
-import type { PostUsers, PostBody } from "@/api/post/types.js";
+import type { PostUsers, PostBody } from "@/api/common/types.js";
 
 export interface GetProjectsParams {
   page?: number;
@@ -100,11 +101,6 @@ export interface MilestoneListResponse {
   totalCount: number;
 }
 
-export interface Workflow {
-  id: string;
-  name: string;
-}
-
 // ─── Project Member Group ───────────────────────────────
 
 export interface MemberGroup {
@@ -172,3 +168,5 @@ export interface ProjectClient {
   getProjectTemplates(projectId: string, params?: { page?: number; size?: number }): Promise<TemplateListResponse>;
   getProjectTemplateDetail(projectId: string, templateId: string, interpolation?: boolean): Promise<TemplateDetailResponse>;
 }
+
+export type { Workflow } from "@/api/common/types.js";

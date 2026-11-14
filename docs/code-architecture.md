@@ -102,6 +102,7 @@ src/
 - 공개 API 구현(`api/client.ts`, `api/public/`, `api/<영역>/public.ts`)과 웹 구현(`api/web/`, `api/<영역>/web.ts`)은 서로 가져오지 않는다. 둘을 고르는 `api/dooray-client.ts` 는 어느 쪽도 아니다.
 - `api/<영역>/` 은 다른 영역의 `types.ts` 만 가져온다.
 - `api/<영역>/` 은 `api/types.ts`·`api/client.ts` 를 가져오지 않는다. DTO 와 파라미터는 자기 영역이나 다른 영역의 `types.ts`, 공통 응답 구조는 `api/common/types.ts` 에서 가져온다.
+- `api/common/` 은 다른 api 영역을 가져오지 않는다. 여러 영역이 쓰는 본문·참여자·식별자 DTO 도 이곳에 둔다.
 
 검사 방식:
 

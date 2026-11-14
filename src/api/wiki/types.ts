@@ -1,6 +1,6 @@
 /** wiki 영역의 DTO·요청 파라미터와 클라이언트 계약이다. */
 import type { DoorayApiHeader, DoorayApiResponse, DoorayApiUnitResponse } from "@/api/common/types.js";
-import type { Member } from "@/api/member/types.js";
+import type { Member } from "@/api/common/types.js";
 
 export interface GetWikisParams {
   page?: number;

@@ -104,6 +104,9 @@ export function violationOf(edge: ImportEdge): string | undefined {
   }
   const fromApiArea = apiAreaOf(edge.from);
   const toApiArea = apiAreaOf(edge.to);
+  if (fromApiArea === "common" && toApiArea !== undefined && toApiArea !== "common") {
+    return "api/common/ 은 다른 api 영역을 가져오지 않는다";
+  }
   if (fromApiArea !== undefined && ["api/types.ts", "api/client.ts"].includes(edge.to)) {
     return `api 영역 ${fromApiArea} 는 api/types.ts·api/client.ts 를 가져오지 않는다`;
   }
@@ -239,6 +242,14 @@ describe("규칙 판정", () => {
     expect(violationOf({ from: "api/post/types.ts", to: "api/common/types.ts" })).toBeUndefined();
     expect(violationOf({ from: "api/types.ts", to: "api/post/types.ts" })).toBeUndefined();
     expect(violationOf({ from: "api/client.ts", to: "api/post/types.ts" })).toBeUndefined();
+  });
+
+  it("api 공통 타입은 다른 api 영역을 가져오지 않는다", () => {
+    for (const to of ["api/post/types.ts", "api/member/types.ts", "api/project/types.ts"]) {
+      expect(violationOf({ from: "api/common/types.ts", to })).toBeDefined();
+    }
+    expect(violationOf({ from: "api/common/types.ts", to: "api/common/other.ts" })).toBeUndefined();
+    expect(violationOf({ from: "api/post/types.ts", to: "api/common/types.ts" })).toBeUndefined();
   });
 
   it("통합 타입 파일은 타입 재내보내기만 남긴다", () => {

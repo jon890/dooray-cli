@@ -1,7 +1,9 @@
 /** post 영역의 DTO·요청 파라미터와 클라이언트 계약이다. */
+import type { PostUser, PostUsers, PostBody } from "@/api/common/types.js";
 import type { DoorayApiHeader, DoorayApiResponse, DoorayApiUnitResponse } from "@/api/common/types.js";
-import type { ProjectInfo, Tag, Milestone, Workflow } from "@/api/project/types.js";
-import type { EmailUser, Member, Group } from "@/api/member/types.js";
+import type { ProjectInfo, Tag, Milestone } from "@/api/project/types.js";
+import type { Workflow } from "@/api/common/types.js";
+import type { EmailUser, Member, Group } from "@/api/common/types.js";
 
 export interface GetPostsParams {
   page?: number;
@@ -32,25 +34,6 @@ export interface ParentPost {
   id: string;
   number: number;
   subject: string;
-}
-
-export interface PostUser {
-  type: string;
-  member?: Member;
-  emailUser?: EmailUser;
-  group?: Group;
-  workflow?: Workflow;
-}
-
-export interface PostUsers {
-  from: PostUser;
-  to: PostUser[];
-  cc: PostUser[];
-}
-
-export interface PostBody {
-  mimeType: string;
-  content: string;
 }
 
 export interface PostFile {
@@ -273,3 +256,5 @@ export interface PostClient {
   uploadPostFile(projectId: string, postId: string, filePath: string): Promise<UploadFileResponse>;
   deletePostFile(projectId: string, postId: string, fileId: string): Promise<DoorayApiUnitResponse>;
 }
+
+export type { PostUser, PostUsers, PostBody } from "@/api/common/types.js";
