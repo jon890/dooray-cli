@@ -1,4 +1,5 @@
-import type { DoorayClient } from "../api/dooray-client.js";
+import type { ProjectClient } from "@/api/project/types.js";
+import type { WikiClient } from "@/api/wiki/types.js";
 import { resolveWiki } from "./wiki.js";
 import { parseDoorayWikiUrl, isLikelyDoorayUrl } from "../utils/dooray-url.js";
 import { DoorayCliError } from "../utils/errors.js";
@@ -30,7 +31,7 @@ const INPUT_HELP =
   "  --project 는 선택입니다. 함께 주면 wikiId 해석 호출을 아낍니다.";
 
 export async function resolveWikiPageInput(
-  client: DoorayClient,
+  client: ProjectClient & WikiClient,
   args: WikiPageInputArgs,
 ): Promise<ResolvedWikiPageInput> {
   const { projectArg, pageIdArg, idOpt, urlOpt, project } = args;

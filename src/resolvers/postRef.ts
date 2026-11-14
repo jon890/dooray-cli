@@ -1,4 +1,5 @@
-import type { DoorayClient } from "../api/dooray-client.js";
+import type { PostClient } from "@/api/post/types.js";
+import type { ProjectClient } from "@/api/project/types.js";
 import { resolveProject } from "./project.js";
 import { resolvePost } from "./post.js";
 import { DoorayCliError } from "../utils/errors.js";
@@ -9,7 +10,7 @@ import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
  *  - "<projectCode>/<postNumber>"  → resolveProject + resolvePost
  *  - 그 외(슬래시 없음)            → raw postId로 간주, 그대로 반환
  */
-export async function resolvePostRef(client: DoorayClient, ref: string): Promise<string> {
+export async function resolvePostRef(client: PostClient & ProjectClient, ref: string): Promise<string> {
   if (ref.includes("/")) {
     const [code, numStr] = ref.split("/", 2);
     const num = Number(numStr);

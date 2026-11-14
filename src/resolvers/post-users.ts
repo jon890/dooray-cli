@@ -1,4 +1,5 @@
-import type { DoorayClient } from "../api/dooray-client.js";
+import type { MemberClient } from "@/api/member/types.js";
+import type { ProjectClient } from "@/api/project/types.js";
 import type { CreatePostUser } from "@/api/post/types.js";
 import { resolveMember } from "./member.js";
 import { resolveMemberGroup } from "./member-group.js";
@@ -60,7 +61,7 @@ function userKey(u: CreatePostUser): string | null {
 
 // ASYNC — 이름/코드 입력을 resolveMember / resolveMemberGroup 으로 id 변환 후 parseUserSpec 호출.
 export async function resolveUserAdditions(
-  client: DoorayClient,
+  client: MemberClient & ProjectClient,
   projectId: string,
   names: string[],
   groupCodes: string[],

@@ -2,7 +2,7 @@
  * 계층·영역 의존 규칙을 import 문으로 검사한다 (ADR-082).
  * 규칙의 뜻과 목표 구조는 docs/code-architecture.md 「의존 규칙」 이 소유하고, 이 파일은 그 표를 코드로 옮긴 것이다.
  * 새 의존성 없이 node:fs 로 src 의 .ts 파일을 읽는다. 테스트 파일(*.test.ts)은 검사하지 않는다.
- * 지금 있는 위반은 ALLOWED_VIOLATIONS 로 시작하고, 정리 PR 마다 줄여 마지막에 비운다.
+ * ALLOWED_VIOLATIONS 는 R4 에서 비웠다. 새 위반은 목록에 더하지 않고 고친다.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, normalize, relative, sep } from "node:path";
@@ -32,21 +32,10 @@ export const LAYER_DEPENDENCIES: Record<string, readonly string[]> = {
 };
 
 /**
- * 지금 남아 있는 위반. `<가져오는 파일> -> <가져오는 대상>` 꼴이며 경로는 src 기준이다.
- * 위반을 고치면 이 목록에서 지운다. 고친 뒤에도 남아 있으면 테스트가 실패한다.
+ * 허용하는 위반. `<가져오는 파일> -> <가져오는 대상>` 꼴이며 경로는 src 기준이다.
+ * R4 에서 비웠고(REQ5) 비어 있어야 한다. 새 위반은 이 목록에 더하지 않고 고친다.
  */
-export const ALLOWED_VIOLATIONS: readonly string[] = [
-  // resolvers 는 필요한 영역 인터페이스만 받아야 한다. 아직 전체 DoorayClient 를 받는 곳이다. R4 에서 비운다.
-  "resolvers/comment-file-input.ts -> api/dooray-client.ts",
-  "resolvers/messenger-channel.ts -> api/dooray-client.ts",
-  "resolvers/post-input.ts -> api/dooray-client.ts",
-  "resolvers/post-users.ts -> api/dooray-client.ts",
-  "resolvers/post.ts -> api/dooray-client.ts",
-  "resolvers/postRef.ts -> api/dooray-client.ts",
-  "resolvers/task-link.ts -> api/dooray-client.ts",
-  "resolvers/wiki-page-input.ts -> api/dooray-client.ts",
-  "resolvers/wiki.ts -> api/dooray-client.ts",
-];
+export const ALLOWED_VIOLATIONS: readonly string[] = [];
 
 export interface ImportEdge {
   from: string;
@@ -205,8 +194,8 @@ describe("의존 규칙", () => {
     expect(unexpected, "의존 규칙을 어긴 import 다. docs/code-architecture.md 「의존 규칙」 을 보고 고친다").toEqual([]);
   });
 
-  it("utils 에 상위 계층 의존 예외가 없다", () => {
-    expect(ALLOWED_VIOLATIONS.filter((edge) => edge.startsWith("utils/"))).toEqual([]);
+  it("허용 목록이 비어 있다", () => {
+    expect(ALLOWED_VIOLATIONS).toEqual([]);
   });
 
   it("IMAP 조회의 의존 경로에 readline 이 없다", () => {

@@ -1,4 +1,5 @@
-import type { DoorayClient } from "../api/dooray-client.js";
+import type { ProjectClient } from "@/api/project/types.js";
+import type { WikiClient } from "@/api/wiki/types.js";
 import type { Wiki } from "@/api/wiki/types.js";
 import { getProjects, getPrivateProjects, getWikis, setWikis, isExpired } from "../cache/store.js";
 import { WIKIS_TTL_MS, type CachedProject, type CachedWiki } from "../cache/types.js";
@@ -6,7 +7,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR, EXIT_API_ERROR } from "../utils/exit-codes.js";
 import { resolveProject, ensurePrivateProjects, PROJECT_ID_RE } from "./project.js";
 
-export async function fetchAllWikis(client: DoorayClient): Promise<Wiki[]> {
+export async function fetchAllWikis(client: ProjectClient & WikiClient): Promise<Wiki[]> {
   const all: Wiki[] = [];
   let page = 0;
   const size = 100;
@@ -29,7 +30,7 @@ export function filterWikisByName(wikis: Wiki[], keyword: string): Wiki[] {
 }
 
 export async function resolveWiki(
-  client: DoorayClient,
+  client: ProjectClient & WikiClient,
   projectCode: string,
 ): Promise<string> {
   // resolveProject 가 공용 목록을 채우고, 거기서 못 찾으면 private 목록도 채운다 (ADR-054)
@@ -65,7 +66,7 @@ export async function resolveWiki(
 }
 
 export async function resolveWikiHomePageId(
-  client: DoorayClient,
+  client: ProjectClient & WikiClient,
   wikiId: string,
 ): Promise<string> {
   const cached = await getWikis();

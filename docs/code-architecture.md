@@ -104,13 +104,13 @@ src/
 - `api/<영역>/` 은 다른 영역의 `types.ts` 만 가져온다.
 - `api/<영역>/` 은 `api/types.ts`·`api/client.ts` 를 가져오지 않는다. DTO 와 파라미터는 자기 영역이나 다른 영역의 `types.ts`, 공통 응답 구조는 `api/common/types.ts` 에서 가져온다.
 - `api/common/` 은 다른 api 영역을 가져오지 않는다. 여러 영역이 쓰는 본문·참여자·식별자 DTO 도 이곳에 둔다.
-- `resolvers`·`services` 는 `api/dooray-client.ts` 를 가져오지 않는다. 필요한 영역 인터페이스(`api/<영역>/types.ts`)만 받는다. 전체 `DoorayClient` 를 받는 resolver 가 아직 있어 허용 목록에 있고, R4 에서 비운다.
+- `resolvers`·`services` 는 `api/dooray-client.ts` 를 가져오지 않는다. 필요한 영역 인터페이스(`api/<영역>/types.ts`)만 받는다.
 
 검사 방식:
 
 - 테스트 파일(`*.test.ts`)은 검사하지 않는다. mock 을 위해 계층을 넘나든다.
 - `import type` 도 센다. 타입만의 의존도 계층을 묶는다.
-- 지금 남은 위반은 테스트의 `ALLOWED_VIOLATIONS` 에 있다. 고치면 목록에서 지운다. 고친 위반이 목록에 남아도 테스트가 실패한다. 새 위반을 목록에 더하지 않는다.
+- 테스트의 `ALLOWED_VIOLATIONS` 는 비어 있고 비어 있어야 한다(테스트가 확인한다). 새 위반은 목록에 더하지 않고 고친다. 목록에 둔 위반이 고쳐졌는데 남아 있어도 테스트가 실패한다.
 
 ### 계층별 책임
 
