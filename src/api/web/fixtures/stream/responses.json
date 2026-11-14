@@ -1,0 +1,257 @@
+{
+  "page": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "totalCount": 9,
+      "contents": [
+        {
+          "id": "card-1",
+          "type": "mail",
+          "mail": {
+            "id": "mail-1"
+          }
+        },
+        {
+          "id": "card-2",
+          "type": "post",
+          "post": {
+            "id": "post-1",
+            "read": false
+          },
+          "eventList": [
+            {
+              "id": "comment-1",
+              "read": true,
+              "type": "comment"
+            }
+          ]
+        },
+        {
+          "id": "card-3",
+          "type": "page",
+          "page": {
+            "id": "page-1",
+            "read": false
+          },
+          "eventList": [
+            {
+              "id": "pagecomment-1",
+              "read": false,
+              "type": null
+            },
+            {
+              "id": "pageevent-1",
+              "read": false,
+              "type": "event"
+            }
+          ]
+        },
+        {
+          "id": "card-4",
+          "type": "schedule",
+          "schedule": {
+            "id": "event-1",
+            "read": true
+          },
+          "eventList": [
+            {
+              "id": "schedevent-1",
+              "read": true,
+              "type": null
+            }
+          ]
+        },
+        {
+          "id": "card-5",
+          "type": "calendar",
+          "calendar": {
+            "id": "calendar-1",
+            "source": {},
+            "target": {},
+            "action": {},
+            "at": "x"
+          }
+        }
+      ],
+      "references": {
+        "nextTimestamp": "cursor-1",
+        "mailMap": {
+          "mail-1": {
+            "id": "mail-1",
+            "createdAt": "2026-11-14T01:00:00+09:00",
+            "subject": "안내",
+            "folderId": 1,
+            "folderName": "받은 편지함",
+            "mail": {
+              "sentAt": "2026-11-14T01:00:00+09:00"
+            },
+            "users": {
+              "from": {
+                "type": "emailUser",
+                "emailUser": {
+                  "name": "보낸이",
+                  "emailAddress": "sender@example.com"
+                }
+              }
+            },
+            "body": {
+              "mimeType": "text/plain",
+              "content": "본문",
+              "emptyContent": false
+            }
+          }
+        },
+        "postMap": {
+          "post-1": {
+            "id": "post-1",
+            "projectId": "project-1",
+            "users": {
+              "from": {
+                "type": "member",
+                "member": {
+                  "organizationMemberId": "member-1",
+                  "name": "홍길동",
+                  "read": true
+                }
+              },
+              "to": [
+                {
+                  "type": "member",
+                  "member": {
+                    "organizationMemberId": "member-2",
+                    "name": "김철수",
+                    "workflowId": "1"
+                  }
+                }
+              ],
+              "cc": [
+                {
+                  "type": "group",
+                  "group": {
+                    "projectMemberGroupId": "group-1",
+                    "code": "팀",
+                    "memberList": []
+                  }
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T01:00:00+09:00",
+            "updatedAt": "2026-11-14T01:10:00+09:00",
+            "subject": "업무",
+            "body": {
+              "mimeType": "text/x-markdown",
+              "content": "내용"
+            },
+            "number": 1
+          }
+        },
+        "eventMap": {
+          "comment-1": {
+            "id": "comment-1",
+            "type": "comment",
+            "subtype": "x",
+            "postId": "post-1",
+            "creator": {
+              "type": "member",
+              "member": {
+                "organizationMemberId": "member-1",
+                "name": "홍길동"
+              }
+            },
+            "body": {
+              "mimeType": "text/x-markdown",
+              "content": "댓글"
+            }
+          }
+        },
+        "pageMap": {
+          "page-1": {
+            "pageId": "page-1",
+            "id": "page-1",
+            "wikiId": "wiki-1",
+            "parentPageId": null,
+            "subject": "문서",
+            "body": {
+              "mimeType": "text/x-markdown",
+              "content": "위키"
+            },
+            "create": {
+              "dateTime": "2026-11-14T01:07:00+09:00",
+              "member": {
+                "organizationMemberId": "member-1",
+                "name": "홍길동"
+              }
+            },
+            "referrers": [
+              {
+                "organizationMemberId": "member-2"
+              }
+            ]
+          }
+        },
+        "pageCommentMap": {
+          "pagecomment-1": {
+            "pageCommentId": "pagecomment-1",
+            "pageId": "page-1",
+            "body": {
+              "mimeType": "text/x-markdown",
+              "content": "위키 댓글"
+            },
+            "createdAt": "2026-11-14T01:08:00+09:00",
+            "creator": {
+              "organizationMemberId": "member-1",
+              "name": "홍길동"
+            }
+          }
+        },
+        "pageEventMap": {
+          "pageevent-1": {
+            "id": "pageevent-1",
+            "type": "x"
+          }
+        },
+        "scheduleMap": {
+          "event-1": {
+            "id": "event-1",
+            "calendarId": "calendar-1",
+            "subject": "회의",
+            "startedAt": "2026-11-20T10:00:00+09:00",
+            "endedAt": "2026-11-20T10:30:00+09:00",
+            "wholeDayFlag": false,
+            "recurrenceType": "none",
+            "users": {
+              "from": {
+                "type": "member",
+                "member": {
+                  "organizationMemberId": "member-1",
+                  "name": "홍길동",
+                  "status": "accepted",
+                  "emailAddress": "hong@example.com",
+                  "calendarId": 1
+                }
+              },
+              "to": [],
+              "cc": []
+            }
+          }
+        }
+      }
+    }
+  },
+  "empty": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "totalCount": 0,
+      "contents": [],
+      "references": {}
+    }
+  }
+}
