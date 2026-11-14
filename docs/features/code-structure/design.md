@@ -7,7 +7,7 @@
 
 스펙의 「배경」 을 낳은 진단의 근거다. 줄 수와 개수는 그날 잰 값이고, PR 마다 다시 잰다.
 
-- `api/client.ts` 1279줄(웹 PR 머지 뒤), `api/types.ts` 1050줄·타입 157개. 파라미터 타입이 두 파일에 흩어져 있다(`client.ts` 의 `GetPostsParams` 재내보내기와 `types.ts` 의 파라미터 절).
+- `api/client.ts` 1279줄, `api/types.ts` 1050줄·타입 157개(웹 PR 머지 뒤 다시 잰 값. 스펙 「배경」 의 1328줄·995줄은 그 전에 잰 값이다). 파라미터 타입이 두 파일에 흩어져 있다(`client.ts` 의 `GetPostsParams` 재내보내기와 `types.ts` 의 파라미터 절).
 - `client.ts` 안의 조합 로직: `getAllWikiPages`(쓰는 곳은 `commands/wiki/tree.ts` 하나, 웹 구현도 같은 조합을 따로 갖는다), `downloadPostFile` 의 재조회.
 - `utils/` 30개에 세 무리가 섞여 있다.
   - 영역을 모르는 공통 잎: errors, exit-codes, spinner, sanitize, local-date, argv-sanitize, command-hint, config-value, content-disposition, delete-confirmation, dooray-id, dooray-message, dooray-url, download-target, format-size, unknown-option-hint
@@ -24,9 +24,9 @@
 | ID | 해결 방법 |
 | --- | --- |
 | REQ1 | PR 마다 기준 브랜치와 작업 브랜치를 각각 빌드해 `scripts/help-snapshot.mjs` 로 모든 명령 경로의 `--help` 를 모으고 `--check` 로 비교한다. `pnpm test` 의 테스트 수를 PR 본문에 전후로 적는다 |
-| REQ2 | R2 전후의 `pnpm api:inventory` 출력을 비교한다. 인벤토리 스크립트가 `client.ts` 대신 `api/*/public.ts` 와 `api/public/` 를 읽게 R2 에서 고친다 |
+| REQ2 | R2 전후의 `pnpm api:inventory` 출력을 비교한다. 인벤토리 스크립트가 `client.ts` 대신 `api/*/public*.ts` 와 `api/public/` 를 읽고 새 호출 꼴을 찾게 R2 에서 고친다(「공개 구현의 꼴」) |
 | REQ3 | R1 이 DTO·파라미터를 `api/<영역>/types.ts` 로, R2 가 공개 구현을 `api/<영역>/public.ts` 로 옮긴다. `api/types.ts`·`api/client.ts` 는 재내보내기만 남는다 |
-| REQ4 | 영역마다 `create<영역>Public(http)` 가 그 영역 인터페이스를 반환형으로 선언해 컴파일러가 구현을 검사한다. 웹 쪽 `create<영역>Web(context)` 와 같은 꼴이다. 규칙 테스트가 공개·웹 구현의 상호 import 를 막는다 |
+| REQ4 | 영역마다 `create<영역>Public(http)` 가 그 영역 인터페이스를 반환형으로 선언해 컴파일러가 구현을 검사한다. 웹 쪽 `create<영역>Web(context)` 와 같은 꼴이다. 공개 쪽은 `DoorayClient` 타입을 붙인 `createPublicClient` 가 조립해 영역 누락을 컴파일러가 잡는다. 규칙 테스트가 공개·웹 구현의 상호 import 를 막는다. 소비자 쪽은 R2 가 「resolvers·services 는 `DoorayClient` 를 가져오지 않는다」 규칙을 더하고 R4 까지 남은 곳을 비운다 |
 | REQ5 | `architecture.test.ts` 가 아래 「의존 규칙」 표로 import 를 검사한다. 지금 위반은 허용 목록으로 시작하고 R3 에서 비운다. 테스트는 허용 목록에 고쳐진 위반이 남아도 실패하므로 목록이 줄어든 상태가 유지된다 |
 | REQ6 | tsconfig `paths` 의 `@/*`, vitest `resolve.tsconfigPaths`, tsup(esbuild 기본 동작)으로 푼다. R0 은 `index.ts` 의 import 하나와 `path-alias.test.ts` 로 네 도구를 보인다. R1~R4 의 이동 스크립트가 옮긴 파일과 그 파일을 가리키는 import 를 별칭으로 쓴다 |
 | REQ7 | `scripts/check-doc-paths.mjs` 가 문서의 `src/…` 경로를 검사한다. R0 은 보고만 하고, 이동 스크립트가 문서 경로를 함께 고친다. R4 에서 `--strict` 를 CI 에 넣는다 |
@@ -58,7 +58,7 @@ src/
     mail/               # IMAP·SMTP. DoorayClient 밖이다 (R2*)
       imap.ts  smtp.ts  errors.ts  uid-lookup.ts  attachment-name.ts
     api-path.ts  file-redirect.ts  json-large-integer.ts  rate-limiter.ts  messenger-thread-request.ts   # 두 구현이 함께 쓰는 도구. 그대로
-  body/                 # 업무·위키 본문 규칙. 영역 타입을 모르는 순수 텍스트 처리 (R3*)
+  body/                 # 본문 입력(파일·stdin·편집기)과 마크업·참조·첨부 확인 규칙. 영역 DTO 를 모른다 (R3*)
   utils/                # 영역을 모르는 공통 잎만 (R3*)
   resolvers/ services/ cache/ config/ skill/ editor/ formatters/   # 그대로 (config·skill 은 R5 선택)
   commands/
@@ -71,12 +71,21 @@ src/
 - 영역 사이 DTO 참조(예: post 의 담당자가 member 의 타입을 쓰는 것)는 상대 영역의 `types.ts` 만 가져온다.
 - `api/public/` 은 웹의 `api/web/` 와 짝이다. 공개 구현의 공용 부분을 영역 폴더 밖에 두어, 영역 폴더에는 그 영역 것만 남긴다.
 
+### R1·R2 에서 정할 것
+
+- R1 의 「나누기」 커밋은 영역 `types.ts` 가 지금 `../types.js` 에서 가져오는 DTO 를 자기 파일이나 `api/common/types.ts`, 다른 영역의 `types.ts` 에서 가져오게 바꾼다. 그대로 두면 재내보내기만 남은 `api/types.ts` 와 서로 가져오는 순환이 된다. 같은 PR 에서 규칙 「`api/<영역>/` 은 `api/types.ts`·`api/client.ts` 를 가져오지 않는다」 를 더한다.
+- `dooray-client.test.ts` 는 「types.ts 는 있고 web.ts 는 없는 영역」 을 폴더에서 찾는다. R1 의 `api/common/` 은 영역이 아니므로 그 검사에서 뺀다.
+- R2 는 `getAllWikiPages` 를 영역 인터페이스 밖의 함수 `collectWikiPages(client: WikiClient, …)` 로 바꿔 `api/wiki/pages.ts` 에 둔다. 공개(`client.ts`)와 웹(`wiki/web.ts`)이 거의 같은 본문을 따로 갖고 있어서다. `commands/wiki/tree` 와 그 테스트의 mock 이 함께 바뀐다.
+- R2 는 `downloadPostFile` 의 재조회를 `api/post/public.ts` 안에 그대로 둔다. 다운로드 한 번의 재시도이고 웹 구현과 공유할 조합이 아니다. 옮기기만 하고 동작은 바꾸지 않는다.
+- REQ4 의 소비자 쪽: 지금 resolver 여럿이 전체 `DoorayClient` 를 받는다. R2 가 규칙 「`resolvers`·`services` 는 `api/dooray-client.ts` 를 가져오지 않는다(영역 인터페이스만 받는다)」 를 더하고, 그때 남은 곳은 새 규칙의 허용 목록으로 시작해 R4 에서 비운다.
+
 ### R3 의 파일 재분류
 
 | 지금 | 옮길 곳 | 이유 |
 | --- | --- | --- |
 | body-input, body-markup, body-replace, inline-file-refs, comment-files, comment-file-merge, wiki-snippet | `body/` | 본문 텍스트 규칙이다 |
-| attachment-check | `body/attachment-check.ts`, 단 `sanitizeFileName` 은 `utils/file-name.ts` 로 | `api/imapClient` 가 readline 이 든 파일에 기대지 않게 한다 |
+| attachment-check | `body/attachment-check.ts`. `sanitizeFileName`(`sanitizeForTerminal` 한 줄 감싸기)은 없애고 `api/mail/imap.ts`·`commands/mail/reply.ts` 가 `utils/sanitize` 의 `sanitizeForTerminal` 을 바로 쓴다 | `api` 가 readline 이 든 파일에 기대지 않게 한다. `utils/content-disposition.ts` 에 같은 이름의 다른 함수가 있어 새 파일을 만들지 않는다 |
+| body-input 의 `readStdin` | `utils/stdin.ts` | `utils/config-value.ts` 가 쓴다. 그대로 두면 R3 뒤 `utils -> body` 위반이 생긴다 |
 | mention, task-link | `body/` | `cache/types` 의 `CachedMe` 대신 필요한 칸만 가진 입력 타입을 body 안에 둔다. 부르는 쪽이 `CachedMe` 를 그대로 넘겨도 구조적 타입으로 맞는다 |
 | comment-enrich | `formatters/comment-enrich.ts` | 표 출력 직전의 변환이고 `api` DTO 를 쓴다. formatters 는 api 를 가져와도 된다 |
 | feedback-meta | `commands/feedback/meta.ts` (`commands/feedback.ts` 는 `commands/feedback/index.ts` 로) | `cache/last-run` 을 쓰는 명령 하나의 조각이다 |
@@ -89,7 +98,6 @@ R3 이 끝나면 허용 목록은 빈다.
 
 - project·post·wiki·mail 도 `commands/<영역>/index.ts` 에서 `<영역>Command()` 를 내보내고, `index.ts` 는 영역 나무를 `addCommand` 로 붙이기만 한다. 명령 등록 순서는 지금 `--help` 순서를 지킨다(REQ1 스냅숏이 확인한다).
 - 명령 파일 안의 영역 로직을 같은 영역의 주제 파일로 뺀다. 대상은 「진단」 의 여섯 파일이다. 새 계층을 만들지 않는다. 캐시 무효화가 필요한 쓰기는 기존 규칙대로 `services/`, 이름 풀이는 `resolvers/` 로 보낸다.
-- `getAllWikiPages` 는 R2 에서 영역 인터페이스 밖의 함수 `collectWikiPages(client: WikiClient, …)` 로 바꿔 `api/wiki/pages.ts` 에 둔다. 공개·웹이 같은 조합을 한 번만 갖는다. 웹 구현에 전용 조합이 필요하면 인터페이스 메서드로 남긴다(R2 에서 웹 구현을 읽고 정한다).
 
 ### R5 (선택)
 
@@ -118,7 +126,8 @@ R3 이 끝나면 허용 목록은 빈다.
 
 - 명령 영역(`commands/<영역>/` 과 `commands/<이름>.ts`)은 다른 명령 영역을 가져오지 않는다.
 - 공개 구현(`api/client.ts`, `api/public/`, `api/<영역>/public*.ts`)과 웹 구현(`api/web/`, `api/<영역>/web*.ts`)은 서로 가져오지 않는다. 둘을 고르는 `api/dooray-client.ts` 는 어느 쪽도 아니다.
-- `api/<영역>/` 은 다른 영역의 `types.ts` 만 가져온다.
+- `api/<영역>/` 은 다른 영역의 `types.ts` 만 가져온다. 영역 안에서 `types-<주제>.ts` 로 나눠도 다른 영역은 `types.ts` 의 재내보내기를 거친다.
+- 영역 구현을 나눌 때는 `public-<주제>.ts`, `web-<주제>.ts` 이름만 쓴다. 테스트가 파일 이름으로 공개·웹을 가르므로 다른 이름이나 하위 폴더는 검사에서 빠진다.
 
 검사 방식:
 
@@ -147,20 +156,27 @@ R1~R2 의 이동으로 경로가 바뀌면 그 PR 이 목록의 경로를 같이
 export function createProjectPublic(http: PublicHttp): ProjectClient { return { async getProjects(params) { … }, … }; }
 
 // api/public/index.ts
+export function createPublicClient(http: PublicHttp): DoorayClient {
+  // 타입을 붙인 객체를 거쳐야 영역 하나를 빠뜨렸을 때 컴파일러가 잡는다.
+  const client: DoorayClient = { ...createProjectPublic(http), ...createPostPublic(http), … };
+  return client;
+}
 export interface DoorayApiClient extends DoorayClient {}
 export class DoorayApiClient {
   constructor(apiKey: string, baseUrl: string) {
-    const http = new PublicHttp(apiKey, baseUrl);
-    Object.assign(this, createProjectPublic(http), createPostPublic(http), …);
+    Object.assign(this, createPublicClient(new PublicHttp(apiKey, baseUrl)));
   }
 }
 ```
 
-- 클래스 이름과 생성자 `(apiKey, baseUrl)` 을 지킨다. `dooray-client.ts` 와 테스트가 `new DoorayApiClient(…)` 를 쓰고, 테스트 14곳 이상이 `vi.mock("…/api/client.js", () => ({ DoorayApiClient: class … }))` 로 바꿔 끼운다.
+- 클래스 이름과 생성자 `(apiKey, baseUrl)` 을 지킨다. `dooray-client.ts` 와 테스트가 `new DoorayApiClient(…)` 를 쓰고, 테스트 24곳이 `vi.mock("…/api/client.js", () => ({ DoorayApiClient: class … }))` 로 바꿔 끼운다.
 - 그래서 `dooray-client.ts` 는 계속 `./client.js` 에서 가져오고, `client.ts` 는 `api/public/index.ts` 를 재내보낸다. mock 은 `client.js` 모듈을 바꾸므로 재내보내기 뒤에서도 그대로 잡힌다.
 - `Object.assign` 은 영역 구현이 반환한 객체 리터럴의 속성만 복사한다. 영역 구현은 클래스 인스턴스를 반환하지 않는다(`api/web/index.ts` 와 같은 제약).
-- `getMe` 처럼 영역 인터페이스 밖에 있는 메서드는 member 영역에 넣는다. R2 에서 `DoorayClient` 에 없는 공개 메서드가 남으면 그 목록을 PR 본문에 적는다.
-- 공개 API 경로는 `apiPath` tagged template 을 그대로 쓴다([ADR-075](../../adr/075-api-path-encoding.md)). 인벤토리 스크립트는 읽는 파일 목록만 바뀐다.
+- 인터페이스 병합만으로는 클래스가 메서드를 다 갖췄는지 컴파일러가 보지 않는다(검토에서 실측). 그래서 조립은 `DoorayClient` 타입을 붙인 `createPublicClient` 가 하고, 클래스는 그 결과를 복사만 한다. 영역끼리 메서드 이름이 겹치지 않는지 보는 테스트를 `dooray-client.test.ts` 의 웹 쪽 검사와 같은 꼴로 공개 쪽에도 둔다.
+- `client.ts` 에서 인터페이스 밖에 있는 것은 비공개 `requestFileServer`·`followDownloadRedirect` 둘이다. 둘은 `api/public/http.ts` 로 간다.
+- 지금 `api-path.test.ts`, `client-file-redirect.test.ts`, `client-download-name.test.ts` 가 인스턴스의 비공개 필드 `api` 를 바꿔 ky 를 끼운다. 영역 구현은 `PublicHttp` 를 closure 로 잡으므로 이 꼴은 효과가 없어진다. R2 는 `PublicHttp` 생성자가 ky 인스턴스를 선택 인자로 받게 하고, 세 테스트를 `createPublicClient(new PublicHttp(…, fakeKy))` 꼴로 바꾼다. 테스트 수는 줄이지 않는다.
+- 공개 API 경로는 `apiPath` tagged template 을 그대로 쓴다([ADR-075](../../adr/075-api-path-encoding.md)).
+- 인벤토리 스크립트는 지금 `client.ts` 하나에서 `this.api.<메서드>(` 와 `${this.baseUrl}` 꼴을 찾는다. 영역 구현에는 `this` 가 없으므로 R2 는 호출 꼴을 `http.api.<메서드>(apiPath…)` 와 `http.url(apiPath…)` 둘로 정하고, 스크립트가 `api/public/` 과 `api/*/public*.ts` 를 읽어 그 꼴을 찾게 고친다. `api-endpoint-inventory.test.mjs` 를 함께 고치고, 전후 출력이 같은지로 REQ2 를 본다.
 
 ### 경로 별칭
 
@@ -168,7 +184,9 @@ export class DoorayApiClient {
 - `vitest.config.ts` 의 `resolve.tsconfigPaths: true` 가 같은 표를 읽는다. 별칭 표의 원본은 tsconfig 하나다.
 - tsup 은 esbuild 가 tsconfig `paths` 를 기본으로 풀므로 설정을 바꾸지 않는다.
 - 지정자는 지금처럼 `.js` 확장자를 붙인다(`@/utils/errors.js`). `moduleResolution: "Bundler"` 가 `.ts` 로 찾는다.
-- 쓰는 자리: 새 파일, 그리고 이동 스크립트가 옮긴 파일과 그 파일을 가리키는 import. 같은 폴더(`./x.js`) import 는 상대 경로로 둔다. 손대지 않는 파일의 다른 import 를 한꺼번에 바꾸지 않는다.
+- 쓰는 자리: 새 파일, 그리고 이동 스크립트가 옮긴 파일과 그 파일을 가리키는 import. 손대지 않는 파일의 다른 import 를 한꺼번에 바꾸지 않는다.
+- 가져오는 파일과 대상이 같은 폴더에 있으면(옮긴 뒤 기준) 별칭보다 `./x.js` 가 먼저다. 예: `api/mail/imap.ts` 가 `api/mail/errors.ts` 를 가져오면 `./errors.js`.
+- `vi.mock` 은 별칭과 상대 경로 어느 쪽으로 적어도 같은 모듈을 잡는다(`path-alias.test.ts` 가 두 방향을 본다).
 
 ### 이동 스크립트 (R1 부터)
 
@@ -197,7 +215,7 @@ export class DoorayApiClient {
 | --- | --- |
 | R0 | 규칙 테스트가 지금 저장소에서 허용 목록 4건으로 통과하고, 판정 함수 단위 테스트가 위반 꼴을 잡는다. `path-alias.test.ts`(vitest·`vi.mock`), `index.ts` 의 별칭 import(tsc·빌드, `dist/index.js --version`). 도움말 스냅숏이 main 빌드와 같다. 문서 경로 검사가 보고만 한다 |
 | R1 | 스냅숏 같음, 테스트 수 같음 이상, `api/types.ts` 가 재내보내기만인지 확인, 허용 목록 경로 갱신 |
-| R2 | 위에 더해 `pnpm api:inventory` 전후 같음, 공개·웹 상호 import 0건(규칙 테스트), `client.ts` 재내보내기만 |
+| R2 | 위에 더해 `pnpm api:inventory` 전후 같음, 공개·웹 상호 import 0건(규칙 테스트), `client.ts` 재내보내기만, `createPublicClient` 에서 영역 하나를 빼면 tsc 가 실패하는지 한 번 확인 |
 | R3 | 허용 목록이 빈다. `api/mail/imap.ts` 가 readline 을 가져오지 않는다 |
 | R4 | 명령 나무를 영역에서 받는다. 스냅숏이 순서까지 같다. 문서 경로 검사 `--strict` 가 0건이고 CI 단계에 들어간다 |
 | R5 | 내보내는 이름이 같고 스냅숏·테스트가 같다 |
