@@ -1,0 +1,52 @@
+{
+  "name": "r3",
+  "description": "본문 규칙을 body 로 옮기고 utils 의 상위 계층 의존을 없앤다",
+  "pr_scope": "동작을 유지하면서 utils 를 재분류하고 메일 UID 조회를 분리한다.",
+  "deferred": [
+    {
+      "what": "resolver 의 전체 클라이언트 의존과 명령 나무 정리",
+      "why": "R4 범위",
+      "after": "R3 머지"
+    }
+  ],
+  "status": "completed",
+  "created_at": "2026-11-14",
+  "spec": "docs/features/code-structure/spec.md",
+  "design": "docs/features/code-structure/design.md",
+  "verification_plan": "verification-plan.md",
+  "requirements": [
+    "REQ1",
+    "REQ5",
+    "REQ6",
+    "REQ7",
+    "REQ8"
+  ],
+  "total_phases": 2,
+  "current_phase": 2,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ1",
+        "REQ5",
+        "REQ6",
+        "REQ7",
+        "REQ8"
+      ]
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ1",
+        "REQ5",
+        "REQ6",
+        "REQ7",
+        "REQ8"
+      ]
+    }
+  ]
+}

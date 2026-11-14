@@ -7,7 +7,7 @@ import {
   serializeWikiFrontmatter,
   parseWikiFrontmatter,
 } from "../../editor/index.js";
-import { readBodyInput, BODY_MIME_TYPES, resolveBodyMimeType, warnUnconvertedBody } from "../../utils/body-input.js";
+import { readBodyInput, BODY_MIME_TYPES, resolveBodyMimeType, warnUnconvertedBody } from "@/body/body-input.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";

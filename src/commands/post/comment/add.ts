@@ -4,7 +4,7 @@ import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { openInEditor } from "../../../editor/index.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
-import { readBodyInputOrNull } from "../../../utils/body-input.js";
+import { readBodyInputOrNull } from "@/body/body-input.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
 import type { OutputOptions } from "../../../formatters/table.js";
@@ -12,8 +12,8 @@ import { printJson } from "../../../formatters/table.js";
 import { resolveMember, buildMemberNameMap } from "../../../resolvers/member.js";
 import { resolveMemberGroup } from "../../../resolvers/member-group.js";
 import { ensureMe } from "../../../resolvers/me.js";
-import { prependMentions } from "../../../utils/mention.js";
-import { appendTaskLinks } from "../../../utils/task-link.js";
+import { prependMentions } from "@/body/mention.js";
+import { appendTaskLinks } from "@/body/task-link.js";
 import { resolveTaskLinks } from "../../../resolvers/task-link.js";
 
 export const commentAddCommand = new Command("add")

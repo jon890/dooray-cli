@@ -2,8 +2,8 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { EXIT_PARAM_ERROR } from "./exit-codes.js";
-import { resolveMailAttachments } from "./mail-attach.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
+import { resolveMailAttachments } from "./attach.js";
 
 let dir: string;
 beforeEach(async () => {

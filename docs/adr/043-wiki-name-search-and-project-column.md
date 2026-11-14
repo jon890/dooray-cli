@@ -24,11 +24,11 @@
   출력이 `ID`, `Name`, `Type` 세 열이고 `Wiki` 응답은 `project.id` 만 담아 project 코드가 없다.
   `wiki pages <project>` 나 `wiki tree <project>` 에 넣을 값을 얻으려면
   `--json` 으로 `project.id` 를 꺼내 프로젝트 목록과 다시 대조해야 한다.
-  이 두 명령은 페이지 ID 가 아니라 project 를 받으므로 ADR-045 의 경로로 대체되지 않는다.
+  이 두 명령은 페이지 ID 가 아니라 project 를 받으므로 [ADR-045](045-wiki-page-standalone-fetch.md) 의 경로로 대체되지 않는다.
 
   `dooray://<number>/pages/<pageId>` 의 앞 숫자는 orgId 다.
-  `src/utils/task-link.ts` 와 `src/utils/mention.ts` 가 `dooray://${me.orgId}/...` 형태로 링크를 만든다.
-  이 값을 project 자리에 넣으면 `resolveProject` 의 15자리 이상 numeric 우회(ADR-030)를 통과해 그대로 반환되고,
+  `src/body/task-link.ts` 와 `src/body/mention.ts` 가 `dooray://${me.orgId}/...` 형태로 링크를 만든다.
+  이 값을 project 자리에 넣으면 `resolveProject` 의 15자리 이상 numeric 우회([ADR-030](030-resolveproject-numeric-fallback.md))를 통과해 그대로 반환되고,
   `resolveWiki` 가 그 값으로 프로젝트 캐시를 다시 뒤져 실패한다.
   사용자가 받은 `프로젝트에 위키가 없습니다` 는 이 경로에서 나온 것이다.
 
@@ -68,7 +68,7 @@
 
 - **적용 범위**: `wiki page get` 도 `resolveWikiPageInput` 을 쓰게 해
   `wiki page file`, `wiki page comment`, `wiki page delete` 와 입력 형태를 맞춘다.
-  ADR-020 이 정한 입력 통합을 남은 명령 하나에 적용하는 것이고 새 결정은 아니다.
+  [ADR-020](020-post-input-unification-vitest.md) 이 정한 입력 통합을 남은 명령 하나에 적용하는 것이고 새 결정은 아니다.
   `--id` 모드가 `--project` 를 동반해야 하는지는 [ADR-045](045-wiki-page-standalone-fetch.md) 가 정한다.
 
   검색 결과가 0건이면 stderr 로 알린다.

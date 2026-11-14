@@ -10,7 +10,7 @@ import { apiPath } from "../api-path.js";
 import { count, date, identifier, invalidResponse, pick, referenceMap, row, rows, text, type Row } from "../web/convert.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_API_ERROR, EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
-import { removeFileReference } from "../../utils/comment-files.js";
+import { removeFileReference } from "@/body/comment-files.js";
 import { parseContentDispositionFileName, fallbackFileName } from "../../utils/content-disposition.js";
 
 function unsupported(): never {

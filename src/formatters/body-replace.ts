@@ -3,7 +3,7 @@
  *
  * 바뀌는 줄만 diff 형식으로 보인다. 본문 전체는 내지 않고, 긴 줄은 바뀐 곳 주변만 남긴다 (ADR-065).
  */
-import type { ReplaceHunk, ReplaceResult } from "../utils/body-replace.js";
+import type { ReplaceHunk, ReplaceResult } from "@/body/body-replace.js";
 import { sanitizeMultilineForTerminal } from "../utils/sanitize.js";
 import { printJson, type OutputOptions } from "./table.js";
 

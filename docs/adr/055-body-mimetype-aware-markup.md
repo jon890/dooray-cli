@@ -23,7 +23,7 @@
   종료 코드 3 으로 멈추고 `--mime-type` 으로 형식을 바꾸는 방법을 안내한다.
   확인되지 않은 표기를 추측해 넣으면 링크로 렌더링되지 않는 문자열이 남고, 그 사실이 출력에 드러나지 않는다.
 
-- **맥락**: `post edit` 은 `resolveBodyMimeType` 으로 본문 형식을 이미 구해 두고도(ADR-053)
+- **맥락**: `post edit` 은 `resolveBodyMimeType` 으로 본문 형식을 이미 구해 두고도([ADR-053](053-body-mimetype-preservation.md))
   그 값을 마크업을 만드는 함수에 넘기지 않는다.
   `prependMentions` 와 `appendTaskLinks` 는 형식과 무관하게 `[이름](dooray://...)` 를 만든다.
   그래서 `text/html` 본문에는 마크다운 원문이 그대로 붙고, 링크로 렌더링되지 않아 멘션 알림도 가지 않는다.
@@ -35,7 +35,7 @@
   찾지 못해도 본문 갱신이 성공으로 처리되고 그 다음 단계가 파일을 삭제하므로,
   본문에는 대상이 사라진 링크가 남는다.
 
-  ADR-053 은 **기존 형식을 보존하는 것**까지 정했다. 보존한 형식에 맞는 내용을 만드는 것은 그 결정의 범위 밖이었다.
+  [ADR-053](053-body-mimetype-preservation.md) 은 **기존 형식을 보존하는 것**까지 정했다. 보존한 형식에 맞는 내용을 만드는 것은 그 결정의 범위 밖이었다.
 
 - **대안 기각**:
   - **지금 동작을 두고 경고만 낸다** — 경고를 낸 뒤에도 링크로 렌더링되지 않는 문자열이 본문에 남는다.
@@ -43,7 +43,7 @@
   - **HTML 본문이면 무조건 거절한다** — 공식 문서가 표기를 정의하는 경우까지 막는다.
     `text/html` 업무에 파일을 올리는 것은 흔한 작업이고, 거절만 하면 CLI 로는 방법이 없다.
   - **본문을 마크다운으로 변환해 저장한다** — 표의 셀 배경이나 rowspan 으로 정보를 표현한 문서가 깨진다.
-    ADR-053 이 보존을 결정한 이유와 정면으로 어긋난다.
+    [ADR-053](053-body-mimetype-preservation.md) 이 보존을 결정한 이유와 정면으로 어긋난다.
   - **`mimeType` 을 보지 않고 본문 내용으로 형식을 추측한다** — 두 형식 모두 평문을 담을 수 있어 구별되지 않는다.
     응답이 형식을 이미 알려주므로 추측할 이유가 없다.
 
@@ -55,7 +55,7 @@
     넘기지 않으면 기본값으로 떨어지므로, 기본값을 `text/x-markdown` 으로 두어 종전 동작을 유지한다.
     HTML 표기가 공식 문서에 없을 때 거절하는 경로가 늘어, `text/html` 본문을 쓰던 자동화가 멈출 수 있다.
 
-- **적용 범위**: `src/utils/mention.ts`, `src/utils/task-link.ts`, `src/utils/comment-files.ts` 와
+- **적용 범위**: `src/body/mention.ts`, `src/body/task-link.ts`, `src/body/comment-files.ts` 와
   그 셋을 부르는 `src/commands/post/edit.ts`, `src/commands/post/comment/edit.ts`,
   `src/commands/post/comment/file/upload.ts`, `src/commands/post/comment/file/delete.ts`.
 
@@ -69,7 +69,7 @@
 | 첨부 reference | 정하지 못했다 | 확인 못함 |
 
 넷이 모두 `확인 못함` 이므로 `text/html` 본문의 네 경로는 모두 거절한다.
-`src/utils/body-markup.ts` 의 `HTML_SUPPORTED_KINDS` 가 그 목록을 코드에서 소유한다.
+`src/body/body-markup.ts` 의 `HTML_SUPPORTED_KINDS` 가 그 목록을 코드에서 소유한다.
 표기를 확정하면 이 표를 고치고 그 목록에 종류를 더한다.
 
 **어떻게 확인했는가:**

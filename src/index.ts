@@ -54,7 +54,7 @@ import { mailLogoutCommand } from "./commands/mail/logout.js";
 import { messengerCommand } from "./commands/messenger/index.js";
 import { streamCommand } from "./commands/stream/index.js";
 import { calendarCommand } from "./commands/calendar/index.js";
-import { feedbackCommand } from "./commands/feedback.js";
+import { feedbackCommand } from "@/commands/feedback/index.js";
 import { DoorayCliError } from "./utils/errors.js";
 import { sanitizeArgv } from "./utils/argv-sanitize.js";
 import { attachUsageHint } from "./utils/unknown-option-hint.js";

@@ -8,14 +8,14 @@ import { printJson } from "../../formatters/table.js";
 import { resolveMailTarget, resolveMailUid } from "../../resolvers/mail-input.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
-import { sanitizeFileName } from "../../utils/attachment-check.js";
-import { readBodyInput } from "../../utils/body-input.js";
+import { sanitizeForTerminal } from "@/utils/sanitize.js";
+import { readBodyInput } from "@/body/body-input.js";
 import { formatSize } from "../../utils/format-size.js";
-import { resolveMailAttachments } from "../../utils/mail-attach.js";
+import { resolveMailAttachments } from "./attach.js";
 import { saveSentCopy } from "./save-sent.js";
 
 function sanitizeReplyPreview(value: string): string {
-  return sanitizeFileName(value).replace(/[\x80-\x9F\u2028\u2029]/g, "?");
+  return sanitizeForTerminal(value).replace(/[\x80-\x9F\u2028\u2029]/g, "?");
 }
 
 export const mailReplyCommand = new Command("reply")

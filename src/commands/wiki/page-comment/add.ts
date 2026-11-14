@@ -7,7 +7,7 @@ import {
   WIKI_PAGE_PROJECT_OPTION_DESC,
 } from "../../../resolvers/wiki-page-input.js";
 import { openInEditor } from "../../../editor/index.js";
-import { readBodyInputOrNull } from "../../../utils/body-input.js";
+import { readBodyInputOrNull } from "@/body/body-input.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { printJson, printQuiet } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";

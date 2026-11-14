@@ -3,7 +3,7 @@ import { getConfigOrThrow } from "../../config/store.js";
 import { createClient } from "../../api/dooray-client.js";
 import { resolveMemberByIdOrEmail } from "../../resolvers/member.js";
 import { openInEditor } from "../../editor/index.js";
-import { readBodyInputOrNull } from "../../utils/body-input.js";
+import { readBodyInputOrNull } from "@/body/body-input.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson, printQuiet } from "../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";

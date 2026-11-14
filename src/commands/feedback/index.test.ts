@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
 
 const mocks = vi.hoisted(() => ({
   execFile: vi.fn(),
@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("node:child_process", () => ({ execFile: mocks.execFile }));
-vi.mock("../cache/last-run.js", () => ({ readLastRun: mocks.readLastRun }));
+vi.mock("@/cache/last-run.js", () => ({ readLastRun: mocks.readLastRun }));
 vi.mock("@inquirer/prompts", () => ({
   input: mocks.input,
   editor: mocks.editor,
@@ -25,7 +25,7 @@ function setTTY(isTTY: boolean): void {
 
 async function runFeedback(args: string[]): Promise<void> {
   vi.resetModules();
-  const { feedbackCommand } = await import("./feedback.js");
+  const { feedbackCommand } = await import("./index.js");
   await feedbackCommand.parseAsync(args, { from: "user" });
 }
 

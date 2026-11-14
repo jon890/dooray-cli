@@ -10,11 +10,11 @@ import {
   collectMeta,
   buildIssueBody,
   buildLastRunBlock,
-} from "../utils/feedback-meta.js";
-import { readLastRun } from "../cache/last-run.js";
-import { CLI_VERSION } from "../version.js";
-import { DoorayCliError } from "../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
+} from "./meta.js";
+import { readLastRun } from "@/cache/last-run.js";
+import { CLI_VERSION } from "@/version.js";
+import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
 
 const execFileAsync = promisify(execFile);
 const TARGET_REPO = "jon890/dooray-cli";

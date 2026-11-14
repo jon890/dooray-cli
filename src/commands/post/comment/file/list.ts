@@ -1,3 +1,4 @@
+import { sanitizeForTerminal } from "@/utils/sanitize.js";
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../../config/store.js";
 import { createClient } from "../../../../api/dooray-client.js";
@@ -8,12 +9,11 @@ import { startSpinner, stopSpinner } from "../../../../utils/spinner.js";
 import { formatSize } from "../../../../utils/format-size.js";
 import {
   extractAttachmentReferences,
-  sanitizeFileName,
-} from "../../../../utils/attachment-check.js";
+} from "@/body/attachment-check.js";
 import {
   mergeCommentFiles,
   type CommentFileSource,
-} from "../../../../utils/comment-file-merge.js";
+} from "@/body/comment-file-merge.js";
 
 function formatSource(source: CommentFileSource): string {
   if (source === "attachment") return "첨부";
@@ -81,7 +81,7 @@ export const listCommentFileCommand = new Command("list")
       output(globalOpts, {
         headers: ["파일명", "크기", "출처", "ID"],
         rows: merged.map((file) => [
-          file.name == null ? "-" : sanitizeFileName(file.name),
+          file.name == null ? "-" : sanitizeForTerminal(file.name),
           formatSize(file.size),
           formatSource(file.source),
           file.id,

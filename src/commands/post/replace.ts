@@ -14,9 +14,9 @@ import type { PostUser } from "@/api/common/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../utils/spinner.js";
-import { resolveBodyMimeType } from "../../utils/body-input.js";
-import { checkAndGuardDropped } from "../../utils/attachment-check.js";
-import { applyReplace, readReplaceInputs } from "../../utils/body-replace.js";
+import { resolveBodyMimeType } from "@/body/body-input.js";
+import { checkAndGuardDropped } from "@/body/attachment-check.js";
+import { applyReplace, readReplaceInputs } from "@/body/body-replace.js";
 import { printReplacePreview } from "../../formatters/body-replace.js";
 
 function toRequestUser(u: PostUser): CreatePostUser {

@@ -3,7 +3,7 @@ import { getConfigOrThrow } from "../../../config/store.js";
 import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { buildMemberNameMap } from "../../../resolvers/member.js";
-import { enrichCommentCreators } from "../../../utils/comment-enrich.js";
+import { enrichCommentCreators } from "@/formatters/comment-enrich.js";
 import { formatCommentDetail } from "../../../formatters/comment.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
