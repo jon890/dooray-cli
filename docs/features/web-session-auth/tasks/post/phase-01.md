@@ -72,7 +72,9 @@ targetProjectId는 현재 프로젝트 ID로 고정하고, 상위 업무의 소�
 생성 시 상위 지정도 같은 프로젝트인지 먼저 확인한다.
 웹 move의 content를 공식 post.id·project.id 참조로 변환한다.
 현재 공개 반환 타입은 단위 응답이지만 공식 문서는 이 참조 객체를 정의한다.
-PostClient 반환 타입을 이 공식 응답과 기존 단위 응답의 합집합으로 넓히는 범위는 코디네이터에게 승인받고 반영한다.
+코디네이터 승인(2026-11-14)에 따라 src/api/post/types.ts의 setPostParent 반환 타입을 공식 참조 응답까지 받을 수 있게 넓힌다.
+공개 쪽 응답도 공식 post.id·project.id 참조를 받는다는 사실을 타입에 표현한다.
+PR1 머지 뒤 실제 시그니처를 대조하고 기존 소비자 코드의 호환성은 tsc로 검사한다.
 공개 API 클라이언트의 런타임 동작은 바꾸지 않는다.
 
 ### 2. 댓글 메서드를 구현한다
@@ -124,6 +126,6 @@ node scripts/check-pii.mjs
 | 파일 | 변경 |
 | --- | --- |
 | `src/api/post/web.ts` | 신규 (PostClient의 업무·댓글 구현) |
-| `src/api/post/types.ts` | 수정 (코디네이터 승인 후 상위 변경의 공식 응답 반환 타입) |
+| `src/api/post/types.ts` | 수정 (승인된 상위 변경의 공식 응답 반환 타입과 소비자 호환성) |
 | `src/api/post/web-post.test.ts` | 신규 (업무 요청·응답·필터 검사) |
 | `src/api/post/web-comment.test.ts` | 신규 (댓글 커서·변환 검사) |

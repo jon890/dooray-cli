@@ -96,7 +96,7 @@ ID는 문자열이다. 날짜는 시간대가 있는 ISO 8601 문자열로 유�
 | `getPost`, `getPostStandalone` | 목록 필드와 body(mimeType, content), files(id, name, size) | `fields=body`가 없으면 본문이 빠진다. `fileIdList`와 fileMap에서 files를 만든다. body의 version·emptyContent는 제외한다 |
 | `createPost`, `createPostComment`, `uploadPostFile` | id | 생성 결과 배열의 해당 항목만 꺼낸다 |
 | `updatePost`, `setPostDone`, `setPostWorkflow`, `updatePostComment`, `deletePostComment`, `deletePostFile` | null | 웹 수정 결과의 추가 필드는 제외한다 |
-| `setPostParent` | post(id), project(id) | 웹 move의 content와 요청 프로젝트를 공식 참조 객체로 바꾼다. 현재 공개 클라이언트의 단위 응답 반환 타입과 공식 스키마가 다른 점은 PR1 인터페이스 통합 때 함께 검토한다 |
+| `setPostParent` | post(id), project(id) | 웹 move의 content와 요청 프로젝트를 공식 참조 객체로 바꾼다. 공식 참조 응답을 받을 수 있도록 승인된 post 영역 계약의 반환 타입을 넓히고 기존 소비자는 tsc로 검사한다 |
 | `getPostComments` | id, post(id), type, subtype, createdAt, modifiedAt, creator(type, member 또는 emailUser), mailUsers(from, to, cc), body(mimeType, content) | `postId`를 post.id로 바꾼다. creator의 내부 표시 필드는 제외한다. 웹에 없는 mailUsers는 생략한다 |
 | `getPostComment` | 댓글 목록 필드와 files(id, name, size) | fileIdList와 fileMap을 연결한다. 웹에 없는 파일 이름·크기를 만들어 넣지 않는다 |
 | `getPostFiles`, `getPostFileMeta` | id, name, size, mimeType, createdAt, creator(type, member.organizationMemberId 또는 emailUser(emailAddress, name)) | 웹의 downloadUrl·type·version·extension 등은 제외한다. 목록에는 totalCount를 배열 길이로 계산한다 |
