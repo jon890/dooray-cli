@@ -4,7 +4,7 @@
 구현 세부는 코드에 있다.
 자명한 사항은 기록하지 않는다.
 
-ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크로 찾는다.
+ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크로 찾는다. 다른 ADR 이 대체한 것은 `docs/adr/superseded/` 에 있고 맨 아래 「대체됨」 에 적는다.
 
 아래 목록이 영역별 라우터다.
 
@@ -20,10 +20,8 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-010](010-cache-file-split.md) — 캐시 파일 분리 (디렉토리 기반)
 - [ADR-012](012-imap-mail.md) — IMAP 메일 연동
 - [ADR-013](013-smtp-mail.md) — SMTP 메일 발송
-- [ADR-014](014-ts-path-alias-deferred.md) — TypeScript Path Alias 보류
 - [ADR-015](015-file-attachment-307-redirect.md) — 파일 첨부 API 307 리다이렉트 수동 처리
 - [ADR-016](016-setup-interactive-wizard.md) — `dooray setup` 대화형 초기 설정 마법사
-- [ADR-017](017-api-types-single-file.md) — `api/types.ts` 단일 파일 유지
 - [ADR-018](018-setup-skill-install.md) — `dooray setup` 에서 Claude Code 스킬 설치
 - [ADR-019](019-post-create-metadata-options.md) — `post create` 메타데이터 옵션 (`--tag`/`--parent`/`--workflow`/`--milestone`)
 - [ADR-020](020-post-input-unification-vitest.md) — post 명령 input 통합 (`--id`/URL/positional)과 첫 테스트 인프라 (vitest)
@@ -87,3 +85,9 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-079](079-member-get-with-org.md) — `member get --with-org` 으로 소속 회사·부서·직책을 바쁨 시간 조회 응답에서 채운다 (부서 이름이 있어도 `id` 가 null 실측)
 - [ADR-080](080-secret-file-exposure-warning.md) — `config.json` 의 평문 비밀값(macOS)과 비밀값을 담은 파일의 넓은 권한(macOS·Linux)은 고치지 않고 설정을 읽는 명령마다 경고하고, `doctor` 는 실패가 있으면 종료 코드 1 로 끝내며, 캐시는 폴더 0700·파일 0600 으로 쓴다 (2026-11-13 0644 평문 실측)
 - [ADR-081](081-web-session-auth.md) — 인증 방식을 `auth-mode`(`api-key` 기본, `web`)로 고르고, 웹 방식은 `SESSION` 쿠키로 웹 화면의 `/wapi`·`/v2/wapi` 경로를 불러 공개 API 응답 모양으로 바꿔 내며, 웹 방식에 한해 [ADR-062](062-undocumented-endpoint-policy.md) 의 읽기 전용·조건 1~4 를 대체한다 (2026-11-13 API 키 전량 폐기, `SESSION` 쿠키 단독 호출 실측)
+- [ADR-082](082-code-structure.md) — 계층 폴더는 두고 api 안만 영역별(`types.ts`·`public.ts`·`web.ts`)로 나누며, 계층·영역 의존 규칙을 테스트로 막고(지금 위반은 허용 목록), 경로 별칭 `@/…` 을 쓴다. [ADR-014](superseded/014-ts-path-alias-deferred.md)·[ADR-017](superseded/017-api-types-single-file.md) 을 대체한다
+
+## 대체됨
+
+- [ADR-014](superseded/014-ts-path-alias-deferred.md) — TypeScript Path Alias 보류. [ADR-082](082-code-structure.md) 가 대체
+- [ADR-017](superseded/017-api-types-single-file.md) — `api/types.ts` 단일 파일 유지. [ADR-082](082-code-structure.md) 가 대체

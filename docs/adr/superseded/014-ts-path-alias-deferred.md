@@ -1,6 +1,10 @@
 ## ADR-014: TypeScript Path Alias 보류
 
+- **status**: `superseded`
+
 **결정**: `@/` 등 path alias 도입 보류
+
+**대체된 부분**: 결정 전체를 [ADR-082](../082-code-structure.md)가 대체했다. esbuild 와 vitest 가 플러그인 없이 tsconfig `paths` 를 푸는 것을 확인해(2026-11-14) `@/…` 별칭을 도입한다. 아래는 대체되기 전의 당시 맥락이다.
 
 **이유**:
 
