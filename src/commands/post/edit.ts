@@ -271,7 +271,8 @@ export const postEditCommand = new Command("edit")
         body: { mimeType: bodyMimeType, content: parsed.body },
         priority: parsed.priority,
         dueDate: parsed.due_date ?? undefined,
-        dueDateFlag: parsed.due_date != null,
+        dueDateFlag: config.authMode === "web" && parsed.due_date === (post.dueDate ?? null)
+          ? post.dueDateFlag : parsed.due_date != null,
         users: { to: toUsers, cc: ccUsers },
       });
       stopSpinner(true, "업무 수정 완료");

@@ -771,3 +771,24 @@ describe("post edit 본문 형식별 마크업", () => {
     stderr.mockRestore();
   });
 });
+
+
+describe("편집기에서 일정 상태 보존", () => {
+  it.each([
+    ["web", true, true],
+    ["web", false, false],
+    ["api-key", true, false],
+  ])("%s에서 날짜를 바꾸지 않으면 일정 여부 %s를 보낸다", async (authMode, previousFlag, expectedFlag) => {
+    mocks.getConfigOrThrow.mockResolvedValue({ authMode });
+    mocks.client.getPost.mockResolvedValue({ result: { ...htmlPost, dueDate: null, dueDateFlag: previousFlag } });
+    mocks.openInEditor.mockImplementation(async (original: string) => original.replace("기존 제목", "편집한 제목"));
+    const program = await createCommandTree();
+    const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+    try {
+      await program.parseAsync(["node", "dooray", "post", "edit", "--id", "post-1"]);
+      expect(mocks.client.updatePost).toHaveBeenCalledWith("project-1", "post-1", expect.objectContaining({
+        subject: "편집한 제목", dueDateFlag: expectedFlag,
+      }));
+    } finally { stdout.mockRestore(); }
+  });
+});

@@ -276,3 +276,7 @@ main의 post list 명령에는 workflow 옵션이 없다.
 임시 단계 생성은 POST `/v2/wapi/projects/!{projectId}/milestones`에 `[{name, status:open}]`를 보냈다.
 임시 그룹 생성은 POST `/v2/wapi/projects/!{projectId}/project-member-groups`에 `[{code, organizationMemberIdList:[자기 ID]}]`를 보냈다.
 이 생성·삭제는 코디네이터가 전달한 사용자 승인(2026-11-14)으로만 수행했다.
+
+편집기에서 날짜를 바꾸지 않은 웹 업무는 기존 dueDateFlag를 그대로 보낸다.
+날짜 미정(dueDate:null, dueDateFlag:true) 업무의 제목만 고쳐도 일정 없음 전환으로 오인하지 않는다.
+API 키 방식의 편집기 요청은 기존 동작을 유지한다.
