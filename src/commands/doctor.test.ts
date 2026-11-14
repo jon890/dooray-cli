@@ -106,6 +106,25 @@ describe("doctor --json 설정 읽기 실패 출처", () => {
   });
 });
 
+describe("doctor 손상된 설정 파일의 이유", () => {
+  it("--json 의 reason 과 checks[].message 에 원문 글자가 없고 위치 안내가 있다", async () => {
+    const { jsonParseReason } = await vi.importActual<typeof import("../config/store.js")>("../config/store.js");
+    const raw = '{"apiKey":SECRETTOKENVALUE123}';
+    let reason = "";
+    try { JSON.parse(raw); } catch (err) { reason = jsonParseReason(raw, err); }
+    mocks.getConfig.mockResolvedValue({ state: "invalid", reason });
+
+    const out = await runDoctor(["--json"]);
+    const payload = JSON.parse(out);
+
+    expect(out).not.toContain("SECRET");
+    expect(out).not.toContain("TOKEN");
+    expect(payload.reason).toContain("1번째 줄 11번째 글자 근처");
+    expect(payload.checks[0].message).toContain("1번째 줄 11번째 글자 근처");
+    expect(process.exitCode).toBe(1);
+  });
+});
+
 describe("doctor 설정 읽기 실패 표시", () => {
   it("키체인 읽기 실패는 설정 파일이 아니라 키체인 실패로 보인다", async () => {
     mocks.getConfig.mockResolvedValue({

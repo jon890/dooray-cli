@@ -218,6 +218,43 @@ function reasonOf(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+/**
+ * JSON 파싱 실패의 reason. Node 의 오류 메시지는 원문 앞뒤를 발췌해 따옴표 없는 비밀값이
+ * 그대로 실리므로(`Unexpected token 'S', ..."{"apiKey":SECRETTOKE"...`) 메시지를 쓰지 않고
+ * 위치만 남긴다. 위치를 구하지 못하면 위치 없이 낸다.
+ */
+export function jsonParseReason(raw: string, err: unknown): string {
+  const base = "JSON 형식이 아닙니다";
+  const offset = errorOffset(raw, err instanceof Error ? err.message : "");
+  if (offset === undefined) return base;
+  const before = raw.slice(0, offset).split("\n");
+  return `${base}(${before.length}번째 줄 ${before[before.length - 1].length + 1}번째 글자 근처)`;
+}
+
+function errorOffset(raw: string, message: string): number | undefined {
+  const located = /\(line (\d+) column (\d+)\)/.exec(message);
+  if (located) {
+    const lines = raw.split("\n");
+    const line = Number(located[1]);
+    if (line < 1 || line > lines.length) return undefined;
+    return (
+      lines.slice(0, line - 1).reduce((sum, l) => sum + l.length + 1, 0) +
+      Number(located[2]) - 1
+    );
+  }
+  if (/^Unexpected end of JSON input/.test(message)) {
+    return raw.length === 0 ? undefined : raw.length;
+  }
+  // Node 24 는 위치 대신 원문 발췌를 준다. 발췌를 원문에서 찾아 위치만 구한다.
+  const excerpt = /^Unexpected token '([\s\S])', (\.\.\.)?"([\s\S]*)"(?:\.\.\.)? is not valid JSON$/.exec(message);
+  if (!excerpt) return undefined;
+  const [, token, leading, snippet] = excerpt;
+  const start = raw.indexOf(snippet);
+  if (start < 0) return undefined;
+  const offset = start + (leading ? 10 : snippet.indexOf(token));
+  return raw[offset] === token ? offset : undefined;
+}
+
 function isNodeError(err: unknown): err is NodeJS.ErrnoException {
   return err instanceof Error && "code" in err;
 }
@@ -322,7 +359,7 @@ async function readConfigFile(): Promise<ConfigFileReadResult> {
     try {
       parsed = JSON.parse(raw);
     } catch (err) {
-      return { state: "invalid", reason: reasonOf(err) };
+      return { state: "invalid", reason: jsonParseReason(raw, err) };
     }
   } catch (err) {
     if (isNodeError(err) && err.code === "ENOENT") return { state: "absent" };
