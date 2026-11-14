@@ -17,6 +17,9 @@ import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import { WebContext } from "./context.js";
 import { createProjectWeb } from "../project/web.js";
 import { createMemberWeb } from "../member/web.js";
+import { createMessengerWeb } from "../messenger/web.js";
+import { createCalendarWeb } from "../calendar/web.js";
+import { createStreamWeb } from "../stream/web.js";
 
 const unsupported = Symbol("unsupported web domain");
 interface WebDomains {
@@ -36,9 +39,9 @@ export function createWebClient(cookie: string, baseUrl: string, publicApiBaseUr
     member: createMemberWeb(context),
     post: unsupported,
     wiki: unsupported,
-    messenger: unsupported,
-    calendar: unsupported,
-    stream: unsupported,
+    messenger: createMessengerWeb(context),
+    calendar: createCalendarWeb(context),
+    stream: createStreamWeb(context),
   };
   const methods = Object.assign({}, ...Object.values(domains).filter((value) => value !== unsupported));
   // 영역 구현은 각 영역 계약이 검사한다. 미지원 영역은 이 공통 경계가 모든 메서드를 막는다.

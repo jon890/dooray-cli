@@ -88,3 +88,8 @@ dooray messenger file download "배포알림" <fileId> --output-file ./보고서
 같은 경로로 메시지를 보내는 쪽은 문서에 있는데 읽는 쪽과 파일 받는 쪽은 없다.
 동작은 실제 호출로 확인했지만 호환을 약속받은 것이 아니라서, 예고 없이 막히거나 응답이 바뀔 수 있다.
 멈추면 곤란한 자동화에 넣을 때는 이 점을 감안한다.
+
+## 웹 방식
+
+`auth-mode` 가 `web` 이면 `channels` 와 `logs` 만 웹 경로로 돈다. `send`, `channel-send`, `thread-send`, `file download` 는 웹 경로를 확인하지 못해 지원하지 않고, 쓰면 요청 전에 종료 코드 3 으로 끝난다.
+웹의 메시지는 파일(`FILE`)과 답장(`REPLY`)만 `type` 을 채우고 스레드 정보는 비어 있다. 자세한 표는 [설정 가이드](setup.md)의 「웹 방식의 지원 범위」 가 소유한다.

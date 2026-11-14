@@ -134,3 +134,10 @@ dooray calendar event delete "팀 캘린더" <eventId> --scope all     # 반복 
 반복 일정의 원본 id 에 `this` 를 주면 그 회차가 아니라 반복 전체가 지워진다. 그래서 원본 id 를 `--scope` 없이(또는 `--scope this` 로)
 지우려 하면 확인을 묻기 전에 종료 코드 3 으로 멈춘다. 한 회차만 지우려면 `calendar event list` 로 그 회차 id 를 찾아 넘기고,
 반복 전체를 지우려면 `--scope all` 을 준다.
+
+## 웹 방식
+
+`auth-mode` 가 `web` 이면 캘린더 명령도 웹 화면이 쓰는 경로로 돈다. `--json` 은 공식 API 의 필드 이름과 구조를 유지한다.
+참석자·참조자를 넣는 쓰기(`event create`·`event edit` 의 `--to`, `--cc`)는 웹에서 확인하지 못해 지원하지 않고, 쓰면 요청 전에 종료 코드 3 으로 끝난다.
+지원하지 않는 명령·옵션과 빠질 수 있는 필드는 [설정 가이드](setup.md)의 「웹 방식의 지원 범위」 표가 소유한다.
+웹에서는 `event list` 가 일반 일정만 낸다.
