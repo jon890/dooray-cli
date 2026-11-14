@@ -11,14 +11,7 @@ dooray post comment add <project> <number> --body-file ./comment.md
 
 ## 목록 필터
 
-| 옵션 | 동작 |
-| --- | --- |
-| `--sort <asc\|desc>` | 정렬. 기본 `asc` |
-| `--reverse` | `--sort desc` 의 alias |
-| `--latest <n>` | 최신 N개. `--sort desc` 와 `--size N` 을 합친 단축이며 최대 100 |
-| `--since <iso>` | 이 시각 이후만. ISO 8601 또는 `YYYY-MM-DD` |
-| `--from-author <name>` | 작성자 이름 부분일치 |
-| `--page <n>` / `--size <n>` | 페이지 번호와 크기. 기본 0 과 20 |
+옵션 목록은 `dooray post comment list --help` 를 본다. 기본 정렬은 오래된 것이 먼저이고, `--latest <n>` 은 `--sort desc` 와 `--size n` 을 합친 단축이며 최대 100 이다.
 
 ```bash
 dooray post comment list <project> <number> --latest 5

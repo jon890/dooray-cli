@@ -100,20 +100,9 @@ dooray wiki page file list <project> <page-id>   # type 컬럼으로 general 과
 
 `list` 는 general 첨부와 inline 이미지를 합쳐 보여준다.
 
-## 삭제 안전 확인
-
-다음 위키 삭제 명령은 같은 안전 확인 정책을 따른다.
-
-- `dooray wiki page delete`
-- `dooray wiki page file delete`
-- `dooray wiki page comment delete`
-
-TTY 확인, non-TTY 실행, `-y`와 `--yes` 사용법은 [SKILL.md](../SKILL.md#삭제-명령의-확인-동작)를 따른다.
-
 ## 페이지 삭제
 
-`wiki page delete` 는 `DELETE /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 를 쓴다.
-공식 API 문서에 있는 endpoint 다.
+삭제 확인은 [SKILL.md](../SKILL.md) 의 「삭제 명령의 확인 동작」 을 따른다.
 
 빈 제목·본문으로 덮는 soft delete 우회는 쓰지 않는다. 페이지가 트리에 남아 혼란을 준다.
 
@@ -121,18 +110,11 @@ TTY 확인, non-TTY 실행, `-y`와 `--yes` 사용법은 [SKILL.md](../SKILL.md#
 
 ## 위키 페이지 이동 사용법
 
-`wiki page move` 는 `POST /wiki/v1/wikis/{wiki-id}/pages/{page-id}/move` 를 쓴다.
-공식 API 문서에 있는 endpoint 다.
-
 페이지를 옮길 때는 새 부모 페이지를 `--parent` 로 반드시 지정한다.
 
 ```bash
 dooray wiki page move <project> <page-id> --parent <parent-page-id>
 ```
-
-`--id <page-id>` 로 페이지를 직접 지정할 수 있다.
-`--project <project>` 를 함께 주면 CLI 가 wikiId 해석 호출을 줄인다.
-`--project` 는 선택이다.
 
 하위 페이지는 기본으로 함께 이동한다.
 페이지 하나만 옮기려면 `--no-children` 을 붙인다.
@@ -146,7 +128,7 @@ dooray wiki page move --id <page-id> --parent <parent-page-id> --no-children
 값에는 프로젝트 코드나 위키 ID 를 줄 수 있다.
 대상 위키에 권한이 없으면 명령은 오류로 끝난다.
 
-이동 명령에는 삭제 명령처럼 실행 전 확인 절차가 없다.
+이동 명령에는 삭제 명령과 달리 실행 전 확인 절차가 없다.
 
 페이지를 지우고 다시 만드는 방식은 쓰지 않는다.
 첨부와 인라인 이미지, 댓글, 페이지 ID 가 사라진다.

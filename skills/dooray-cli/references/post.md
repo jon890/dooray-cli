@@ -31,16 +31,6 @@ dooray post file upload   --url <url> --file ./report.pdf
 
 기존 positional 형태(`comment edit <project> <number> <comment-id>`)는 그대로 쓸 수 있다.
 
-## 삭제 안전 확인
-
-다음 업무 삭제 명령은 같은 안전 확인 정책을 따른다.
-
-- `dooray post comment delete`
-- `dooray post file delete`
-- `dooray post comment file delete`
-
-TTY 확인, non-TTY 실행, `-y`와 `--yes` 사용법은 [SKILL.md](../SKILL.md#삭제-명령의-확인-동작)를 따른다.
-
 ## 업무 목록 필터링
 
 `post list` 의 필터는 함께 줄 수 있고 `--all` 이면 모든 페이지에 같은 조건이 걸린다.
@@ -52,12 +42,9 @@ dooray post list <project> --cc me --updated prev-7d --order -postUpdatedAt
 dooray post list <project> --to user@example.com --all
 ```
 
-| 옵션 | 동작 |
-| --- | --- |
-| `--from` / `--to` / `--cc` | 등록자·담당자·참조자. `me`, 멤버 id(15자리 이상), 이메일, 프로젝트 멤버 이름을 받는다. 옵션마다 한 명 |
-| `--parent` | 그 업무의 하위 업무만. 이 프로젝트의 업무 번호(`42`), `<project>/<number>`, postId(15자리 이상 숫자) |
-| `--created` / `--updated` | 등록·수정 기간. 형식은 아래 |
-| `--order` | `createdAt`·`postUpdatedAt`·`postDueAt` 중 하나. 앞에 `-` 를 붙이면 내림차순. 기본 `-createdAt` |
+`--from`·`--to`·`--cc` 는 `me`, 멤버 id(15자리 이상), 이메일, 프로젝트 멤버 이름을 받고 옵션마다 한 명이다.
+`--parent` 는 이 프로젝트의 업무 번호(`42`), `<project>/<number>`, postId(15자리 이상 숫자)를 받는다.
+나머지 옵션은 `dooray post list --help` 를 본다.
 
 같은 멤버 옵션을 두 번 주면 조회 전에 종료 코드 3 으로 끝난다. 여러 사람의 결합 규칙이 공식 문서에 없어 받지 않는다.
 "A 나 B 가 담당인 업무" 가 필요하면 `--to` 를 한 사람씩 따로 조회해 합친다.
@@ -104,13 +91,18 @@ dooray post create <project> \
 | `--priority` | `highest` / `high` / `normal` / `low` / `lowest` |
 | `--due-date` | ISO 8601 |
 | `--parent` | `<project>/<number>` 또는 raw postId |
-| `--workflow` | 이름 또는 class (`registered` / `working` / `closed`). 부분일치가 모호하면 후보와 함께 에러 |
+| `--workflow` | 이름 또는 class (`backlog` / `registered` / `working` / `closed`). 부분일치가 모호하면 후보와 함께 에러 |
 | `--tag` | 반복 지정. mandatory 태그 그룹은 클라이언트가 미리 검증한다 |
 
 `--body` 와 `--body-file` 은 함께 쓸 수 없다.
 
 **`--workflow` 는 생성 후 별도 호출이다.** 설정에 실패해도 업무는 이미 만들어졌으므로
 stderr 에 경고만 나가고 **종료 코드는 0** 이다. 워크플로우 적용을 보장해야 하면 stderr 를 따로 확인한다.
+
+## 완료 처리
+
+`post done` 은 업무를 완료 상태로 바꾼다. 웹 방식은 프로젝트에 완료 상태가 여러 개면 대표 상태를 정할 수 없어 종료 코드 3 으로 멈춘다.
+그때는 `post workflow <project> <number> <workflow>` 로 완료 상태를 이름으로 지정한다.
 
 ## 참조자와 담당자 변경
 
@@ -183,10 +175,9 @@ dooray post comment get <project> <number> <comment-id> --json | jq -r '.body.co
 
 첨부를 정말 떼려는 것이면 `--no-confirm` 으로 진행한다.
 
-본문 형식은 기존 값을 그대로 유지한다.
-`text/html` 업무에 마크다운을 주면 마크다운 원문이 그대로 저장되므로,
-주는 본문의 형식이 기존과 다르면 `--mime-type text/x-markdown` 처럼 함께 준다.
-`--mime-type` 만 단독으로 주면 본문은 그대로 두고 형식만 바꾼다.
+본문 형식(`--mime-type`)은 [SKILL.md](../SKILL.md) 의 「본문 형식」 을 따른다.
+
+## 댓글 첨부 목록의 출처
 
 `comment file list`는 웹 UI 첨부와 CLI 업로드 링크를 함께 보여주고 `출처` 열로 구분한다.
 
@@ -235,9 +226,7 @@ CHILD_ID=$(dooray post create <project> --title "subtask A" --json | jq -r '.id'
 dooray post edit --id "$CHILD_ID" --parent <project>/<parent-number>
 ```
 
-`--parent` 는 단독으로 동작하지 않는다. `--title`, `--body`, `--body-file`, `--tag` 계열,
-참조자와 담당자 변경 옵션, `--mime-type` 중 하나를 함께 줘야 비대화형 수정으로 들어간다.
-아무것도 바꾸지 않으려면 원래 제목을 `--title` 에 그대로 넣는다.
+`--parent` 만 줘도 편집기를 열지 않고 비대화형으로 수정한다. 기존 제목·본문은 그대로 둔다.
 parent 해제는 API 가 지원하지 않아 CLI 로 할 수 없다. 웹 UI 에서 처리한다.
 계층 구조는 두 단계를 넘지 못한다. 상위업무를 가진 하위업무를 상위 업무로 설정할 수 없고,
 그 조건에서 `--parent` 를 쓰면 실패한다.
