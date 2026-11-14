@@ -1,4 +1,4 @@
-import { DoorayApiClient } from "../api/client.js";
+import type { ProjectClient } from "../api/project/types.js";
 import type { MemberGroup } from "../api/types.js";
 import type { CachedMemberGroup } from "../cache/types.js";
 import { getMemberGroups, setMemberGroups, isExpired } from "../cache/store.js";
@@ -10,7 +10,7 @@ import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 // resolveMember 의 MEMBER_ID_RE 와 동일 패턴
 const GROUP_ID_RE = /^\d{15,}$/;
 
-export async function fetchAllMemberGroups(client: DoorayApiClient, projectId: string): Promise<CachedMemberGroup[]> {
+export async function fetchAllMemberGroups(client: ProjectClient, projectId: string): Promise<CachedMemberGroup[]> {
   const all: CachedMemberGroup[] = [];
   let page = 0;
   const size = RESOLVER_FETCH_PAGE_SIZE;
@@ -32,7 +32,7 @@ export async function fetchAllMemberGroups(client: DoorayApiClient, projectId: s
 }
 
 export async function ensureMemberGroups(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
 ): Promise<CachedMemberGroup[]> {
   const entry = await getMemberGroups(projectId);
@@ -49,7 +49,7 @@ function hasValidCode(g: CachedMemberGroup): g is CachedMemberGroup & { code: st
 }
 
 export async function resolveMemberGroup(
-  client: DoorayApiClient,
+  client: ProjectClient,
   projectId: string,
   input: string,
 ): Promise<{ id: string; code: string }> {

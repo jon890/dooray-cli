@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { buildMemberNameMap } from "../../../resolvers/member.js";
 import { enrichCommentCreators } from "../../../utils/comment-enrich.js";
@@ -91,7 +91,7 @@ export const commentGetCommand = new Command("get")
     const parsed = parseGetArgs(arg1, arg2, arg3, opts);
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
     const globalOpts = commentGetCommand.optsWithGlobals() as OutputOptions;
 
     startSpinner("댓글 조회 중...");

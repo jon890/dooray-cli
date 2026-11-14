@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { resolveMessengerChannel } from "../../resolvers/messenger-channel.js";
 import { buildOrganizationMemberNameMap } from "../../resolvers/member.js";
 import type { MessengerLog } from "../../api/types.js";
@@ -90,7 +90,7 @@ export const messengerLogsCommand = new Command("logs")
     }
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const channelId = await resolveMessengerChannel(client, channel);
 

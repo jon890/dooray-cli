@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { basename } from "node:path";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { checkOutputFile, saveDownload } from "../../../utils/download-target.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
@@ -24,7 +24,7 @@ export const fileDownloadCommand = new Command("download")
     const globalOpts = fileDownloadCommand.optsWithGlobals() as OutputOptions;
     await checkOutputFile({ command: fileDownloadCommand, dirKey: "output", dirFlag: "--output", outputFile: opts.outputFile });
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     let projectArg: string | undefined;
     let postNumberArg: string | undefined;

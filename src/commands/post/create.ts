@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient, type DoorayClient } from "../../api/dooray-client.js";
 import { resolveProject, ensureProjects } from "../../resolvers/project.js";
 import { resolvePostInput } from "../../resolvers/post-input.js";
 import { resolveMember, buildMemberNameMap } from "../../resolvers/member.js";
@@ -24,7 +24,7 @@ import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
 
 async function resolveUsers(
-  client: DoorayApiClient,
+  client: DoorayClient,
   projectId: string,
   inputs: string[],
 ): Promise<CreatePostUser[]> {
@@ -71,7 +71,7 @@ export const postCreateCommand = new Command("create")
   .action(async (project, opts) => {
     const globalOpts = postCreateCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const mentionInputs: string[] = (opts.mention ?? []).filter((s: string) => s.length > 0);
     const groupInputs: string[] = (opts.mentionGroup ?? []).filter((s: string) => s.length > 0);

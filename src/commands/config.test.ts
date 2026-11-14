@@ -4,6 +4,7 @@ import { EXIT_CONFIG_ERROR, EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
 
 const mocks = vi.hoisted(() => ({
   getConfig: vi.fn(),
+  readSessionCookie: vi.fn().mockResolvedValue(undefined),
   warnConfigFileSecurity: vi.fn(),
   updateConfigValue: vi.fn(),
 }));
@@ -14,6 +15,7 @@ vi.mock("../config/store.js", async (importOriginal) => ({
     await importOriginal<typeof import("../config/store.js")>()
   ).configReadErrorMessage,
   getConfig: mocks.getConfig,
+  readSessionCookie: mocks.readSessionCookie,
   warnConfigFileSecurity: mocks.warnConfigFileSecurity,
 }));
 vi.mock("../services/config.js", () => ({
@@ -37,6 +39,20 @@ afterEach(() => {
 });
 
 describe("config 명령 오류 처리", () => {
+  it("쿠키는 API 방식에서도 유무만 표시하고 값은 내보내지 않는다", async () => {
+    mocks.getConfig.mockResolvedValue({ state: "ok", config: { version: 1, apiKey: "", baseUrl: "https://api.dooray.com" } });
+    mocks.readSessionCookie.mockResolvedValueOnce("fake-session-secret");
+    await runConfig(["get", "session-cookie"]);
+    expect(console.log).toHaveBeenCalledWith("session-cookie: 설정됨");
+    expect(JSON.stringify(vi.mocked(console.log).mock.calls)).not.toContain("fake-session-secret");
+  });
+  it("웹 방식을 켤 때 한 번만 stderr 로 경고한다", async () => {
+    mocks.updateConfigValue.mockResolvedValue({ cacheCleared: false });
+    const write = vi.spyOn(process.stderr, "write").mockReturnValue(true);
+    await runConfig(["set", "auth-mode", "web"]);
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(String(write.mock.calls[0][0])).toContain("비공식 웹 API");
+  });
   it("config set 의 오류는 process.exit 없이 종료 코드를 담아 던진다", async () => {
     const exit = vi.spyOn(process, "exit");
     mocks.updateConfigValue.mockRejectedValue(

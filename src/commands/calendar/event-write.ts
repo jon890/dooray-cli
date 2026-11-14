@@ -8,7 +8,7 @@
 
 import { Command, Option } from "commander";
 import type { OutputOptions } from "../../formatters/table.js";
-import type { DoorayApiClient } from "../../api/client.js";
+import type { DoorayClient } from "../../api/dooray-client.js";
 import type { CalendarEventWriteRequest } from "../../api/types.js";
 import { ensureMe } from "../../resolvers/me.js";
 import { resolveOrganizationMember } from "../../resolvers/member.js";
@@ -185,7 +185,7 @@ export async function prepareEventFields(
  * 같은 사람을 두 번 적으면 한 번만 넣는다. `me` 는 여러 번 나와도 내 정보를 한 번만 조회한다.
  */
 export async function resolveEventRequest(
-  client: DoorayApiClient,
+  client: DoorayClient,
   prepared: PreparedEventFields,
   mode: EventRequestMode,
 ): Promise<CalendarEventWriteRequest> {

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import { getConfigOrThrow } from "../../config/store.js";
-import { DoorayApiClient } from "../../api/client.js";
+import { createClient } from "../../api/dooray-client.js";
 import { fetchMemberOrganization } from "../../resolvers/member-organization.js";
 import { formatMemberDetail } from "../../formatters/member.js";
 import type { OutputOptions } from "../../formatters/table.js";
@@ -24,7 +24,7 @@ export const memberGetCommand = new Command("get")
     }
 
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
     const res = await client.getMemberDetail(memberId);
     const organization = withOrg ? await fetchMemberOrganization(client, memberId) : undefined;
     formatMemberDetail(res.result, globalOpts, organization);

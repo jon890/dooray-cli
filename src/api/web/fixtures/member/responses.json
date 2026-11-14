@@ -1,0 +1,15 @@
+{
+  "me": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"content": {"id": "1234567890123456789", "name": "홍길동", "userCode": "test-user", "externalEmailAddress": "user@example.com", "defaultOrganizationId": "2222333344445555666", "defaultOrganization": {"organizationId": "2222333344445555666", "role": "member"}, "idProviderType": "service", "idProviderUserId": "user", "locale": "ko_KR", "timezoneName": "Asia/Seoul", "englishName": "Test User", "nativeName": "홍길동", "nickname": "test", "displayMemberId": null, "sessionCheckedAt": "internal"}, "references": {}}
+  },
+  "search": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": {"contents": [{"id": "1234567890123456789", "name": "홍길동", "userCode": "test-user", "externalEmailAddress": "user@example.com", "emailAddress": "internal", "sessionCheckedAt": "internal"}], "totalCount": 2, "references": {}}
+  },
+  "projectMembers": {
+    "header": {"isSuccessful": true, "resultCode": 0, "resultMessage": ""},
+    "result": [{"projectId": "project-1", "role": "admin", "member": {"id": "1234567890123456789", "name": "홍길동", "emailAddress": "internal"}}],
+    "totalCount": 101
+  }
+}

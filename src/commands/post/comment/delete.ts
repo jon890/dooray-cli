@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
@@ -34,7 +34,7 @@ export const commentDeleteCommand = new Command("delete")
 
     const globalOpts = commentDeleteCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     let projectArg: string | undefined;
     let postNumberArg: string | undefined;

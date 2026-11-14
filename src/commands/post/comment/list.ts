@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient, type DoorayClient } from "../../../api/dooray-client.js";
 import { resolvePostInput } from "../../../resolvers/post-input.js";
 import { buildMemberNameMap, resolveMember } from "../../../resolvers/member.js";
 import { enrichCommentCreators } from "../../../utils/comment-enrich.js";
@@ -57,7 +57,7 @@ function resolveOrder(opts: Record<string, unknown>): "createdAt" | "-createdAt"
 }
 
 async function fetchSince(
-  client: DoorayApiClient,
+  client: DoorayClient,
   projectId: string,
   postId: string,
   sinceDate: Date,
@@ -97,7 +97,7 @@ export const commentListCommand = new Command("list")
   .action(async (project, postNumberStr, opts) => {
     const globalOpts = commentListCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     // 상호배타 검증 (fetch 전)
     validateExclusive(opts);

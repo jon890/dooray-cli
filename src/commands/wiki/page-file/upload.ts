@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
-import { DoorayApiClient } from "../../../api/client.js";
+import { createClient } from "../../../api/dooray-client.js";
 import {
   resolveWikiPageInput,
   WIKI_PAGE_ID_OPTION_DESC,
@@ -27,7 +27,7 @@ export const wikiPageFileUploadCommand = new Command("upload")
   .action(async (arg1, arg2, arg3, opts) => {
     const globalOpts = wikiPageFileUploadCommand.optsWithGlobals() as OutputOptions;
     const config = await getConfigOrThrow();
-    const client = new DoorayApiClient(config.apiKey, config.baseUrl);
+    const client = createClient(config);
 
     const fileType = opts.type as WikiPageFileType;
     if (fileType !== "general" && fileType !== "inline_image") {

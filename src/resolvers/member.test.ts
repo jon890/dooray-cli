@@ -30,6 +30,12 @@ function mockClient(opts: {
 }
 
 describe("resolveMember 입력 자동 분기", () => {
+  it("웹 목록의 이름이 있으면 멤버마다 상세를 다시 요청하지 않는다", async () => {
+    const detail = vi.fn();
+    const client = Object.assign(mockClient({ getMemberDetail: detail, getProjectMembers: vi.fn().mockResolvedValue({ result: [{ organizationMemberId: "member-1" }], totalCount: 1 }) }), { getMemberNameFromList: () => "홍길동" });
+    expect(await resolveMember(client, "project-1", "홍길동")).toBe("member-1");
+    expect(detail).not.toHaveBeenCalled();
+  });
   it("15자리 이상 숫자 → getMemberDetail 호출 후 input 반환", async () => {
     const id = "1234567890123456789";
     const client = mockClient({
