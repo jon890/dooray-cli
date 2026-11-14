@@ -119,7 +119,7 @@ commands/* → services/*  → cache/store + api/dooray-client + config/store   
 commands/* → formatters/*
 commands/* → utils/errors
 commands/setup|doctor|skill → skill/manager → skill/manifest
-editor/    → api/types + cache/types + utils (편집 데이터 타입과 임시 파일)
+editor/    → api/<영역>/types + cache/types + utils (편집 데이터 타입과 임시 파일)
 ```
 
 - `commands/setup.ts`는 services/config, api/dooray-client, @inquirer/prompts에 의존하고 스킬 파일시스템 처리는 `skill/manager.ts`에 위임. config 저장을 `services/config`로 보내 계정·환경이 바뀌면 캐시가 함께 비워지게 한다 ([ADR-042](adr/042-cache-invalidation-on-mutation.md))
