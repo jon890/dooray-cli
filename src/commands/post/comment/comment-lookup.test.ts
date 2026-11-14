@@ -16,7 +16,7 @@ describe("withCreatorNames", () => {
   it("이름 조회에 성공하면 작성자 이름을 채운다", async () => {
     mocks.buildMemberNameMap.mockResolvedValue(new Map([["m-1", "홍길동"]]));
     const result = await withCreatorNames({} as MemberClient, "p-1", comment);
-    expect(JSON.stringify(result)).toContain("홍길동");
+    expect(result.creator?.member?.name).toBe("홍길동");
   });
 
   it("이름 조회가 실패해도 댓글은 돌려준다", async () => {

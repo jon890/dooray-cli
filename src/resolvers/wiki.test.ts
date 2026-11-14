@@ -162,9 +162,24 @@ describe("filterWikisByName", () => {
 });
 
 describe("resolveTargetWikiId", () => {
+  beforeEach(() => {
+    vi.mocked(isExpired).mockReturnValue(false);
+    vi.mocked(getProjects).mockResolvedValue({ data: [], updatedAt: new Date().toISOString() });
+    vi.mocked(getPrivateProjects).mockResolvedValue(null);
+  });
+
   it("프로젝트 id 꼴이면 조회 없이 그대로 wikiId 로 쓴다", async () => {
     const client = mockClient(async () => ({ result: [], totalCount: 0 }));
     await expect(resolveTargetWikiId(client, "1234567890123456789")).resolves.toBe("1234567890123456789");
     expect(client.getWikis).not.toHaveBeenCalled();
+  });
+
+  it("프로젝트 코드면 resolveWiki 처럼 풀어 그 프로젝트의 wikiId 를 돌려준다", async () => {
+    vi.mocked(getProjects).mockResolvedValue({
+      data: [{ id: "3333444455556666777", code: "sample-project", wikiId: "wiki-7" }],
+      updatedAt: new Date().toISOString(),
+    });
+    const client = mockClient(async () => ({ result: [], totalCount: 0 }));
+    await expect(resolveTargetWikiId(client, "sample-project")).resolves.toBe("wiki-7");
   });
 });
