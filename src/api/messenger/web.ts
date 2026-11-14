@@ -1,19 +1,17 @@
 /**
  * 메신저 웹 경로(messenger 의 `v1`·`v3` api 경로)를 호출하고 공개 API 응답 모양으로 바꾼다.
- * 읽기(대화방 목록·메시지 목록)만 실측했다. 보내기·스레드·파일 받기는 웹 경로를 실측하지 못해 지원하지 않는다.
+ * 읽기, 나에게 보내기, 스레드 만들기, 파일 받기를 실측했다. 다른 사람의 대화방에 보내는 경로는 같은 요청이지만 실측 장소 규칙상 확인하지 못했다.
  * 경로와 변환 근거는 docs/api/web-endpoints/messenger.md 가 소유한다.
  */
 import type { MessengerClient } from "./types.js";
 import type { MessengerChannel, MessengerLog } from "../types.js";
 import { apiPath } from "../api-path.js";
 import { date, identifier, invalidResponse, pick, row, rows, text, type Row } from "../web/convert.js";
+import { randomUUID } from "node:crypto";
+import { parseContentDispositionFileName, fallbackFileName } from "../../utils/content-disposition.js";
 import type { WebContext } from "../web/context.js";
 import { DoorayCliError } from "../../utils/errors.js";
-import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
-
-const unsupported = async (): Promise<never> => {
-  throw new DoorayCliError("웹 방식에서는 지원하지 않습니다. auth-mode 를 api-key 로 바꾸세요.", EXIT_PARAM_ERROR);
-};
+import { EXIT_API_ERROR, EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 
 function channel(source: Row): MessengerChannel {
   const memberIds = Array.isArray(source.members) ? source.members.map(identifier) : [];
@@ -38,6 +36,10 @@ function log(source: Row): MessengerLog {
   const out: Row = { id: identifier(source.id), ...pick(source, ["seq", "text"]) };
   if (source.senderId !== undefined && source.senderId !== null) out.sender = { type: "member", member: { organizationMemberId: identifier(source.senderId) } };
   if (source.sentAt !== undefined && source.sentAt !== null) out.sentAt = date(source.sentAt);
+  if (source.thread) {
+    const thread = row(source.thread);
+    out.thread = { channelId: identifier(thread.channelId), ...pick(thread, ["totalCount", "lastUpdatedAt"]) };
+  }
   if (source.file) {
     const file = row(source.file);
     out.file = { id: identifier(file.id), ...pick(file, ["title", "fileName", "fileSize", "mimeType"]) };
@@ -46,9 +48,39 @@ function log(source: Row): MessengerLog {
   return out as unknown as MessengerLog;
 }
 
+const ALREADY_EXISTS = /CHANNEL_ALREADY_EXISTS/;
+
 export function createMessengerWeb(context: WebContext): MessengerClient {
   const http = context.http;
-  return {
+  let myId: Promise<string> | undefined;
+  const memberId = () => (myId ??= http.request("messenger/v1/api/members/me", { searchParams: { v: "0.2.0" } }).then((response) => identifier(row(row(response.result).content).id)));
+
+  /** 채널(또는 스레드 채널)에 메시지를 보낸다. token 은 클라이언트가 만드는 UUID 다. */
+  async function send(channelId: string, body: string) {
+    const response = await http.request(apiPath`messenger/v1/api/channelLogs/${channelId}`, { method: "POST", json: { text: body, token: randomUUID() } });
+    const content = row(row(response.result).content);
+    return { header: response.header, id: identifier(content.id), channelId: identifier(content.channelId) };
+  }
+
+  /** 로그에서 스레드를 연다. 이미 있으면 그 스레드 채널을 돌려준다. */
+  async function openThread(channelId: string, logId: string): Promise<string> {
+    try {
+      const me = await memberId();
+      const response = await http.request("messenger/v1/api/thread-channels", {
+        method: "POST", json: { parentChannelId: channelId, parentChannelLogId: logId, capacity: 1, type: "thread", members: [me], isPublic: false },
+      });
+      return identifier(row(row(response.result).content).channelId);
+    } catch (error) {
+      if (!(error instanceof DoorayCliError) || !ALREADY_EXISTS.test(error.message)) throw error;
+      // 이미 스레드가 있는 로그다. 대화방 로그의 thread 필드에서 그 채널을 찾는다.
+      const logs = await client.getChannelLogs(channelId, 1000);
+      const found = logs.result.find((l) => l.id === logId)?.thread?.channelId;
+      if (!found) throw new DoorayCliError("스레드가 이미 있지만 그 채널을 찾지 못했습니다.", EXIT_API_ERROR);
+      return found;
+    }
+  }
+
+  const client: MessengerClient = {
     async getMessengerChannels() {
       const response = await http.request("messenger/v3/api/members/me/favorites", { searchParams: { responseType: "all", flags: "system,normal,archived" } });
       const content = row(row(response.result).content);
@@ -64,10 +96,43 @@ export function createMessengerWeb(context: WebContext): MessengerClient {
       const result = rows(content.logs).map(log).reverse();
       return { header: response.header, result, ...(typeof content.hasPrev === "boolean" && { hasMore: content.hasPrev }) };
     },
-    sendDirectMessage: unsupported,
-    sendChannelMessage: unsupported,
-    createChannelThread: unsupported,
-    createLogThread: unsupported,
-    downloadMessengerFile: unsupported,
+    async sendDirectMessage(organizationMemberId, body) {
+      // 웹에는 상대 id 로 1:1 방에 바로 보내는 경로가 없다. 내 대화방이나 이미 있는 1:1 방을 목록에서 찾아 보낸다.
+      const channels = (await client.getMessengerChannels()).result;
+      const me = await memberId();
+      const target = organizationMemberId === me
+        ? channels.find((c) => c.type === "me")
+        : channels.find((c) => c.type === "direct" && c.users?.participants?.some((p) => p.member?.organizationMemberId === organizationMemberId));
+      if (!target) throw new DoorayCliError("웹 방식에서는 대화방이 아직 없는 상대에게 보낼 수 없습니다. 먼저 메신저에서 1:1 대화를 시작하세요.", EXIT_PARAM_ERROR);
+      const sent = await send(target.id, body);
+      return { header: sent.header, result: { id: sent.id, channelId: sent.channelId } };
+    },
+    async sendChannelMessage(channelId, body) {
+      const sent = await send(channelId, body);
+      return { header: sent.header, result: { id: sent.id, channelId: sent.channelId } };
+    },
+    async createChannelThread(channelId, body, threadText) {
+      const parent = await send(channelId, body);
+      const threadChannelId = await openThread(channelId, parent.id);
+      const first = threadText ? await send(threadChannelId, threadText) : parent;
+      return { header: first.header, result: { id: first.id, channelId: threadChannelId } };
+    },
+    async createLogThread(channelId, logId, body) {
+      const threadChannelId = await openThread(channelId, logId);
+      const sent = await send(threadChannelId, body);
+      return { header: sent.header, result: { id: sent.id, channelId: threadChannelId } };
+    },
+    async downloadMessengerFile(channelId, fileId) {
+      const response = await http.requestBytes(apiPath`messenger/v2/api/channel/${channelId}/file/${fileId}`);
+      const disposition = response.headers.get("content-disposition");
+      // 없는 파일은 200 에 본문과 content-disposition 이 모두 없다.
+      if (!disposition) {
+        await response.body?.cancel().catch(() => undefined);
+        throw new DoorayCliError("메신저 파일을 찾지 못했습니다. 대화방 id 와 파일 id 조합을 확인하세요.", EXIT_API_ERROR);
+      }
+      const fileName = parseContentDispositionFileName(disposition) ?? fallbackFileName(fileId, undefined, disposition);
+      return { buffer: await response.arrayBuffer(), fileName };
+    },
   };
+  return client;
 }

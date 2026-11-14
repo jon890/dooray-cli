@@ -130,10 +130,86 @@
             "senderId": "member-1",
             "sentAt": 1763049720000,
             "text": "답장",
-            "originalLogId": "log-1"
+            "originalLogId": "log-1",
+            "thread": {
+              "channelId": "thread-1",
+              "totalCount": "2",
+              "lastUpdatedAt": 1763049780000
+            }
           }
         ]
       }
     }
+  },
+  "myMessenger": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "id": "member-1",
+        "orgId": "tenant-1"
+      }
+    }
+  },
+  "sent": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "id": "log-9",
+        "channelId": "channel-2",
+        "type": 0,
+        "senderId": "member-1",
+        "seq": 9,
+        "text": "x",
+        "token": "t"
+      }
+    }
+  },
+  "sentThread": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "id": "log-10",
+        "channelId": "thread-1",
+        "type": 0,
+        "senderId": "member-1",
+        "seq": 1,
+        "text": "x"
+      }
+    }
+  },
+  "threadCreated": {
+    "header": {
+      "resultCode": 0,
+      "resultMessage": "",
+      "isSuccessful": true
+    },
+    "result": {
+      "content": {
+        "channelId": "thread-1",
+        "parentChannelId": "channel-2",
+        "parentChannelLogId": "log-9",
+        "type": "thread"
+      }
+    }
+  },
+  "threadExists": {
+    "header": {
+      "resultCode": -300101,
+      "resultMessage": "CHANNEL_ALREADY_EXISTS_ERROR",
+      "isSuccessful": false
+    },
+    "result": null
   }
 }

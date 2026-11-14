@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createWebClient } from "../web/index.js";
+import { createMessengerWeb } from "./web.js";
+import { WebContext } from "../web/context.js";
 
 const fixtures = JSON.parse(readFileSync(new URL("../web/fixtures/messenger/responses.json", import.meta.url), "utf8"));
 const client = () => createWebClient("fake-session", "https://my-org.dooray.com", "https://api.dooray.com");
@@ -41,6 +43,7 @@ describe("웹 메신저 읽기", () => {
     expect(res.result[1]).toMatchObject({ type: "FILE", file: { id: "file-1", fileName: "a.txt", fileSize: 10, mimeType: "text/plain" } });
     expect(res.result[1].file).not.toHaveProperty("thumb");
     expect(res.result[2]).not.toHaveProperty("type");
+    expect(res.result[0].thread).toEqual({ channelId: "thread-1", totalCount: "2", lastUpdatedAt: 1763049780000 });
     expect(res.result[2].sentAt).toMatch(/[+-]\d\d:\d\d$/);
   });
 
@@ -49,15 +52,87 @@ describe("웹 메신저 읽기", () => {
     await expect(client().getChannelLogs("channel-1", 5)).rejects.toMatchObject({ exitCode: 1 });
     await expect(client().getMessengerChannels()).rejects.toMatchObject({ exitCode: 1 });
   });
+});
 
-  it("보내기·스레드·파일 받기는 요청 없이 지원하지 않는다고 끝낸다", async () => {
-    const calls = respond(fixtures.logs);
-    const c = client();
-    for (const run of [
-      () => c.sendDirectMessage("member-1", "x"), () => c.sendChannelMessage("channel-1", "x"),
-      () => c.createChannelThread("channel-1", "x"), () => c.createLogThread("channel-1", "log-1", "x"),
-      () => c.downloadMessengerFile("channel-1", "file-1"),
-    ]) await expect(run()).rejects.toMatchObject({ exitCode: 3 });
-    expect(calls).toHaveLength(0);
+type Call = { url: URL; method: string; body?: Record<string, unknown> };
+function sequence(...bodies: unknown[]) {
+  const calls: Call[] = [];
+  vi.stubGlobal("fetch", vi.fn(async (request: Request) => {
+    const body = request.body ? await request.clone().json() : undefined;
+    calls.push({ url: new URL(request.url), method: request.method, body });
+    return Response.json(bodies[Math.min(calls.length - 1, bodies.length - 1)]);
+  }));
+  return calls;
+}
+
+describe("웹 메신저 보내기", () => {
+  it("채널 메시지는 channelLogs 로 text 와 UUID token 을 보내고 id·channelId 만 돌려준다", async () => {
+    const calls = sequence(fixtures.sent);
+    const res = await client().sendChannelMessage("channel-2", "안녕");
+    expect(calls[0]).toMatchObject({ method: "POST" });
+    expect(calls[0].url.pathname).toBe("/messenger/v1/api/channelLogs/channel-2");
+    expect(calls[0].body).toEqual({ text: "안녕", token: expect.stringMatching(/^[0-9a-f-]{36}$/) });
+    expect(res.result).toEqual({ id: "log-9", channelId: "channel-2" });
+  });
+
+  it("나에게 보내기는 내 아이디면 나와의 대화방으로, 그 밖에는 이미 있는 1:1 방으로 보낸다", async () => {
+    const calls = sequence(fixtures.channels, fixtures.myMessenger, fixtures.sent);
+    await client().sendDirectMessage("member-1", "메모");
+    expect(calls.map((c) => c.url.pathname)).toEqual(["/messenger/v3/api/members/me/favorites", "/messenger/v1/api/members/me", "/messenger/v1/api/channelLogs/channel-2"]);
+    const other = sequence(fixtures.channels, fixtures.myMessenger, fixtures.sent);
+    await client().sendDirectMessage("member-2", "안녕");
+    expect(other[2].url.pathname).toBe("/messenger/v1/api/channelLogs/channel-1");
+  });
+
+  it("대화방이 없는 상대에게는 요청 없이 지원하지 않는다고 끝낸다", async () => {
+    const calls = sequence(fixtures.channels, fixtures.myMessenger);
+    await expect(client().sendDirectMessage("member-9", "안녕")).rejects.toMatchObject({ exitCode: 3 });
+    expect(calls).toHaveLength(2);
+  });
+
+  it("메시지에서 스레드를 열고 스레드 채널에 보낸다", async () => {
+    const calls = sequence(fixtures.myMessenger, fixtures.threadCreated, fixtures.sentThread);
+    const res = await client().createLogThread("channel-2", "log-9", "스레드 글");
+    expect(calls[1].url.pathname).toBe("/messenger/v1/api/thread-channels");
+    expect(calls[1].body).toEqual({ parentChannelId: "channel-2", parentChannelLogId: "log-9", capacity: 1, type: "thread", members: ["member-1"], isPublic: false });
+    expect(calls[2].url.pathname).toBe("/messenger/v1/api/channelLogs/thread-1");
+    expect(res.result).toEqual({ id: "log-10", channelId: "thread-1" });
+  });
+
+  it("새 메시지와 스레드를 함께 만든다. 스레드 첫 글을 생략하면 새 메시지 id 를 돌려준다", async () => {
+    const calls = sequence(fixtures.sent, fixtures.myMessenger, fixtures.threadCreated);
+    const res = await client().createChannelThread("channel-2", "본문");
+    expect(calls).toHaveLength(3);
+    expect(res.result).toEqual({ id: "log-9", channelId: "thread-1" });
+  });
+
+  it("이미 스레드가 있는 메시지는 로그의 thread 필드에서 그 채널을 찾아 쓴다", async () => {
+    const calls = sequence(fixtures.myMessenger, fixtures.threadExists, fixtures.logs, fixtures.sentThread);
+    const res = await client().createLogThread("channel-1", "log-3", "또 하나");
+    expect(calls[2].url.pathname).toBe("/messenger/v1/api/channel/channel-1/logs");
+    expect(calls[3].url.pathname).toBe("/messenger/v1/api/channelLogs/thread-1");
+    expect(res.result.channelId).toBe("thread-1");
+  });
+});
+
+describe("웹 메신저 파일 받기", () => {
+  function setup() {
+    const context = new WebContext("fake-session", "https://example.dooray.com", "https://api.dooray.com");
+    return { context, api: createMessengerWeb(context) };
+  }
+
+  it("channel/file 경로에서 받아 content-disposition 의 이름을 쓴다", async () => {
+    const { context, api } = setup();
+    const bytes = vi.spyOn(context.http, "requestBytes").mockResolvedValue(new Response("데이터", { headers: { "content-disposition": 'attachment; filename="../report.pdf"' } }));
+    const file = await api.downloadMessengerFile("channel-1", "file-1");
+    expect(bytes).toHaveBeenCalledWith("messenger/v2/api/channel/channel-1/file/file-1");
+    expect(file.fileName).toBe("report.pdf");
+    expect(new TextDecoder().decode(file.buffer)).toBe("데이터");
+  });
+
+  it("없는 파일은 200 에 content-disposition 이 없어 찾지 못했다고 끝낸다", async () => {
+    const { context, api } = setup();
+    vi.spyOn(context.http, "requestBytes").mockResolvedValue(new Response(null, { status: 200 }));
+    await expect(api.downloadMessengerFile("channel-1", "file-9")).rejects.toMatchObject({ exitCode: 1 });
   });
 });
