@@ -1,22 +1,14 @@
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../../config/store.js";
 import { createClient } from "../../../api/dooray-client.js";
-import { resolvePostInput } from "../../../resolvers/post-input.js";
-import { buildMemberNameMap } from "../../../resolvers/member.js";
-import { enrichCommentCreators } from "@/formatters/comment-enrich.js";
 import { formatCommentDetail } from "../../../formatters/comment.js";
 import type { OutputOptions } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import { type CommentLookupArgs, fetchPostComment, withCreatorNames } from "./comment-lookup.js";
 
-export interface GetArgs {
-  projectArg?: string;
-  postNumberArg?: string;
-  commentId: string;
-  idOpt?: string;
-  urlOpt?: string;
-}
+export type GetArgs = CommentLookupArgs;
 
 /**
  * argv 분기 결정 순수 함수 — action 분리로 단위 테스트 가능
@@ -98,33 +90,15 @@ export const commentGetCommand = new Command("get")
     let projectId: string;
     let comment;
     try {
-      const resolved = await resolvePostInput(client, {
-        projectArg: parsed.projectArg,
-        postNumberArg: parsed.postNumberArg,
-        idOpt: parsed.idOpt,
-        urlOpt: parsed.urlOpt,
-        argv: process.argv.slice(2),
-      });
-      projectId = resolved.projectId;
-
-      const detail = await client.getPostComment(resolved.projectId, resolved.postId, parsed.commentId);
-      comment = detail.result;
+      ({ projectId, comment } = await fetchPostComment(client, parsed, process.argv.slice(2)));
       stopSpinner(true, "댓글 조회 완료");
     } catch (e) {
       stopSpinner(false);
       throw e;
     }
 
-    if (!globalOpts.json) {
-      // table/quiet 모드만 enrich — --json 은 raw 유지 (comment list 와 동일 정책)
-      let nameMap = new Map<string, string>();
-      try {
-        nameMap = await buildMemberNameMap(client, projectId);
-      } catch {
-        // enrich 실패 시 빈 이름으로 폴백 (comment list 와 동일 정책)
-      }
-      comment = enrichCommentCreators([comment], nameMap)[0]!;
-    }
+    // table/quiet 모드만 이름을 채운다. --json 은 raw 유지 (comment list 와 동일 정책)
+    if (!globalOpts.json) comment = await withCreatorNames(client, projectId, comment);
 
     formatCommentDetail(comment, globalOpts);
   });

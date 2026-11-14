@@ -4,17 +4,8 @@ import { Command } from "commander";
 import type { StreamListResponse } from "@/api/stream/types.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
-import {
-  cursorToMs,
-  DEFAULT_SIZE,
-  fetchStreams,
-  parseSize,
-  PAGING_SIZE,
-  resolveSinceMs,
-  streamItemAt,
-  streamItemAuthor,
-  streamItemSummary,
-} from "./list.js";
+import { cursorToMs, fetchStreams, streamItemAt, streamItemAuthor, streamItemSummary } from "./feed.js";
+import { DEFAULT_SIZE, parseSize, PAGING_SIZE, resolveSinceMs } from "./list.js";
 
 const mocks = vi.hoisted(() => ({
   getConfigOrThrow: vi.fn(),

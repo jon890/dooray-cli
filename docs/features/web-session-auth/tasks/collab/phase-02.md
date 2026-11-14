@@ -25,7 +25,7 @@
 ### 2. `src/api/stream/web.ts` 의 `createStreamWeb(context): StreamClient`
 
 - `getStreams(params)`: `GET v2/wapi/streams` 에 `services=project,mail,calendar,drive,wiki,contacts,ai`, `size`, `before`, `read` 를 보낸다. `Dooray-Api-Version` 은 붙이지 않는다(결과가 같다).
-- 카드를 공식 원소로 바꾸는 순수 함수를 `src/api/stream/web-convert.ts` 에 둔다: `mail`, `post`(+ `eventList` 마다 `event` 원소), `page`(+ 위키 댓글 `pageComment` 원소), `schedule`. 사용자 객체는 `{type, member{organizationMemberId, name}}` 로 줄인다. 공식에 없는 카드·하위 항목은 뺀다.
+- 카드를 공식 원소로 바꾸는 순수 함수를 `src/api/stream/web.ts` 안에 둔다: `mail`, `post`(+ `eventList` 마다 `event` 원소), `page`(+ 위키 댓글 `pageComment` 원소), `schedule`. 사용자 객체는 `{type, member{organizationMemberId, name}}` 로 줄인다. 공식에 없는 카드·하위 항목은 뺀다.
 - `result.references.nextTimestamp` 를 `cursor` 로 올린다. 끝에서는 `cursor` 없이 빈 `result` 를 낸다.
 - 뺀 카드의 개수는 stderr 한 줄로 알린다(출력이 달라지는 것을 숨기지 않는다).
 - 참조 맵에 카드의 id 가 없으면 `EXIT_API_ERROR` 로 멈춘다. 웹 쪽 변경을 조용히 넘기지 않는다는 설계 규칙을 따른다.
@@ -58,7 +58,7 @@ node scripts/check-public-refs.mjs
 
 | 파일 | 변경 |
 | --- | --- |
-| `src/api/stream/web.ts`, `src/api/stream/web-convert.ts`, `src/api/stream/web.test.ts` | 신규 |
+| `src/api/stream/web.ts`, `src/api/stream/web.test.ts` | 신규 |
 | `src/api/web/fixtures/stream/responses.json` | 신규 |
 | `src/commands/web-support/stream.ts` | 신규 |
 | `src/api/web/index.ts`, `src/commands/web-support.ts` | 한 줄씩 |

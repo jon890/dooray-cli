@@ -1,4 +1,5 @@
-import type { DoorayClient } from "../api/dooray-client.js";
+import type { ProjectClient } from "@/api/project/types.js";
+import type { WikiClient } from "@/api/wiki/types.js";
 import type { Wiki } from "@/api/wiki/types.js";
 import { getProjects, getPrivateProjects, getWikis, setWikis, isExpired } from "../cache/store.js";
 import { WIKIS_TTL_MS, type CachedProject, type CachedWiki } from "../cache/types.js";
@@ -6,7 +7,7 @@ import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR, EXIT_API_ERROR } from "../utils/exit-codes.js";
 import { resolveProject, ensurePrivateProjects, PROJECT_ID_RE } from "./project.js";
 
-export async function fetchAllWikis(client: DoorayClient): Promise<Wiki[]> {
+export async function fetchAllWikis(client: ProjectClient & WikiClient): Promise<Wiki[]> {
   const all: Wiki[] = [];
   let page = 0;
   const size = 100;
@@ -29,7 +30,7 @@ export function filterWikisByName(wikis: Wiki[], keyword: string): Wiki[] {
 }
 
 export async function resolveWiki(
-  client: DoorayClient,
+  client: ProjectClient & WikiClient,
   projectCode: string,
 ): Promise<string> {
   // resolveProject 가 공용 목록을 채우고, 거기서 못 찾으면 private 목록도 채운다 (ADR-054)
@@ -64,8 +65,18 @@ export async function resolveWiki(
   return project.wikiId;
 }
 
+/**
+ * 위키 이동의 대상 위키. 프로젝트 id 꼴이면 그대로 wikiId 로 쓰고, 아니면 프로젝트 코드로 풀어 wikiId 를 얻는다.
+ */
+export async function resolveTargetWikiId(
+  client: ProjectClient & WikiClient,
+  input: string,
+): Promise<string> {
+  return PROJECT_ID_RE.test(input) ? input : resolveWiki(client, input);
+}
+
 export async function resolveWikiHomePageId(
-  client: DoorayClient,
+  client: ProjectClient & WikiClient,
   wikiId: string,
 ): Promise<string> {
   const cached = await getWikis();
