@@ -1,10 +1,12 @@
 ## ADR-018: `dooray setup` 에서 Claude Code 스킬 설치
 
-**상태**: [ADR-035](035-managed-skill-lifecycle.md)로 대체됨. 아래는 ADR-035 이전의 설계이며 현재 동작이 아니다.
+- **status**: `superseded`
 
 **결정**: setup 마지막 단계에서 스킬 설치 여부를 물어보고 심볼릭 링크로 설치 (`~/.claude/skills/dooray-cli` → 패키지 내부 `skills/dooray-cli/`).
 idempotent 재실행 가능.
 npx 임시 경로 감지 시 경고 후 skip (global install 전용).
+
+**대체된 부분**: 패키지 내부 직접 링크 설계는 [ADR-035](../035-managed-skill-lifecycle.md) 가 대체했다. 아래는 대체되기 전의 당시 맥락이다.
 
 **맥락**: 별도 `dooray install skills` 커맨드보다 setup 일원화가 UX 간결.
 심볼릭 링크는 `npm update -g` 시 스킬도 자동 최신화 (유지보수 비용 0).

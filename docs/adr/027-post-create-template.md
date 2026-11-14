@@ -17,4 +17,4 @@ Dooray API 가 `GET /templates` 와 `interpolation` 파라미터를 노출 (cmux
 
 **적용 범위**: `post create --template` 만.
 `post edit --template` 은 별도 — 기존 본문 덮어쓰기인지 merge 인지 의도 불명확.
-templates 캐시는 ADR-004/010 동일 패턴 적용 (TTL 24h, `~/.dooray/cache/templates/{projectId}.json`).
+templates 캐시는 ADR-004/010 동일 패턴 적용한다. 경로와 TTL 은 [data-schema](../data-schema.md)가 소유한다.

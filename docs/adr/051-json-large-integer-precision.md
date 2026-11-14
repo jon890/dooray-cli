@@ -26,7 +26,7 @@ JavaScript 의 `Number.MAX_SAFE_INTEGER` 는 16자리인 9007199254740991 이므
 | CLI 가 출력한 값 | 1234567890123456800 |
 | 메신저 실시간 채널이 알려준 실제 값 | 1234567890123456789 |
 
-`src/api/types.ts` 는 `MessengerSendResult.id` 를 `string` 으로 선언한다.
+당시 `api/types.ts` 는 `MessengerSendResult.id`(지금은 `src/api/messenger/types.ts`)를 `string` 으로 선언한다.
 TypeScript 의 타입은 런타임 값을 바꾸지 않으므로 이 선언이 손실을 막지 못했다.
 
 **적용 범위**: 특정 endpoint 가 아니라 모든 응답이다.

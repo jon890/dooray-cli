@@ -2,6 +2,9 @@
 
 **결정**: Dooray 파일 업로드/다운로드 시 307 리다이렉트를 수동 처리
 
+**대체된 부분**: 2차 요청에 같은 인증 헤더를 싣는다는 조건은 [ADR-074](074-file-redirect-hardening.md) 가 좁혔다.
+`location` 이 API 주소와 같은 도메인의 `https` 일 때만 싣는다.
+
 **이유**:
 
 - Dooray 파일 API는 307 Temporary Redirect로 실제 파일 서버 URL을 반환

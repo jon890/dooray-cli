@@ -16,7 +16,7 @@ PostUser type 의 그룹 분기는 `type: "memberGroup"` 이 아니라 `type: "g
 **대안 기각**:
 - cc-only patch endpoint 역공학 — 부재 확인 (`POST .../set-cc`, `.../cc`, `.../to-and-cc` 모두 null 응답)
 - `{ "type": "memberGroup", "memberGroup": { "memberGroupId": "..." } }` 형식 (이슈 본문 시도) — `Failed to read HTTP message`.
-  실제 API contract 는 `type: "group"` 과 `Group.projectMemberGroupId` (api/types.ts:122-125)
+  실제 API contract 는 `type: "group"` 과 `Group.projectMemberGroupId` (당시 `api/types.ts`, 지금은 `src/api/common/types.ts`)
 - subcommand 분리 (`post participants {add,set,remove}`) — `post edit` 의 다른 옵션 (title/body/mention/link-task) 과 조합 불가, 한 번 PUT 으로 끝낼 수 없어 race 위험
 - replace 기본 정책 — 사용자가 매번 전체 멤버/그룹 알아야 함, 자동화 친화성 떨어짐. append와 `--cc-clear` / `--to-clear` 채택
 

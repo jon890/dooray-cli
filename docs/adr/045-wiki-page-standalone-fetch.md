@@ -15,7 +15,7 @@
   `GET /wiki/v1/pages/{page-id}` 가 공개 API 에 있고 wikiId 없이 페이지 ID 하나만 받는다.
   응답 `result` 는 `id`, `wikiId`, `version`, `parentPageId`, `subject`, `body`, `root`,
   `createdAt`, `updatedAt`, `creator`, `referrers`, `files`, `images` 를 담는다.
-  `src/api/types.ts` 의 `WikiPageDetail` 과 필드가 일치해 새 타입이 필요 없다.
+  당시 `api/types.ts` 의 `WikiPageDetail`(지금은 `src/api/wiki/types.ts`)과 필드가 일치해 새 타입이 필요 없다.
 
   전제가 틀린 채로 Issue #154 의 계획을 세웠다.
   그 이슈의 핵심 요청은 페이지 ID 하나만 아는 상태에서 project 를 찾아가는 절차였는데,

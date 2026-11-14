@@ -14,7 +14,7 @@
 
 **대안 기각**:
 - 기존 사전 필터 정책 유지 — root cause 미해결. response shape 가 평면으로 되돌아오지 않는 한 모든 그룹 영영 매칭 실패
-- API client 단에서 response 정규화 — `client.ts` 가 raw HTTP 래퍼 (비즈니스 로직 없음) 원칙에 위배. resolver 단에서 처리
+- API client 단에서 response 정규화 — 당시 `api/client.ts` 가 raw HTTP 래퍼 (비즈니스 로직 없음) 원칙에 위배. resolver 단에서 처리
 - name fallback — 공식 spec / 실제 응답 둘 다 MemberGroup 에 `name` 필드 부재. fallback 키 없음
 - cache 스키마 확장 (name 필드 추가) — 위 사유로 무의미
 - detail API `/member-groups/{id}` 의 `members[].name` 활용 — 그룹 자체 이름이 아니라 그룹 멤버 이름. 의미 충돌
@@ -22,7 +22,7 @@
 **적용 범위**:
 - `src/resolvers/member-group.ts` `fetchAllMemberGroups` — `res.result.flat()` 로 nested array 정규화
 - `src/resolvers/member-group.ts` `resolveMemberGroup` — numeric 15+자리 입력 시 id 직접 매칭 fallback (response shape 가 다시 변할 robustness)
-- `src/api/types.ts` `MemberGroup.code?: string` 과 `src/cache/types.ts` `CachedMemberGroup.code?: string` 유지 (개별 code 누락 가능성은 여전히 존재)
+- `src/api/project/types.ts` `MemberGroup.code?: string` 과 `src/cache/types.ts` `CachedMemberGroup.code?: string` 유지 (개별 code 누락 가능성은 여전히 존재)
 - `src/resolvers/match.ts` undefined / 빈 문자열 가드 유지
 - stderr 메시지의 ADR 번호 오기 (`ADR-026` → `ADR-028`) 정정
 - helpHint AI 친화: 후보 탐색 명령과 id 직접 입력 형식 둘 다 명시

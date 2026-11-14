@@ -10,7 +10,7 @@
 
 **서버 특성**:
 
-- `SINCE` 날짜 검색 미지원 (서버 파서 버그)
+- `SEARCH SINCE`·`BEFORE` 는 일자 단위로만 동작한다. 시각으로 좁힐 수 없어 앞뒤 하루를 더해 후보를 좁힌다 ([ADR-040](040-mail-url-to-uid-lookup.md))
 - `SORT` 미지원 → UID 역순(최신순)으로 대체
 - `SUBJECT`, `FROM`, `TO`, `UNSEEN`, `SEEN` 검색은 지원
 

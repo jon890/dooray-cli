@@ -9,4 +9,4 @@
 - TypeScript 타입 기본 제공
 - CLI 툴에서 axios의 XMLHttpRequest 레거시 불필요
 
-**제약**: Node 18+ 필수 (`engines: { node: ">=18" }` 명시)
+**제약**: 최소 Node 버전은 `package.json` 의 `engines` 가 소유한다. 이 결정을 내릴 때는 18 이상이었다.

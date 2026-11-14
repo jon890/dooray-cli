@@ -2,15 +2,8 @@
 
 **결정**: `post list` 에 옵션 일곱 개를 더한다. 업무 목록 API 가 이미 받는 파라미터를 그대로 옮긴다.
 
-| 옵션 | API 파라미터 | 받는 값 |
-| --- | --- | --- |
-| `--from <member>` | `fromMemberIds` | `me`, 15자리 이상 id, 이메일, 프로젝트 멤버 이름 중 한 명 |
-| `--to <member>` | `toMemberIds` | 위와 같다 |
-| `--cc <member>` | `ccMemberIds` | 위와 같다 |
-| `--parent <ref>` | `parentPostId` | 이 프로젝트의 업무 번호, `project/번호`, postId(15자리 이상 숫자) |
-| `--created <range>` | `createdAt` | `A~B`, `A~`, `~B`, `prev-<N>d` |
-| `--updated <range>` | `updatedAt` | 위와 같다 |
-| `--order <field>` | `order` | `createdAt`·`postUpdatedAt`·`postDueAt` 과 각각의 `-` 내림차순 |
+옵션과 API 파라미터의 대응은 `--from`→`fromMemberIds`, `--to`→`toMemberIds`, `--cc`→`ccMemberIds`, `--parent`→`parentPostId`,
+`--created`→`createdAt`, `--updated`→`updatedAt`, `--order`→`order` 다. 옵션이 받는 값은 [업무와 위키 가이드](../guide/post-wiki.md)가 소유한다.
 
 기간의 A·B 는 `YYYY-MM-DD` 또는 offset 이 붙은 ISO8601 이다.
 기간과 정렬은 API 를 부르기 전에 검증하고, 서버가 받지 않거나 공식 문서에 없는 기간 형태는 문서에 있는 `A~B` 로 바꿔 보낸다.

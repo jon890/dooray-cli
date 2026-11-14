@@ -19,7 +19,7 @@ member 가 아닌 프로젝트 (예: 다른 팀 프로젝트 — 권한은 있�
 - `src/resolvers/project.ts` `resolveProject` — `PROJECT_ID_RE = /^\d{15,}$/` 분기 추가 (`resolveMember` 의 `MEMBER_ID_RE`, `resolveMemberGroup` 의 `GROUP_ID_RE` 와 동일 패턴 mirror)
 - cache 자체는 그대로 — cache 에 있는 projectId 매칭도 기존 흐름 유지 (numeric 분기가 먼저 잡힐 뿐)
 - 단위 테스트: numeric 우회 / code 매칭 / private cache 매칭 / 모두 실패 시 에러
-- wiki resolver (`src/resolvers/wiki.ts:13`) — `resolveProject` 의 cache freshness 보장 의도가 numeric 분기 시 깨짐.
+- wiki resolver (`src/resolvers/wiki.ts` 의 `resolveWiki`) — `resolveProject` 의 cache freshness 보장 의도가 numeric 분기 시 깨짐.
   wiki 도 numeric projectId 허용으로 가되, freshness 는 별도 명령 (`dooray cache refresh`) 으로 안내
 
 **트레이드오프**:
