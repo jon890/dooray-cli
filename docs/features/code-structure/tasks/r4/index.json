@@ -1,0 +1,60 @@
+{
+  "name": "r4",
+  "description": "명령 파일의 영역 로직을 빼고 영역마다 명령 나무를 내보낸다",
+  "pr_scope": "동작을 유지하면서 resolver 의 전체 클라이언트 의존을 없애고, 명령 나무와 명령 파일의 영역 로직 자리를 정리하고, 문서 경로 검사를 CI 에 넣는다.",
+  "deferred": [
+    {
+      "what": "config/store.ts, skill/manager.ts 분할",
+      "why": "선택 항목 R5",
+      "after": "R4 머지"
+    }
+  ],
+  "status": "completed",
+  "created_at": "2026-11-14",
+  "spec": "docs/features/code-structure/spec.md",
+  "design": "docs/features/code-structure/design.md",
+  "verification_plan": "verification-plan.md",
+  "requirements": [
+    "REQ1",
+    "REQ4",
+    "REQ5",
+    "REQ7"
+  ],
+  "total_phases": 4,
+  "current_phase": 4,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ4",
+        "REQ5"
+      ]
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ1"
+      ]
+    },
+    {
+      "number": 3,
+      "file": "phase-03.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ1"
+      ]
+    },
+    {
+      "number": 4,
+      "file": "phase-04.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ7"
+      ]
+    }
+  ]
+}
