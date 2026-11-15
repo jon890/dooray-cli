@@ -17,7 +17,7 @@ UID 직접 입력의 답장은 기존처럼 확인 없이 보낸다.
 https://<tenant>.dooray.com/mail/systems/inbox/<mail-id>
 ```
 
-Dooray 는 메일 조회 REST API 를 제공하지 않아 이 기능은 IMAP 위에 있고 (ADR-012), 주소의 mail id 와 IMAP UID 는 체계가 다르다.
+Dooray 는 메일 조회 REST API 를 제공하지 않아 이 기능은 IMAP 위에 있고 ([ADR-012](012-imap-mail.md)), 주소의 mail id 와 IMAP UID 는 체계가 다르다.
 그래서 둘을 잇는 경로를 실제 사서함으로 찾았다.
 
 메일 헤더를 거치는 경로는 막혀 있다.

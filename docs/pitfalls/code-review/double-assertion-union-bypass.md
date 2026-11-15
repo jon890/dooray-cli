@@ -16,6 +16,6 @@ TypeScript 의 구조적 호환성 검사가 우회되어 다른 shape mismatch 
 grep -nE "as unknown as .*\|" src/
 # 결과 있으면 의심 — API client 반환 타입 union 으로 옮길 수 있는지 검토
 ```
-**Why**: PR #77 review — `member-group.ts:21` 이중 단언으로 ADR-028 nested array unwrap 구현.
+**Why**: PR #77 review — `member-group.ts:21` 이중 단언으로 [ADR-028](../../adr/028-member-group-response-shape.md) nested array unwrap 구현.
 리뷰 권장에 따라 `MemberGroupListResponse.result` union 으로 옮기고 단언 제거 (PR #77 commit `76105b5`).
-같은 패턴이 향후 spec ↔ runtime mismatch 흡수 (ADR-028 류) 에 재발 가능 — API client 단에서 union 으로 흡수하는 게 type-safety 측면에서 우선.
+같은 패턴이 향후 spec ↔ runtime mismatch 흡수 ([ADR-028](../../adr/028-member-group-response-shape.md) 류) 에 재발 가능 — API client 단에서 union 으로 흡수하는 게 type-safety 측면에서 우선.

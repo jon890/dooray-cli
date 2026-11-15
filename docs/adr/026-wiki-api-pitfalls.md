@@ -26,4 +26,4 @@
 | `PUT .../pages/{pageId}/title` | 제목만 | `--title X` 단독 |
 | `PUT .../pages/{pageId}/content` | 본문만 | `--body` 또는 `--body-file` 단독 |
 
-> member-group `code` 누락은 ADR-028 로 분리 (wiki 도메인과 무관한 별 함정).
+> member-group `code` 누락은 [ADR-028](028-member-group-response-shape.md) 로 분리 (wiki 도메인과 무관한 별 함정).

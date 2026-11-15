@@ -34,7 +34,7 @@
   캐시 무효화 판정이 어긋난다. `src/services/config.ts` 의 `updateConfigValue` 가 `prev` 를 `getConfig` 로 읽고
   `shouldInvalidateCache` 에 넘긴다. 그 함수는 이전 설정이 없으면 `false` 를 돌려주는데,
   손상된 파일도 같은 경로를 탄다. 그래서 손상된 상태에서 `apiKey` 를 바꾸면 이전 계정의 캐시가 남는다.
-  캐시 디렉터리가 계정별로 나뉘지 않으므로 (ADR-042) 다음 조회가 다른 계정의 데이터를 쓴다.
+  캐시 디렉터리가 계정별로 나뉘지 않으므로 ([ADR-042](042-cache-invalidation-on-mutation.md)) 다음 조회가 다른 계정의 데이터를 쓴다.
 
   `clearMailCredentials` 가 손상된 파일에서 `false` 를 돌려준다.
   자격 증명이 남아 있는데 없었다고 보고하는 것이라, 지운 줄 알고 넘어간다.

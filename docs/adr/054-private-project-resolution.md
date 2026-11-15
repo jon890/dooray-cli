@@ -8,7 +8,7 @@
   위키를 찾는 `resolveWiki` 도 공용 캐시 하나가 아니라 공용과 private 두 캐시를 모두 본다.
   두 캐시에서 모두 못 찾으면 그 자리에서 private 목록을 받아 채우고 다시 찾는다.
   **캐시를 읽는 것만으로는 모자란다.** 입력이 15자리 이상 숫자면 `resolveProject` 가
-  그것을 projectId 로 보고 즉시 돌려주므로(ADR-030) 어느 캐시도 채워지지 않은 채
+  그것을 projectId 로 보고 즉시 돌려주므로([ADR-030](030-resolveproject-numeric-fallback.md)) 어느 캐시도 채워지지 않은 채
   `resolveWiki` 에 닿는다. 그 경로에서 캐시만 읽으면 개인 프로젝트의 projectId 는
   종전과 같이 `프로젝트에 위키가 없습니다` 로 끝난다.
 
@@ -41,7 +41,7 @@
   - **공용 목록과 private 목록을 한 캐시로 합친다** — `project list --type private` 가 두 목록을 구분해 보여주고 있어
     합치면 그 명령의 결과가 달라진다. 목록을 받는 조건도 서로 다르다.
   - **`resolveWiki` 가 `wikiId` 를 직접 받게 한다** — 15자리 이상 숫자를 projectId 로 볼지 wikiId 로 볼지 구별할 수 없다.
-    `resolveProject` 가 그 형태를 이미 projectId 로 해석하고 있어(ADR-030) 뜻이 겹친다.
+    `resolveProject` 가 그 형태를 이미 projectId 로 해석하고 있어([ADR-030](030-resolveproject-numeric-fallback.md)) 뜻이 겹친다.
 
 - **결과**:
   - 얻는 것: 개인 프로젝트 코드가 캐시 상태와 무관하게 동작한다.
@@ -53,7 +53,7 @@
     private 프로젝트가 많은 계정에서는 그 조회가 목록 크기를 100으로 나눈 만큼의 호출이 된다.
     `--link-task` 는 링크마다 `resolveProject` 를 병렬로 부르므로(`src/resolvers/task-link.ts`)
     private 캐시가 비어 있으면 그 목록 조회가 링크 수만큼 동시에 나갈 수 있다.
-    `api/rate-limiter` 가 요청 간격을 조절하고(ADR-039) 받은 목록이 캐시에 남으므로 그대로 둔다.
+    `api/rate-limiter` 가 요청 간격을 조절하고([ADR-039](039-rate-limit-token-bucket.md)) 받은 목록이 캐시에 남으므로 그대로 둔다.
 
 - **적용 범위**: `src/resolvers/project.ts` 의 `resolveProject`,
   `src/resolvers/wiki.ts` 의 `resolveWiki`, `src/commands/wiki/page-edit.ts` 의 입력 모드.

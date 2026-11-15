@@ -9,7 +9,7 @@
 
 - **맥락**: 이 저장소는 여러 곳에 「위키 API 가 page-only fetch 를 지원하지 않는다」고 적어 두었다.
   `CLAUDE.md` 의 명령 공통 규약, `src/resolvers/wiki-page-input.ts` 의 안내 문구,
-  ADR-043 의 적용 범위가 모두 그 전제로 쓰였다.
+  [ADR-043](043-wiki-name-search-and-project-column.md) 의 적용 범위가 모두 그 전제로 쓰였다.
 
   공식 API 문서를 확인한 결과 사실과 다르다.
   `GET /wiki/v1/pages/{page-id}` 가 공개 API 에 있고 wikiId 없이 페이지 ID 하나만 받는다.
@@ -22,7 +22,7 @@
   이 endpoint 를 쓰면 project 를 찾을 필요가 없어진다.
 
   응답에서 wikiId 를 얻어 기존 경로를 재사용하는 방식은 post 쪽에 이미 있다.
-  ADR-020 이 `GET /project/v1/posts/{postId}` 의 응답에 `project.{id,code}` 가 들어 있어
+  [ADR-020](020-post-input-unification-vitest.md) 이 `GET /project/v1/posts/{postId}` 의 응답에 `project.{id,code}` 가 들어 있어
   한 lookup 으로 기존 코드 경로를 재사용한다고 적었고, `resolveByPostId` 가 그것을 구현한다.
   위키도 같은 모양이 되어 두 영역의 입력 해석이 같은 형태로 읽힌다.
 
@@ -33,7 +33,7 @@
 - **대안 기각**:
   - `wiki page get` 만 새 endpoint 를 직접 부르고 resolver 는 그대로 둔다.
     `wiki page get` 은 project 없이 되고 나머지 하위 명령은 안 되는 비대칭이 남는다.
-    ADR-020 이 없애려 한 것이 그 비대칭이다.
+    [ADR-020](020-post-input-unification-vitest.md) 이 없애려 한 것이 그 비대칭이다.
   - 반환형을 `{ wikiId: string | null, pageId }` 로 바꿔 wikiId 해석을 호출부로 넘긴다.
     호출부 대부분이 wikiId 를 요구하는 API 를 부르므로 같은 해석을 여러 곳에 두게 된다.
   - `--project` 요구를 유지하고 문서에만 새 endpoint 를 적는다.
@@ -55,4 +55,4 @@
 
   `dooray://<orgId>/pages/<pageId>` 형태는 여전히 `--url` 로 받지 않는다.
   다만 그 링크의 뒤 숫자가 pageId 이므로 `--id` 에 넣으면 project 없이 조회된다.
-  ADR-043 이 정한 orgId 오류 안내는 그 방법을 알려주는 자리로 남는다.
+  [ADR-043](043-wiki-name-search-and-project-column.md) 이 정한 orgId 오류 안내는 그 방법을 알려주는 자리로 남는다.

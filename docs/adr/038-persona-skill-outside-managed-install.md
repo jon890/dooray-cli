@@ -2,7 +2,7 @@
 
 **결정**: `skills/dooray-persona`를 `dooray skill` 명령의 설치 대상에 넣지 않고 npm 패키지에도 담지 않는다.
 저장소를 내려받아 스킬 디렉터리를 직접 연결해 쓴다.
-ADR-035의 관리형 설치는 `dooray-cli` 스킬에만 적용한다.
+[ADR-035](035-managed-skill-lifecycle.md)의 관리형 설치는 `dooray-cli` 스킬에만 적용한다.
 
 **맥락**: 관리형 설치기는 스킬 하나를 전제로 설치 경로와 매니페스트를 고정하고, 콘텐츠로 `SKILL.md`와 `references/`만 수집한다.
 `dooray-persona`는 실행 스크립트가 본체라 지금 설치기로는 스크립트가 복사되지 않아 설치해도 동작하지 않는다.

@@ -20,7 +20,7 @@
 
 공식 문서의 Calendar > Busy Hours 절이 응답 예시의 `member` 에 `primaryDepartment`(주 소속 부서),
 `defaultOrganization` 의 `name`, `positionName`(직책명)을 싣고 있다.
-공식 문서에 있는 endpoint 라 ADR-062 의 조건은 해당하지 않는다.
+공식 문서에 있는 endpoint 라 [ADR-062](062-undocumented-endpoint-policy.md) 의 조건은 해당하지 않는다.
 `docs/api/official-endpoints.txt` 에도 이미 있다.
 
 **실측으로 확인한 것** (2026-10, 실제 계정 한 명으로 시작해 같은 테넌트의 멤버 약 400명으로 넓혔다):
@@ -44,7 +44,7 @@
 - **`member get` 의 일반 출력에 항상 소속 줄을 더한다** — `member get` 마다 바쁨 시간 조회가 붙는다.
   그 조회가 실패했을 때 상세 조회까지 실패시킬지, 줄만 빼고 경고할지를 따로 정해야 하고,
   옵션을 주지 않은 지금의 호출이 받는 출력이 바뀐다.
-- **`--json` 에 항상 `organization` 을 더한다** — ADR-056 이 기각한 모양과 같다.
+- **`--json` 에 항상 `organization` 을 더한다** — [ADR-056](056-json-enrichment-behind-option.md) 이 기각한 모양과 같다.
   옵션을 주지 않은 자동화가 받는 응답이 바뀐다.
 - **여러 멤버를 받는 별도 명령(`member org <id...>`)** — 한 번에 20명까지 조회할 수 있어 대량 조회에는 낫다.
   지금 요구는 멤버 하나의 소속이고, 명령을 나누면 상세와 소속을 따로 불러 합치는 일이 호출하는 쪽에 남는다.

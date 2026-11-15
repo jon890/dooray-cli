@@ -51,7 +51,7 @@ Dooray 를 다루는 다른 도구(MCP 서버)에는 `old_string` 을 찾아 `ne
   본문 `![...](/wikis/<n>/files/<x>)` 의 `<x>` 가 `images[]` 의 `attachFileId` 와 같았고 `id` 와는 달랐다.
   `attachFileId` 는 공식 문서 안에서 서술이 갈린다. 페이지 조회 응답 예시 가운데 `GET /wiki/v1/wikis/{wiki-id}/pages/{page-id}` 의
   `files[]`·`images[]` 는 `id`·`name`·`size` 만 보이고, `GET /wiki/v1/pages/{page-id}` 예시와 「Attach Files」·「Files」 절은
-  `$.result.files[].attachFileId`·`$.result.images[].attachFileId` 를 말한다(2026-11-14 확인, ADR-046). 이 결정은 실측으로 확인한 값을
+  `$.result.files[].attachFileId`·`$.result.images[].attachFileId` 를 말한다(2026-11-14 확인, [ADR-046](046-official-api-doc-precedence.md)). 이 결정은 실측으로 확인한 값을
   첨부 참조 누락 확인에만 쓰고, 응답에 없으면 `id` 만으로 확인한다.
   앞 숫자 `<n>` 은 그 위키의 wikiId 와 달랐다. 검출에는 앞 숫자를 쓰지 않는다.
   일반 첨부(`files[]`)가 본문에 어떤 형태로 들어가는지는 표본에 없어 확인하지 못했다
@@ -124,7 +124,7 @@ Dooray 를 다루는 다른 도구(MCP 서버)에는 `old_string` 을 찾아 `ne
   사용자가 미리보기를 복사해 다음 `--old` 를 만들기 때문에, 탭을 `?` 로 바꾸면 복사본이 0건이 된다. 탭은 커서를 앞으로만 옮겨 터미널에 안전하다.
   CR 은 커서를 줄 머리로 돌려 앞 글자를 덮어쓰므로 그대로 둘 수 없고, `?` 는 원문의 `?` 와, 글자 `\r` 은 코드 예시에 적힌 `\r` 과 헷갈린다.
   공용 `sanitizeMultilineForTerminal` 의 기본 동작(탭과 CR 을 `?` 로, CRLF 를 LF 로)은 그대로 두고 옵션으로 켠다
-- **본문 형식은 `resolveBodyMimeType` 으로 기존 값을 보존한다** (ADR-053). `--mime-type` 은 두지 않는다.
+- **본문 형식은 `resolveBodyMimeType` 으로 기존 값을 보존한다** ([ADR-053](053-body-mimetype-preservation.md)). `--mime-type` 은 두지 않는다.
   일부만 바꾸는 명령이 본문 전체의 형식을 바꾸면 나머지 부분이 깨진다
 - **업무는 `post edit` 의 첨부 누락 경고를 그대로 쓴다.** 치환으로 `/files/<id>` 참조가 사라지면 `checkAndGuardDropped` 가
   경고하고 확인을 받는다. `--no-confirm` 으로 넘긴다. `--dry-run` 에서는 확인하지 않는다 (`post edit` 과 같다)
