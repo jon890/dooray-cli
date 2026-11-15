@@ -8,7 +8,7 @@
 > form-data 필드 순서가 중요합니다. 반드시 type 필드를 먼저 보내고, 그 다음에 file 필드를 보내야 정상 동작합니다.
 
 RFC 7578 (multipart/form-data) 는 필드 순서 무관을 기본으로 하지만, Dooray 서버는 `type` 을 먼저 파싱해 분기하는 듯 (silent fail or 400 가능).
-`post file upload` (ADR-015) 는 `file` 만 보내 이슈가 없었으나 wiki 는 `type=general|inline_image` 분기가 필수.
+`post file upload` ([ADR-015](015-file-attachment-307-redirect.md)) 는 `file` 만 보내 이슈가 없었으나 wiki 는 `type=general|inline_image` 분기가 필수.
 
 **대안 기각**:
 - 호출자가 직접 순서 책임 — 여러 명령 (upload와 향후 inline 자동삽입 등) 에서 같은 함정 반복 위험. 클라이언트 캡슐화가 단일 소스
@@ -17,7 +17,7 @@ RFC 7578 (multipart/form-data) 는 필드 순서 무관을 기본으로 하지�
 
 **적용 범위**:
 - `src/api/wiki/public.ts` `uploadWikiPageFile(wikiId, pageId, filePath, type)` — `formData.append("type", type)` 를 `formData.append("file", ...)` 보다 **반드시 먼저** 호출
-- 307 redirect 처리 (ADR-015 패턴 재사용) 시 동일한 FormData 객체 재사용으로 순서 보존
+- 307 redirect 처리 ([ADR-015](015-file-attachment-307-redirect.md) 패턴 재사용) 시 동일한 FormData 객체 재사용으로 순서 보존
 - `type` 값은 `"general" | "inline_image"` 만 허용 (TypeScript literal type)
 
 **적용 외**:

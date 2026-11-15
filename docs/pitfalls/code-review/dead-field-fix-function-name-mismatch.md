@@ -10,7 +10,7 @@ related: []
 
 **증상**: `member?.emailAddress ?? memberId` 같은 dead 필드 접근 (`emailAddress` 가 타입에 없어 항상 fallback) 을 `.name` 등으로 fix 해 tsc 통과 시켰지만, 함수명 `memberIdToEmail` 은 그대로 둠.
 함수가 실제로는 name 을 반환하는데 호출자는 email 로 오인할 수 있음.
-PR #52 review 가 ADR-013 SMTP 발송 위험까지 언급 (이번 케이스는 false alarm 이었지만 패턴 자체는 실재 위험).
+PR #52 review 가 [ADR-013](../../adr/013-smtp-mail.md) SMTP 발송 위험까지 언급 (이번 케이스는 false alarm 이었지만 패턴 자체는 실재 위험).
 **Good**: dead 필드 접근 / undefined fallback fix 시점에 함수명과 호출자 변수명 (`emails: string[]` → `names: string[]`) 까지 일괄 점검.
 fix scope 안에서 rename 가능하면 같은 commit 에 흡수, 별도 PR 이 깔끔하면 follow-up commit.
 **호출자 검색**: `grep -rn "<함수명>\b" src/` 로 caller 모두 확인 후 의미상 충돌 없는지 검토.

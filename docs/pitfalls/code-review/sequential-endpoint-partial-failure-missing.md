@@ -24,4 +24,4 @@ git diff main..HEAD -- src/commands/ | grep -E "^\+\s+await client\." | wc -l
 ```
 **Why**: PR #62 critic REVISE — `updatePost` 성공 후 `setPostParent` 실패 시 본문은 저장된 상태.
 사용자가 명령 재실행하면 mention prepend 중복 / link-task 중복 추가 가능.
-ADR-019 (post create --workflow), ADR-024 (comment file delete) 도 동일 패턴 — sequential 추가 시 반드시 partial-failure UX 점검.
+[ADR-019](../../adr/019-post-create-metadata-options.md) (post create --workflow), [ADR-024](../../adr/024-comment-file-synthesis.md) (comment file delete) 도 동일 패턴 — sequential 추가 시 반드시 partial-failure UX 점검.

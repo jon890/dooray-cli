@@ -14,7 +14,7 @@ npx 임시 경로 감지 시 경고 후 skip (global install 전용).
 스킬 포맷은 Claude Code SKILL.md frontmatter 규격 — 타 에이전트 지원은 요청 시 확장.
 
 **대안 기각**:
-- `postinstall` 훅 — npm 정책상 interactive postinstall 비권장, CI/Docker 비-TTY 실패 (ADR-016 과 동일 사유)
+- `postinstall` 훅 — npm 정책상 interactive postinstall 비권장, CI/Docker 비-TTY 실패 ([ADR-016](../016-setup-interactive-wizard.md) 과 동일 사유)
 - 파일 복사 — `npm update` 시 자동 최신화 안 됨, 사용자가 재설치 명령 알아야
 
 세부 (origin 경로 / doctor 검증 / package.json `files` 필드) 는 `src/commands/setup.ts` 와 `src/commands/doctor.ts` 참조.

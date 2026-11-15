@@ -24,4 +24,4 @@
 상한 없는 `Promise.all` 은 자식이 수백 개인 레벨에서 병렬 요청이 폭증해 rate limit / 커넥션 고갈 위험이 있어 chunk 단위로 나눠 처리한다.
 `--depth` 로 사용자가 범위를 좁힐 수도 있다.
 
-> 페이지 create/edit 쪽 함정은 ADR-026 으로 분리 (읽기 drill-down 과 무관한 별 관심사).
+> 페이지 create/edit 쪽 함정은 [ADR-026](026-wiki-api-pitfalls.md) 으로 분리 (읽기 drill-down 과 무관한 별 관심사).

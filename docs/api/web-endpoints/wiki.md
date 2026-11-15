@@ -68,7 +68,7 @@
 - 업로드는 `type` 을 먼저, `file` 을 나중에 담은 multipart 로 통한다. `general`, `inline_image` 둘 다 확인했다. 3MB 파일과 한글 파일 이름도 통한다. 응답 상태는 200 이다(공식 201).
 - 업로드·다운로드 모두 307 이 오지 않았다. 설계 「웹 HTTP 층」 의 첨부 307 규칙은 방어용으로 둔다.
 - 페이지 상세의 `files[]`·`images[]` 항목에 `downloadUrl`(`/page-files/{fileId}`)이 있다. 이 경로를 `SESSION` 으로 부르면 바이트와 `content-disposition` 이 바로 온다. 공개 API 모양의 `…/pages/{pageId}/files/{fileId}` 와 `…/wikis/{wikiId}/attachFiles/{attachFileId}` 는 404 다.
-- 다운로드 경로에는 위키·페이지 id 가 없다. 파일이 그 페이지의 것인지 CLI 가 확인해야 하므로 페이지 상세를 먼저 읽어 `files[]`·`images[]` 에 `fileId` 가 있는 것을 확인한 뒤 `/page-files/{fileId}` 를 `apiPath` 로 만들어 부른다. 응답이 준 `downloadUrl` 문자열을 그대로 요청 주소로 쓰지 않는다. 이 조회가 이름 대체 값(`knownName`)도 준다. 저장 이름은 `Content-Disposition` 을 `src/utils/content-disposition.ts`(ADR-067)로 풀어 정한다.
+- 다운로드 경로에는 위키·페이지 id 가 없다. 파일이 그 페이지의 것인지 CLI 가 확인해야 하므로 페이지 상세를 먼저 읽어 `files[]`·`images[]` 에 `fileId` 가 있는 것을 확인한 뒤 `/page-files/{fileId}` 를 `apiPath` 로 만들어 부른다. 응답이 준 `downloadUrl` 문자열을 그대로 요청 주소로 쓰지 않는다. 이 조회가 이름 대체 값(`knownName`)도 준다. 저장 이름은 `Content-Disposition` 을 `src/utils/content-disposition.ts`([ADR-067](../../adr/067-attachment-file-name-decoding.md))로 풀어 정한다.
 - 삭제도 경로에 페이지 id 가 없다. 같은 확인을 먼저 한다. 없는 파일은 HTTP 200 에 `resultCode=404` 다.
 - `files[].id` 와 `pageFileId` 는 같은 값이다. `attachFileId` 는 다른 값이고 본문 참조(`/wikis/{wikiId}/files/{attachFileId}`)에 쓴다.
 

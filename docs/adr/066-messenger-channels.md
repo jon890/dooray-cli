@@ -11,12 +11,12 @@
 `logs <channel>` 이나 `channel-send --channel` 에 넘길 channelId 를 CLI 안에서 찾을 수 없었고,
 최근 대화가 있었던 방을 훑을 수단도 없었다.
 
-endpoint 는 `resolveMessengerChannel` 이 이름 해석에 이미 쓰고 있었다(ADR-033).
+endpoint 는 `resolveMessengerChannel` 이 이름 해석에 이미 쓰고 있었다([ADR-033](033-messenger-send.md)).
 그 해석은 제목이 빈 방을 후보에서 빼므로 1:1 방은 이름으로 넘길 수 없고 id 를 알아야 한다.
 이 명령이 그 id 를 얻는 경로다.
 
-이 endpoint 는 공식 API 문서의 Messenger > Channels 절에 실려 있다(ADR-061 이 2026-09-21 에 확인).
-`scripts/api-endpoint-inventory.mjs` 의 대조도 이미 통과하는 경로라 ADR-062 의 조건은 해당하지 않는다.
+이 endpoint 는 공식 API 문서의 Messenger > Channels 절에 실려 있다([ADR-061](061-messenger-logs-read.md) 이 2026-09-21 에 확인).
+`scripts/api-endpoint-inventory.mjs` 의 대조도 이미 통과하는 경로라 [ADR-062](062-undocumented-endpoint-policy.md) 의 조건은 해당하지 않는다.
 
 **공식 문서가 정한 것** (`GET /messenger/v1/channels` 절, 2026-10-01 PR 리뷰에서 메인테이너가 확인):
 
@@ -30,7 +30,7 @@ endpoint 는 `resolveMessengerChannel` 이 이름 해석에 이미 쓰고 있었
 
 실제 계정으로 호출해 응답을 집계했다. 접근 가능한 대화방은 230개였다.
 
-- **`size` 를 완전히 무시한다.** `size=3` 이든 `1000` 이든 전체가 온다(ADR-061 에도 기록). 페이징 수단이 없다.
+- **`size` 를 완전히 무시한다.** `size=3` 이든 `1000` 이든 전체가 온다([ADR-061](061-messenger-logs-read.md) 에도 기록). 페이징 수단이 없다.
 - `type` 은 `direct`(1:1) 144개, `private`(그룹) 86개였다. 문서의 네 값 중 `me`·`bot` 인 방은 이 계정에 없었다.
 - `status` 는 `normal` 229개, `system` 1개였다. 문서의 `archived`·`deleted` 는 보지 못했다.
 - `archivedAt` 이 있는 방이 2개였다.
@@ -53,7 +53,7 @@ endpoint 는 `resolveMessengerChannel` 이 이름 해석에 이미 쓰고 있었
 
 - **필터링과 정렬은 클라이언트에서 한다.** API 가 파라미터를 받지 않으므로 다른 선택지가 없다.
   어차피 전체가 한 번에 오므로 클라이언트에서 필터링해도 누락이 생기지 않는다.
-  ADR-061 이 `logs` 에서 `--since` 를 기각한 이유(최근 1000건 밖은 조용히 빠진다)가 여기에는 해당하지 않는다.
+  [ADR-061](061-messenger-logs-read.md) 이 `logs` 에서 `--since` 를 기각한 이유(최근 1000건 밖은 조용히 빠진다)가 여기에는 해당하지 않는다.
 - **정렬은 `updatedAt` 내림차순이다.** 최근에 손댄 방을 위로 올리는 데 쓸 수 있는 시각 필드가 이것뿐이다.
   `updatedAt` 이 없거나 읽을 수 없는 방은 맨 뒤로 보내고, `--since` 를 주면 뺀다.
 - **`updatedAt` 은 이름과 도움말에서 「수정 시각」 으로만 부른다.** 문서는 갱신 조건을 정하지 않으므로
@@ -99,10 +99,10 @@ endpoint 는 `resolveMessengerChannel` 이 이름 해석에 이미 쓰고 있었
   실측 계정에서 전체 표 출력은 약 27초가 걸렸다. 제목 없는 방 154개 중 144개가 1:1 방이라 상대가 저마다 달라
   고유 조회 대상은 145명이고, 앞 3명 제한으로 줄어든 것은 1명이다. 시간 대부분은 클라이언트의 요청 속도 제한
   (버스트 20, 초당 5건)에서 나온다. 줄이려면 멤버 이름 캐시가 필요하고, 그것은 이번 범위 밖이다.
-- **`--json` 은 필터·정렬만 적용한 서버 응답이고 표시명을 넣지 않는다.** raw 유지 규약(ADR-031, ADR-056)을 따른다.
-- **시각은 `logs` 의 `formatSentAt` 으로 보인다.** `Date` 로 파싱하지 않고 `+09:00` 일 때만 offset 과 초·밀리초를 뗀다(ADR-061).
+- **`--json` 은 필터·정렬만 적용한 서버 응답이고 표시명을 넣지 않는다.** raw 유지 규약([ADR-031](031-file-json-output-schema.md), [ADR-056](056-json-enrichment-behind-option.md))을 따른다.
+- **시각은 `logs` 의 `formatSentAt` 으로 보인다.** `Date` 로 파싱하지 않고 `+09:00` 일 때만 offset 과 초·밀리초를 뗀다([ADR-061](061-messenger-logs-read.md)).
 - 표의 모든 열(이름·종류·수정 시각·id)은 서버가 준 문자열에서 나오므로 표에 넣기 전에 `sanitizeForTerminal` 을 거친다.
-  `formatSentAt` 은 형식이 다르면 원문을 그대로 돌려주므로 시각 열도 예외가 아니다. `--json`·`--quiet` 은 raw 그대로 낸다(ADR-031).
+  `formatSentAt` 은 형식이 다르면 원문을 그대로 돌려주므로 시각 열도 예외가 아니다. `--json`·`--quiet` 은 raw 그대로 낸다([ADR-031](031-file-json-output-schema.md)).
 
 **대안 기각**:
 
@@ -112,7 +112,7 @@ endpoint 는 `resolveMessengerChannel` 이 이름 해석에 이미 쓰고 있었
 - **`client.searchMembers({ name })` 로 검색어를 멤버 id 로 먼저 바꾸기** — 호출 수는 줄지만 서버 이름 검색이
   정확 일치일 가능성이 있어(확인하지 않음) 부분 일치를 잃을 수 있다. 성씨나 이름 일부로 찾는 쓰임새가 깨진다.
 - **모든 모드에서 이름 조회** — 방이 많으면 수십~백여 번의 호출이 붙는다. 이름을 쓰지 않는 모드에서는 낭비다.
-- **`--json` 에 표시명 끼워넣기** — raw 유지 규약을 깬다. 필요해지면 ADR-056 처럼 명시 옵션으로 연다.
+- **`--json` 에 표시명 끼워넣기** — raw 유지 규약을 깬다. 필요해지면 [ADR-056](056-json-enrichment-behind-option.md) 처럼 명시 옵션으로 연다.
 - **`--since` 를 상대 기간(`7d` 등)으로도 받기** — 캘린더와 날짜 입력 규칙이 갈린다. 필요해지면 두 명령에 함께 더한다.
 - **`displayed` 로 필터링하지 않기** — 처음에는 뜻을 가리지 못해 이 쪽을 택했다. 숨긴 방을 기본 목록에 내면 사용자가 숨긴 방이 다시 보인다. `--all` 로 볼 수 있으므로 기본에서 빼도 방을 잃지 않는다.
 - **`me`·`bot` 을 그룹으로 표시** — 제목 빈 `me` 방이 `그룹: (나)` 로 보이는 등 문서의 type 뜻과 어긋난다.

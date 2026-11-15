@@ -1,6 +1,19 @@
 # 코드 구조 정리 기술 설계
 
 스펙: [spec.md](spec.md). 기능 전체(R0~R5)를 설계한다. PR 마다 이 설계에서 자기 몫을 가져가고, 바뀌는 결정만 이 문서를 고친다.
+상태: R0부터 R5까지 모두 구현해 머지했다(2026-11-14과 15일). 현재 구조와 의존 규칙의 원본은 `docs/code-architecture.md` 와 `src/architecture.test.ts` 이고, 이 문서는 설계 당시의 근거와 PR 별 결정을 남긴다. 아래 「목표」, 「지금」, 「R1·R2 에서 정할 것」 같은 표현은 당시 시점의 서술이다.
+
+PR 별 실행 증거(전후 테스트 수, 도움말 스냅숏 비교, 요구사항별 결과, 리뷰 반영)는 PR 본문의 「검증」 과 완료 근거 블록이 갖는다.
+
+| 단계 | PR | 머지 커밋 |
+| --- | --- | --- |
+| R0 구조 ADR·규칙 테스트·별칭 | [#261](https://github.com/jon890/dooray-cli/pull/261) | `0af3e93` |
+| R1 타입 분할 | [#262](https://github.com/jon890/dooray-cli/pull/262) | `6fc2634` |
+| R2 공개 클라이언트 분할 | [#263](https://github.com/jon890/dooray-cli/pull/263) | `fc14574` |
+| R3 utils 재분류와 `body/` | [#264](https://github.com/jon890/dooray-cli/pull/264) | `db068cb` |
+| R4 명령 정리 | [#265](https://github.com/jon890/dooray-cli/pull/265) | `6f7a8c1` |
+| R5 설정·스킬 관리 분할 | [#266](https://github.com/jon890/dooray-cli/pull/266) | `0432ee1` |
+
 이 문서의 경로는 따로 적지 않으면 `src/` 기준이다. 아직 없는 목표 경로가 문서 경로 검사(`scripts/check-doc-paths.mjs`)에 걸리지 않게 `src/` 를 붙이지 않는다.
 
 ## 진단 (2026-11-14)

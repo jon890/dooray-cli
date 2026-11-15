@@ -20,6 +20,6 @@ grep -rnE "redirect.*manual|throwHttpErrors.*false" src/api/
 # 그 위치에서 status === 307 분기 존재 확인
 ```
 
-**Why**: PR #72 ADR-029 / ADR-015 연관.
+**Why**: PR #72 [ADR-029](../../adr/029-wiki-page-file-multipart-order.md) / [ADR-015](../../adr/015-file-attachment-307-redirect.md) 연관.
 
 **Self-check**: `redirect: "manual"` 패턴이 있으면 status 분기도 함께 있는가?

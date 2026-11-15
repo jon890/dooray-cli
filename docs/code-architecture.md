@@ -19,17 +19,21 @@
 
 ## 디렉터리 구조
 
-계층 폴더를 두고 api 안만 영역별로 나눈다 ([ADR-082](adr/082-code-structure.md)). 정리는 PR 여럿(R0~R5)으로 진행 중이라 지금 상태와 목표를 나눠 적는다.
-PR 마다 무엇이 옮겨지는지는 [코드 구조 정리 기술 설계](features/code-structure/design.md)가 갖는다. 정리가 끝나면 「지금」 을 지우고 목표만 남긴다.
-
-### 지금
+계층 폴더를 두고 api 안만 영역별로 나눈다 ([ADR-082](adr/082-code-structure.md)). 정리 과정과 PR 별 결정은 [코드 구조 정리 기술 설계](features/code-structure/design.md)가 갖는다.
 
 ```
 src/
-  index.ts        # CLI entrypoint. Commander 루트. 영역마다 내보낸 명령 나무를 붙인다
+  index.ts        # CLI entrypoint. Commander 루트. 영역마다 내보낸 명령 나무를 붙이기만 한다
   version.ts      # 빌드 때 주입된 CLI_VERSION
 
   api/            # HTTP·IMAP·SMTP 래퍼와 API 요청·응답 타입
+    dooray-client.ts   # 영역 인터페이스의 교집합 DoorayClient 와 createClient
+    client.ts types.ts # 재내보내기만
+    common/            # 영역이 함께 쓰는 DTO
+    public/            # 공개 API 구현의 공용 부분(HTTP, 영역 구현 조립)
+    web/               # 웹 구현의 공용 부분(HTTP, 영역 구현 조립, 변환 도구)
+    <영역>/            # types.ts(인터페이스와 DTO) public.ts(공개 구현) web.ts(웹 구현)
+    mail/              # IMAP·SMTP
   resolvers/      # 사람이 준 이름·URL·부분 입력을 식별자로 바꾼다. 읽기 전용
   services/       # 캐시의 유효성을 깨는 변경. 성공 직후 해당 캐시를 지운다
   cache/          # ~/.dooray/cache/ 파일 CRUD 와 TTL
@@ -39,31 +43,11 @@ src/
   formatters/     # 엔티티별 표·JSON·quiet 출력
   body/           # 본문 입력, 마크업, 참조와 첨부 확인 규칙. API·캐시 타입을 모른다
   utils/          # 오류, 종료 코드, 표준 입력, 출력 정리 같은 영역 공통 부품
-  commands/       # 명령 하나에 파일 하나. 영역마다 index.ts 가 명령 나무를 내보낸다. 위 계층을 조합한다
-    messenger/  project/  member/  post/  wiki/  mail/  calendar/  stream/  feedback/
-    web-support/    # 웹 방식이 지원하는 명령·옵션 목록. web-support.ts 가 영역별 파일을 모은다 (ADR-081)
-```
-
-### 목표
-
-```
-src/
-  index.ts        # 영역마다 내보낸 명령 나무를 붙이기만 한다
-  version.ts
-  api/
-    dooray-client.ts   # 영역 인터페이스의 교집합 DoorayClient 와 createClient
-    client.ts types.ts # 재내보내기만
-    common/            # 영역이 함께 쓰는 DTO
-    public/            # 공개 API 구현의 공용 부분(HTTP, 영역 구현 조립)
-    web/               # 웹 구현의 공용 부분(HTTP, 영역 구현 조립, 변환 도구)
-    <영역>/            # types.ts(인터페이스와 DTO) public.ts(공개 구현) web.ts(웹 구현)
-    mail/              # IMAP·SMTP
-  body/           # 업무·위키 본문 규칙. 영역 타입을 모르는 텍스트 처리
-  utils/          # 영역을 모르는 공통 부품만
-  resolvers/  services/  cache/  config/  skill/  editor/  formatters/   # 책임은 지금과 같다
-  commands/
+  commands/       # 영역마다 index.ts 가 명령 나무를 내보낸다. 위 계층을 조합한다
     <영역>/index.ts   # 그 영역의 명령 나무
     <영역>/*.ts       # 명령 파일과, 명령 파일에서 뺀 그 영역의 로직
+    messenger/  project/  member/  post/  wiki/  mail/  calendar/  stream/  feedback/
+    web-support/    # 웹 방식이 지원하는 명령·옵션 목록. web-support.ts 가 영역별 파일을 모은다 (ADR-081)
 ```
 
 파일 하나하나가 무엇을 하는지는 여기 적지 않는다.

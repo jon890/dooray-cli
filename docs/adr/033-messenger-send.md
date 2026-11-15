@@ -16,7 +16,7 @@
 
 - **`--to` 는 id / 이메일만** (이름 미지원). messenger 는 project 스코프가 없어 `matchByName`(project 멤버 목록 필요)을 못 쓴다. `resolveMember` 의 id(`getMemberDetail`)·email(`searchMembers`) 분기를 공유 헬퍼로 추출해 재사용, 이름 입력 시 "id 또는 이메일 사용" 안내 에러.
 - **`--channel` 은 channelId(15+자리) 또는 대화방 이름** — 이름이면 `GET /messenger/v1/channels`(내가 속한 방) title 매칭(정확 → 부분 → 모호 시 후보 출력, 일반 resolver 정책). `resolveMessengerChannel` 신설. 제약: 이름 검색은 **내가 속한 방만** 대상이며, direct 방(title 빈값)은 매칭 불가 → 그 경우 raw channelId 사용.
-  그 channelId 는 `dooray messenger channels` 로 찾는다 (ADR-066).
+  그 channelId 는 `dooray messenger channels` 로 찾는다 ([ADR-066](066-messenger-channels.md)).
 - **body**: `--body` / `--body-file`(`-`=stdin) 또는 `$EDITOR` fallback (comment add/edit 와 일관). 셋 다 없으면 $EDITOR 진입.
 - **출력**: `--json` = `res.result` raw (file upload 과 동일 패턴 — DM `{id}`, 채널 `{id, channelId}`) / `--quiet` = `id` / 기본 prose.
 - 전송은 **API 토큰 소유자 명의**로 나간다 (personal token). 본문은 `text` plain 만 — mention/첨부/rich 는 scope 밖.
