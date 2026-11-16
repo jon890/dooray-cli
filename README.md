@@ -53,7 +53,8 @@ dooray doctor
 ```
 
 웹 방식은 **비공식 웹 API** 라 예고 없이 바뀔 수 있어요. SESSION 쿠키는 로그인 계정의 모든 권한을 가지므로 비밀값으로 다뤄요.
-쿠키 입력과 지원 범위는 [설정 가이드](docs/guide/setup.md#웹-로그인-세션으로-연결하기)에서 확인해요.
+쿠키를 찾는 방법과 입력 방법은 [설정 가이드](docs/guide/setup.md#웹-로그인-세션으로-연결하기)에서 단계별로 안내해요.
+쓸 수 있는 명령은 [웹 방식의 지원 범위](docs/guide/setup.md#웹-방식의-지원-범위)에서 확인해요.
 
 ### 3. 첫 명령을 실행해요
 
@@ -141,7 +142,7 @@ dooray post comment add --id "$POST_ID" --body "시작합니다"
 
 | 문서 | 내용 |
 | --- | --- |
-| [설치와 설정](docs/guide/setup.md) | 설정 값 바꾸기, 토큰을 안전하게 넣는 방법, 스킬 관리, 출력 모드 |
+| [설치와 설정](docs/guide/setup.md) | 인증 방식 고르기(API 키·웹 로그인 세션), 연결 확인, 스킬 관리, 설정 값 바꾸기, 출력 모드, 문제 해결 |
 | [업무와 위키](docs/guide/post-wiki.md) | 태그와 기간으로 필터링, 본문 일부 치환, 본문 형식, 멘션, 첨부 파일, 삭제 확인 |
 | [메신저](docs/guide/messenger.md) | 메시지 보내기, 스레드, 대화방 목록, 메시지와 스레드 답글 조회, 파일 받기 |
 | [캘린더](docs/guide/calendar.md) | 캘린더와 일정 조회, 일정 만들기·고치기·지우기 |
@@ -150,7 +151,7 @@ dooray post comment add --id "$POST_ID" --body "시작합니다"
 
 ## 문제가 생기면
 
-- 설정이 의심되면 `dooray doctor` 를 먼저 실행해 보세요. 설정과 API 연결, 설정 파일 보안, 스킬 상태를 한 번에 확인해요. 항목별 결과와 종료 코드는 [설치와 설정 가이드](docs/guide/setup.md)에 있어요.
+- 설정이 의심되면 `dooray doctor` 를 먼저 실행해 보세요. 설정과 API 연결, 설정 파일 보안, 스킬 상태를 한 번에 확인해요. 항목별 결과와 종료 코드는 [설치와 설정 가이드](docs/guide/setup.md#연결-확인하기)에 있어요. 증상별 해결 방법은 [문제 해결](docs/guide/setup.md#문제-해결)에 있어요.
 - 에이전트가 새 명령을 모르면 `dooray skill update` 를 실행해 주세요.
 - 버그나 제안은 [GitHub Issues](https://github.com/jon890/dooray-cli/issues) 에 남겨 주세요. `dooray feedback` 으로 터미널에서 바로 올릴 수도 있어요.
 
