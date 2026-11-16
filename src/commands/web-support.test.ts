@@ -24,7 +24,7 @@ describe("웹 명령 지원 범위", () => {
   });
   it("사용자 가이드의 명령·옵션 표와 코드 목록이 같다", () => {
     const guide = readFileSync(new URL("../../docs/guide/setup.md", import.meta.url), "utf8");
-    const support = guide.split("## 웹 방식의 지원 범위")[1].split("## 보안 경고와 진단")[0];
+    const support = guide.split("## 웹 방식의 지원 범위")[1].split(/\n## /)[0];
     for (const [domain, list] of Object.entries(WEB_SUPPORT_BY_DOMAIN)) {
       const section = support.split(`### ${WEB_AREA_NAMES[domain as keyof typeof WEB_AREA_NAMES]}\n`)[1]?.split(/\n### /)[0];
       expect(section).toBeDefined();
