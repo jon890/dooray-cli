@@ -45,14 +45,15 @@
 
 - 원소 순서는 카드 순서이고, 카드 안에서는 지금처럼 카드 원소 뒤에 하위 항목을 `eventList` 순서대로 둔다.
 - 옵션이 없을 때 변경 기록은 `result` 에서 빠지고 `changes` 에 같은 모양으로 들어간다. `changes` 와 `unknown` 은 `--json` 출력에 나가지 않는다.
-- `unknown` 은 CLI 가 모르는 카드 종류, 어느 맵에도 없는 하위 항목, 변환하다 모양이 맞지 않은 변경 기록, 본문 글이 있는 일정 하위 항목의 수다. 공개 API 종류 원소의 모양 오류는 지금처럼 응답 오류로 멈춘다.
+- `unknown` 은 CLI 가 모르는 카드 종류, 어느 맵에도 없는 하위 항목(업무·위키·일정 카드 모두), 변환하다 모양이 맞지 않은 변경 기록, 본문 글이 있는 일정 하위 항목의 수다. 지금 업무·위키 하위 항목이 맵에 없을 때 응답 오류로 멈추던 것도 `unknown` 으로 바꾼다. 카드 자체(`postMap`, `pageMap` 등)의 누락과 공개 API 종류 원소의 모양 오류는 지금처럼 응답 오류로 멈춘다.
+- 변경 기록의 `createdAt` 이 시각 문자열이 아니면(없음, `null`, 다른 형식) 그 기록을 `unknown` 으로 센다. 시각이 없으면 `--since` 를 적용할 수 없다.
 - 2026-11-16 응답에서 `pageEventMap` 항목의 `creator.member.name` 은 100건 모두 있었다. `calendar`·`project` 의 `source` 에는 `organizationMemberId` 만 있다.
 
-표 요약(REQ5): `actions` 키나 `action` 키가 있는 원소만 아래 규칙을 쓴다. 공개 API 방식의 `project`·`event` 원소는 기존 요약 그대로다.
+표 요약(REQ5): 모델에 `actions` 배열이 있는 `event`, `body.actions` 가 있는 `pageEvent`, `source` 키가 있는 `calendar`·`project` 만 아래 규칙을 쓴다. 공개 API `project` 원소에도 `action` 이 있지만 사람은 `actor` 로 오고 `source` 가 없으므로 기존 요약 그대로다. 댓글 `event` 도 그대로다.
 
 | 원소 | 내용 칸 | 작성자 칸 |
 | --- | --- | --- |
-| 변경 기록 `event` | `actions` 를 쉼표로 잇는다. `workflow` 는 「업무 상태: <전 ko_KR 이름> → <후 ko_KR 이름>」, `endedAt` 은 「완료일: <뒤 값 날짜>」, `subject` 는 「제목: <전> → <후>」, 나머지는 `message` 그대로 | `creator.member.name` |
+| 변경 기록 `event` | `actions` 를 쉼표로 잇는다. 항목 이름은 `message` 의 「: 변경」 앞부분이다(스펙 DECISION13). `workflow` 는 「<이름>: <전 ko_KR 이름> → <후 ko_KR 이름>」, `endedAt` 은 「<이름>: <뒤 값 날짜>」, `subject` 는 「<이름>: <전> → <후>」, 나머지는 `message` 그대로 | `creator.member.name` |
 | `pageEvent` | `body.actions[].message` 를 쉼표로 잇는다 | `creator.member.name` |
 | `calendar` | `action.type` 이 `schedule_deleted` 면 「일정 삭제: <target.schedule.subject>」, 모르는 값이면 `action.type` 그대로 | `source.organizationMemberId` 의 이름 |
 | `project` | `action` 이 `invited` 면 「프로젝트 초대」, 모르는 값이면 그 값 그대로 | `source.organizationMemberId` 의 이름 |
@@ -96,6 +97,7 @@ fixture 의 id 와 이름은 가짜 값으로 쓰고 `node scripts/check-pii.mjs
 - `docs/adr/083-web-only-stream-elements.md` 와 `docs/adr/INDEX.md` 한 줄
 - `CLAUDE.md` 「명령 공통 규약」 출력 줄에 [ADR-083](../../adr/083-web-only-stream-elements.md) 예외 한 줄, `docs/code-architecture.md` 「출력 원칙」 에 같은 한 줄
 - `docs/api/web-endpoints/stream.md`: 변경 기록 절, 「캘린더 공유 알림」 정정(스펙 DECISION10)
+- `docs/flow.md` 의 `stream list` 절: 입력에 `--with-changes`, 출력 뒤 건수 안내
 - `docs/guide/setup.md` 의 웹 방식 차이 표 `stream list` 행
 - `skills/dooray-cli/SKILL.md` 의 `stream list` 행들. `--with-changes` 출력은 웹 모양이고 `project` 원소가 공개 API 모양과 다를 수 있다고 적는다(스펙 DECISION9)
 - `stream list --with-changes` 도움말에 「웹 방식만, 웹 응답 모양 그대로」 를 적는다
@@ -108,7 +110,7 @@ fixture 의 id 와 이름은 가짜 값으로 쓰고 `node scripts/check-pii.mjs
 | DECISION1 | 옵션이 없을 때 변경 기록을 어디서 세나 | 웹 구현이 변경 기록을 만들어 `changes` 로 돌려주고 `fetchStreams` 가 `--since` 를 적용해 센다 | 작성자 | 스펙 DECISION12 의 건수는 원소 시각이 있어야 셀 수 있다. 변환을 두 번 만들지 않는다 |
 | DECISION2 | 표의 `source` 이름 | 웹 구현이 응답의 멤버 맵을 이름 캐시에 넣고, 명령이 캐시에 없는 사람만 상세 조회한다. `--json` 원소에는 이름을 더하지 않는다 | 작성자 | 스펙 DECISION6(웹 응답 그대로)과 DECISION11(사람마다 한 번 조회)을 함께 지킨다. 2026-11-16 실측 17건이 모두 맵에 있어 추가 조회는 대개 없다 |
 | DECISION3 | 본문 글이 있는 일정 하위 항목 | `unknown` 으로 센다 | 작성자 | 스펙은 일정 하위 항목을 시스템 기록으로만 정했다(DECISION14). 실측 2건은 모두 본문 글이 없었다. 새 모양을 만들지 않는다 |
-| DECISION4 | 맵에 없거나 모양이 맞지 않은 변경 기록 | `unknown` 으로 세고 넘어간다 | 작성자 | 옵션이 없는 호출에 새 실패 경로를 만들지 않는다 |
+| DECISION4 | 맵에 없는 하위 항목과 모양이 맞지 않은 변경 기록 | 카드 종류와 상관없이 `unknown` 으로 세고 넘어간다 | 작성자 | 옵션이 없는 호출에 새 실패 경로를 만들지 않는다. 하위 항목이 변경 기록인지는 맵에서 찾아야 알 수 있어, 업무·위키 하위 항목의 누락도 같은 규칙으로 둔다 |
 | DECISION5 | 공개 API 방식 경고 자리 | `stream list` 명령. 클라이언트 계약은 `withChanges` 를 받기만 한다 | 작성자 | 설정의 인증 방식을 아는 곳이 명령이다. `CLAUDE.md` 「무시되는 옵션」 규약 |
 | DECISION6 | 안내를 내는 자리 | 웹 구현은 건수만 돌려주고 명령이 끝에 한 번 낸다. 지금의 첫 페이지 경고는 없앤다 | 작성자 | 여러 페이지의 건수를 합칠 수 있는 곳이 명령이다. 같은 안내가 두 번 나오지 않는다 |
 | DECISION7 | 이름 조회 실패 | 멤버 id 를 보이고 stderr 로 한 번 경고한다 | 작성자 | 표 표시만의 보강이다. [ADR-056](../../adr/056-json-enrichment-behind-option.md) 의 실패 규칙은 `--json` 에 값을 더하는 옵션에 대한 것이다 |
