@@ -44,7 +44,7 @@ PR 은 하나다.
 | ID | 요구사항 | 관측할 인수 조건 |
 | --- | --- | --- |
 | REQ1 | 웹 방식 업무 댓글 원소에 활동 시각이 있다 | `--json` 의 `event` 원소에 웹 `eventMap` 의 `createdAt` 이 같은 시각으로 있고, 수정된 댓글은 `modifiedAt` 이 `updatedAt` 으로 있다. 표의 시각 칸이 채워진다 |
-| REQ2 | 옵션이 없으면 원소 종류와 모양이 지금과 같다 | `--with-changes` 없는 출력이 REQ1 의 `createdAt` 말고는 변경 전과 같다. 버린 항목이 있으면 명령 끝에 stderr 로 「옵션을 주면 더 나올 건수」 와 `--with-changes` 안내가 한 번 나온다. 건수는 `--since` 범위 안의 것만 세고 여러 페이지를 합친다 |
+| REQ2 | 옵션이 없으면 원소 종류와 모양이 지금과 같다 | `--with-changes` 없는 출력이 REQ1 의 `createdAt`·`updatedAt` 말고는 변경 전과 같다. 다만 `--since` 를 주면 업무 댓글을 페이지 커서가 아니라 댓글 자신의 시각으로 고른다. 버린 항목이 있으면 명령 끝에 stderr 로 「옵션을 주면 더 나올 건수」 와 `--with-changes` 안내가 한 번 나온다. 건수는 `--since` 범위 안의 것만 세고 여러 페이지를 합친다 |
 | REQ3 | `--with-changes` 를 주면 업무와 일정의 시스템 기록이 `event` 원소로 나온다 | 원소에 `id`, `postId`(일정이면 `scheduleId`), `creator`, `createdAt`, `actions` 가 있고 `body` 키가 없다. `actions` 는 웹 응답의 값 그대로다 |
 | REQ4 | `--with-changes` 를 주면 위키 활동, 일정 삭제 알림, 프로젝트 카드가 웹 응답의 종류와 필드로 나온다 | `pageEvent`, `calendar`, `project` 원소가 출력에 있고, 각 원소의 필드가 웹 응답의 값과 같다 |
 | REQ5 | 표는 변경 기록의 변경 항목과 전·후 값, 한 사람을 보여 준다 | 기록 하나가 한 행이고 변경이 여럿이면 쉼표로 잇는다. 업무 상태는 「업무 상태: 진행 전 → 진행 중」 처럼 한국어 이름으로, 완료일은 뒤 값만, 제목은 전·후 값으로, 값이 없거나 긴 변경(반복, 본문, 참조자)은 「반복: 변경」 처럼 서버 문구만 보인다. 일정 삭제는 「일정 삭제: <일정 제목>」, 프로젝트 초대는 「프로젝트 초대」 다. 시각 칸과 작성자 칸이 채워지고, 일정 삭제·프로젝트 초대의 작성자는 한 사람(`source`)의 이름이다 |
@@ -76,10 +76,10 @@ PR 은 하나다.
 
 ## 도메인 규칙 변경
 
-도메인 규칙 변경 없음: `--json` 은 공개 API 모양을 지키고 보강은 옵션 뒤에 둔다는 `CLAUDE.md` 출력 규약과 [ADR-056](../../adr/056-json-enrichment-behind-option.md) 을 따른다.
+도메인 규칙 변경 없음: 출력 규약의 예외는 [ADR-083](../../adr/083-web-only-stream-elements.md) 이 `stream list --with-changes` 에 한정해 둔다. 옵션이 없는 출력은 `CLAUDE.md` 출력 규약과 [ADR-056](../../adr/056-json-enrichment-behind-option.md) 그대로다.
 
 ## 결정 기록 연결 (필요할 때만)
 
 | 결정 | 종류 | 선택 이유를 남길 ADR | 현재 규칙의 원본 |
 | --- | --- | --- | --- |
-| DECISION2 | output-contract | 웹 응답에만 있는 원소를 옵션 뒤에 내는 규칙. 새 ADR 이 필요한지는 technical-design 이 [ADR-056](../../adr/056-json-enrichment-behind-option.md)·[ADR-081](../../adr/081-web-session-auth.md) 과 대조해 정한다 | `CLAUDE.md` 「명령 공통 규약」 의 출력 줄 |
+| DECISION2, DECISION6 | output-contract | [ADR-083](../../adr/083-web-only-stream-elements.md) | [기술 설계](design.md) 「인터페이스와 데이터」 |
