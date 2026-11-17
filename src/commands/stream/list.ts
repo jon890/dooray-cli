@@ -1,13 +1,15 @@
 /**
- * `dooray stream list` — 내 두레이 활동(피드) 목록. `GET common/v1/streams`.
+ * `dooray stream list` — 내 두레이 활동(피드) 목록. `GET common/v1/streams`(웹 방식은 `GET /v2/wapi/streams`).
  *
  * 옵션을 읽어 `feed.ts` 의 `fetchStreams` 를 부르고 결과를 표·JSON·quiet 로 낸다.
  * 서버가 주는 범위와 커서·원소 읽기 규칙은 `feed.ts` 의 머리말을 본다.
+ * 웹 응답에만 있는 변경 기록은 `--with-changes` 를 줄 때만 내고, 아니면 뺀 건수를 끝에 알린다(ADR-083).
  */
 
 import { Command } from "commander";
 import { getConfigOrThrow } from "../../config/store.js";
-import { createClient } from "../../api/dooray-client.js";
+import { createClient, type DoorayClient } from "../../api/dooray-client.js";
+import type { StreamItem } from "@/api/stream/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { output, printJson, truncate } from "../../formatters/table.js";
 import { formatSentAt } from "../../formatters/datetime.js";
@@ -26,6 +28,7 @@ import {
   fetchStreams,
   type FetchStreamsResult,
   MAX_PAGES,
+  streamChangeSourceId,
   streamItemAt,
   streamItemAuthor,
   streamItemId,
@@ -46,6 +49,7 @@ interface StreamListOptions {
   since?: string;
   unread?: boolean;
   all?: boolean;
+  withChanges?: boolean;
 }
 
 function paramError(message: string): DoorayCliError {
@@ -79,6 +83,46 @@ export function resolveSinceMs(value: string, now: number = Date.now()): number 
   );
 }
 
+/**
+ * 웹 `calendar`·`project` 원소의 행위자 이름을 사람마다 한 번 찾는다. 표에만 쓰고 원소에는 더하지 않는다(ADR-083).
+ * 웹 응답의 멤버 이름을 먼저 보고, 없는 사람만 멤버 상세로 찾는다. 찾지 못하면 id 를 이름 자리에 쓰고 한 번 경고한다.
+ */
+async function resolveSourceNames(client: DoorayClient, items: StreamItem[]): Promise<Map<string, string>> {
+  const ids = [...new Set(items.map(streamChangeSourceId).filter((id): id is string => !!id))];
+  const names = new Map<string, string>();
+  let failed = false;
+  await Promise.all(
+    ids.map(async (id) => {
+      const listed = client.getMemberNameFromList?.(id);
+      if (listed) {
+        names.set(id, listed);
+        return;
+      }
+      try {
+        const name = (await client.getMemberDetail(id)).result?.name;
+        if (typeof name === "string" && name !== "") {
+          names.set(id, name);
+          return;
+        }
+      } catch {
+        // 표 표시만의 보강이라 명령을 실패로 끝내지 않는다.
+      }
+      failed = true;
+      names.set(id, id);
+    }),
+  );
+  if (failed) process.stderr.write("⚠  작성자 이름을 찾지 못해 멤버 id 로 보입니다.\n");
+  return names;
+}
+
+/** 출력을 다 쓴 뒤 stderr 로 뺀 변경 기록과 모르는 항목의 건수를 알린다. 웹 구현만 0 보다 크다. */
+function writeHiddenNotice({ hiddenChanges, unknown }: FetchStreamsResult): void {
+  if (hiddenChanges > 0) {
+    process.stderr.write(`ℹ  변경 기록 ${hiddenChanges}건을 뺐습니다. --with-changes 로 함께 봅니다.\n`);
+  }
+  if (unknown > 0) process.stderr.write(`ℹ  웹 응답에 CLI 가 모르는 항목 ${unknown}건이 있어 뺐습니다.\n`);
+}
+
 export const streamListCommand = new Command("list")
   .description("내 두레이 활동(피드) 목록. 최근 2주, 최신순")
   .option(
@@ -89,6 +133,10 @@ export const streamListCommand = new Command("list")
   .option("--since <date>", "이 시각 이후 활동만, 거기까지 페이지를 넘긴다 (YYYY-MM-DD, offset 붙은 ISO8601, prev-<N>d)")
   .option("--unread", "읽지 않은 것만")
   .option("--all", "빈 페이지가 올 때까지 끝까지 넘긴다")
+  .option(
+    "--with-changes",
+    "웹 방식만. 업무 상태 변경, 위키 활동, 일정 삭제 알림 같은 변경 기록을 웹 응답 모양 그대로 함께 낸다",
+  )
   .action(async (opts: StreamListOptions) => {
     const globalOpts = streamListCommand.optsWithGlobals() as OutputOptions;
 
@@ -100,6 +148,11 @@ export const streamListCommand = new Command("list")
     }
 
     const config = await getConfigOrThrow();
+    let withChanges = opts.withChanges === true;
+    if (withChanges && config.authMode !== "web") {
+      process.stderr.write("⚠  --with-changes 는 웹 방식에서만 동작합니다. 무시합니다.\n");
+      withChanges = false;
+    }
     const client = createClient(config);
 
     startSpinner("활동 조회 중...");
@@ -111,6 +164,7 @@ export const streamListCommand = new Command("list")
         read: opts.unread ? false : undefined,
         sinceMs,
         all: opts.all,
+        withChanges,
       });
     } catch (e) {
       stopSpinner(false);
@@ -128,34 +182,44 @@ export const streamListCommand = new Command("list")
       process.stderr.write(`ℹ  다음 페이지: --before ${nextCursor}\n`);
     }
 
-    if (globalOpts.json) {
-      // API result 원소를 바꾸지 않고 배열로 낸다.
-      printJson(items);
-      return;
-    }
-
-    const ids = items.map(streamItemId).filter((id): id is string => !!id);
-    if (globalOpts.quiet) {
-      if (ids.length > 0) output(globalOpts, { headers: [], rows: [], raw: items, ids });
-      return;
-    }
-
-    if (items.length === 0) {
-      process.stdout.write("조건에 맞는 활동이 없습니다.\n");
-      return;
-    }
-
-    // 서버가 준 문자열은 외부 통제 값이라 출력 직전 control char 를 없앤다.
-    const rows = items.map((item) => [
-      sanitizeForTerminal(formatSentAt(streamItemAt(item))),
-      sanitizeForTerminal(item.type ?? ""),
-      sanitizeForTerminal(streamItemAuthor(item)),
-      sanitizeForTerminal(truncate(streamItemSummary(item), 60)),
-    ]);
-    output(globalOpts, {
-      headers: ["시각", "타입", "작성자", "제목·내용"],
-      rows,
-      raw: items,
-      ids,
-    });
+    await writeItems(globalOpts, client, items);
+    writeHiddenNotice(result);
   });
+
+async function writeItems(globalOpts: OutputOptions, client: DoorayClient, items: StreamItem[]): Promise<void> {
+  if (globalOpts.json) {
+    // API result 원소를 바꾸지 않고 배열로 낸다.
+    printJson(items);
+    return;
+  }
+
+  const ids = items.map(streamItemId).filter((id): id is string => !!id);
+  if (globalOpts.quiet) {
+    if (ids.length > 0) output(globalOpts, { headers: [], rows: [], raw: items, ids });
+    return;
+  }
+
+  if (items.length === 0) {
+    process.stdout.write("조건에 맞는 활동이 없습니다.\n");
+    return;
+  }
+
+  const sourceNames = await resolveSourceNames(client, items);
+  const author = (item: StreamItem): string => {
+    const sourceId = streamChangeSourceId(item);
+    return streamItemAuthor(item) || (sourceId ? (sourceNames.get(sourceId) ?? sourceId) : "");
+  };
+  // 서버가 준 문자열은 외부 통제 값이라 출력 직전 control char 를 없앤다.
+  const rows = items.map((item) => [
+    sanitizeForTerminal(formatSentAt(streamItemAt(item))),
+    sanitizeForTerminal(item.type ?? ""),
+    sanitizeForTerminal(author(item)),
+    sanitizeForTerminal(truncate(streamItemSummary(item), 60)),
+  ]);
+  output(globalOpts, {
+    headers: ["시각", "타입", "작성자", "제목·내용"],
+    rows,
+    raw: items,
+    ids,
+  });
+}

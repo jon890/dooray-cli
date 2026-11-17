@@ -73,11 +73,84 @@ export function streamItemAuthor(item: StreamItem): string {
   return "";
 }
 
-/** 제목이 있으면 제목(프로젝트는 이름), 없으면 본문 앞부분. 줄바꿈은 공백으로 접는다. */
+/**
+ * 웹 `calendar`·`project` 카드의 행위자 id. 이름은 응답에 없어 명령이 멤버 조회로 채운다(ADR-083).
+ * 공개 API `project` 원소는 `source` 대신 `actor` 를 가지므로 undefined 다.
+ */
+export function streamChangeSourceId(item: StreamItem): string | undefined {
+  if (item.type !== "calendar" && item.type !== "project") return undefined;
+  const id = record(streamModel(item)?.source)?.organizationMemberId;
+  return typeof id === "string" || typeof id === "number" ? String(id) || undefined : undefined;
+}
+
+/** 상태 이름. `ko_KR` 이 없으면 첫 이름이다. */
+function localizedName(value: unknown): string | undefined {
+  const names = record(value)?.names;
+  if (!Array.isArray(names)) return undefined;
+  const ko = names.find((n) => record(n)?.locale === "ko_KR");
+  return str(record(ko)?.name) ?? str(record(names[0])?.name);
+}
+
+/** 시스템 기록 한 건의 요약. 항목 이름은 `message` 의 「: 변경」 앞부분이다. 값을 읽지 못하면 `message` 로 둔다. */
+function actionSummary(value: unknown): string {
+  const action = record(value);
+  if (!action) return "";
+  const message = str(action.message);
+  const fallback = message ?? str(action.name) ?? "";
+  const sep = message?.indexOf(": ") ?? -1;
+  const label = message ? (sep >= 0 ? message.slice(0, sep) : message) : str(action.name);
+  const data = record(action.data);
+  if (action.name === "workflow") {
+    const before = localizedName(data?.before), after = localizedName(data?.after);
+    return before && after ? `${label}: ${before} → ${after}` : fallback;
+  }
+  if (action.name === "endedAt") {
+    const day = typeof data?.after === "string" ? /^\d{4}-\d{2}-\d{2}/.exec(data.after)?.[0] : undefined;
+    return day ? `${label}: ${day}` : fallback;
+  }
+  if (action.name === "subject") {
+    return typeof data?.before === "string" && typeof data.after === "string"
+      ? `${label}: ${data.before} → ${data.after}`
+      : fallback;
+  }
+  return fallback;
+}
+
+function joinActions(actions: unknown[], one: (action: unknown) => string): string {
+  return actions.map(one).filter((s) => s !== "").join(", ");
+}
+
+/**
+ * 변경 기록 원소의 요약(ADR-083). 변경 기록이 아니면 undefined.
+ * 공개 API `project` 원소(`actor`·`action`)와 댓글 `event`(`body` 있음)는 변경 기록이 아니다.
+ */
+function changeSummary(item: StreamItem, model: Record<string, unknown>): string | undefined {
+  if (item.type === "event" && Array.isArray(model.actions)) return joinActions(model.actions, actionSummary);
+  const pageActions = record(model.body)?.actions;
+  if (item.type === "pageEvent" && Array.isArray(pageActions)) {
+    return joinActions(pageActions, (a) => str(record(a)?.message) ?? str(record(a)?.name) ?? "");
+  }
+  if (!("source" in model)) return undefined;
+  if (item.type === "calendar") {
+    const type = str(record(model.action)?.type);
+    if (type !== "schedule_deleted") return type ?? "";
+    const subject = str(record(record(model.target)?.schedule)?.subject);
+    return subject ? `일정 삭제: ${subject}` : "일정 삭제";
+  }
+  if (item.type === "project") {
+    const action = str(model.action) ?? str(record(model.actionDetail)?.type);
+    if (action === "invited" || record(model.actionDetail)?.type === "invited") return "프로젝트 초대";
+    return action ?? "";
+  }
+  return undefined;
+}
+
+/** 변경 기록은 바뀐 내용을, 그 밖에는 제목이 있으면 제목(프로젝트는 이름), 없으면 본문 앞부분. 줄바꿈은 공백으로 접는다. */
 export function streamItemSummary(item: StreamItem): string {
   const model = streamModel(item);
   if (!model) return "";
-  const text = str(model.subject) ?? str(model.name) ?? str(record(model.body)?.content) ?? "";
+  const text =
+    changeSummary(item, model) ?? str(model.subject) ?? str(model.name) ?? str(record(model.body)?.content) ?? "";
   return text.replace(/\s+/g, " ").trim();
 }
 
@@ -112,6 +185,8 @@ export interface FetchStreamsOptions {
   read?: boolean;
   sinceMs?: number;
   all?: boolean;
+  /** 웹 변경 기록을 `items` 에 함께 담는다(ADR-083). 클라이언트에 그대로 넘긴다. */
+  withChanges?: boolean;
 }
 
 export interface FetchStreamsResult {
@@ -120,6 +195,27 @@ export interface FetchStreamsResult {
   nextCursor?: string;
   /** 페이지 상한에 걸려 끝까지 받지 못했는지. */
   truncated: boolean;
+  /** `withChanges` 가 아니어서 뺀 변경 기록 수. `--since` 를 통과한 것만 센다. 웹 방식만 0 보다 크다. */
+  hiddenChanges: number;
+  /** 웹 응답에서 CLI 가 모르는 항목 수. 웹 방식만 0 보다 크다. */
+  unknown: number;
+}
+
+/**
+ * 원소를 `--since` 로 판단한 결과. `keep` 은 남기고, `older` 는 원소 시각이 since 보다 앞서 빼고, `drop` 은 시각이 없고 페이지가 since 구간 밖이라 뺀다.
+ * 시각이 없는 원소(schedule 등)는 그 페이지의 앞쪽 경계가 since 이후일 때만 남긴다.
+ */
+function sinceVerdict(item: StreamItem, sinceMs: number, pageOverlapsSince: boolean): "keep" | "older" | "drop" {
+  const at = streamItemAt(item);
+  const ms = at ? Date.parse(at) : NaN;
+  if (!Number.isNaN(ms)) return ms >= sinceMs ? "keep" : "older";
+  return pageOverlapsSince ? "keep" : "drop";
+}
+
+/** 페이지의 가장 새 쪽 경계(직전 커서)가 since 이후인지. 첫 페이지(before 없음)는 지금이다. since 가 미래면 첫 페이지도 구간 밖이다. */
+function pageOverlapsSince(before: string | undefined, sinceMs: number): boolean {
+  const newerEdgeMs = before != null ? cursorToMs(before) : Date.now();
+  return newerEdgeMs == null || newerEdgeMs >= sinceMs;
 }
 
 /**
@@ -136,31 +232,36 @@ export async function fetchStreams(
   opts: FetchStreamsOptions,
 ): Promise<FetchStreamsResult> {
   const items: StreamItem[] = [];
+  let hiddenChanges = 0;
+  let unknown = 0;
   let before = opts.before;
   const paging = opts.all || opts.sinceMs != null;
   for (let page = 0; page < MAX_PAGES; page++) {
-    const res = await client.getStreams({ size: opts.size, before, read: opts.read });
+    const res = await client.getStreams({ size: opts.size, before, read: opts.read, withChanges: opts.withChanges });
     const received = res.result ?? [];
     const cursor = normalizeCursor(res.cursor);
-    if (received.length === 0) return { items, truncated: false };
+    const cursorMs = cursorToMs(cursor);
+    // 빈 페이지로 끝내기 전에 센다. 웹 구현은 변경 기록만 있던 페이지를 이어 받으며 건수를 모아 준다.
+    const changes = res.changes ?? [];
+    if (opts.sinceMs == null) {
+      hiddenChanges += changes.length;
+    } else {
+      const sinceMs = opts.sinceMs;
+      const overlaps = pageOverlapsSince(before, sinceMs);
+      hiddenChanges += changes.filter((item) => sinceVerdict(item, sinceMs, overlaps) === "keep").length;
+    }
+    unknown += res.unknown ?? 0;
+    if (received.length === 0) return { items, truncated: false, hiddenChanges, unknown };
 
     let reachedSince = false;
     if (opts.sinceMs != null) {
       const sinceMs = opts.sinceMs;
-      const cursorMs = cursorToMs(cursor);
-      // 이 페이지의 가장 새 쪽 경계. 첫 페이지(before 없음)는 지금이다. since 가 미래면 첫 페이지도 구간 밖이다.
-      const newerEdgeMs = before != null ? cursorToMs(before) : Date.now();
-      const pageOverlapsSince = newerEdgeMs == null || newerEdgeMs >= sinceMs;
+      const overlaps = pageOverlapsSince(before, sinceMs);
       let olderItem = false;
       for (const item of received) {
-        const at = streamItemAt(item);
-        const ms = at ? Date.parse(at) : NaN;
-        if (!Number.isNaN(ms)) {
-          if (ms >= sinceMs) items.push(item);
-          else olderItem = true;
-        } else if (pageOverlapsSince) {
-          items.push(item);
-        }
+        const verdict = sinceVerdict(item, sinceMs, overlaps);
+        if (verdict === "keep") items.push(item);
+        else if (verdict === "older") olderItem = true;
       }
       // 커서를 읽지 못하면 원소 시각으로 대신 판단한다.
       reachedSince = cursorMs != null ? cursorMs < sinceMs - SINCE_STOP_MARGIN_MS : olderItem;
@@ -170,9 +271,9 @@ export async function fetchStreams(
 
     // 커서가 없거나 그대로면 더 받을 방법이 없다.
     if (!paging || reachedSince || !cursor || cursor === before) {
-      return { items, nextCursor: cursor, truncated: false };
+      return { items, nextCursor: cursor, truncated: false, hiddenChanges, unknown };
     }
     before = cursor;
   }
-  return { items, nextCursor: before, truncated: true };
+  return { items, nextCursor: before, truncated: true, hiddenChanges, unknown };
 }

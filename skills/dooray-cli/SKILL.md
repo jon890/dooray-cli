@@ -287,6 +287,7 @@ dooray post get <project> <number> --json --with-tag-names
 | 어느 시각 이후 활동만 | `dooray stream list --since <YYYY-MM-DD\|ISO8601\|prev-<N>d>` — 그 시각보다 오래된 페이지가 나오면 멈춘다 |
 | 2주 치 전부 | `dooray stream list --all` — 빈 페이지가 올 때까지 넘긴다 |
 | 다음 페이지 이어 받기 | `dooray stream list --before <cursor>` — 한 페이지만 받으면 다음 커서를 stderr 에 `다음 페이지: --before <cursor>` 로 알린다 |
+| 변경 기록까지 함께 | `dooray stream list --with-changes` — 웹 방식만. 업무 상태 변경, 위키 활동, 일정 삭제 알림을 함께 낸다. `--json` 은 웹 응답 모양이고 `project` 원소는 공개 API 모양과 다를 수 있다. 옵션이 없으면 뺀 건수를 stderr 로 알린다 |
 
 - 한 페이지가 `--size` 보다 적게 와도 끝이 아니다. 끝까지 보려면 `--all` 이나 `--since` 를 쓴다.
 - `--json` 은 API 의 원소를 그대로 배열로 낸다. 원소는 `{ "type": "post", "post": {...} }` 처럼 type 이름의 키에 모델이 들어 있고, 모델은 type 마다 다르다.
