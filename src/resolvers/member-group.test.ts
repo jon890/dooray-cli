@@ -84,7 +84,7 @@ describe("resolveMemberGroup", () => {
     expect(result.code).toBe("");
   });
 
-  it("id 매칭 실패 — 친절한 안내 + EXIT_PARAM_ERROR", async () => {
+  it("id 매칭 실패 — 기본은 친절한 안내 + EXIT_PARAM_ERROR (본문 멘션용)", async () => {
     const client = mockClient(fixtureFlat);
     await expect(resolveMemberGroup(client, "p1", "9999999999999999999")).rejects.toSatisfy(
       (err: unknown) =>
@@ -92,6 +92,29 @@ describe("resolveMemberGroup", () => {
         err.exitCode === EXIT_PARAM_ERROR &&
         /그룹 id 를 찾을 수 없습니다.*dooray project groups/s.test(err.message),
     );
+  });
+
+  it("allowUnlistedId — 프로젝트 목록에 있는 ID 는 code 를 채운다", async () => {
+    const client = mockClient(fixtureFlat);
+    const result = await resolveMemberGroup(client, "p1", "1111222233334444555", { allowUnlistedId: true });
+    expect(result).toEqual({ id: "1111222233334444555", code: "all" });
+  });
+
+  it("allowUnlistedId — 목록에 없는 숫자 ID 는 그대로 통과 (다른 프로젝트 그룹)", async () => {
+    const client = mockClient(fixtureFlat);
+    const result = await resolveMemberGroup(client, "p1", "9999999999999999999", { allowUnlistedId: true });
+    expect(result).toEqual({ id: "9999999999999999999", code: "" });
+  });
+
+  it("allowUnlistedId — code 입력은 기존 부분일치 흐름을 따른다", async () => {
+    const client = mockClient(fixtureFlat);
+    expect(await resolveMemberGroup(client, "p1", "개발", { allowUnlistedId: true })).toEqual({
+      id: "2222333344445555666",
+      code: "개발",
+    });
+    await expect(
+      resolveMemberGroup(client, "p1", "존재하지않는code", { allowUnlistedId: true }),
+    ).rejects.toThrow(/dooray project groups|id 직접 입력/);
   });
 
   it("code 매칭 실패 시 helpHint 에 id 입력 안내 포함", async () => {
