@@ -181,7 +181,8 @@ dooray post get <project> <number> --json --with-tag-names
 
 참조자·담당자 옵션만 지정하면 `$EDITOR`를 열지 않고 기존 제목·본문·태그를 보존한 채 참여자만 바꾼다.
 
-그룹 지정(`--cc-group`, `--mention-group`)은 15자리 이상 numeric 이면 ID 로, 그 외에는 code 부분일치로 찾는다.
+그룹 지정(`--cc-group`, `--to-group`, `--mention-group`)은 15자리 이상 numeric 이면 ID 로, 그 외에는 code 부분일치로 찾는다.
+`--cc-group`·`--to-group` 은 그 프로젝트 그룹 목록에 없는 ID(다른 프로젝트의 그룹)도 그대로 서버로 넘기고, 서버가 거부하면 그 메시지가 오류로 나온다. `--mention-group` 은 그룹 code 가 본문에 필요해 목록에 없는 ID 를 거절한다.
 
 본문 형식이 `text/html` 이면 `--mention` 계열이 거절된다. 이유와 대처는 [mention-link.md](references/mention-link.md) 가 소유한다.
 
