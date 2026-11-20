@@ -26,6 +26,7 @@ dooray post comment add <project> 1 --mention 홍길동 --mention-group 개발 -
 
 후보가 여러 개일 때 임의로 고르지 않고 사용자에게 어느 그룹인지 묻는다.
 code 로 못 찾으면 15자리 이상 numeric ID 를 직접 넣을 수도 있다.
+`--cc-group` 은 그 프로젝트 그룹 목록에 없는 ID(다른 프로젝트의 그룹)도 그대로 서버로 넘긴다. `--mention-group` 은 목록에 없는 ID 를 거절한다.
 
 ## Dooray 마크다운 링크 형식
 

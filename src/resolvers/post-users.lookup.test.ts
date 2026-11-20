@@ -65,4 +65,18 @@ describe("resolveUserAdditions 오류 종료 코드", () => {
     expect(err).toBeInstanceOf(DoorayCliError);
     expect(err).toMatchObject({ exitCode: EXIT_API_ERROR, cause: original });
   });
+
+  it("그룹은 프로젝트 목록에 없는 ID 도 허용하는 옵션으로 찾는다", async () => {
+    mocks.resolveMemberGroup.mockResolvedValue({ id: "9999999999999999999", code: "" });
+
+    const users = await resolveUserAdditions(client, "project-1", [], ["9999999999999999999"]);
+
+    expect(mocks.resolveMemberGroup).toHaveBeenCalledWith(
+      client,
+      "project-1",
+      "9999999999999999999",
+      { allowUnlistedId: true },
+    );
+    expect(users).toHaveLength(1);
+  });
 });

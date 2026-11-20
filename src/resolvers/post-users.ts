@@ -75,7 +75,7 @@ export async function resolveUserAdditions(
   );
   const groups = await Promise.all(
     groupCodes.map((c) =>
-      resolveMemberGroup(client, projectId, c).catch((err: unknown) => {
+      resolveMemberGroup(client, projectId, c, { allowUnlistedId: true }).catch((err: unknown) => {
         throw wrapLookupError(`그룹 '${c}' 조회 실패`, err);
       }),
     ),

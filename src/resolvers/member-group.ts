@@ -52,6 +52,7 @@ export async function resolveMemberGroup(
   client: ProjectClient,
   projectId: string,
   input: string,
+  options: { allowUnlistedId?: boolean } = {},
 ): Promise<{ id: string; code: string }> {
   const groups = await ensureMemberGroups(client, projectId);
 
@@ -60,6 +61,11 @@ export async function resolveMemberGroup(
     const found = groups.find((g) => g.id === input);
     if (found) {
       return { id: found.id, code: found.code ?? "" };
+    }
+    // 참조·담당 그룹은 다른 프로젝트의 그룹도 서버가 받는다. 목록에 없는 ID 는 그대로 넘기고
+    // 서버가 거부하면 API 오류로 알린다. 본문 멘션은 code 가 있어야 하므로 이 완화를 쓰지 않는다.
+    if (options.allowUnlistedId) {
+      return { id: input, code: "" };
     }
     throw new DoorayCliError(
       `그룹 id 를 찾을 수 없습니다: "${input}"\n` +
