@@ -1,4 +1,4 @@
-## ADR-083: 참조·담당 그룹은 프로젝트 목록에 없는 ID 도 그대로 넘긴다
+## ADR-084: 참조·담당 그룹은 프로젝트 목록에 없는 ID 도 그대로 넘긴다
 
 - **status**: `accepted`
 - **decision-type**: `behavior`
