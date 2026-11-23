@@ -1,3 +1,4 @@
+import { uploadBlob } from "@/utils/upload-blob.js";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { PublicHttp } from "@/api/public/http.js";
@@ -147,7 +148,7 @@ export function createWikiPublic(http: PublicHttp): WikiClient {
           const buildFormData = (): FormData => {
             const fd = new FormData();
             fd.append("type", type);
-            fd.append("file", new Blob([fileBuffer]), fileName);
+            fd.append("file", uploadBlob(fileBuffer, fileName), fileName);
             return fd;
           };
 

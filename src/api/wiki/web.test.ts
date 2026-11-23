@@ -306,6 +306,7 @@ describe("웹 위키 첨부", () => {
       expect([...calls[0].form!.keys()]).toEqual(["type", "file"]);
       expect(calls[0].form!.get("type")).toBe("general");
       expect((calls[0].form!.get("file") as File).name).toBe("올림.txt");
+      expect((calls[0].form!.get("file") as File).type).toBe("text/plain");
       expect(res.result).toEqual({ id: "file-9", attachFileId: "attach-9", name: "올림.txt", mimeType: "application/octet-stream", type: "general", size: 6, createdAt: "2026-11-14T03:00:00+09:00" });
       expect(calls[0].headers.get("cookie")).toBe("SESSION=fake-session");
     } finally { await rm(dir, { recursive: true, force: true }); }

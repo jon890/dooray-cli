@@ -3,6 +3,7 @@
  * 웹은 같은 부모 아래 같은 제목을 거절하지 않고 ` (1)` 을 붙여 저장하므로(공식 API 는 409),
  * 쓰기 전에 형제 제목을 확인하고 쓴 뒤 저장된 제목을 비교한다.
  */
+import { uploadBlob } from "@/utils/upload-blob.js";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { WikiClient } from "./types.js";
@@ -192,7 +193,8 @@ export function createWikiWeb(context: WebContext): WikiClient {
       // ADR-029: type 필드를 file 필드보다 먼저 append (Dooray 서버 순서 의존)
       const form = new FormData();
       form.append("type", type);
-      form.append("file", new Blob([buffer]), basename(filePath));
+      const fileName = basename(filePath);
+      form.append("file", uploadBlob(buffer, fileName), fileName);
       const response = await http.upload(apiPath`v2/wapi/wikis/${wikiId}/pages/${pageId}/files`, form);
       pages.delete(pageId);
       const source = row(response.result);

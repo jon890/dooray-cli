@@ -1,3 +1,4 @@
+import { uploadBlob } from "@/utils/upload-blob.js";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { PublicHttp } from "@/api/public/http.js";
@@ -242,7 +243,7 @@ export function createPostPublic(http: PublicHttp): PostClient {
           const fileBuffer = await readFile(filePath);
 
           const formData = new FormData();
-          formData.append("file", new Blob([fileBuffer]), fileName);
+          formData.append("file", uploadBlob(fileBuffer, fileName), fileName);
 
           const url = http.url(apiPath`project/v1/projects/${projectId}/posts/${postId}/files`);
           const res = await fetch(url, {

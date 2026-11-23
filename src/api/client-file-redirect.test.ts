@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fileURLToPath } from "node:url";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { KyInstance } from "ky";
 import { DoorayApiClient } from "./client.js";
 import { PublicHttp } from "./public/http.js";
@@ -101,6 +104,40 @@ describe("파일 서버의 다시 보내기", () => {
 });
 
 describe("첨부 업로드의 redirect", () => {
+  it.each([
+    ["sample.PNG", "image/png"],
+    ["sample.jpg", "image/jpeg"],
+    ["sample.jpeg", "image/jpeg"],
+    ["sample.gif", "image/gif"],
+    ["sample.webp", "image/webp"],
+    ["sample.svg", "image/svg+xml"],
+    ["sample.pdf", "application/pdf"],
+    ["sample.unknown", "application/octet-stream"],
+    ["sample", "application/octet-stream"],
+  ])("업무와 위키 요청의 %s 파일 파트에 %s 를 보낸다", async (name, mimeType) => {
+    const dir = await mkdtemp(join(tmpdir(), "upload-mime-"));
+    try {
+      const source = join(dir, name);
+      await writeFile(source, "sample");
+      const fetchMock = stubFetch((url) =>
+        url.startsWith(BASE)
+          ? new Response(null, { status: 307, headers: { location: TRUSTED } })
+          : new Response(JSON.stringify({ result: { id: "new" } })),
+      );
+      const c = new DoorayApiClient("key", BASE);
+      await c.uploadPostFile("p", "post", source);
+      await c.uploadWikiPageFile("w", "page", source, "general");
+
+      expect(fetchMock).toHaveBeenCalledTimes(4);
+      for (const [url, init] of fetchMock.mock.calls) {
+        const body = await new Request(url, init).text();
+        expect(body).toContain(`filename="${name}"\r\nContent-Type: ${mimeType}\r\n`);
+      }
+    } finally {
+      await rm(dir, { recursive: true });
+    }
+  });
+
   it.each([
     ["uploadPostFile", (c: DoorayApiClient, f: string) => c.uploadPostFile("p", "post", f), "파일 업로드"],
     ["uploadWikiPageFile", (c: DoorayApiClient, f: string) => c.uploadWikiPageFile("w", "page", f, "general"), "위키 파일 업로드"],
