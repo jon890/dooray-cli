@@ -49,11 +49,12 @@ describe("웹 업무 파일과 공용 전송 경계", () => {
     const upload = vi.spyOn(context.http, "upload").mockResolvedValue(fixtures.created);
     const dir = await mkdtemp(join(tmpdir(), "post-file-test-"));
     try {
-      const source = join(dir, "sample.txt"); await writeFile(source, "sample");
+      const source = join(dir, "sample.png"); await writeFile(source, "sample");
       expect((await api.uploadPostFile("project-1", "post-1", source)).result).toEqual({ id: "created-1" });
       const [url, form, opts] = upload.mock.calls[0];
       expect(url).toBe("wapi/task/v1/tasks/post-1/files");
       expect(opts).toEqual({ searchParams: { type: "general" } });
+      expect((form.get("file") as File).type).toBe("image/png");
       expect(await (form.get("file") as File).text()).toBe("sample");
     } finally { await rm(dir, { recursive: true }); }
   });

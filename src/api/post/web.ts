@@ -1,4 +1,5 @@
 /** 업무·댓글·첨부의 웹 요청을 공식 응답으로 바꾼다. 원본 상세는 쓰기 시 필드 보존에만 쓴다. */
+import { uploadBlob } from "@/utils/upload-blob.js";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { PostClient } from "./types.js";
@@ -321,7 +322,8 @@ export function createPostWeb(context: WebContext): PostClient {
     async uploadPostFile(projectId, postId, filePath) {
       await load(postId, projectId);
       const form = new FormData();
-      form.append("file", new Blob([await readFile(filePath)]), basename(filePath));
+      const fileName = basename(filePath);
+      form.append("file", uploadBlob(await readFile(filePath), fileName), fileName);
       const response = await http.upload(apiPath`wapi/task/v1/tasks/${postId}/files`, form, { searchParams: { type: "general" } });
       const uploaded = rows(response.result);
       if (uploaded.length !== 1) return invalidResponse();
