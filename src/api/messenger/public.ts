@@ -5,10 +5,17 @@ import { buildThreadRequest } from "@/api/messenger-thread-request.js";
 import { DoorayCliError } from "@/utils/errors.js";
 import { fallbackFileName, parseContentDispositionFileName } from "@/utils/content-disposition.js";
 import { toDoorayCliError } from "@/api/public/http.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
+
+async function reactionRequiresWeb(): Promise<never> {
+  throw new DoorayCliError("메신저 리액션은 웹 세션으로만 지원합니다.", EXIT_PARAM_ERROR);
+}
 
 /** messenger 영역의 공개 API 구현. 공용 HTTP 는 PublicHttp 가 맡는다. */
 export function createMessengerPublic(http: PublicHttp): MessengerClient {
   return {
+    addMessengerReaction: reactionRequiresWeb,
+    removeMessengerReaction: reactionRequiresWeb,
     async sendDirectMessage(
       organizationMemberId: string,
       text: string,

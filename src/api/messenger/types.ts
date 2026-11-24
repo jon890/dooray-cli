@@ -107,6 +107,8 @@ export interface MessengerClient {
   sendDirectMessage(organizationMemberId: string, text: string): Promise<MessengerSendResponse>;
   sendChannelMessage(channelId: string, text: string): Promise<MessengerSendResponse>;
   getChannelLogs(channelId: string, size: number): Promise<MessengerLogListResponse>;
+  addMessengerReaction(channelId: string, logId: string, emoji: string): Promise<void>;
+  removeMessengerReaction(channelId: string, logId: string, emoji: string): Promise<void>;
   downloadMessengerFile(channelId: string, fileId: string): Promise<{ buffer: ArrayBuffer; fileName: string }>;
   createChannelThread(channelId: string, text: string, threadText?: string): Promise<MessengerSendResponse>;
   createLogThread(channelId: string, logId: string, text: string): Promise<MessengerSendResponse>;

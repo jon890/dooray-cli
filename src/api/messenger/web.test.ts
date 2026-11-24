@@ -131,6 +131,56 @@ describe("웹 메신저 보내기", () => {
   });
 });
 
+describe("웹 메신저 리액션", () => {
+  const ok = (result: unknown) => ({ header: fixtures.logs.header, result });
+  const message = { id: "log-1", channelId: "channel-1" };
+  const reaction = {
+    id: "reaction-1",
+    channelId: message.channelId,
+    logId: message.id,
+    value: "+1",
+    count: 2,
+    members: [{ memberId: "member-2" }, { memberId: "member-1" }],
+  };
+  const withReaction = (item: typeof reaction) => ok({
+    content: { logs: [{ ...message, reactions: [item.id] }] },
+    references: { reactionMap: { [item.id]: item } },
+  });
+
+  it("해당 대화방의 메시지인지 확인한 뒤 대표 이름을 POST 본문에 넣는다", async () => {
+    const calls = sequence(ok({ content: { logs: [message] } }), ok({ content: reaction }));
+    await client().addMessengerReaction(message.channelId, message.id, "+1");
+    expect(calls[0].url.pathname).toBe("/messenger/v1/api/channel/channel-1/logs");
+    expect(Object.fromEntries(calls[0].url.searchParams)).toEqual({
+      limit: "1", setLastChannel: "false", logId: "log-1", direction: "both",
+    });
+    expect(calls[1]).toMatchObject({ method: "POST", body: { value: "+1" } });
+    expect(calls[1].url.pathname).toBe("/messenger/v1/api/channels/channel-1/logs/log-1/reactions");
+  });
+
+  it("메시지가 다른 대화방에 있으면 어느 쪽도 변경하지 않는다", async () => {
+    const calls = sequence(ok({ content: { logs: [{ ...message, channelId: "channel-2" }] } }));
+    await expect(client().addMessengerReaction(message.channelId, message.id, "+1")).rejects.toMatchObject({ exitCode: 1 });
+    await expect(client().removeMessengerReaction(message.channelId, message.id, "+1")).rejects.toMatchObject({ exitCode: 1 });
+    expect(calls.map(({ method }) => method)).toEqual(["GET", "GET"]);
+  });
+
+  it("같은 이름에 내 참여 기록이 있으면 이름 대신 리액션 ID로 DELETE 한다", async () => {
+    const calls = sequence(withReaction(reaction), fixtures.myMessenger, ok({ content: reaction }));
+    await client().removeMessengerReaction(message.channelId, message.id, "+1");
+    expect(calls.map(({ method }) => method)).toEqual(["GET", "GET", "DELETE"]);
+    expect(calls[2].url.pathname).toBe("/messenger/v1/api/channels/channel-1/logs/log-1/reactions/reaction-1");
+    expect(calls[2].body).toBeUndefined();
+  });
+
+  it("다른 사람만 단 같은 이름의 리액션은 삭제하지 않는다", async () => {
+    const calls = sequence(withReaction({ ...reaction, members: [{ memberId: "member-2" }] }), fixtures.myMessenger);
+    await expect(client().removeMessengerReaction(message.channelId, message.id, "+1"))
+      .rejects.toMatchObject({ exitCode: 1, message: expect.stringContaining("내가 단") });
+    expect(calls.map(({ method }) => method)).toEqual(["GET", "GET"]);
+  });
+});
+
 describe("웹 메신저 파일 받기", () => {
   function setup() {
     const context = new WebContext("fake-session", "https://example.dooray.com", "https://api.dooray.com");

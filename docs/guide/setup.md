@@ -393,6 +393,7 @@ dooray post comment add --id "$POST_ID" --body "시작합니다"
 | --- | --- |
 | `messenger channels` | 없음 |
 | `messenger logs` | 없음 |
+| `messenger react` | 없음 |
 | `messenger send` | 없음 |
 | `messenger channel-send` | 없음 |
 | `messenger thread-send` | 없음 |

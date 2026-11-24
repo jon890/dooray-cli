@@ -18,6 +18,19 @@
 | downloadMessengerFile | GET `/messenger/v2/api/channel/{channelId}/file/{fileId}` | 없음 | SESSION 만으로 HTTP 200 에 `content-disposition: attachment` 와 본문이 바로 온다. 리다이렉트가 없다. 틀린 파일 id 는 HTTP 200 에 본문과 `content-disposition` 이 없다 |
 | (메시지 삭제) | DELETE `/messenger/v1/api/channels/{channelId}/logs/{logId}` | 없음 | CLI 가 쓰지 않는다. 실측 메시지를 지우는 데만 썼다. `channelLogs`·`channel/…/logs` 경로로는 403 이다 |
 
+## 메시지 리액션
+
+2026-11-24 나와의 대화방에서 웹 메신저 요청을 확인했다.
+
+| 요청 | 입력 | 응답 |
+| --- | --- | --- |
+| GET `/messenger/v1/api/channel/{channelId}/logs` | `logId`, `direction=both`, `limit=1`, `setLastChannel=false` | `result.content.logs` 에 대상 메시지가 온다. 메시지의 `reactions` 는 리액션 ID 배열이다. 각 ID의 상세는 `result.references.reactionMap` 에 있으며, `value` 와 `members[].memberId` 로 이름과 참여자를 확인한다 |
+| POST `/messenger/v1/api/channels/{channelId}/logs/{logId}/reactions` | JSON `{"value":"+1"}` | HTTP 200. `result.content` 에 `id`, `channelId`, `logId`, `value`, `count`, `members` 가 온다 |
+| DELETE `/messenger/v1/api/channels/{channelId}/logs/{logId}/reactions/{reactionId}` | 본문 없음 | HTTP 200. `result.content` 는 POST 와 같은 구조다 |
+
+웹 서버는 별칭과 등록되지 않은 이름도 받아들인다. CLI 는 웹 화면에서 표시를 확인한 대표 이름만 받는다.
+CLI 는 쓰기 전에 조회한 메시지의 대화방 ID를 확인한다. 제거할 때는 `GET /messenger/v1/api/members/me?v=0.2.0` 에서 받은 내 ID가 해당 리액션의 참여자 목록에 있어야 한다.
+
 대화방 목록은 `me`·`direct`·`private`·`bot` 네 종류가 왔다. 화면은 `me` 방(나와의 대화) 하나를 갖는다.
 
 ## 공식 응답 필드와 변환

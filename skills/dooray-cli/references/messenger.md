@@ -74,4 +74,16 @@ dooray messenger channel-send --channel "$THREAD" --body "배포 완료"
 ## 웹 방식에서 보내기
 
 웹 방식의 `messenger send --to` 는 이미 있는 1:1 방(또는 나와의 대화)에만 보낸다. 상대와 대화방이 아직 없으면 종료 코드 3 으로 멈추고 새 방을 만들지 않는다.
+
+## 메시지 리액션
+
+```bash
+dooray messenger react "<channel>" <messageId> --emoji +1
+dooray messenger react "<channel>" <messageId> --emoji +1 --remove
+```
+
+- 대화방 이름 또는 ID를 넣는다. 메시지 ID는 `messenger logs` 에서 확인한다.
+- 지원하는 대표 이름은 `dooray messenger react --help` 에 나온다. 이모지 문자, 별칭, 목록에 없는 이름은 거절한다.
+- API 키 방식에서도 저장한 웹 세션을 쓴다. 세션이 없거나 만료되면 종료 코드 3으로 끝난다. 공식 API 문서에 없는 경로라 예고 없이 막힐 수 있다.
+- `--json` 은 `channelId`, `messageId`, `emoji`, `status`(`added` 또는 `removed`)를 내고 `--quiet` 은 메시지 ID만 낸다.
 사용자에게 메신저에서 1:1 대화를 먼저 시작하게 하거나 API 키 방식으로 바꿀지 묻는다.
