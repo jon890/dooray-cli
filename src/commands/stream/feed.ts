@@ -148,8 +148,8 @@ export async function fetchStreams(
     if (opts.sinceMs != null) {
       const sinceMs = opts.sinceMs;
       const cursorMs = cursorToMs(cursor);
-      // 이 페이지의 가장 새 쪽 경계. 첫 페이지(before 없음)는 지금이라 since 이후다.
-      const newerEdgeMs = before != null ? cursorToMs(before) : undefined;
+      // 이 페이지의 가장 새 쪽 경계. 첫 페이지(before 없음)는 지금이다. since 가 미래면 첫 페이지도 구간 밖이다.
+      const newerEdgeMs = before != null ? cursorToMs(before) : Date.now();
       const pageOverlapsSince = newerEdgeMs == null || newerEdgeMs >= sinceMs;
       let olderItem = false;
       for (const item of received) {

@@ -105,6 +105,14 @@ describe("fetchStreams — 페이지 넘기기", () => {
     expect(types(res.items)).toEqual(["post", "event", "schedule"]);
   });
 
+  it("--since 가 미래면 첫 페이지의 시각 없는 원소도 뺀다", async () => {
+    const client = fakeClient();
+    const sinceMs = Date.now() + 24 * 60 * 60 * 1000;
+    const res = await fetchStreams(client, { size: 20, sinceMs });
+    expect(client.getStreams).toHaveBeenCalledTimes(1);
+    expect(res.items).toEqual([]);
+  });
+
   it("--since 여유로 더 받은 페이지의 시각 없는 원소는 뺀다", async () => {
     // 둘째 페이지 커서(12:00:00)가 since(12:00:30)보다 30초 앞이라 여유 안이어서 셋째 페이지를 받는다.
     // 셋째 페이지는 앞쪽 경계(둘째 페이지 커서)부터 since 보다 앞이라 시각 없는 원소를 판단할 근거가 없다.
