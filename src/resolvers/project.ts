@@ -73,6 +73,7 @@ export async function buildProjectCodeMap(client: ProjectClient): Promise<Map<st
 export async function resolveProject(
   client: ProjectClient,
   input: string,
+  { useCache = true }: { useCache?: boolean } = {},
 ): Promise<string> {
   // 1. numeric 15+자리 — cache 우회 (ADR-030, Issue #78)
   // 기본 프로젝트 목록에 없는 프로젝트도 projectId 만 있으면 후속 API 호출 가능.
@@ -82,12 +83,12 @@ export async function resolveProject(
   }
 
   // 2. cache 매칭 (기존 흐름)
-  const projects = await ensureProjects(client);
+  const projects = useCache ? await ensureProjects(client) : await fetchAllProjects(client);
   const match = projects.find((p) => p.code === input || p.id === input);
   if (match) return match.id;
 
   // private 프로젝트는 별도 목록에만 있다. 캐시가 없거나 기간이 지났으면 받아서 채운다 (ADR-054).
-  const privateProjects = await ensurePrivateProjects(client);
+  const privateProjects = useCache ? await ensurePrivateProjects(client) : await fetchAllProjects(client, { type: "private" });
   const privateMatch = privateProjects.find((p) => p.code === input || p.id === input);
   if (privateMatch) return privateMatch.id;
 

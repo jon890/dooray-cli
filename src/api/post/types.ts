@@ -236,9 +236,9 @@ export type SetPostParentResponse = DoorayApiUnitResponse | {
   result: { post: { id: string }; project: { id: string } };
 };
 
-/** 공개 API 방식에서 댓글 리액션을 거절하는 문구. 명령과 공개 구현이 같은 말을 쓴다. */
+/** 공개 API 클라이언트에서 댓글 리액션 호출을 거절하는 문구. */
 export const REACTION_WEB_ONLY_MESSAGE =
-  "댓글 리액션은 공식 API 에 없어 웹 방식(auth-mode web)에서만 지원합니다. dooray config set auth-mode web 으로 바꾸세요.";
+  "댓글 리액션은 웹 API 에서만 지원합니다. dooray config set session-cookie - 로 SESSION 쿠키를 저장하세요.";
 
 export interface PostClient {
   getPosts(projectId: string, params?: GetPostsParams): Promise<PostListResponse>;

@@ -90,7 +90,7 @@ export function violationOf(edge: ImportEdge): string | undefined {
 
   const fromArea = commandAreaOf(edge.from);
   const toArea = commandAreaOf(edge.to);
-  if (fromArea !== undefined && toArea !== undefined && fromArea !== toArea) {
+  if (fromArea !== undefined && toArea !== undefined && fromArea !== toArea && edge.to !== "commands/web-support.ts") {
     return `명령 영역 ${fromArea} 는 다른 명령 영역 ${toArea} 를 가져오지 않는다`;
   }
 

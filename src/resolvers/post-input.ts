@@ -28,6 +28,8 @@ export interface PostInputArgs {
   postNumberArg?: string;
   idOpt?: string;
   urlOpt?: string;
+  /** 기본 인증과 다른 계정으로 조회하면 공유 프로젝트 캐시를 쓰지 않는다. */
+  useProjectCache?: boolean;
   /**
    * 실행된 인자 배열 (`process.argv.slice(2)`).
    * 주어지면 안내 오류가 실행한 명령을 고쳐 만든 완성 명령 한 줄을 보여준다 (ADR-044).
@@ -73,7 +75,7 @@ export async function resolvePostInput(
   client: PostClient & ProjectClient,
   args: PostInputArgs,
 ): Promise<ResolvedPostInput> {
-  const { projectArg, postNumberArg, idOpt, urlOpt, argv } = args;
+  const { projectArg, postNumberArg, idOpt, urlOpt, useProjectCache, argv } = args;
   const hasPositional = !!projectArg || !!postNumberArg;
 
   // 1. --id + --url 동시 → 에러
@@ -170,7 +172,7 @@ export async function resolvePostInput(
         EXIT_PARAM_ERROR,
       );
     }
-    const projectId = await resolveProject(client, projectArg);
+    const projectId = await resolveProject(client, projectArg, { useCache: useProjectCache });
     const num = Number(postNumberArg);
     // classifyPostInputToken 이 postNumber 를 보장하므로 NaN 불가하나,
     // 분류 로직 변경 시 NaN <= 0 (false) 로 0번 조회되는 회귀 방지로 isFinite 명시

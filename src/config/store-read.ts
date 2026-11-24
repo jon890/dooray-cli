@@ -39,11 +39,12 @@ export function configReadErrorMessage(
 async function fillSecrets(
   stored: StoredConfig,
   secrets: SecretStore,
+  sessionOnly: boolean,
 ): Promise<ConfigReadResult> {
   const merged: Config = { ...stored, apiKey: stored.apiKey ?? "" };
   try {
-    for (const field of SECRET_FIELDS) {
-      if (field === "sessionCookie" && stored.authMode !== "web") continue;
+    for (const field of sessionOnly ? ["sessionCookie"] as const : SECRET_FIELDS) {
+      if (!sessionOnly && field === "sessionCookie" && stored.authMode !== "web") continue;
       if (nonEmpty(stored[field]) !== undefined) continue;
       const value = await secrets.get(field);
       if (value !== undefined) merged[field] = value;
@@ -58,7 +59,7 @@ async function fillSecrets(
  * 키체인에 접근하지 못하면 `unreadable` 로 돌려준다 (ADR-069).
  * 설정은 있는데 지금 읽을 수 없는 상태라는 뜻이 파일 권한 오류와 같다.
  */
-export async function getConfig(): Promise<ConfigReadResult> {
+export async function getConfig({ sessionOnly = false } = {}): Promise<ConfigReadResult> {
   const file = await readConfigFile();
   if (file.state !== "ok") return file;
   const secrets = getSecretStore(CONFIG_PATH);
@@ -69,7 +70,7 @@ export async function getConfig(): Promise<ConfigReadResult> {
       config: { ...file.stored, apiKey: file.stored.apiKey ?? "" },
     };
   }
-  return fillSecrets(file.stored, secrets);
+  return fillSecrets(file.stored, secrets, sessionOnly);
 }
 
 /** 명령 지원 판정용으로 파일만 읽는다. 키체인·보안 경고를 건드리지 않는다. */

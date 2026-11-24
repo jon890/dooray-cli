@@ -84,7 +84,7 @@ describe("resolvePostInput", () => {
     expect(out.postId).toBe("post-id-123");
     expect(out.projectCode).toBe("my-project");
     expect(out.postNumber).toBe(337);
-    expect(resolveProject).toHaveBeenCalledWith(c, "my-project");
+    expect(resolveProject).toHaveBeenCalledWith(c, "my-project", { useCache: undefined });
     expect(resolvePost).toHaveBeenCalledWith(c, "proj-id-abc", 337);
   });
 

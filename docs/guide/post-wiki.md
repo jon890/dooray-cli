@@ -203,7 +203,7 @@ dooray post comment edit <project> 42 --comment-id <comment-id> --body "확인 �
 
 ### 댓글에 리액션 달기
 
-답글 대신 이모지 리액션만 남길 때 써요. 웹 로그인 세션 방식(`auth-mode web`)에서만 동작해요.
+답글 대신 이모지 리액션만 남길 때 써요. 이 명령은 저장된 웹 로그인 세션을 사용해요. API 키 방식에서도 [테넌트 이름과 SESSION 쿠키를 설정](setup.md#api-키-방식에서-댓글-리액션-쓰기)하면 쓸 수 있어요.
 
 ```bash
 dooray post comment react <project> <number> <comment-id> --emoji +1

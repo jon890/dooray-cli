@@ -164,6 +164,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 
 - 목록은 `commands/web-support/project.ts`, `member.ts` 처럼 영역별 파일에 두고 `web-support.ts` 가 모은다. 판정 함수는 하나다. 목록은 웹 방식으로 돌 수 있는 명령 경로와, 명령마다 웹에서 지원하지 않는 옵션이다. PR1 의 `member get --with-org` 는 캘린더 경로가 필요해 막는다. 예: PR1 의 `member search` 는 `--email`·`--user-code`·`--user-code-exact` 를 웹 경로에서 받는지 실측해 정한다.
 - `assertWebSupported(path, opts, mode)` 는 순수 함수다. 방식이 `web` 이고 명령이 목록에 없거나 미지원 옵션 값이 있으면 스펙 REQ8 의 메시지와 `EXIT_PARAM_ERROR` 를 던진다.
+- 웹 전용 명령 목록도 이 모듈에서 관리한다. `runWebOnlyCommand` 는 이 목록의 명령에 웹 클라이언트를 전달한다. 기본 인증이 API 키 방식이면 공유 프로젝트 캐시를 건너뛰고, 쿠키가 없거나 만료되면 재입력을 안내하며 종료 코드 3 으로 끝낸다.
 - 설정을 쓰지 않는 명령(`setup`, `config`, `doctor`, `cache`, `skill`, `feedback`)과 `mail` 은 목록과 무관하게 통과한다.
 - `preAction` 은 `readAuthModeFromFile()` 로 파일만 읽는다. 키체인을 읽지 않고, 보안 경고도 내지 않는다. 설정 파일이 손상됐거나 읽지 못하면 guardWebCommand 는 API 방식으로 통과시켜 각 명령의 기존 검사 순서(삭제 확인 등)를 지킨다. 비밀값·캐시 파일 보호 강화 설계가 `config`·`setup` 에서 경고하지 않기로 한 것을 지킨다.
 - `web/index.ts` 가 영역별 web.ts 구현을 조립한다. 미지원 영역의 기본값은 index 에만 두고 뒤 PR 은 자기 영역 파일과 등록 줄을 더한다.
@@ -184,6 +185,7 @@ PR2~PR4 의 경로는 그 PR 의 plan 이 같은 방법으로 실측해 `docs/ap
 - 연결 확인은 `ensureMe` 가 아니라 `createClient(config).getMe()` 를 직접 부른다. 캐시된 내 정보로 통과하지 않게 한다. 실패하면 `DoorayCliError` 메시지를 그대로 보이고 `api-connection` 을 `fail` 로 둔다.
 - 웹 방식에서는 `checks` 의 `api-key` 항목 대신 `session-cookie`·`tenant-name` 항목을 둔다. `--json` 평면 키는 그대로 두고 `authMode` 키를 더한다. `apiKeyOk` 는 웹 방식에서도 지금 뜻(값이 있는가)을 지킨다.
 - `auth-mode` 항목은 웹 방식이면 비공식 API 경고와 함께 `warn` 이다. `warn` 은 종료 코드에 넣지 않는다.
+- API 키 방식에서는 웹 전용 명령의 쿠키 설정 여부와 저장 방법을 표시한다. 연결 확인에는 기본 인증을 쓴다.
 
 ### 캐시 무효화
 

@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   getConfig: vi.fn(),
   getConfigOrThrow: vi.fn(),
   readConfigFileSecurity: vi.fn(),
+  readSessionCookie: vi.fn(),
   getProjects: vi.fn(),
   getMe: vi.fn(),
   ensureMe: vi.fn(),
@@ -13,6 +14,7 @@ vi.mock("../config/store.js", () => ({
   getConfig: mocks.getConfig,
   getConfigOrThrow: mocks.getConfigOrThrow,
   readConfigFileSecurity: mocks.readConfigFileSecurity,
+  readSessionCookie: mocks.readSessionCookie,
 }));
 vi.mock("../skill/context.js", () => ({
   createSkillManagerContext: () => ({}),
@@ -50,6 +52,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   process.exitCode = undefined;
   mocks.readConfigFileSecurity.mockResolvedValue([]);
+  mocks.readSessionCookie.mockResolvedValue(undefined);
   mocks.getConfigOrThrow.mockResolvedValue(validConfig);
   mocks.getProjects.mockResolvedValue([]);
   mocks.getMe.mockResolvedValue({ result: { name: "홍길동" } });
@@ -71,6 +74,21 @@ async function runDoctor(args: string[] = []): Promise<string> {
   await doctorCommand.parseAsync(args, { from: "user" });
   return output.join("\n");
 }
+
+it("API 키 방식에서 웹 전용 명령의 쿠키 설정을 값 없이 안내한다", async () => {
+  mocks.getConfig.mockResolvedValue({ state: "ok", config: validConfig });
+  mocks.readSessionCookie.mockResolvedValue("fake-session");
+  const json = await runDoctor(["--json"]);
+  expect(JSON.parse(json).checks).toContainEqual(expect.objectContaining({
+    id: "session-cookie",
+    message: expect.stringContaining("post comment react"),
+    fix: expect.stringContaining("dooray config set session-cookie -"),
+  }));
+  expect(json).not.toContain("fake-session");
+  expect(mocks.getMe).toHaveBeenCalledTimes(1);
+  expect(process.exitCode).toBe(0);
+  expect(await runDoctor()).toContain("dooray config set session-cookie -");
+});
 
 describe("doctor --json 설정 읽기 실패 출처", () => {
   it("키체인 읽기 실패는 source 가 keychain 이다", async () => {

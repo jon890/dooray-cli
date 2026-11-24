@@ -7,12 +7,13 @@ import {
   SKILL_AGENT_NAMES,
   type SkillStatus,
 } from "../skill/manager.js";
-import { getConfig, readConfigFileSecurity } from "../config/store.js";
+import { getConfig, readConfigFileSecurity, readSessionCookie } from "../config/store.js";
 import { getConfigFileSecurityFixAdvice } from "../config/file-security.js";
 import { getCacheStats } from "../cache/store.js";
 import { createClient } from "../api/dooray-client.js";
 import { isConfigComplete, WEB_AUTH_WARNING } from "../config/web-auth.js";
 import type { Config } from "../config/types.js";
+import { WEB_ONLY_COMMANDS } from "@/commands/web-support.js";
 
 function formatSkillStatus(status: SkillStatus): string {
   switch (status.status) {
@@ -59,6 +60,21 @@ interface DoctorCheck {
   fix?: string;
 }
 
+/** API 키 방식의 연결 확인과 별도로 웹 전용 명령의 쿠키 설정만 살핀다. */
+async function checkWebOnlySession(): Promise<DoctorCheck> {
+  const id = "session-cookie";
+  const label = `웹 전용 명령(${WEB_ONLY_COMMANDS.join(", ")})의 SESSION 쿠키`;
+  const fix = "dooray config set tenant-name <tenant> 로 테넌트를 설정하고 dooray config set session-cookie - 로 쿠키를 저장하세요.";
+  try {
+    if (await readSessionCookie()) {
+      return { id, status: "warn", message: `${label}: 설정됨. ${WEB_AUTH_WARNING}`, fix };
+    }
+    return { id, status: "pass", message: `${label}: 미설정(선택)`, fix };
+  } catch {
+    return { id, status: "warn", message: `${label}: 읽기 실패`, fix };
+  }
+}
+
 export const doctorCommand = new Command("doctor")
   .description("설정 및 환경 진단")
   .option("--json", "JSON 형식으로 출력")
@@ -71,6 +87,7 @@ export const doctorCommand = new Command("doctor")
     const complete = missing.length === 0;
     const json = opts.json || !!command.parent?.opts().json;
     const checks: DoctorCheck[] = [];
+    const webOnlySession = config.state === "ok" && authMode === "api-key" ? await checkWebOnlySession() : undefined;
     if (config.state === "ok") {
       checks.push({ id: "config", status: "pass", message: "설정 파일을 읽었습니다." });
       checks.push({ id: "auth-mode", status: authMode === "web" ? "warn" : "pass", message: authMode === "web" ? WEB_AUTH_WARNING : "API 키 방식을 사용합니다." });
@@ -80,6 +97,7 @@ export const doctorCommand = new Command("doctor")
           checks.push({ id, status: ok ? "pass" : "fail", message: `${label}: ${ok ? "설정됨" : "미설정 또는 올바르지 않음"}`, ...(!ok && { fix: "dooray setup" }) });
         }
       } else checks.push({ id: "api-key", status: apiKeyOk ? "pass" : "fail", message: apiKeyOk ? "API 키가 설정되어 있습니다." : "API 키가 없습니다.", ...(!apiKeyOk && { fix: "dooray setup" }) });
+      if (webOnlySession) checks.push(webOnlySession);
       checks.push({ id: "base-url", status: !missing.includes("base-url") ? "pass" : "fail", message: !missing.includes("base-url") ? "Base URL 이 설정되어 있습니다." : "Base URL 이 없거나 웹 방식에 맞지 않습니다.", ...(missing.includes("base-url") && { fix: "dooray setup" }) });
     } else {
       const message = config.state === "absent" ? "설정 파일이 없습니다."
@@ -124,7 +142,13 @@ export const doctorCommand = new Command("doctor")
           console.log(chalk.yellow(`  ⚠ ${WEB_AUTH_WARNING}`));
           console.log(`  SESSION 쿠키: ${okConfig?.sessionCookie ? "설정됨" : "미설정"}`);
           console.log(`  테넌트 이름: ${missing.includes("tenant-name") ? "미설정 또는 올바르지 않음" : "설정됨"}`);
-        } else console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
+        } else {
+          console.log(`  API Key:  ${apiKeyOk ? chalk.green("✅ 설정됨") : chalk.red("❌ 미설정")}`);
+          if (webOnlySession) {
+            console.log(`  ${webOnlySession.message}`);
+            console.log(`  ${webOnlySession.fix}`);
+          }
+        }
         console.log(`  Base URL: ${okConfig?.baseUrl ? chalk.green(`✅ ${okConfig.baseUrl}`) : chalk.red("❌ 미설정")}`);
       }
   
