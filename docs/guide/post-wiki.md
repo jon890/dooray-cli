@@ -201,6 +201,20 @@ dooray post comment edit <project> 42 --comment-id <comment-id> --body "확인 �
 본문 형식이 `text/html` 이면 이 세 옵션을 쓸 수 없어요.
 멘션과 링크의 HTML 표기를 확인하지 못했기 때문이에요. 종료 코드 3 으로 멈추고 `--mime-type text/x-markdown` 으로 형식을 바꾸는 방법을 안내해요.
 
+### 댓글에 리액션 달기
+
+답글 대신 이모지 리액션만 남길 때 써요. 웹 로그인 세션 방식(`auth-mode web`)에서만 동작해요.
+
+```bash
+dooray post comment react <project> <number> <comment-id> --emoji +1
+dooray post comment react <project> <number> <comment-id> --emoji +1 --remove   # 내가 단 리액션 떼기
+```
+
+- 리액션은 이모지 문자가 아니라 이름으로 줘요(`+1`, `heart`, `pray`, `tada`, `eyes`, `white_check_mark` 등). 쓸 수 있는 이름은 `--help` 에 있어요.
+- 별칭은 받지 않아요. `thumbsup` 대신 `+1` 을 써요.
+- 한 댓글에 리액션 종류는 10개까지예요.
+- 공식 API 문서에 없는 경로라 예고 없이 막힐 수 있어요. API 키 방식에서는 업무를 조회하기 전에 종료 코드 3 으로 멈춰요.
+
 ## 파일 다루기
 
 ### 댓글에 파일 붙이기
