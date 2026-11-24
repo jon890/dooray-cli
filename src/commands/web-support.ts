@@ -9,7 +9,7 @@ import { projectWebSupport, projectWebAreaName } from "./web-support/project.js"
 import { memberWebSupport, memberWebAreaName } from "./web-support/member.js";
 import { postWebSupport, postWebAreaName, postWebOnlySupport } from "./web-support/post.js";
 import { wikiWebSupport, wikiWebAreaName } from "./web-support/wiki.js";
-import { messengerWebSupport, messengerWebAreaName } from "./web-support/messenger.js";
+import { messengerWebSupport, messengerWebAreaName, messengerWebOnlySupport } from "./web-support/messenger.js";
 import { calendarWebSupport, calendarWebAreaName } from "./web-support/calendar.js";
 import { streamWebSupport, streamWebAreaName } from "./web-support/stream.js";
 export const WEB_AREA_NAMES = { project: projectWebAreaName, member: memberWebAreaName, post: postWebAreaName, wiki: wikiWebAreaName, messenger: messengerWebAreaName, calendar: calendarWebAreaName, stream: streamWebAreaName };
@@ -25,7 +25,7 @@ export const WEB_SUPPORTED_COMMANDS: Readonly<Record<string, readonly string[]>>
   ...memberWebSupport,
   ...postWebSupport, ...wikiWebSupport, ...messengerWebSupport, ...calendarWebSupport, ...streamWebSupport,
 };
-export const WEB_ONLY_COMMANDS = Object.keys(postWebOnlySupport);
+export const WEB_ONLY_COMMANDS = Object.keys({ ...postWebOnlySupport, ...messengerWebOnlySupport });
 const exempt = new Set(["setup", "config", "doctor", "cache", "skill", "feedback", "mail"]);
 export function isWebSupportExempt(path: string): boolean { return exempt.has(path.split(" ")[0]); }
 
@@ -47,6 +47,7 @@ function getCommandPath(actionCommand: Command): string {
 export async function runWebOnlyCommand<T>(
   command: Command,
   run: (client: DoorayClient, useProjectCache: boolean) => Promise<T>,
+  { sessionErrorInWebMode = false } = {},
 ): Promise<T> {
   const path = getCommandPath(command);
   if (!WEB_ONLY_COMMANDS.includes(path)) throw new Error(`웹 전용 명령 목록에 없습니다: ${path}`);
@@ -61,12 +62,13 @@ export async function runWebOnlyCommand<T>(
   await warnConfigFileSecurity();
   const { config } = result;
   const webMode = config.authMode === "web";
-  if (!webMode && !config.sessionCookie) throw new DoorayCliError(setupMessage, EXIT_PARAM_ERROR);
+  const useSetupError = !webMode || sessionErrorInWebMode;
+  if (useSetupError && !config.sessionCookie) throw new DoorayCliError(setupMessage, EXIT_PARAM_ERROR);
   const client = createClient({ ...config, authMode: "web" });
   try {
     return await run(client, webMode);
   } catch (error) {
-    if (!webMode && error instanceof WebSessionExpiredError) throw new DoorayCliError(setupMessage, EXIT_PARAM_ERROR);
+    if (useSetupError && error instanceof WebSessionExpiredError) throw new DoorayCliError(setupMessage, EXIT_PARAM_ERROR);
     throw error;
   }
 }

@@ -113,6 +113,21 @@ dooray messenger logs "배포알림" --json       # 서버 응답 원형
 dooray messenger logs <스레드 channelId>
 ```
 
+## 메시지에 리액션 달고 떼기
+
+```bash
+dooray messenger react "<channel>" <messageId> --emoji +1
+dooray messenger react "<channel>" <messageId> --emoji +1 --remove
+```
+
+대화방 이름이나 ID를 쓰고, 메시지 ID는 `messenger logs` 에서 찾아요.
+`messenger react --help` 에서 지원하는 이모지 이름을 볼 수 있어요. `thumbsup` 같은 별칭이나 이모지 문자를 입력하면 종료 코드 3으로 끝나요.
+
+이 명령은 저장한 웹 세션을 사용해요. API 키 방식에서도 테넌트 이름을 설정하고 `dooray config set session-cookie -` 로 쿠키를 저장하면 쓸 수 있어요.
+세션이 없거나 만료되면 종료 코드 3을 반환해요. 공식 API 문서에 없는 경로라 예고 없이 막힐 수 있어요.
+
+`--json` 은 `channelId`, `messageId`, `emoji`, `status`(`added` 또는 `removed`)를 출력해요. `--quiet` 은 메시지 ID만 출력해요.
+
 ## 파일 받기
 
 파일 메시지의 `fileId` 는 `logs` 출력 마지막의 참조 열에서 찾아요.

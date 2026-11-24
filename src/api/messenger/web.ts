@@ -6,7 +6,7 @@
 import type { MessengerClient } from "./types.js";
 import type { MessengerChannel, MessengerLog } from "./types.js";
 import { apiPath } from "../api-path.js";
-import { date, identifier, invalidResponse, pick, row, rows, text, type Row } from "../web/convert.js";
+import { date, identifier, invalidResponse, pick, referenceMap, row, rows, text, type Row } from "../web/convert.js";
 import { randomUUID } from "node:crypto";
 import { parseContentDispositionFileName, fallbackFileName } from "../../utils/content-disposition.js";
 import type { WebContext } from "../web/context.js";
@@ -57,6 +57,20 @@ export function createMessengerWeb(context: WebContext): MessengerClient {
   const http = context.http;
   let myId: Promise<string> | undefined;
   const memberId = () => (myId ??= http.request("messenger/v1/api/members/me", { searchParams: { v: "0.2.0" } }).then((response) => identifier(row(row(response.result).content).id)));
+
+  /** 로그 ID로 메시지 한 건을 찾아 대화방이 맞는지 확인한다. 마지막으로 연 방은 바꾸지 않는다. */
+  async function reactionTarget(channelId: string, logId: string) {
+    const response = await http.request(apiPath`messenger/v1/api/channel/${channelId}/logs`, {
+      searchParams: { limit: 1, setLastChannel: false, logId, direction: "both" },
+    });
+    const result = row(response.result);
+    const content = row(result.content);
+    const message = rows(content.logs).find((item) => identifier(item.id) === logId);
+    if (!message || identifier(message.channelId) !== channelId) {
+      throw new DoorayCliError("이 대화방에서 메시지를 찾지 못했습니다. 대화방과 메시지 ID를 확인하세요.", EXIT_API_ERROR);
+    }
+    return { message, references: result.references };
+  }
 
   /** 채널(또는 스레드 채널)에 메시지를 보낸다. token 은 클라이언트가 만드는 UUID 다. */
   async function send(channelId: string, body: string) {
@@ -112,6 +126,38 @@ export function createMessengerWeb(context: WebContext): MessengerClient {
       // 웹은 오래된 것이 앞이다. 공개 API 와 같이 최신이 앞이 되게 뒤집는다.
       const result = rows(content.logs).map(log).reverse();
       return { header: response.header, result, ...(typeof content.hasPrev === "boolean" && { hasMore: content.hasPrev }) };
+    },
+    async addMessengerReaction(channelId, logId, emoji) {
+      await reactionTarget(channelId, logId);
+      const response = await http.request(apiPath`messenger/v1/api/channels/${channelId}/logs/${logId}/reactions`, {
+        method: "POST", json: { value: emoji },
+      });
+      identifier(row(row(response.result).content).id);
+    },
+    async removeMessengerReaction(channelId, logId, emoji) {
+      const { message, references } = await reactionTarget(channelId, logId);
+      const map = referenceMap(references, "reactionMap");
+      const ids = message.reactions ?? [];
+      if (!Array.isArray(ids)) return invalidResponse();
+      const matches = ids.map(identifier).flatMap((id) => {
+        const reaction = row(map[id]);
+        if (identifier(reaction.id) !== id || identifier(reaction.channelId) !== channelId || identifier(reaction.logId) !== logId) {
+          return invalidResponse();
+        }
+        return text(reaction.value) === emoji ? [reaction] : [];
+      });
+      if (matches.length > 0) {
+        const me = await memberId();
+        const mine = matches.find((item) => rows(item.members).some((member) => identifier(member.memberId) === me));
+        if (mine) {
+          const reactionId = identifier(mine.id);
+          await http.request(apiPath`messenger/v1/api/channels/${channelId}/logs/${logId}/reactions/${reactionId}`, {
+            method: "DELETE", retry: 0,
+          });
+          return;
+        }
+      }
+      throw new DoorayCliError("이 메시지에 내가 단 해당 이름의 리액션이 없습니다.", EXIT_API_ERROR);
     },
     async sendDirectMessage(organizationMemberId, body) {
       // 웹에는 상대 id 로 1:1 방에 바로 보내는 경로가 없다. 내 대화방이나 이미 있는 1:1 방을 목록에서 찾아 보낸다.

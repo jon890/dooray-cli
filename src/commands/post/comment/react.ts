@@ -9,26 +9,13 @@ import { printJson, type OutputOptions } from "../../../formatters/table.js";
 import { startSpinner, stopSpinner } from "../../../utils/spinner.js";
 import { DoorayCliError } from "../../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../../utils/exit-codes.js";
+import { normalizeReactionName } from "@/utils/reaction-name.js";
 import { parseGetArgs, type GetArgs } from "./get.js";
 
 /** 실측으로 달고 뗀 이름. 이 밖의 이름도 웹 이모지 선택기가 쓰는 이름이면 된다. */
 export const MEASURED_REACTION_NAMES = [
   "+1", "heart", "smile", "joy", "clap", "pray", "ok_hand", "raised_hands", "tada", "eyes", "white_check_mark", "100",
 ] as const;
-
-const NAME_PATTERN = /^[a-z0-9_+-]+$/i;
-
-/** `:+1:` 처럼 콜론으로 감싼 이름도 받는다. 이모지 문자는 웹이 거절하므로 요청 전에 막는다. */
-export function normalizeReactionName(raw: string): string {
-  const name = raw.trim().replace(/^:(.+):$/, "$1");
-  if (!NAME_PATTERN.test(name)) {
-    throw new DoorayCliError(
-      `리액션은 이모지 문자가 아니라 이름으로 줍니다(예: --emoji +1). 받은 값: ${JSON.stringify(raw)}`,
-      EXIT_PARAM_ERROR,
-    );
-  }
-  return name;
-}
 
 /** get 과 같은 입력 형식에, 첫 positional 에 Dooray URL 을 주는 형식을 더한다. */
 export function parseReactArgs(

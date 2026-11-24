@@ -23,7 +23,8 @@ vi.mock("../../../resolvers/post-input.js", async (importOriginal) => {
 });
 vi.mock("../../../utils/spinner.js", () => ({ startSpinner: vi.fn(), stopSpinner: vi.fn(), setQuiet: vi.fn() }));
 
-import { normalizeReactionName, parseReactArgs } from "./react.js";
+import { normalizeReactionName } from "@/utils/reaction-name.js";
+import { parseReactArgs } from "./react.js";
 
 async function run(...args: string[]): Promise<void> {
   vi.resetModules();
