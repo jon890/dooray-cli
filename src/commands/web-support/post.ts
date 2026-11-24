@@ -1,5 +1,9 @@
 /** 실측한 post 명령. 참여자 종류처럼 데이터에 따른 제약은 웹 구현이 쓰기 전에 검사한다. */
 export const postWebAreaName = "업무";
+export const postWebOnlySupport = {
+  "post comment react": [],
+} as const;
+
 export const postWebSupport: Readonly<Record<string, readonly string[]>> = {
   "post list": [],
   "post search": [],
@@ -15,7 +19,7 @@ export const postWebSupport: Readonly<Record<string, readonly string[]>> = {
   "post comment add": [],
   "post comment edit": [],
   "post comment delete": [],
-  "post comment react": [],
+  ...postWebOnlySupport,
   "post comment file list": [],
   "post comment file upload": [],
   "post comment file download": [],

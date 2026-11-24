@@ -52,6 +52,7 @@ web 은 비공식 웹 API 로 경로가 예고 없이 바뀔 수 있다. SESSION
 쿠키 만료·브라우저 로그아웃 뒤에는 SESSION 을 다시 넣는다. 401·로그인 리다이렉트는 종료 코드 2 로 끝나며 쿠키 재입력, 403 은 권한 확인 안내다.
 doctor 는 API 키가 없어도 웹 설정을 검사하며 캐시 없이 getMe 로 쿠키 유효성을 확인한다. authMode 키가 현재 방식을 나타내고 auth-mode 항목의 warn 은 종료 코드를 실패로 만들지 않는다.
 `config get session-cookie` 는 유무만 보여 준다. auth-mode 를 api-key 로 바꿔도 저장한 쿠키는 지우지 않는다.
+API 키 방식에서 `post comment react` 를 쓸 때는 `tenant-name` 을 설정하고 `dooray config set session-cookie -` 로 쿠키를 저장한다. 쿠키가 없거나 만료되면 리액션 명령이 종료 코드 3 으로 같은 입력 방법을 안내한다. `doctor` 는 쿠키가 저장됐는지 보여 준다.
 인증 방식·쿠키를 바꾸면 캐시를 비우고, 웹 방식은 테넌트 이름 변경도 같다.
 
 지원 명령·옵션과 빠질 수 있는 필드는 [설정 가이드의 웹 방식 지원 범위](https://github.com/jon890/dooray-cli/blob/main/docs/guide/setup.md#웹-방식의-지원-범위)를 따른다.

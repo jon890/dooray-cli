@@ -84,7 +84,7 @@ src/
 
 계층 안의 규칙:
 
-- 명령 영역(`commands/<영역>/` 과 `commands/<이름>.ts`)은 다른 명령 영역을 가져오지 않는다.
+- 명령 영역(`commands/<영역>/` 과 `commands/<이름>.ts`)은 다른 명령 영역을 가져오지 않는다. 공용 웹 지원 정책은 `commands/web-support.ts` 에서 가져온다.
 - 공개 API 구현(`api/client.ts`, `api/public/`, `api/<영역>/public*.ts`)과 웹 구현(`api/web/`, `api/<영역>/web*.ts`)은 서로 가져오지 않는다. 둘을 고르는 `api/dooray-client.ts` 는 어느 쪽도 아니다.
 - `api/<영역>/` 은 다른 영역의 `types.ts` 만 가져온다.
 - `api/<영역>/` 은 `api/types.ts`·`api/client.ts` 를 가져오지 않는다. DTO 와 파라미터는 자기 영역이나 다른 영역의 `types.ts`, 공통 응답 구조는 `api/common/types.ts` 에서 가져온다.

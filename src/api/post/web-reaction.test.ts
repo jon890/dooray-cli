@@ -61,7 +61,7 @@ describe("공개 API 방식의 댓글 리액션", () => {
   it("요청 없이 웹 방식에서만 된다고 코드 3으로 알린다", async () => {
     const http = { get: vi.fn(), post: vi.fn(), delete: vi.fn() };
     const client = createPublicClient(new PublicHttp("key", "https://api.dooray.com", http as unknown as KyInstance));
-    await expect(client.addPostCommentReaction("project-1", "post-1", "comment-1", "+1")).rejects.toMatchObject({ exitCode: 3, message: expect.stringContaining("auth-mode web") });
+    await expect(client.addPostCommentReaction("project-1", "post-1", "comment-1", "+1")).rejects.toMatchObject({ exitCode: 3, message: expect.stringContaining("dooray config set session-cookie -") });
     await expect(client.removePostCommentReaction("project-1", "post-1", "comment-1", "+1")).rejects.toMatchObject({ exitCode: 3 });
     expect(http.post).not.toHaveBeenCalled();
     expect(http.delete).not.toHaveBeenCalled();

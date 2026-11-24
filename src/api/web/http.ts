@@ -12,6 +12,12 @@ export interface WebEnvelope { header: DoorayApiHeader; result: unknown; totalCo
 export type WebFileOptions = Omit<RequestInit, "body"> & { searchParams?: Record<string, string | number | boolean | undefined> };
 export const SESSION_EXPIRED_MESSAGE = "세션이 끝났거나 쿠키가 틀렸습니다. 브라우저에서 SESSION 쿠키를 꺼내 dooray config set session-cookie - 로 다시 넣으세요.";
 
+export class WebSessionExpiredError extends DoorayCliError {
+  constructor() {
+    super(SESSION_EXPIRED_MESSAGE, EXIT_AUTH_ERROR);
+  }
+}
+
 export class WebHttp {
   private readonly api;
   private readonly origin: string;
@@ -67,7 +73,7 @@ export class WebHttp {
     if (status >= 300 && status < 400) {
       try { signin = new URL(response.headers.get("location") ?? "", this.origin).pathname.startsWith("/auth/signin"); } catch { /* 주소는 메시지에 넣지 않는다. */ }
     }
-    if (status === 401 || signin) throw new DoorayCliError(SESSION_EXPIRED_MESSAGE, EXIT_AUTH_ERROR);
+    if (status === 401 || signin) throw new WebSessionExpiredError();
     if (status === 403) throw new DoorayCliError("이 계정에는 그 대상의 권한이 없습니다.", EXIT_AUTH_ERROR);
     if (status >= 300 && status < 400 && !(allowFileRedirect && status === 307)) throw new DoorayCliError("웹이 다른 주소로 보냈습니다. 리다이렉트는 따라가지 않습니다.", EXIT_API_ERROR);
     if (status === 429) throw new DoorayCliError("API 호출 한도를 넘었습니다 (429). 잠시 뒤 다시 실행하세요.", EXIT_RATE_LIMITED);
@@ -89,7 +95,7 @@ export class WebHttp {
     let body = errorBody;
     if (!bodyWasRead || typeof errorBody === "string") {
       const raw = bodyWasRead ? errorBody as string : await response.text();
-      if (response.ok && this.isLoginHtml(response, raw.slice(0, 4096))) throw new DoorayCliError(SESSION_EXPIRED_MESSAGE, EXIT_AUTH_ERROR);
+      if (response.ok && this.isLoginHtml(response, raw.slice(0, 4096))) throw new WebSessionExpiredError();
       try { body = parseJsonPreservingLargeIntegers(raw); } catch {
         if (!response.ok) throw new DoorayCliError(`웹 API 호출 실패 (${response.status}).`, EXIT_API_ERROR);
         throw new DoorayCliError("웹 응답이 JSON 이 아닙니다.", EXIT_API_ERROR);
@@ -165,7 +171,7 @@ export class WebHttp {
       }
       if (!response.ok) { await this.readEnvelope(response); return response; }
       const prefix = await this.prefix(response);
-      if (this.isLoginHtml(response, prefix)) throw new DoorayCliError(SESSION_EXPIRED_MESSAGE, EXIT_AUTH_ERROR);
+      if (this.isLoginHtml(response, prefix)) throw new WebSessionExpiredError();
       if (/\bjson\b/i.test(response.headers.get("content-type") ?? "") && !/^attachment(?:;|$)/i.test(response.headers.get("content-disposition") ?? "")) {
         let parsed: unknown;
         try { parsed = parseJsonPreservingLargeIntegers(prefix); } catch {

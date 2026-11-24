@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { resolveProject } from "./project.js";
-import { getPrivateProjects } from "../cache/store.js";
+import { getPrivateProjects, getProjects, setProjects, setPrivateProjects } from "../cache/store.js";
 import type { DoorayApiClient } from "../api/client.js";
 import { DoorayCliError } from "../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../utils/exit-codes.js";
@@ -41,6 +41,15 @@ describe("resolveProject", () => {
   it("code 매칭 — 기존 흐름", async () => {
     const result = await resolveProject({} as unknown as DoorayApiClient, "project-a");
     expect(result).toBe("1111222233334444555");
+  });
+
+  it("다른 인증의 프로젝트를 조회할 때 공유 캐시를 읽거나 채우지 않는다", async () => {
+    const client = mockClient([{ id: "project-web", code: "project-a" }]);
+    expect(await resolveProject(client, "project-a", { useCache: false })).toBe("project-web");
+    expect(getProjects).not.toHaveBeenCalled();
+    expect(getPrivateProjects).not.toHaveBeenCalled();
+    expect(setProjects).not.toHaveBeenCalled();
+    expect(setPrivateProjects).not.toHaveBeenCalled();
   });
 
   it("numeric 15자리 이상 — cache 우회", async () => {

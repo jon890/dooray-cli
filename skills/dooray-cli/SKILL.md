@@ -196,7 +196,7 @@ dooray post get <project> <number> --json --with-tag-names
 | 댓글 추가 | `dooray post comment add <project> <number> --body "..."` |
 | 댓글 수정 | `dooray post comment edit <project> <number> <comment-id> --body "..."` — 형식은 위 「본문 형식」 을 따른다 |
 | 댓글 삭제 | `dooray post comment delete <project> <number> <comment-id>` — `--json` 은 `{"commentId": "...", "status": "deleted"}` |
-| 댓글 리액션 | `dooray post comment react <project> <number> <comment-id> --emoji +1` (`--remove` 로 떼기) — 웹 방식(`auth-mode web`)에서만 된다. 이름은 이모지 문자가 아니라 `+1`·`heart`·`pray` 같은 이름이고 별칭(`thumbsup`)은 거절된다. `--json` 은 `{"commentId": "...", "emoji": "+1", "status": "added"\|"removed"}`. 공식 API 문서에 없는 endpoint 라 예고 없이 막힐 수 있다 |
+| 댓글 리액션 | `dooray post comment react <project> <number> <comment-id> --emoji +1` (`--remove` 로 떼기) — 저장된 웹 세션을 쓴다. API 키 방식에서도 테넌트 이름과 `dooray config set session-cookie -` 로 쿠키를 설정하면 된다. `+1`·`heart`·`pray` 같은 이름을 쓰고 별칭(`thumbsup`)은 거절된다. `--json` 은 `{"commentId": "...", "emoji": "+1", "status": "added"\|"removed"}`. 비공식 웹 API 라 예고 없이 막힐 수 있다 |
 
 내부 ID 를 positional 자리에 넣으면 입력 오류가 나지만, 그 오류가 `--id` 를 쓴 완성 명령을 그대로 보여준다.
 그 줄을 그대로 복사해 실행하면 되고, 자동화는 오류 출력을 읽어 재시도할 수 있다.

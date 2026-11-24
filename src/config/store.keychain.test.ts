@@ -128,6 +128,15 @@ describe("키체인 모드 읽기", () => {
     expect(await readAuthModeFromFile()).toBe("api-key");
     expect(await readSessionCookie()).toBe("fake-session");
   });
+  it("웹 전용 명령의 설정 조회는 키체인에서 SESSION 만 읽는다", async () => {
+    fileWith({ ...BASE, authMode: "api-key", tenantName: "my-org" });
+    store.values.set("apiKey", "fake-key");
+    store.values.set("sessionCookie", "fake-session");
+    expect(await getConfig({ sessionOnly: true })).toMatchObject({
+      state: "ok", config: { authMode: "api-key", tenantName: "my-org", sessionCookie: "fake-session" },
+    });
+    expect(store.get.mock.calls).toEqual([["sessionCookie"]]);
+  });
   it("API 방식에서 다른 값을 저장해도 키체인의 쿠키를 지우지 않는다", async () => {
     fileWith({ ...BASE, apiKey: "fake-key" });
     store.values.set("sessionCookie", "fake-session");

@@ -6,7 +6,7 @@
 - **현재 규칙의 원본**: [웹 로그인 세션 인증 스펙](../features/web-session-auth/spec.md)과 [기술 설계](../features/web-session-auth/design.md), 클라이언트 선택은 `src/api/dooray-client.ts`, 지원 명령은 `src/commands/web-support.ts`, 웹 경로 명세는 `docs/api/web-endpoints.md` 와 영역별 `docs/api/web-endpoints/*.md`
 - **결정**: 설정 값 `auth-mode` 로 공개 API(`api-key`, 기본)와 웹 로그인 세션(`web`)을 고른다. 웹 방식은 테넌트 웹 주소에 `SESSION` 쿠키를 붙여 웹 화면이 쓰는 `/wapi`·`/v2/wapi` 경로를 부르고, 응답을 공개 API 응답 모양으로 바꿔 돌려준다.
   두 방식은 영역별 인터페이스 교집합인 `DoorayClient` 의 구현 둘이고 명령은 `createClient` 로 받는다. 자동 전환과 명령별 옵션은 두지 않는다.
-  웹 방식에 한해 [ADR-062](062-undocumented-endpoint-policy.md) 의 「읽기 전용」 과 조건 1~4 를 아래처럼 바꾼다. 공개 API 방식의 비공식 경로에는 [ADR-062](062-undocumented-endpoint-policy.md) 가 그대로 적용된다.
+  웹 세션으로 부르는 경로에는 [ADR-062](062-undocumented-endpoint-policy.md) 의 「읽기 전용」 과 조건 1~4 를 아래처럼 바꾼다. API 키로 부르는 비공식 경로에는 [ADR-062](062-undocumented-endpoint-policy.md) 가 그대로 적용된다.
   - 쓰기도 허용한다.
   - 조건 1(공식 문서 확인)은 웹 경로 전체가 공식 문서에 없으므로 endpoint 마다 하지 않는다.
   - 조건 2(실측 기록)는 ADR 대신 `docs/api/web-endpoints.md` 색인과 영역별 `web-endpoints/*.md`에 메서드마다 남긴다.
@@ -34,3 +34,9 @@
 영역 계약은 PR1 에 함께 둔다(사용자 결정 2026-11-14). 영역 web.ts 는 자기 계약 전체를 구현하고 DoorayClient 는 영역 계약의 교집합이다. 메서드별 stub 은 두지 않는다. 공통 Proxy 가 미지원 호출을 거절하며 then 을 제외해 thenable 오인을 막는다.
 
 공용 기반 보완(코디네이터 결정 2026-11-14): 웹 HTTP 와 첨부 전송은 `src/api/web/http.ts` 를 공유한다. 공개 API 주소를 전달받아 웹 origin 또는 같은 클라우드의 정확한 https file-api 호스트로 첨부 307 을 한 번만 허용하며, 새 Cookie 헤더만 붙인다(코디네이터 결정 2026-11-14). 공개 클라이언트의 isTrustedFileHost 는 바꾸지 않는다. 다운로드 시간 제한은 [첨부 시간 제한 규칙](074-file-redirect-hardening.md)을 따른다. 뒤 영역의 빈 지원 목록·가이드 절·웹 경로 색인을 PR1 에 준비해 동시 구현에서 공용 파일 변경을 줄인다. 목록용 이름 캐시와 상세 응답 캐시는 분리하며, 매개변수 DTO 는 각 영역의 `types.ts` 가 소유한다.
+
+웹 전용 명령 보완(사용자 결정 2026-11-24)
+
+- 기본 인증 방식은 `auth-mode` 가 정한다. 웹 전용 명령만 API 키 방식에서도 실행 전에 저장된 SESSION 을 선택한다. 대상 목록은 `web-support` 가 소유한다. 이때 업무와 댓글을 찾는 요청도 같은 세션을 쓰고, 일반 명령과 공유하는 프로젝트 캐시는 건너뛴다.
+- API 키 방식에서 웹 전용 명령의 쿠키가 없거나 만료되면 종료 코드 3 으로 끝나며 `dooray config set session-cookie -` 를 안내한다. 업무·댓글 접근 권한이 없으면 종료 코드 2 를 유지한다.
+- `doctor` 는 API 키 방식에서 웹 전용 명령의 쿠키 설정 여부와 저장 방법을 보여 준다. 연결 테스트는 API 키로 실행한다.

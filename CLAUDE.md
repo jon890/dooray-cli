@@ -22,7 +22,7 @@ Dooray 공식 API 문서: [https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO
 스냅샷이 낡았으면 `docs/api/official-endpoints.txt` 를 갱신하고, 비공식 경로인데 쓰기로 정했으면
 그 스크립트의 `KNOWN_UNDOCUMENTED` 로 옮긴다.
 
-웹 인증 방식의 비공식 웹 경로는 [ADR-081](docs/adr/081-web-session-auth.md) 의 예외를 따른다. 공개 API 방식에는 아래 정책이 적용된다.
+세션 인증으로 부르는 비공식 웹 경로는 [ADR-081](docs/adr/081-web-session-auth.md) 의 예외를 따른다. API 키로 부르는 경로에는 아래 정책이 적용된다.
 
 **공식 문서에 없는 endpoint 는 기본으로 쓰지 않는다.** 쓰려면 읽기 전용이어야 하고
 확인·실측·등록·경고를 모두 채워야 한다. 조건과 그 이유는
