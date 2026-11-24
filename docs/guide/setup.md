@@ -302,6 +302,7 @@ dooray post comment add --id "$POST_ID" --body "시작합니다"
 | `post comment add` | 없음 |
 | `post comment edit` | 없음 |
 | `post comment delete` | 없음 |
+| `post comment react` | 없음 |
 | `post comment file list` | 없음 |
 | `post comment file upload` | 없음 |
 | `post comment file download` | 없음 |
@@ -321,6 +322,7 @@ dooray post comment add --id "$POST_ID" --body "시작합니다"
 - 외부 이메일 참여자(`emailUser`)가 있는 업무나 템플릿에는 쓰지 못하고 종료 코드 3 으로 멈춰요. 쓰기 요청 형식을 확인하지 못했기 때문이에요. 참여자를 조용히 빼지 않고 API 키 방식으로 바꾸라고 안내해요.
 - 완료 기한 없음(`dueDateFlag` 가 false)으로 새로 바꾸는 요청은 서버가 무시해서 종료 코드 3 으로 멈춰요. 이미 false 인 업무의 본문을 고칠 때는 이 필드를 보내지 않고 그대로 둬요.
 - 멤버·그룹 참여자와 HTML·Markdown 본문은 지원해요. 본문 합성·미리보기 옵션은 API 방식과 같아요.
+- `post comment react` 는 웹 방식에서만 써요. 공식 API 에 리액션 기능이 없어서, API 키 방식에서는 업무를 조회하기 전에 종료 코드 3 으로 멈춰요.
 - 댓글 목록을 오름차순으로 읽으면 이전 댓글을 모아야 해서 큰 업무는 첫 조회가 오래 걸릴 수 있어요. 최신 댓글과 내림차순 첫 페이지는 최신 구간만 읽어요.
 
 #### 웹 응답에서 빠질 수 있는 필드

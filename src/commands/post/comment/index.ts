@@ -5,6 +5,7 @@ import { commentGetCommand } from "./get.js";
 import { commentAddCommand } from "./add.js";
 import { commentEditCommand } from "./edit.js";
 import { commentDeleteCommand } from "./delete.js";
+import { commentReactCommand } from "./react.js";
 import { commentFileCommand } from "./file/index.js";
 
 export const postCommentCommand = new Command("comment").description("댓글 관련 명령");
@@ -15,4 +16,5 @@ postCommentCommand.addCommand(commentGetCommand);
 postCommentCommand.addCommand(commentAddCommand);
 postCommentCommand.addCommand(commentEditCommand);
 postCommentCommand.addCommand(commentDeleteCommand);
+postCommentCommand.addCommand(commentReactCommand);
 postCommentCommand.addCommand(commentFileCommand);

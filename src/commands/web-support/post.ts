@@ -15,6 +15,7 @@ export const postWebSupport: Readonly<Record<string, readonly string[]>> = {
   "post comment add": [],
   "post comment edit": [],
   "post comment delete": [],
+  "post comment react": [],
   "post comment file list": [],
   "post comment file upload": [],
   "post comment file download": [],

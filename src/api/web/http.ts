@@ -85,7 +85,7 @@ export class WebHttp {
       throw new DoorayCliError(`웹 API 호출 실패: ${message}`, EXIT_API_ERROR);
     }
   }
-  private async readEnvelope(response: Response, bodyWasRead = false, errorBody?: unknown): Promise<WebEnvelope> {
+  private async readEnvelope(response: Response, bodyWasRead = false, errorBody?: unknown, resultOptional = false): Promise<WebEnvelope> {
     let body = errorBody;
     if (!bodyWasRead || typeof errorBody === "string") {
       const raw = bodyWasRead ? errorBody as string : await response.text();
@@ -97,10 +97,15 @@ export class WebHttp {
     }
     this.throwBodyFailure(body, response);
     const obj = body as Partial<WebEnvelope> | null;
-    if (!obj || typeof obj !== "object" || !obj.header || obj.header.isSuccessful !== true || !("result" in obj)) throw new DoorayCliError("웹 응답 구조가 올바르지 않습니다.", EXIT_API_ERROR);
+    if (!obj || typeof obj !== "object" || !obj.header || obj.header.isSuccessful !== true) throw new DoorayCliError("웹 응답 구조가 올바르지 않습니다.", EXIT_API_ERROR);
+    if (!("result" in obj)) {
+      if (!resultOptional) throw new DoorayCliError("웹 응답 구조가 올바르지 않습니다.", EXIT_API_ERROR);
+      return { ...obj, result: null } as WebEnvelope;
+    }
     return obj as WebEnvelope;
   }
-  async request(input: string | URL | Request, options?: Options): Promise<WebEnvelope> {
+  /** `resultOptional` 은 성공 응답에 result 칸이 없는 경로(댓글 리액션 삭제)만 켠다. 없으면 result 를 null 로 채운다. */
+  async request(input: string | URL | Request, options?: Options, { resultOptional = false }: { resultOptional?: boolean } = {}): Promise<WebEnvelope> {
     try {
       let errorBody: unknown, bodyWasRead = false;
       const response = await this.api(input, { ...options, redirect: "manual" }).catch((error: unknown) => {
@@ -108,7 +113,7 @@ export class WebHttp {
         throw error;
       });
       this.assertStatus(response);
-      return await this.readEnvelope(response, bodyWasRead, errorBody);
+      return await this.readEnvelope(response, bodyWasRead, errorBody, resultOptional);
     } catch (error) { throw this.safeError(error); }
   }
 

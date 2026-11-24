@@ -236,6 +236,10 @@ export type SetPostParentResponse = DoorayApiUnitResponse | {
   result: { post: { id: string }; project: { id: string } };
 };
 
+/** 공개 API 방식에서 댓글 리액션을 거절하는 문구. 명령과 공개 구현이 같은 말을 쓴다. */
+export const REACTION_WEB_ONLY_MESSAGE =
+  "댓글 리액션은 공식 API 에 없어 웹 방식(auth-mode web)에서만 지원합니다. dooray config set auth-mode web 으로 바꾸세요.";
+
 export interface PostClient {
   getPosts(projectId: string, params?: GetPostsParams): Promise<PostListResponse>;
   getPost(projectId: string, postId: string): Promise<PostDetailResponse>;
@@ -250,6 +254,10 @@ export interface PostClient {
   createPostComment(projectId: string, postId: string, body: CreateCommentRequest): Promise<CreateCommentApiResponse>;
   updatePostComment(projectId: string, postId: string, logId: string, body: UpdateCommentRequest, options?: { removeFileId?: string }): Promise<UpdateCommentResponse>;
   deletePostComment(projectId: string, postId: string, logId: string): Promise<DeleteCommentResponse>;
+  /** 댓글에 리액션을 단다. 공식 API 에 없어 웹 방식만 구현한다. `emoji` 는 웹이 쓰는 이모지 이름이다(예: `+1`). */
+  addPostCommentReaction(projectId: string, postId: string, logId: string, emoji: string): Promise<DoorayApiUnitResponse>;
+  /** 내가 단 리액션을 뗀다. 공식 API 에 없어 웹 방식만 구현한다. */
+  removePostCommentReaction(projectId: string, postId: string, logId: string, emoji: string): Promise<DoorayApiUnitResponse>;
   getPostFiles(projectId: string, postId: string): Promise<PostFileListResponse>;
   getPostFileMeta(projectId: string, postId: string, fileId: string): Promise<PostFileMetaResponse>;
   downloadPostFile(projectId: string, postId: string, fileId: string, knownName?: string): Promise<{ buffer: ArrayBuffer; fileName: string }>;

@@ -24,7 +24,7 @@ describe("영역별 명령 나무", () => {
       "list", "search", "get", "edit", "replace", "create", "done", "workflow", "comment", "file",
     ]);
     const comment = postCommand.commands.find((c) => c.name() === "comment")!;
-    expect(names(comment)).toEqual(["list", "latest", "get", "add", "edit", "delete", "file"]);
+    expect(names(comment)).toEqual(["list", "latest", "get", "add", "edit", "delete", "react", "file"]);
     const file = postCommand.commands.find((c) => c.name() === "file")!;
     expect(names(file)).toEqual(["list", "download", "download-all", "upload", "delete"]);
   });
