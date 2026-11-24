@@ -189,6 +189,21 @@ export function createPostWeb(context: WebContext): PostClient {
     details.delete(postId); threads.delete(postId);
     return response;
   }
+  /** 리액션은 업무 소속을 확인한 댓글에만 단다. 지운 댓글은 type 이 comment 가 아니게 남는다. */
+  async function reactionTarget(projectId: string, postId: string, logId: string) {
+    const target = await methods.getPostComment(projectId, postId, logId);
+    if (target.result.type !== "comment") throw new DoorayCliError("댓글이 아니라 리액션을 달 수 없습니다. 지운 댓글이거나 업무 기록일 수 있습니다.", EXIT_PARAM_ERROR);
+  }
+  /** 웹은 실패를 200 과 결과 코드로 알린다. 서버 문구는 원인을 가리키지 않아 흔한 원인을 덧붙인다. */
+  async function reactionRequest(send: () => Promise<WebEnvelope>, failure: string, hint: string): Promise<WebEnvelope> {
+    try { return await send(); }
+    catch (error) {
+      if (error instanceof DoorayCliError && error.exitCode === EXIT_API_ERROR && error.message.startsWith("웹 API 호출 실패")) {
+        throw new DoorayCliError(`${failure}. ${hint} (${error.message})`, EXIT_API_ERROR);
+      }
+      throw error;
+    }
+  }
   const methods: PostClient = {
     async getPosts(projectId, params = {}) {
       const { postWorkflowClasses, postWorkflowIds, ...rest } = params;
@@ -298,6 +313,21 @@ export function createPostWeb(context: WebContext): PostClient {
     async deletePostComment(projectId, postId, logId) {
       await methods.getPostComment(projectId, postId, logId);
       const response = await mutation(projectId, postId, apiPath`/events/${logId}`, undefined, "DELETE");
+      return { header: response.header, result: null };
+    },
+    async addPostCommentReaction(projectId, postId, logId, emoji) {
+      await reactionTarget(projectId, postId, logId);
+      const response = await reactionRequest(() => http.request(apiPath`wapi/task/v1/tasks/${postId}/events/${logId}/reactions`, { method: "POST", json: { reactionValue: emoji } }),
+        "리액션을 달지 못했습니다", "이미 단 리액션이거나, 웹이 모르는 이름이거나(별칭 대신 대표 이름을 씁니다. 예: thumbsup 대신 +1), 이 댓글의 리액션 종류가 10개를 넘었을 수 있습니다.");
+      identifier(row(response.result).reactionId);
+      threads.delete(postId);
+      return { header: response.header, result: null };
+    },
+    async removePostCommentReaction(projectId, postId, logId, emoji) {
+      await reactionTarget(projectId, postId, logId);
+      const response = await reactionRequest(() => http.request(apiPath`wapi/task/v1/tasks/${postId}/events/${logId}/reactions/${emoji}`, { method: "DELETE" }, { resultOptional: true }),
+        "리액션을 떼지 못했습니다", "내가 단 그 이름의 리액션이 이 댓글에 없을 수 있습니다.");
+      threads.delete(postId);
       return { header: response.header, result: null };
     },
     async getPostFiles(projectId, postId) {

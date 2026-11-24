@@ -3,9 +3,11 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import type { PublicHttp } from "@/api/public/http.js";
 import type { PostClient, CreateCommentApiResponse, CreateCommentRequest, CreatePostApiResponse, CreatePostRequest, DeleteCommentResponse, GetPostCommentsParams, GetPostsParams, PostCommentDetailResponse, PostCommentListResponse, PostDetailResponse, PostFileListResponse, PostFileMetaResponse, PostListResponse, SetParentPostRequest, SetWorkflowRequest, UpdateCommentRequest, UpdateCommentResponse, UpdatePostRequest, UpdatePostResponse, UploadFileResponse } from "./types.js";
+import { REACTION_WEB_ONLY_MESSAGE } from "./types.js";
 import type { DoorayApiUnitResponse } from "@/api/common/types.js";
 import { apiPath } from "@/api/api-path.js";
 import { DoorayCliError } from "@/utils/errors.js";
+import { EXIT_PARAM_ERROR } from "@/utils/exit-codes.js";
 import { fallbackFileName, parseContentDispositionFileName } from "@/utils/content-disposition.js";
 import { fileStatusExitCode, toDoorayCliError } from "@/api/public/http.js";
 
@@ -177,6 +179,15 @@ export function createPostPublic(http: PublicHttp): PostClient {
         } catch (e) {
           throw await toDoorayCliError(e);
         }
+      },
+
+      // 공식 API 에 리액션 경로가 없고, 공개 API 방식의 비공식 쓰기는 ADR-062 가 막는다.
+      async addPostCommentReaction(): Promise<DoorayApiUnitResponse> {
+        throw new DoorayCliError(REACTION_WEB_ONLY_MESSAGE, EXIT_PARAM_ERROR);
+      },
+
+      async removePostCommentReaction(): Promise<DoorayApiUnitResponse> {
+        throw new DoorayCliError(REACTION_WEB_ONLY_MESSAGE, EXIT_PARAM_ERROR);
       },
 
       async getPostFiles(projectId: string, postId: string): Promise<PostFileListResponse> {

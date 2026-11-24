@@ -27,6 +27,8 @@
 | `createPostComment` | POST `/v2/wapi/projects/!{projectId}/posts/{number}/events` | 요청은 배열. `{body, sendMailFlag:false, fileIdList:[]}`. `result: [{id}]`에서 한 항목을 꺼낸다 |
 | `updatePostComment` | PUT `/v2/wapi/projects/!{projectId}/posts/{number}/events/{eventId}` | `{body, fileIdList}`. `result: null`. 수정 후 내용과 첨부 연결 확인 |
 | `deletePostComment` | DELETE `/v2/wapi/projects/!{projectId}/posts/{number}/events/{eventId}` | `result: null`. 직접 만든 댓글 삭제 성공 |
+| `addPostCommentReaction` | POST `/wapi/task/v1/tasks/{postId}/events/{eventId}/reactions` | 공식 API 에 없는 기능이라 공개 구현은 요청 없이 거절한다. `{reactionValue: 이름}`. `result: {reactionId, reactionDetailId}`를 공식 `null`로 바꾼다. 아래 「댓글 리액션」 |
+| `removePostCommentReaction` | DELETE `/wapi/task/v1/tasks/{postId}/events/{eventId}/reactions/{이름}` | 이름은 경로 조각으로 인코딩한다(`+1` → `%2B1`). 성공 응답에 `result` 칸이 없어 이 경로만 없는 것을 허용한다 |
 | `getPostFiles` | GET `/v2/wapi/projects/!{projectId}/posts/{number}/files` | `result.content` 배열이다. `contents`가 아니다 |
 | `getPostFileMeta` | 위 첨부 목록에서 해당 ID를 찾는다 | 파일별 웹 메타 경로는 성공하지 않았다. 목록의 해당 항목에 공식 메타 필드가 있다 |
 | `downloadPostFile` | GET `/files/{fileId}?disposition=attachment` | 직접 200과 파일 바이트를 받았다. `Content-Disposition` 있음. 보낸 텍스트와 받은 바이트가 같았다 |
@@ -71,6 +73,27 @@
 내림차순의 첫 페이지와 `latest`는 최신 구간만 읽고, 뒤 페이지를 요청할 때만 오래된 구간을 추가로 읽는다.
 반복 커서·중복 ID를 감지하고, 같은 페이지를 무한히 요청하지 않는다.
 프로세스 안에서 완전히 읽은 결과를 재사용하고, 댓글을 쓰면 해당 결과를 지운다.
+
+## 댓글 리액션
+
+2026-11-24 로그인된 ego 브라우저에서 업무 화면 스크립트가 부르는 경로를 찾고(`createTaskEventReaction`, `deleteTaskEventReaction`), 그 화면의 fetch 로 실측했다.
+참여자가 본인뿐인 비공개 프로젝트의 업무에 임시 댓글을 만들어 실측하고 댓글을 지웠다.
+같은 날 [공식 서비스 API 문서](https://helpdesk.dooray.com/share/pages/9wWo-xwiR66BO5LGshgVTg/2939987647631384419) 본문에는 reaction, 리액션, 이모지가 없었다.
+
+- 리액션 값은 이모지 문자가 아니라 웹 이모지 데이터의 짧은 이름이다. 댓글 응답의 `reactions[].value` 도 같은 이름이다(`+1`, `hearts`, `ok_hand`, `man-gesturing-ok`).
+- 실측으로 달고 뗀 이름: `+1`, `heart`, `smile`, `joy`, `clap`, `pray`, `ok_hand`, `raised_hands`, `tada`, `eyes`, `white_check_mark`, `100`.
+- 별칭은 거절된다. `thumbsup` 은 실패하고 대표 이름 `+1` 은 성공했다.
+- 실패는 모두 HTTP 200 과 `header.isSuccessful: false` 로 온다. 웹 서버 문구가 원인을 가리키지 않아 CLI 가 흔한 원인을 덧붙인다.
+
+| 상황 | resultCode | 서버 문구 |
+| --- | --- | --- |
+| 이미 단 리액션을 다시 단다 | -100202 | 중복된 요청입니다. |
+| 모르는 이름, 별칭, 이모지 문자 | -200200 | 입력한 내용에 오류가 있습니다. |
+| 한 댓글의 리액션 종류가 10개인데 새 종류를 단다 | -11200701 | (화면 문구는 「리액션은 최대 10개까지 등록 가능합니다.」) |
+| 내가 달지 않은 이름을 뗀다 | -100200 | 요청한 내용에 오류가 있습니다. |
+
+- 지운 댓글은 같은 ID 로 조회하면 `type: event` 로 남는다. CLI 는 `type` 이 `comment` 가 아니면 쓰기 전에 종료 코드 3 으로 멈춘다.
+- 공개 API 방식에서는 쓰지 않는다. 공식 문서에 없는 쓰기 경로라 [ADR-062](../../adr/062-undocumented-endpoint-policy.md) 가 막는다. 웹 방식의 쓰기 허용은 [ADR-081](../../adr/081-web-session-auth.md) 을 따른다.
 
 ## 요청 변환과 지원 범위
 
