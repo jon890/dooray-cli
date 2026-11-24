@@ -128,7 +128,8 @@ export interface FetchStreamsResult {
  * - `all`: 빈 배열이 올 때까지 넘긴다.
  * - `sinceMs`: 응답 커서가 그보다 여유(`SINCE_STOP_MARGIN_MS`) 이상 오래되면 멈춘다. 원소는 자기 시각이 그보다 오래되면 뺀다.
  *   멈춤을 원소 시각이 아니라 커서로 판단하는 것은, 원소 시각이 최신순에서 수십 초씩 어긋나기 때문이다(실측).
- *   시각이 없는 원소(schedule 등)는 그 페이지 커서가 since 이후일 때만 남긴다.
+ *   시각이 없는 원소(schedule 등)는 그 페이지의 앞쪽 경계(직전 커서, 첫 페이지면 지금)가 since 이후일 때 남긴다.
+ *   since 를 넘긴 첫 페이지에도 since 이후 원소가 섞여 있어, 거기 든 시각 없는 원소를 버리면 빠뜨린다.
  */
 export async function fetchStreams(
   client: StreamClient,
@@ -147,6 +148,9 @@ export async function fetchStreams(
     if (opts.sinceMs != null) {
       const sinceMs = opts.sinceMs;
       const cursorMs = cursorToMs(cursor);
+      // 이 페이지의 가장 새 쪽 경계. 첫 페이지(before 없음)는 지금이다. since 가 미래면 첫 페이지도 구간 밖이다.
+      const newerEdgeMs = before != null ? cursorToMs(before) : Date.now();
+      const pageOverlapsSince = newerEdgeMs == null || newerEdgeMs >= sinceMs;
       let olderItem = false;
       for (const item of received) {
         const at = streamItemAt(item);
@@ -154,7 +158,7 @@ export async function fetchStreams(
         if (!Number.isNaN(ms)) {
           if (ms >= sinceMs) items.push(item);
           else olderItem = true;
-        } else if (cursorMs == null || cursorMs >= sinceMs) {
+        } else if (pageOverlapsSince) {
           items.push(item);
         }
       }

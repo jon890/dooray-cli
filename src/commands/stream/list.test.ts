@@ -71,7 +71,7 @@ describe("fetchStreams — 페이지 넘기기", () => {
     const res = await fetchStreams(client, { size: 20, sinceMs });
     // 셋째 페이지 커서가 since 보다 앞이라 넷째 페이지는 부르지 않는다.
     expect(client.getStreams).toHaveBeenCalledTimes(3);
-    // 시각이 없는 schedule 은 그 페이지 커서가 since 이후라 남는다.
+    // 시각이 없는 schedule 은 첫 페이지(앞쪽 경계가 지금)에 있어 남는다.
     expect(types(res.items)).toEqual(["post", "event", "schedule", "mail", "pageComment"]);
   });
 
@@ -94,6 +94,38 @@ describe("fetchStreams — 페이지 넘기기", () => {
     // 첫 커서(10:00:00)는 since 보다 30초 앞이지만 여유 안이라 둘째 페이지까지 받는다.
     expect(getStreams).toHaveBeenCalledTimes(2);
     expect(res.items.map((i) => (i[i.type!] as { id: string }).id)).toEqual(["post-1", "event-late"]);
+  });
+
+  it("--since 를 넘긴 첫 페이지에서 멈추고, 그 페이지의 시각 없는 원소는 남긴다", async () => {
+    // 첫 페이지 커서(10:00)가 since(10:10)보다 앞이다. 그 페이지에는 since 이후 원소도 섞여 있다.
+    const client = fakeClient();
+    const sinceMs = Date.parse("2026-11-02T10:10:00+09:00");
+    const res = await fetchStreams(client, { size: 20, sinceMs });
+    expect(client.getStreams).toHaveBeenCalledTimes(1);
+    expect(types(res.items)).toEqual(["post", "event", "schedule"]);
+  });
+
+  it("--since 가 미래면 첫 페이지의 시각 없는 원소도 뺀다", async () => {
+    const client = fakeClient();
+    const sinceMs = Date.now() + 24 * 60 * 60 * 1000;
+    const res = await fetchStreams(client, { size: 20, sinceMs });
+    expect(client.getStreams).toHaveBeenCalledTimes(1);
+    expect(res.items).toEqual([]);
+  });
+
+  it("--since 여유로 더 받은 페이지의 시각 없는 원소는 뺀다", async () => {
+    // 둘째 페이지 커서(12:00:00)가 since(12:00:30)보다 30초 앞이라 여유 안이어서 셋째 페이지를 받는다.
+    // 셋째 페이지는 앞쪽 경계(둘째 페이지 커서)부터 since 보다 앞이라 시각 없는 원소를 판단할 근거가 없다.
+    const schedule = { type: "schedule", schedule: { id: "schedule-old", subject: "일정" } };
+    const pages: StreamListResponse[] = [PAGES[0], PAGES[1], { ...PAGES[2], result: [schedule, ...PAGES[2].result!] }];
+    const getStreams = vi.fn(async (params?: { before?: string }) =>
+      params?.before == null ? pages[0] : pages[pages.findIndex((p) => String(p.cursor) === params.before) + 1],
+    );
+    const sinceMs = Date.parse("2026-11-01T12:00:30+09:00");
+    const res = await fetchStreams({ getStreams }, { size: 20, sinceMs });
+    expect(getStreams).toHaveBeenCalledTimes(3);
+    expect(types(res.items)).toEqual(["post", "event", "schedule", "mail", "pageComment"]);
+    expect(res.items.map((i) => (i[i.type!] as { id: string }).id)).not.toContain("schedule-old");
   });
 
   it("--unread 는 read=false 로 보낸다", async () => {
