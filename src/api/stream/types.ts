@@ -19,12 +19,21 @@ export interface StreamListResponse {
   result: StreamItem[] | null;
   // 문서 예시는 문자열이다. 숫자로 오더라도 19자리라 JSON 파서가 문자열로 보존한다 (ADR-051).
   cursor?: string | number | null;
+  /**
+   * 웹 구현만 채운다. `withChanges` 가 아닐 때 `result` 에서 뺀 변경 기록이다(ADR-083).
+   * 명령이 건수를 세는 데만 쓰고 `--json` 출력에 내지 않는다.
+   */
+  changes?: StreamItem[];
+  /** 웹 구현만 채운다. CLI 가 모르는 카드 종류와 변환하지 못한 하위 항목의 수다. `--json` 출력에 내지 않는다. */
+  unknown?: number;
 }
 
 export interface GetStreamsParams {
   size?: number;
   before?: string;
   read?: boolean;
+  /** 웹 응답에만 있는 변경 기록을 `result` 에 함께 담는다(ADR-083). 웹 구현만 읽고 서버로 보내지 않는다. */
+  withChanges?: boolean;
 }
 
 export interface StreamClient {

@@ -74,11 +74,35 @@
           "id": "card-5",
           "type": "calendar",
           "calendar": {
-            "id": "calendar-1",
-            "source": {},
-            "target": {},
-            "action": {},
-            "at": "x"
+            "id": "calendar-notice-1",
+            "source": {
+              "organizationMemberId": "member-3",
+              "type": "member"
+            },
+            "target": {
+              "schedule": {
+                "subject": "주간 회의"
+              }
+            },
+            "action": {
+              "type": "schedule_deleted"
+            },
+            "at": "2026-11-14T11:26:36+0900"
+          }
+        },
+        {
+          "id": "card-6",
+          "type": "project",
+          "project": {
+            "id": "project-2",
+            "source": {
+              "organizationMemberId": "member-4"
+            },
+            "action": "invited",
+            "actionDetail": {
+              "type": "invited"
+            },
+            "at": "2026-11-14T11:30:00+0900"
           }
         }
       ],
@@ -170,7 +194,9 @@
             "body": {
               "mimeType": "text/x-markdown",
               "content": "댓글"
-            }
+            },
+            "createdAt": "2026-11-14T01:02:00+09:00",
+            "modifiedAt": null
           },
           "event-nobody": {
             "id": "event-nobody",
@@ -182,6 +208,69 @@
                 "organizationMemberId": "member-1",
                 "name": "홍길동"
               }
+            },
+            "createdAt": "2026-11-14T01:03:00+09:00",
+            "modifiedAt": null,
+            "body": {
+              "actions": [
+                {
+                  "name": "workflow",
+                  "type": "changed",
+                  "message": "상태: 변경",
+                  "data": {
+                    "before": {
+                      "names": [
+                        {
+                          "name": "To do",
+                          "locale": "en_US"
+                        },
+                        {
+                          "name": "할 일",
+                          "locale": "ko_KR"
+                        }
+                      ]
+                    },
+                    "after": {
+                      "names": [
+                        {
+                          "name": "Doing",
+                          "locale": "en_US"
+                        },
+                        {
+                          "name": "진행 중",
+                          "locale": "ko_KR"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "schedevent-1": {
+            "id": "schedevent-1",
+            "type": "schedule",
+            "scheduleId": "event-1",
+            "creator": {
+              "type": "member",
+              "member": {
+                "organizationMemberId": "member-1",
+                "name": "홍길동"
+              }
+            },
+            "createdAt": "2026-11-14T01:09:00+09:00",
+            "body": {
+              "actions": [
+                {
+                  "name": "subject",
+                  "type": "changed",
+                  "message": "제목: 변경",
+                  "data": {
+                    "before": "회의",
+                    "after": "주간 회의"
+                  }
+                }
+              ]
             }
           }
         },
@@ -227,8 +316,26 @@
         },
         "pageEventMap": {
           "pageevent-1": {
+            "type": "pageEvent",
             "id": "pageevent-1",
-            "type": "x"
+            "pageId": "page-1",
+            "body": {
+              "actions": [
+                {
+                  "name": "body",
+                  "type": "changed",
+                  "message": "본문 변경"
+                }
+              ]
+            },
+            "createdAt": "2026-11-14T01:08:30+09:00",
+            "creator": {
+              "type": "member",
+              "member": {
+                "organizationMemberId": "member-1",
+                "name": "홍길동"
+              }
+            }
           }
         },
         "scheduleMap": {
@@ -254,6 +361,18 @@
               "to": [],
               "cc": []
             }
+          }
+        },
+        "organizationMemberMap": {
+          "member-3": {
+            "id": "member-3",
+            "name": "이영희",
+            "userCode": "younghee"
+          },
+          "member-4": {
+            "id": "member-4",
+            "name": "박민수",
+            "userCode": "minsu"
           }
         }
       }

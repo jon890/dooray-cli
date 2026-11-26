@@ -1,0 +1,46 @@
+{
+  "name": "with-changes-option",
+  "description": "웹 방식 stream list 의 변경 기록을 --with-changes 로 보고 업무 댓글에 시각을 넣는다",
+  "pr_scope": "스펙의 REQ1~REQ7 을 한 PR 로 완성한다. 웹 변환, stream list 명령, 관련 문서를 함께 바꾼다.",
+  "deferred": [],
+  "status": "pending",
+  "created_at": "2026-11-17",
+  "spec": "docs/features/stream-change-records/spec.md",
+  "design": "docs/features/stream-change-records/design.md",
+  "verification_plan": "verification-plan.md",
+  "requirements": [
+    "REQ1",
+    "REQ2",
+    "REQ3",
+    "REQ4",
+    "REQ5",
+    "REQ6",
+    "REQ7"
+  ],
+  "total_phases": 2,
+  "current_phase": 2,
+  "phases": [
+    {
+      "number": 1,
+      "file": "phase-01.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ1",
+        "REQ2",
+        "REQ3",
+        "REQ4"
+      ]
+    },
+    {
+      "number": 2,
+      "file": "phase-02.md",
+      "execution_profile": "standard",
+      "requirements": [
+        "REQ2",
+        "REQ5",
+        "REQ6",
+        "REQ7"
+      ]
+    }
+  ]
+}

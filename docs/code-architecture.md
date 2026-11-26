@@ -176,6 +176,7 @@ rg "^\s+(async )?\w+\(" src/api/*/public.ts src/api/*/web.ts
 
 - 기본: human-readable (테이블·포맷)
 - `--json`: 공개 API 모양의 JSON (stdout, 파이프 친화). 웹의 내부 필드는 변환한다
+  - 예외: `stream list --with-changes` 는 공개 API 에 없는 웹 변경 기록을 웹 응답 모양 그대로 낸다 ([ADR-083](adr/083-web-only-stream-elements.md))
 - `--quiet`: ID만 출력 (스크립팅용)
 - `--no-color`: 컬러 제거 (CI 환경, `NO_COLOR` env 자동 감지)
 - 스피너·에러: stderr / 데이터: stdout (파이프 시 stderr 오염 방지)

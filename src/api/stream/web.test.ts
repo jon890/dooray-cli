@@ -39,7 +39,12 @@ describe("웹 스트림", () => {
         cc: [{ type: "group", group: { projectMemberGroupId: "group-1" } }],
       },
     });
-    expect(event.event).toEqual({ read: true, id: "comment-1", type: "comment", postId: "post-1", creator: { type: "member", member: { organizationMemberId: "member-1", name: "홍길동" } }, body: { mimeType: "text/x-markdown", content: "댓글" } });
+    expect(event.event).toEqual({
+      read: true, id: "comment-1", type: "comment", postId: "post-1", creator: { type: "member", member: { organizationMemberId: "member-1", name: "홍길동" } },
+      body: { mimeType: "text/x-markdown", content: "댓글" }, createdAt: "2026-11-14T01:02:00+09:00",
+    });
+    // 웹의 modifiedAt 이 null 이면 updatedAt 키를 넣지 않는다.
+    expect(event.event).not.toHaveProperty("updatedAt");
     expect(page.page).toEqual({
       read: false, id: "page-1", wikiId: "wiki-1", subject: "문서", referrers: [{ organizationMemberId: "member-2" }], body: { mimeType: "text/x-markdown", content: "위키" },
       creator: { organizationMemberId: "member-1", name: "홍길동" }, createdAt: "2026-11-14T01:07:00+09:00",
@@ -47,14 +52,16 @@ describe("웹 스트림", () => {
     expect(comment.pageComment).toMatchObject({ read: false, id: "pagecomment-1", pageId: "page-1", createdAt: "2026-11-14T01:08:00+09:00" });
     expect(schedule.schedule).toMatchObject({ read: true, id: "event-1", calendarId: "calendar-1", wholeDayFlag: false, recurrenceType: "none" });
     expect(schedule.schedule).not.toHaveProperty("recurrenceRule");
-    stderr.mockRestore();
+    expect(stderr).not.toHaveBeenCalled();
   });
 
-  it("본문이 없는 시스템 이벤트는 event 원소로 만들지 않고 건너뛴다", async () => {
-    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  it("옵션이 없으면 변경 기록은 result 가 아니라 changes 에 있다", async () => {
     respond(fixtures.page);
     const res = await client().getStreams();
     expect(res.result!.filter((i) => i.type === "event")).toHaveLength(1);
+    expect(res.changes!.map((i) => i.type)).toEqual(["event", "pageEvent", "event", "calendar", "project"]);
+    expect(res.changes!.map((i) => (i[i.type!] as { id: string }).id)).toEqual(["event-nobody", "pageevent-1", "schedevent-1", "calendar-notice-1", "project-2"]);
+    expect(res.unknown).toBe(0);
   });
 
   it("다음 페이지 커서를 최상위 cursor 로 올린다. 끝에서는 cursor 가 없다", async () => {
@@ -67,14 +74,86 @@ describe("웹 스트림", () => {
     expect(last).not.toHaveProperty("cursor");
   });
 
-  it("공식 종류에 없는 항목을 빼고 처음 한 번만 stderr 로 알린다", async () => {
+  it("모르는 카드 종류는 unknown 으로 세고 stderr 에 쓰지 않는다", async () => {
     const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const page = structuredClone(fixtures.page);
+    page.result.contents.push({ id: "card-9", type: "drive", drive: { id: "drive-1" } }, { id: "card-10", type: "ai" });
+    respond(page);
+    const res = await client().getStreams({ withChanges: true });
+    expect(res.unknown).toBe(2);
+    expect(res.result!.map((i) => i.type)).not.toContain("drive");
+    expect(stderr).not.toHaveBeenCalled();
+  });
+
+  it("withChanges 면 변경 기록을 카드 순서대로 result 에 담고 웹 값을 그대로 둔다", async () => {
+    const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    respond(fixtures.page);
+    const res = await client().getStreams({ withChanges: true });
+    expect(res.result!.map((i) => i.type)).toEqual(["mail", "post", "event", "event", "page", "pageComment", "pageEvent", "schedule", "event", "calendar", "project"]);
+    expect(res.changes).toEqual([]);
+    expect(res.unknown).toBe(0);
+    const refs = fixtures.page.result.references;
+    const [, , , system, , , pageEvent, , scheduleEvent, calendar, project] = res.result!;
+    expect(system.event).toEqual({
+      read: false, id: "event-nobody", type: "workflow", postId: "post-1", creator: { type: "member", member: { organizationMemberId: "member-1", name: "홍길동" } },
+      createdAt: "2026-11-14T01:03:00+09:00", actions: refs.eventMap["event-nobody"].body.actions,
+    });
+    expect(system.event).not.toHaveProperty("body");
+    expect(scheduleEvent.event).toEqual({
+      read: true, id: "schedevent-1", type: "schedule", scheduleId: "event-1", creator: { type: "member", member: { organizationMemberId: "member-1", name: "홍길동" } },
+      createdAt: "2026-11-14T01:09:00+09:00", actions: refs.eventMap["schedevent-1"].body.actions,
+    });
+    expect(scheduleEvent.event).not.toHaveProperty("postId");
+    expect(pageEvent).toEqual({ type: "pageEvent", pageEvent: refs.pageEventMap["pageevent-1"] });
+    expect(calendar).toEqual({ type: "calendar", calendar: fixtures.page.result.contents[4].calendar });
+    expect(project).toEqual({ type: "project", project: fixtures.page.result.contents[5].project });
+    expect(stderr).not.toHaveBeenCalled();
+  });
+
+  it("withChanges 는 서버로 보내지 않는다", async () => {
+    const calls = respond(fixtures.empty);
+    await client().getStreams({ size: 20, withChanges: true });
+    expect(calls[0].searchParams.has("withChanges")).toBe(false);
+    expect(Object.fromEntries(calls[0].searchParams)).toEqual({ services: "project,mail,calendar,drive,wiki,contacts,ai", size: "20" });
+  });
+
+  it("응답의 organizationMemberMap 이름을 멤버 이름 캐시로 내준다", async () => {
     respond(fixtures.page);
     const c = client();
     await c.getStreams();
-    await c.getStreams();
-    expect(stderr).toHaveBeenCalledTimes(1);
-    expect(String(stderr.mock.calls[0][0])).toContain("공식 활동 종류에 없는");
+    expect(c.getMemberNameFromList?.("member-3")).toBe("이영희");
+    expect(c.getMemberNameFromList?.("member-4")).toBe("박민수");
+  });
+
+  it("변경 기록 원소에 쓸 수 없는 하위 항목과 시각은 멈추지 않고 unknown 으로 센다", async () => {
+    const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const page = structuredClone(fixtures.page);
+    const contents = page.result.contents, refs = page.result.references;
+    contents[1].eventList.push({ id: "missing-post-event", read: false, type: null });
+    contents[2].eventList.push({ id: "missing-page-event", read: false, type: "event" });
+    contents[3].eventList.push({ id: "missing-schedule-event", read: false, type: null });
+    contents[1].eventList.push({ id: "null-time", read: false, type: null }, { id: "object-time", read: false, type: null });
+    refs.eventMap["null-time"] = { ...refs.eventMap["event-nobody"], id: "null-time", createdAt: null };
+    refs.eventMap["object-time"] = { ...refs.eventMap["event-nobody"], id: "object-time", createdAt: {} };
+    respond(page);
+    const res = await client().getStreams({ withChanges: true });
+    expect(res.unknown).toBe(5);
+    const ids = res.result!.map((i) => (i[i.type!] as { id: string }).id);
+    expect(ids).not.toContain("null-time");
+    expect(ids).not.toContain("object-time");
+    expect(res.result!.filter((i) => i.type === "event")).toHaveLength(3);
+    expect(stderr).not.toHaveBeenCalled();
+  });
+
+  it("댓글의 createdAt 이 null 이면 댓글 원소는 남기고 createdAt 키만 뺀다", async () => {
+    const page = structuredClone(fixtures.page);
+    page.result.references.eventMap["comment-1"].createdAt = null;
+    respond(page);
+    const res = await client().getStreams();
+    const comment = res.result!.find((i) => i.type === "event")!;
+    expect(comment.event).toMatchObject({ id: "comment-1", body: { mimeType: "text/x-markdown", content: "댓글" } });
+    expect(comment.event).not.toHaveProperty("createdAt");
+    expect(res.unknown).toBe(0);
   });
 
   it("참조 맵에 없는 카드는 구조가 바뀐 것이라 API 오류로 멈춘다", async () => {
@@ -104,6 +183,28 @@ describe("웹 스트림", () => {
     const res = await client().getStreams({ size: 1 });
     expect(n).toBe(7);
     expect(res.result).toEqual([]);
+    // 이어 받은 페이지마다 뺀 일정 삭제 알림을 모두 모은다.
+    expect(res.changes!.map((i) => i.type)).toEqual(Array(6).fill("calendar"));
+    expect(res.unknown).toBe(0);
+  });
+
+  it("변경 기록만 있는 페이지는 --with-changes 여도 이어 받아 옵션 없는 호출과 같은 페이지 범위를 본다", async () => {
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const onlyChange = { header: fixtures.page.header, result: { totalCount: 1, contents: [fixtures.page.result.contents[4]], references: { nextTimestamp: "cursor-2" } } };
+    const run = async (withChanges: boolean) => {
+      const calls: URL[] = [];
+      vi.stubGlobal("fetch", vi.fn(async (request: Request) => { calls.push(new URL(request.url)); return Response.json(calls.length === 1 ? onlyChange : fixtures.page); }));
+      const res = await client().getStreams({ size: 1, withChanges });
+      return { calls: calls.length, res };
+    };
+    const plain = await run(false);
+    const withChanges = await run(true);
+    expect(plain.calls).toBe(2);
+    expect(withChanges.calls).toBe(2);
+    // 옵션을 주면 첫 페이지의 변경 기록이 앞에 붙고, 둘째 페이지 원소와 변경 기록이 뒤따른다.
+    expect(withChanges.res.result!.length).toBe(plain.res.result!.length + plain.res.changes!.length);
+    expect(withChanges.res.result![0].type).toBe("calendar");
+    expect(withChanges.res.changes).toEqual([]);
   });
 
   it("서버가 같은 커서를 되풀이하면 멈춘다", async () => {
@@ -111,7 +212,8 @@ describe("웹 스트림", () => {
     const loop = { header: fixtures.page.header, result: { totalCount: 1, contents: [fixtures.page.result.contents[4]], references: { nextTimestamp: "same" } } };
     const fetchMock = vi.fn(async () => Response.json(loop));
     vi.stubGlobal("fetch", fetchMock);
-    await client().getStreams({ size: 1 });
+    const res = await client().getStreams({ size: 1 });
     expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(3);
+    expect(res.changes).toHaveLength(fetchMock.mock.calls.length);
   });
 });

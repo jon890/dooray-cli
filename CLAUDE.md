@@ -77,6 +77,7 @@ dooray                # 글로벌 링크 시
 - **출력**: `--json` 은 공개 API 응답 모양 유지(웹 방식은 공식 필드로 변환), `--quiet` 은 식별자만
   - 보강한 값이 필요하면 그것을 명시하는 옵션을 둔다. `post get --with-tag-names` 가 그 형태다.
     옵션을 주지 않은 호출의 출력은 달라지지 않는다 ([ADR-056](docs/adr/056-json-enrichment-behind-option.md))
+  - 예외: `stream list --with-changes` 는 공개 API 에 없는 웹 변경 기록을 웹 응답 모양 그대로 낸다. 옵션이 없으면 공개 API 모양만 낸다 ([ADR-083](docs/adr/083-web-only-stream-elements.md))
 - **파괴적 삭제 명령**: 확인을 기본으로 하고 `-y`/`--yes` 로 생략한다 ([ADR-036](docs/adr/036-delete-confirmation-policy.md))
   - TTY 확인의 기본값은 아니오다. 사용자가 거절하면 API를 호출하지 않고 정상 취소한다
   - non-TTY에서 `-y`/`--yes`가 없으면 설정 조회·resolver·API 호출 전에 `EXIT_PARAM_ERROR`(3)로 중단한다

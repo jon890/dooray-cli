@@ -1,6 +1,6 @@
 # stream 웹 경로 실측
 
-2026-11-14 실측했다. 공통 규칙과 공식 문서는 [색인](../web-endpoints.md)에 있다. 읽기만 했다.
+2026-11-14 실측했다. 변경 기록 절은 2026-11-16 실측이다. 공통 규칙과 공식 문서는 [색인](../web-endpoints.md)에 있다. 읽기만 했다.
 
 웹 화면의 「스트림」 패널이 쓰는 `GET /v2/wapi/streams` 가 대응한다. 이 경로는 `services` 쿼리가 없으면 항상 빈 목록을 준다.
 같은 이름의 `GET /wapi/common/v1/streams` 는 404 다.
@@ -43,7 +43,7 @@
 | --- | --- | --- |
 | `mail` 카드 | `{type: "mail", mail: {id, folder{id, name}, sentAt, subject, users{from{type, emailUser{name, emailAddress}}}, body{mimeType, content}}}` | `mailMap` 에서 채운다. `folderId` 는 숫자라 문자열로 바꾼다 |
 | `post` 카드 | `{type: "post", post: {read, id, projectId, users, subject, body, createdAt, updatedAt}}` | `postMap` 에서 채운다. `users` 항목은 `{type, member{organizationMemberId, name}}` 로 줄인다 |
-| `post` 카드의 `eventList[]` | `{type: "event", event: {read, id, type, postId, creator, body}}` | 하위 항목마다 원소 하나를 더한다. 업무 카드 뒤에 둔다 |
+| `post` 카드의 `eventList[]` | `{type: "event", event: {read, id, type, postId, creator, body, createdAt, updatedAt}}` | 하위 항목마다 원소 하나를 더한다. 업무 카드 뒤에 둔다. 본문 글이 없는 하위 항목은 아래 「변경 기록」 을 따른다 |
 | `page` 카드 | `{type: "page", page: {read, id, wikiId, parentPageId, subject, referrers, body, creator, createdAt}}` | `pageMap` 에서 채운다. `pageId` 를 `id` 로, `create.dateTime` 을 `createdAt` 으로, `create.member` 를 `creator` 로 옮긴다 |
 | 위키 댓글 하위 항목 | `{type: "pageComment", pageComment: {read, id, pageId, body, creator, createdAt}}` | `pageCommentMap` 에서 채운다 |
 | `schedule` 카드 | `{type: "schedule", schedule: {read, id, calendarId, users, startedAt, endedAt, wholeDayFlag, subject, recurrenceType, recurrenceRule}}` | `scheduleMap` 에서 채운다. `users` 항목은 상세 변환과 같다 |
@@ -51,10 +51,30 @@
 
 웹에만 있어 낼 수 없는 것과 공식에만 있어 낼 수 없는 것:
 
-- 웹의 `calendar` 카드(캘린더 공유 알림)와 `pageEventMap` 하위 항목(첨부 추가·삭제 같은 위키 활동)은 공식 원소 종류에 없어 뺀다. 뺀 개수는 stderr 로 알린다.
-- 공식 원소 종류 `project`(프로젝트 멤버 변경)와 `fileEvent`(드라이브 파일)는 이 계정에서 웹 응답에 나오지 않았다. 나오면 모양을 모르니 같이 뺀다.
+- 웹의 `calendar` 카드(일정 삭제 알림. 2026-11-16 응답 16건이 모두 `schedule_deleted` 였다), `pageEventMap` 하위 항목(본문 변경, 첨부 추가·삭제 같은 위키 활동), 본문 글이 없는 업무·일정 하위 항목(시스템 기록), `project` 카드는 공식 원소 종류에 담을 칸이 없다. `--with-changes` 를 줄 때만 낸다. 옵션이 없으면 뺀 건수를 출력 끝에 stderr 로 알린다. 모양은 아래 「변경 기록」 절이 정한다.
+- 공식 원소 종류 `fileEvent`(드라이브 파일)는 이 계정에서 웹 응답에 나오지 않았다. 모르는 카드 종류와 맵에 없는 하위 항목은 내지 않고, 건수를 출력 끝에 stderr 로 알린다.
 - 카드 하나가 원소 여러 개가 된다. 그래서 `size` 는 웹 카드 수이고 돌려주는 원소 수와 같지 않다. 공식도 응답 건수가 `size` 보다 적을 수 있다고 적고 있어 CLI 의 페이지 넘기기 규칙(빈 배열까지)은 그대로 쓴다.
-- 한 페이지의 카드가 전부 공식 종류 밖이라 변환 결과가 비면, 웹 구현이 다음 커서로 이어 받아 호출자가 끝으로 오해하지 않게 한다. 끝은 원본 카드가 빈 페이지이고, 같은 커서가 되풀이되면 멈춘다.
+- 한 페이지의 카드가 전부 공식 종류 밖이라 공개 API 종류 원소가 없으면, 웹 구현이 다음 커서로 이어 받아 호출자가 끝으로 오해하지 않게 한다. 끝은 원본 카드가 빈 페이지이고, 같은 커서가 되풀이되면 멈춘다.
+- 이어 받을지는 `--with-changes` 로 변경 기록을 넣었는지와 무관하게 정한다. 옵션을 줄 때와 안 줄 때 같은 페이지 범위를 봐야 안내한 건수만큼 더 나온다.
 - 업무 댓글 `event.type` 은 웹의 `eventMap[id].type`·`subtype` 값을 그대로 쓴다. 공식 값(`comment` 등)과의 대응은 API 복구 뒤 비교한다.
 
 공식 API 와 같은 기간의 원소를 나란히 비교하는 것은 후속 확인이다(스펙 DECISION26).
+
+## 변경 기록
+
+2026-11-16 한 계정의 2주 응답으로 확인했다. 공개 API 원소 종류에 없는 항목을 `--with-changes` 를 줄 때만 낸다. 결정과 이유는 [ADR-083](../../adr/083-web-only-stream-elements.md) 이 소유한다.
+
+| 웹 원본 | 원소 |
+| --- | --- |
+| 업무 카드 `eventList[]` 중 `eventMap` 항목의 `body.mimeType` 이 문자열이 아닌 것(시스템 기록) | `{type: "event", event: {read, id, type, postId, creator, createdAt, updatedAt?, actions}}`. `body` 키가 없다. `actions` 는 `body.actions` 그대로이고 없으면 `[]` |
+| 일정 카드 `eventList[]` 중 본문 글이 없는 `eventMap` 항목 | 위와 같고 `postId` 대신 `scheduleId` |
+| 위키 카드 `eventList[]` 중 `pageEventMap` 항목 | `{type: "pageEvent", pageEvent: <항목 그대로>}`. `id`, `pageId`, `body.actions`, `createdAt`, `creator` 가 있다 |
+| `calendar` 카드 | `{type: "calendar", calendar: <카드의 calendar 그대로>}`. `source.organizationMemberId`, `target.schedule.subject`, `action.type`, `at` 이 있다 |
+| `project` 카드 | `{type: "project", project: <카드의 project 그대로>}`. `source.organizationMemberId`, `action`(`invited`), `actionDetail`, `at` 이 있다. 공개 API `project` 원소(`actor`, `name`)와 이름은 같지만 모양이 다르다 |
+
+- `actions[]` 원소는 `name`(`workflow`, `endedAt`, `subject` 등), `type`, `message`(「업무 상태: 변경」 처럼 서버가 준 한국어 문구), `data`(전·후 값)를 가진다. 기록 하나에 원소가 여럿일 수 있다.
+  - `workflow` 의 `data.before`·`data.after` 는 `names[]`(`name`, `locale`) 를 가져 `ko_KR` 이름을 바로 쓸 수 있다. `endedAt` 은 뒤 값만, `subject` 는 전·후 값이 문자열로 온다. 반복, 위키 본문, 참조자 변경은 값이 없거나 길다.
+- `calendar`·`project` 의 `at` 은 `2026-11-14T11:26:36+0900` 처럼 콜론 없는 오프셋이다. `source` 에는 `organizationMemberId` 만 있고 이름이 없다.
+- 이름은 `references.organizationMemberMap`(`id`, `name`)에 있다. CLI 는 이 맵을 원소에 넣지 않고 멤버 이름 캐시에만 넣어 표의 작성자 칸에 쓴다. 맵에 없는 사람은 멤버 상세로 한 번 찾는다.
+- 변경 기록의 `createdAt` 이 시각 문자열이 아니면 그 기록은 모르는 항목으로 센다.
+- 업무 댓글(본문 글이 있는 `eventMap` 항목)은 `createdAt` 을 그대로, 수정 시각 `modifiedAt`(510건 중 28건)을 `updatedAt` 으로 옮긴다. 값이 없거나 `null` 이면 키를 넣지 않는다.

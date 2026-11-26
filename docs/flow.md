@@ -1098,7 +1098,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["--size·--before·--since·--unread·--all 입력"] --> B{"옵션 검증"}
+    A["--size·--before·--since·--unread·--all·--with-changes 입력"] --> B{"옵션 검증"}
     B -->|실패| X["종료 코드 3"]
     B -->|통과| C["GET common/v1/streams"]
     C --> D{"--all 또는 --since"}
@@ -1110,6 +1110,7 @@ flowchart TD
 
 - 기본은 한 페이지만 받고 다음 페이지 커서를 stderr 로 알린다. `--all` 은 빈 배열이 올 때까지 넘기고, `--since` 는 응답 커서가 기준보다 60초 넘게 앞서면 멈춘다. 페이지 상한은 1000이다. 규칙의 원본은 [ADR-078](adr/078-stream-list.md) 이다.
 - 429 가 재시도 3회 뒤에도 남으면 종료 코드 6 으로 끝난다.
+- 웹 방식은 `GET common/v1/streams` 대신 `GET /v2/wapi/streams` 를 부른다. 출력 뒤 변경 기록 건수를 stderr 로 안내한다(웹 방식, 옵션이 없을 때). `--with-changes` 는 웹 방식에서만 동작하고, 공개 API 방식에서는 경고하고 무시한다. 규칙의 원본은 [ADR-083](adr/083-web-only-stream-elements.md) 이다.
 
 
 ## 위키 페이지 첨부파일 흐름 (Issue #70, [ADR-029](adr/029-wiki-page-file-multipart-order.md))

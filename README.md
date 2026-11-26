@@ -115,6 +115,7 @@ dooray messenger channel-send --channel "배포알림" --body "배포 완료"
 dooray messenger logs <스레드 channelId>           # 스레드 답글 읽기
 dooray calendar event list                          # 오늘 일정
 dooray stream list --since prev-1d                  # 하루 동안의 활동 알림
+dooray stream list --since prev-1d --with-changes   # 상태 변경까지 포함한 하루 활동
 ```
 
 업무나 위키 페이지를 가리킬 때는 `<project> <번호>` 대신 Dooray URL 을 그대로 줘도 돼요.
