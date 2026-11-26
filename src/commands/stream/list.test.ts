@@ -240,7 +240,7 @@ describe("fetchStreams — 페이지 넘기기", () => {
     expect(res.unknown).toBe(3);
   });
 
-  it("--since 는 커서가 since 이후여도 자기 시각이 앞선 댓글을 빼고, 시각 없는 댓글은 커서로 판단한다", async () => {
+  it("--since 는 커서가 since 이후여도 자기 시각이 앞선 댓글을 빼고, 시각 없는 댓글은 페이지 앞쪽 경계로 판단한다", async () => {
     const sinceMs = Date.parse("2026-11-14T10:00:00+09:00");
     const noTime = { type: "event", event: { id: "comment-no-time", body: { mimeType: "text/x-markdown", content: "x" } } };
     const page: StreamListResponse = {
@@ -250,7 +250,7 @@ describe("fetchStreams — 페이지 넘기기", () => {
         commentEvent("comment-old", "2026-11-14T09:59:00+09:00"),
         noTime,
       ],
-      // 페이지 커서는 since 이후다. 시각 없는 댓글은 이 커서로 판단한다.
+      // 첫 페이지라 앞쪽 경계는 지금이고 since 이후다. 시각 없는 댓글은 남는다.
       cursor: nsCursor("2026-11-14T10:00:00+09:00"),
     };
     const end: StreamListResponse = { header: PAGES[0].header, result: [] };
