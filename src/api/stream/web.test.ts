@@ -188,6 +188,25 @@ describe("웹 스트림", () => {
     expect(res.unknown).toBe(0);
   });
 
+  it("변경 기록만 있는 페이지는 --with-changes 여도 이어 받아 옵션 없는 호출과 같은 페이지 범위를 본다", async () => {
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    const onlyChange = { header: fixtures.page.header, result: { totalCount: 1, contents: [fixtures.page.result.contents[4]], references: { nextTimestamp: "cursor-2" } } };
+    const run = async (withChanges: boolean) => {
+      const calls: URL[] = [];
+      vi.stubGlobal("fetch", vi.fn(async (request: Request) => { calls.push(new URL(request.url)); return Response.json(calls.length === 1 ? onlyChange : fixtures.page); }));
+      const res = await client().getStreams({ size: 1, withChanges });
+      return { calls: calls.length, res };
+    };
+    const plain = await run(false);
+    const withChanges = await run(true);
+    expect(plain.calls).toBe(2);
+    expect(withChanges.calls).toBe(2);
+    // 옵션을 주면 첫 페이지의 변경 기록이 앞에 붙고, 둘째 페이지 원소와 변경 기록이 뒤따른다.
+    expect(withChanges.res.result!.length).toBe(plain.res.result!.length + plain.res.changes!.length);
+    expect(withChanges.res.result![0].type).toBe("calendar");
+    expect(withChanges.res.changes).toEqual([]);
+  });
+
   it("서버가 같은 커서를 되풀이하면 멈춘다", async () => {
     vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     const loop = { header: fixtures.page.header, result: { totalCount: 1, contents: [fixtures.page.result.contents[4]], references: { nextTimestamp: "same" } } };

@@ -103,7 +103,14 @@ function systemEvent(sub: Row, id: string, ev: Row, owner: "postId" | "scheduleI
   } };
 }
 
-export interface ConvertedStream { items: StreamItem[]; changes: StreamItem[]; unknown: number; memberNames: Map<string, string> }
+export interface ConvertedStream {
+  items: StreamItem[];
+  changes: StreamItem[];
+  /** `items` 가운데 공개 API 종류 원소 수. 변경 기록을 `items` 에 넣었어도 세지 않는다. */
+  publicCount: number;
+  unknown: number;
+  memberNames: Map<string, string>;
+}
 
 /**
  * 카드 목록을 원소로 바꾼다. 공개 API 원소 종류에 없는 변경 기록은 `withChanges` 면 `items` 에 카드 순서대로, 아니면 `changes` 에 둔다(ADR-083).
@@ -114,6 +121,7 @@ export function convertStreamCards(cards: Row[], references: Row, withChanges: b
   const items: StreamItem[] = [];
   const changes: StreamItem[] = [];
   let unknown = 0;
+  let changeItems = 0;
   const mails = map(references, "mailMap"), posts = map(references, "postMap"), events = map(references, "eventMap");
   const pages = map(references, "pageMap"), pageComments = map(references, "pageCommentMap"), schedules = map(references, "scheduleMap");
   const pageEvents = map(references, "pageEventMap");
@@ -126,7 +134,10 @@ export function convertStreamCards(cards: Row[], references: Row, withChanges: b
       item = undefined;
     }
     if (item === undefined) unknown += 1;
-    else (withChanges ? items : changes).push(item);
+    else {
+      (withChanges ? items : changes).push(item);
+      if (withChanges) changeItems += 1;
+    }
   };
   for (const card of cards) {
     const type = text(card.type);
@@ -196,7 +207,7 @@ export function convertStreamCards(cards: Row[], references: Row, withChanges: b
     else if (type === "project") change(() => ({ type, project: row(card.project) }));
     else unknown += 1;
   }
-  return { items, changes, unknown, memberNames: memberNames(references) };
+  return { items, changes, publicCount: items.length - changeItems, unknown, memberNames: memberNames(references) };
 }
 
 /** 표에 보일 이름은 원소에 더하지 않고 멤버 이름 캐시로만 내준다(ADR-083). 모양이 맞지 않는 항목은 건너뛴다. */
@@ -216,9 +227,11 @@ export function createStreamWeb(context: WebContext): StreamClient {
       let before = params?.before;
       const withChanges = params?.withChanges === true;
       const seen = new Set<string>();
+      const items: StreamItem[] = [];
       const changes: StreamItem[] = [];
       let unknown = 0;
-      // 한 페이지가 전부 빠져 비면, 호출자가 끝으로 오해하지 않게 다음 페이지를 이어 받는다. 이어 받는 동안 뺀 변경 기록과 건수는 모은다.
+      // 한 페이지에 공개 API 종류 원소가 없으면, 호출자가 끝으로 오해하지 않게 다음 페이지를 이어 받는다. 이어 받는 동안 원소와 뺀 변경 기록, 건수는 모은다.
+      // 이어 받을지는 변경 기록을 넣었는지와 무관하게 정한다. 그래야 옵션을 줄 때와 안 줄 때 같은 페이지 범위를 본다.
       for (;;) {
         const response = await context.http.request("v2/wapi/streams", {
           searchParams: { services: SERVICES, size: params?.size, before, read: params?.read },
@@ -226,14 +239,14 @@ export function createStreamWeb(context: WebContext): StreamClient {
         const result = row(response.result), references = row(result.references ?? {});
         const cards = rows(result.contents);
         const converted = convertStreamCards(cards, references, withChanges);
-        const items = converted.items;
+        items.push(...converted.items);
         changes.push(...converted.changes);
         unknown += converted.unknown;
         for (const [id, name] of converted.memberNames) context.memberNames.set(id, name);
         const next = references.nextTimestamp;
         const cursor = typeof next === "string" && next !== "" ? next : typeof next === "number" ? String(next) : undefined;
         // 원본 카드가 있었으면 걸러져 비어도 끝이 아니다. 끝은 원본이 빈 페이지다. 커서가 되풀이되면 멈춘다.
-        if (items.length === 0 && cards.length > 0 && cursor !== undefined && cursor !== before && !seen.has(cursor)) { seen.add(cursor); before = cursor; continue; }
+        if (converted.publicCount === 0 && cards.length > 0 && cursor !== undefined && cursor !== before && !seen.has(cursor)) { seen.add(cursor); before = cursor; continue; }
         return { header: response.header, result: items, ...(cursor !== undefined && { cursor }), changes, unknown };
       }
     },
