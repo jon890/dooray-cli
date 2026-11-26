@@ -1,0 +1,21 @@
+## ADR-085: 업무·댓글 본문을 보내기 전에 업무 링크를 검사한다
+
+- **status**: `accepted`
+- **decision-type**: `behavior`
+- **areas**: `post`
+- **현재 규칙의 원본**: `src/body/link-check.ts`(문자열 판정), `src/resolvers/link-check.ts`(조회와 고치기), `src/commands/post/link-check.ts`(옵션과 출력)
+- **결정**: `post create`, `post edit`, `post comment add`, `post comment edit` 는 사용자가 쓴 본문(`--body`, `--body-file`, 댓글의 `$EDITOR`)을 보내기 전에 업무 링크를 검사한다.
+  - 표시 글에 이스케이프하지 않은 `[` `]` 가 있으면 멈춘다. `--fix-links` 면 `&#91;` `&#93;` 로 바꿔 보낸다.
+  - 같은 테넌트의 업무 웹 주소(`/project/tasks/<postId>`, `/task/<projectId>/<postId>`, `/task/to/<postId>`)를 링크로 쓰면 멈춘다. `--fix-links` 면 업무를 조회해 `dooray://<orgId>/tasks/<postId> "<workflow>"` 로 바꾼다. 조회하지 못한 웹 주소는 고치지 않는다.
+  - 링크마다 postId 로 업무를 조회해 표시 글 앞의 「프로젝트/번호」 가 실제와 다르면 멈춘다. `--fix-links` 로도 고치지 않는다. 조회가 실패하면 경고만 한다.
+  - 멈출 때는 고친 꼴 한 줄을 보여 주고 종료 코드 7(`EXIT_LINK_CHECK_ERROR`)로 끝낸다. `--no-link-check` 로 검사를 끈다.
+  - 검사하지 않는 경우: 템플릿 본문, `post edit` 에서 본문 없이 기존 본문에 멘션·링크만 붙일 때, `--mime-type` 단독, `text/html` 본문([ADR-055](055-body-mimetype-aware-markup.md)).
+- **맥락**: 에이전트가 본문을 직접 조립하면서 대괄호가 든 제목을 그대로 넣거나, 웹 주소로 링크하거나, 다른 업무의 postId 를 넣는 실수를 되풀이했다. 규칙을 스킬 문서에 적어도 반복됐고, `--link-task` 는 CLI 가 링크를 만들어 주지만 직접 조립한 본문은 검사가 없었다.
+- **대안 기각**:
+  - **경고만 하고 보낸다** — 깨진 링크가 이미 등록된 뒤라 고치려면 다시 수정해야 하고, 에이전트는 stderr 경고를 흘려 읽는다.
+  - **번호가 다르면 표시 글을 실제 업무로 바꾼다** — 틀린 쪽이 표시 글인지 postId 인지 CLI 가 알 수 없다.
+  - **기존 종료 코드 3 을 쓴다** — 본문만 고쳐 다시 보내면 되는 경우를 다른 입력 오류와 나눠야 호출하는 쪽이 대응할 수 있다.
+- **결과**:
+  - 얻는 것: 깨진 링크와 잘못된 postId 가 등록되기 전에 막힌다.
+  - 감당할 것: 업무 링크가 든 본문은 링크마다 조회 한 번이 늘어난다(같은 postId 는 한 번). 조회 실패는 막지 않으므로 권한 없는 업무의 잘못된 번호는 지나간다.
+- **확인 방법**: `src/body/link-check.test.ts`, `src/resolvers/link-check.test.ts`, `src/commands/post/link-check.test.ts`, `src/commands/post/comment/add.test.ts`, `src/commands/post/edit.test.ts`

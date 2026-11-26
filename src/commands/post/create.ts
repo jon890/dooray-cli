@@ -24,6 +24,7 @@ import type { PostUser } from "@/api/common/types.js";
 import type { TemplateDetail } from "@/api/project/types.js";
 import type { OutputOptions } from "../../formatters/table.js";
 import { printJson } from "../../formatters/table.js";
+import { addLinkCheckOptions, runLinkCheck } from "./link-check.js";
 
 async function resolveUsers(
   client: DoorayClient,
@@ -115,6 +116,8 @@ export const postCreateCommand = new Command("create")
       stopSpinner(false);
       throw e;
     }
+    // 업무 링크 검사는 사용자가 쓴 본문만 본다. 템플릿 본문은 사용자가 조립하지 않았다 (ADR-085).
+    const userBodyGiven = bodyContent.length > 0;
     if (!bodyContent && templateDetail?.body) {
       bodyContent = templateDetail.body.content;
     }
@@ -154,6 +157,10 @@ export const postCreateCommand = new Command("create")
       const me = await ensureMe(client);
       const links = await resolveTaskLinks(client, linkInputs);
       bodyContent = appendTaskLinks(bodyContent, links, me);
+    }
+
+    if (userBodyGiven) {
+      bodyContent = await runLinkCheck(client, config, bodyContent, opts);
     }
 
     if (opts.dryRun) {
@@ -241,3 +248,5 @@ export const postCreateCommand = new Command("create")
       process.stdout.write(`업무가 생성되었습니다: ${res.result.id}\n`);
     }
   });
+
+addLinkCheckOptions(postCreateCommand);

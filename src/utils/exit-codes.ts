@@ -7,3 +7,5 @@ export const EXIT_CONFIG_ERROR = 4;
 export const EXIT_IO_ERROR = 5;
 /** API 호출 한도 초과(HTTP 429). 재시도를 다 쓴 뒤에도 429 면 이 코드로 끝난다. 부르는 쪽이 기다렸다 다시 부를 수 있게 다른 API 오류와 나눈다 */
 export const EXIT_RATE_LIMITED = 6;
+/** 본문 업무 링크 검사에서 멈춤. 본문을 고쳐 다시 보내면 되는 경우라 일반 입력 오류(3)와 나눈다 (ADR-085) */
+export const EXIT_LINK_CHECK_ERROR = 7;

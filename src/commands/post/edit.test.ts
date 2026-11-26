@@ -793,3 +793,31 @@ describe("편집기에서 일정 상태 보존", () => {
     } finally { stdout.mockRestore(); }
   });
 });
+
+describe("post edit 업무 링크 검사", () => {
+  const broken = '[my-project/505 [MOD] 한도](dooray://1234567890123456789/tasks/9876543210987654321 "working")';
+
+  async function runEdit(...args: string[]): Promise<void> {
+    const program = await createCommandTree();
+    const stdout = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    try {
+      await program.parseAsync(["node", "dooray", "post", "edit", "--id", "post-1", ...args]);
+    } finally {
+      stdout.mockRestore();
+    }
+  }
+
+  it("새로 쓴 본문의 깨진 링크는 수정하지 않고 종료 코드 7 로 멈춘다", async () => {
+    Object.assign(mocks.client, { getPostStandalone: vi.fn().mockRejectedValue(new Error("404")) });
+    mocks.readBodyInputOrNull.mockResolvedValue(broken);
+    await expect(runEdit("--body", broken)).rejects.toMatchObject({ exitCode: 7 });
+    expect(mocks.client.updatePost).not.toHaveBeenCalled();
+  });
+
+  it("본문 없이 --link-task 만 주면 기존 본문의 링크는 검사하지 않는다", async () => {
+    mocks.client.getPost.mockResolvedValue({ result: { ...post, body: { mimeType: "text/x-markdown", content: broken } } });
+    await runEdit("--link-task", "my-project/7");
+    expect(mocks.client.updatePost).toHaveBeenCalledOnce();
+  });
+});

@@ -15,6 +15,7 @@ import { ensureMe } from "../../../resolvers/me.js";
 import { prependMentions } from "@/body/mention.js";
 import { appendTaskLinks } from "@/body/task-link.js";
 import { resolveTaskLinks } from "../../../resolvers/task-link.js";
+import { addLinkCheckOptions, runLinkCheck } from "../link-check.js";
 
 export const commentAddCommand = new Command("add")
   .description("댓글 추가")
@@ -96,6 +97,8 @@ export const commentAddCommand = new Command("add")
       bodyContent = appendTaskLinks(bodyContent, links, me);
     }
 
+    bodyContent = await runLinkCheck(client, config, bodyContent, opts);
+
     if (opts.dryRun) {
       stopSpinner(false);
       if (globalOpts.json) {
@@ -119,3 +122,5 @@ export const commentAddCommand = new Command("add")
       process.stdout.write(`댓글이 추가되었습니다: ${res.result.id}\n`);
     }
   });
+
+addLinkCheckOptions(commentAddCommand);

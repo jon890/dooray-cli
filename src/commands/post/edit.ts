@@ -25,6 +25,7 @@ import { checkMarkupSupport, type BodyMarkupKind } from "@/body/body-markup.js";
 import { DoorayCliError } from "../../utils/errors.js";
 import { EXIT_PARAM_ERROR } from "../../utils/exit-codes.js";
 import type { CreatePostUser } from "@/api/post/types.js";
+import { addLinkCheckOptions, runLinkCheck } from "./link-check.js";
 
 async function resolveUsers(
   client: DoorayClient,
@@ -138,6 +139,8 @@ export const postEditCommand = new Command("edit")
       if (linkInputs.length > 0) requireMarkup("task-link");
 
       let newBody = await readBodyInputOrNull(opts);
+      // 업무 링크 검사는 새로 쓴 본문만 본다. 기존 본문에 링크만 붙일 때 옛 본문 때문에 멈추지 않게 한다 (ADR-085).
+      const bodyWritten = newBody != null;
 
       if (newBody != null && !opts.dryRun) {
         const attachments = (post.files ?? []).map((f) => ({ id: f.id, name: f.name }));
@@ -169,6 +172,10 @@ export const postEditCommand = new Command("edit")
         const me = await ensureMe(client);
         const links = await resolveTaskLinks(client, linkInputs);
         newBody = appendTaskLinks(effectiveBody, links, me, bodyMimeType);
+      }
+
+      if (bodyWritten && newBody != null) {
+        newBody = await runLinkCheck(client, config, newBody, opts, bodyMimeType);
       }
 
       let toUsers: CreatePostUser[] = post.users.to.map((u) => ({
@@ -285,3 +292,5 @@ export const postEditCommand = new Command("edit")
 
     process.stdout.write(`#${postNumber} 업무가 수정되었습니다.\n`);
   });
+
+addLinkCheckOptions(postEditCommand);
