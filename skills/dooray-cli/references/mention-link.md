@@ -78,6 +78,15 @@ title 은 workflow class 다. `registered`, `working`, `closed`, `backlog` 넷 �
 치환 대상은 표시 텍스트뿐이고 URL 은 해당 없다.
 `--link-task` 옵션을 쓰면 CLI 가 알아서 치환하므로 직접 조립할 때만 신경 쓴다.
 
+### CLI 의 업무 링크 검사
+
+`post create`, `post edit`, `post comment add`, `post comment edit` 는 `--body`·`--body-file` 본문을 보내기 전에 업무 링크를 검사한다.
+표시 글의 대괄호, 같은 테넌트의 업무 웹 주소(`/project/tasks/<postId>`, `/task/<projectId>/<postId>`), 표시 글 「프로젝트/번호」 와 postId 의 실제 번호 불일치를 찾으면 보내지 않고 고친 꼴을 보여 준 뒤 **종료 코드 7** 로 멈춘다.
+
+- 종료 코드 7 이면 stderr 의 `고친 꼴:` 줄로 본문을 고쳐 다시 보낸다. 대괄호와 웹 주소는 `--fix-links` 를 붙여 다시 실행해도 된다.
+- 번호 불일치는 `--fix-links` 로도 고치지 않는다. 표시 글과 postId 중 무엇이 틀렸는지 `post get` 으로 확인한다.
+- 조회 실패는 경고만 하고 보낸다. `--no-link-check` 는 사용자가 검사를 끄라고 할 때만 쓴다.
+
 ### 위키 페이지
 
 ```markdown

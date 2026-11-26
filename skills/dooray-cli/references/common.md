@@ -176,6 +176,7 @@ CLI 에러 발생 시 복구 방법:
 | `웹 방식에서는 지원하지 않습니다. auth-mode 를 api-key 로 바꾸세요.` (종료 코드 3) | 웹 방식이 지원하지 않는 명령이나 옵션 | 사용자에게 API 키 방식으로 바꿀지 묻는다. 묻지 않고 `auth-mode` 를 바꾸지 않는다 |
 | `mise ERROR No version is set for shim: dooray` | 저장소가 mise 설정(`mise.toml`, `.tool-versions` 등)으로 Node.js 를 고정해, 전역 Node.js 에만 깔린 shim 이 CLI 가 뜨기 전에 실패함. `dooray doctor` 로도 잡을 수 없음 | `mise use -g npm:@bifos/dooray-cli` 로 mise 에 전역 등록 (버전을 생략하면 최신 버전으로 고정됨) |
 | `API 호출 한도를 넘었습니다 (429)`, 종료 코드 6 | 재시도 3회 뒤에도 호출 한도 초과 | 잠시 기다렸다 다시 실행. 종료 코드 6 은 다른 API 오류(1)와 구분된다 |
+| `본문의 업무 링크 N개가 형식에 맞지 않아 보내지 않았습니다` (종료 코드 7) | 직접 조립한 업무 링크의 대괄호·웹 주소·postId 문제 | `고친 꼴:` 줄대로 본문을 고치거나 `--fix-links` 로 다시 실행 ([mention-link.md](mention-link.md)) |
 | non-TTY 삭제 실행이 종료 코드 3으로 중단됨 | 삭제 확인용 yes 플래그가 없음 | `-y` 또는 `--yes`를 붙여 다시 실행 |
 
 ---

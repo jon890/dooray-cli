@@ -201,6 +201,23 @@ dooray post comment edit <project> 42 --comment-id <comment-id> --body "확인 �
 본문 형식이 `text/html` 이면 이 세 옵션을 쓸 수 없어요.
 멘션과 링크의 HTML 표기를 확인하지 못했기 때문이에요. 종료 코드 3 으로 멈추고 `--mime-type text/x-markdown` 으로 형식을 바꾸는 방법을 안내해요.
 
+### 본문의 업무 링크 검사
+
+`post create`, `post edit`, `post comment add`, `post comment edit` 는 `--body` 나 `--body-file` 로 쓴 본문을 보내기 전에 업무 링크를 검사해요.
+문제가 있으면 보내지 않고 고친 꼴 한 줄을 보여 준 뒤 종료 코드 7 로 멈춰요.
+
+| 문제 | 예 | `--fix-links` 를 주면 |
+| --- | --- | --- |
+| 표시 글에 대괄호가 그대로 있어요 | `[<project>/505 [MOD] 제목](dooray://...)` | `&#91;` `&#93;` 로 바꿔서 보내요 |
+| 업무 웹 주소로 링크했어요 | `[<project>/505 제목](https://<tenant>.dooray.com/project/tasks/<postId>)`, `/task/<projectId>/<postId>` | 업무를 조회해 `dooray://<orgId>/tasks/<postId> "<workflow>"` 로 바꿔서 보내요 |
+| 표시 글의 번호와 postId 의 실제 번호가 달라요 | `[<project>/520 …](dooray://<orgId>/tasks/<518 의 postId>)` | 고치지 않고 멈춰요. postId 를 직접 확인해요 |
+
+- 링크마다 postId 로 업무를 조회해요. 조회가 실패하면 번호를 확인하지 않고 경고만 해요.
+- 웹 주소는 설정한 `tenant-name` 의 주소만 봐요. 설정하지 않았으면 `*.dooray.com` 주소를 모두 봐요.
+- 검사를 끄려면 `--no-link-check` 를 줘요.
+- `post edit` 에서 본문 없이 `--link-task` 나 `--mention` 만 주면 기존 본문은 검사하지 않아요.
+- `--dry-run` 에도 같은 검사가 돌아요. `--fix-links` 와 함께 주면 고친 본문을 보여 줘요.
+
 ### 댓글에 리액션 달기
 
 답글 대신 이모지 리액션만 남길 때 써요. 이 명령은 저장된 웹 로그인 세션을 사용해요. API 키 방식에서도 [테넌트 이름과 SESSION 쿠키를 설정](setup.md#api-키-방식에서-댓글-리액션-쓰기)하면 쓸 수 있어요.

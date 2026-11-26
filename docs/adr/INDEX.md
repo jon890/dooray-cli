@@ -87,6 +87,7 @@ ADR-NNN 내용은 `docs/adr/NNN-*.md` (번호 glob) 또는 아래 목록 링크�
 - [ADR-082](082-code-structure.md) — 계층 폴더는 두고 api 안만 영역별(`types.ts`·`public.ts`·`web.ts`)로 나누며, 계층·영역 의존 규칙을 테스트로 막고(지금 위반은 허용 목록), 경로 별칭 `@/…` 을 쓴다. [ADR-014](superseded/014-ts-path-alias-deferred.md)·[ADR-017](superseded/017-api-types-single-file.md) 을 대체한다
 - [ADR-083](083-web-only-stream-elements.md) — 웹 방식 `stream list` 는 공개 API 원소에 칸이 없는 웹 응답 항목(업무·일정 시스템 기록, 위키 활동, 일정 삭제 알림, 프로젝트 카드)을 `--with-changes` 를 줄 때만 웹 모양으로 내고, 옵션이 없으면 뺀 건수를 알린다 (2026-11-16 2주 응답에서 232건 제외 실측)
 - [ADR-084](084-cc-group-cross-project-id.md) — `--cc-group`·`--to-group` 의 15자리 이상 숫자 ID 는 프로젝트 그룹 목록에 없어도 그대로 서버로 넘기고, 본문 멘션은 코드가 필요해 계속 거절한다
+- [ADR-085](085-body-task-link-check.md) — `post create`·`edit` 와 `post comment add`·`edit` 는 사용자가 쓴 본문의 업무 링크(표시 글 대괄호, 같은 테넌트 웹 주소, 표시 번호와 postId 불일치)를 보내기 전에 검사해 종료 코드 7 로 멈추고, `--fix-links` 는 대괄호와 웹 주소만 고치며, 조회 실패는 경고만 한다. `--no-link-check` 로 끈다
 
 ## 대체됨
 
