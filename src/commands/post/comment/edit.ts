@@ -17,6 +17,7 @@ import { appendTaskLinks } from "@/body/task-link.js";
 import { resolveTaskLinks } from "../../../resolvers/task-link.js";
 import { checkAndGuardDropped } from "@/body/attachment-check.js";
 import { checkMarkupSupport, type BodyMarkupKind } from "@/body/body-markup.js";
+import { addLinkCheckOptions, runLinkCheck } from "../link-check.js";
 
 export const commentEditCommand = new Command("edit")
   .description("댓글 수정 ($EDITOR 또는 --body 옵션)")
@@ -161,6 +162,8 @@ export const commentEditCommand = new Command("edit")
     }
 
     let edited = await readBodyInputOrNull(opts);
+    // --mime-type 단독이면 기존 본문을 다시 보낼 뿐이라 업무 링크 검사를 하지 않는다 (ADR-085).
+    const bodyWritten = edited != null || opts.mimeType == null;
     warnUnconvertedBody(comment.body.mimeType, opts.mimeType, edited != null);
 
     if (edited == null && opts.mimeType != null) {
@@ -190,6 +193,10 @@ export const commentEditCommand = new Command("edit")
       edited = appendTaskLinks(edited, links, me, bodyMimeType);
     }
 
+    if (bodyWritten) {
+      edited = await runLinkCheck(client, config, edited, opts, bodyMimeType);
+    }
+
     if (opts.dryRun) {
       stopSpinner(false);
       const globalOpts = commentEditCommand.optsWithGlobals() as OutputOptions;
@@ -215,3 +222,5 @@ export const commentEditCommand = new Command("edit")
 
     process.stdout.write(`댓글이 수정되었습니다: ${commentId}\n`);
   });
+
+addLinkCheckOptions(commentEditCommand);

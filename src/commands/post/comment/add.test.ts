@@ -147,3 +147,42 @@ describe("post comment add 빈 본문 거부", () => {
     expect(mocks.client.createPostComment).not.toHaveBeenCalled();
   });
 });
+
+describe("post comment add 업무 링크 검사", () => {
+  const ORG = "1234567890123456789";
+  const POST = "9876543210987654321";
+  const broken = `[my-project/505 [MOD] 한도](dooray://${ORG}/tasks/${POST} "working")`;
+
+  beforeEach(() => {
+    mocks.ensureMe.mockResolvedValue({ id: "me", name: "me", orgId: ORG });
+    Object.assign(mocks.client, {
+      getPostStandalone: vi.fn().mockResolvedValue({
+        result: { id: POST, project: { id: "p", code: "my-project" }, number: 505, subject: "[MOD] 한도", workflowClass: "working" },
+      }),
+    });
+    mocks.readBodyInputOrNull.mockResolvedValue(broken);
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  });
+
+  it("표시 글 대괄호가 있으면 등록하지 않고 종료 코드 7 로 멈춘다", async () => {
+    await expect(run(...base, "--body", broken)).rejects.toMatchObject({ exitCode: 7 });
+    expect(mocks.client.createPostComment).not.toHaveBeenCalled();
+  });
+
+  it("--fix-links 면 고친 본문으로 등록한다", async () => {
+    await run(...base, "--body", broken, "--fix-links");
+    expect(mocks.client.createPostComment).toHaveBeenCalledWith("project-1", "post-1", {
+      body: {
+        mimeType: "text/x-markdown",
+        content: `[my-project/505 &#91;MOD&#93; 한도](dooray://${ORG}/tasks/${POST} "working")`,
+      },
+    });
+  });
+
+  it("--no-link-check 면 본문 그대로 등록한다", async () => {
+    await run(...base, "--body", broken, "--no-link-check");
+    expect(mocks.client.createPostComment).toHaveBeenCalledWith("project-1", "post-1", {
+      body: { mimeType: "text/x-markdown", content: broken },
+    });
+  });
+});
